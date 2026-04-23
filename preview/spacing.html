@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #FDFAF8; padding: 20px; }
+.section-label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A89AAF; margin-bottom: 10px; }
+.tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.token { background: white; border-radius: 8px; padding: 8px 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 8px; }
+.bar { background: #E8508A; border-radius: 3px; height: 8px; }
+.token-name { font-size: 10px; font-weight: 600; color: #1A1118; }
+.token-val { font-size: 10px; color: #7A6880; }
+</style></head><body>
+<div class="section-label">Spacing Scale — 8px base</div>
+<div class="tokens">
+  <div class="token"><div class="bar" style="width:4px"></div><div><div class="token-name">space-1</div><div class="token-val">4px</div></div></div>
+  <div class="token"><div class="bar" style="width:8px"></div><div><div class="token-name">space-2</div><div class="token-val">8px</div></div></div>
+  <div class="token"><div class="bar" style="width:12px"></div><div><div class="token-name">space-3</div><div class="token-val">12px</div></div></div>
+  <div class="token"><div class="bar" style="width:16px"></div><div><div class="token-name">space-4</div><div class="token-val">16px</div></div></div>
+  <div class="token"><div class="bar" style="width:24px"></div><div><div class="token-name">space-6</div><div class="token-val">24px</div></div></div>
+  <div class="token"><div class="bar" style="width:32px"></div><div><div class="token-name">space-8</div><div class="token-val">32px</div></div></div>
+  <div class="token"><div class="bar" style="width:48px"></div><div><div class="token-name">space-12</div><div class="token-val">48px</div></div></div>
+  <div class="token"><div class="bar" style="width:64px"></div><div><div class="token-name">space-16</div><div class="token-val">64px</div></div></div>
+  <div class="token"><div class="bar" style="width:96px"></div><div><div class="token-name">space-24</div><div class="token-val">96px</div></div></div>
+</div>
+<div class="section-label">Border Radius Tokens</div>
+<div class="tokens">
+  <div class="token"><div style="width:28px;height:28px;background:#E8508A;border-radius:4px"></div><div><div class="token-name">radius-xs</div><div class="token-val">4px</div></div></div>
+  <div class="token"><div style="width:28px;height:28px;background:#E8508A;border-radius:8px"></div><div><div class="token-name">radius-sm</div><div class="token-val">8px</div></div></div>
+  <div class="token"><div style="width:28px;height:28px;background:#E8508A;border-radius:12px"></div><div><div class="token-name">radius-md</div><div class="token-val">12px</div></div></div>
+  <div class="token"><div style="width:28px;height:28px;background:#E8508A;border-radius:16px"></div><div><div class="token-name">radius-lg</div><div class="token-val">16px</div></div></div>
+  <div class="token"><div style="width:28px;height:28px;background:#E8508A;border-radius:24px"></div><div><div class="token-name">radius-xl</div><div class="token-val">24px</div></div></div>
+  <div class="token"><div style="width:48px;height:28px;background:#E8508A;border-radius:999px"></div><div><div class="token-name">radius-pill</div><div class="token-val">999px</div></div></div>
+</div>
+</body></html>
