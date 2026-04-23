@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #FDFAF8; padding: 24px 28px; }
+.label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A89AAF; margin-bottom: 10px; }
+.form-group { margin-bottom: 16px; }
+.field-label { font-size: 12px; font-weight: 600; color: #2D1B2E; margin-bottom: 5px; display: block; }
+.input { width: 100%; padding: 11px 14px; border: 1.5px solid #EDE8EA; border-radius: 10px; font-family: 'Outfit', sans-serif; font-size: 14px; color: #1A1118; background: white; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+.input::placeholder { color: #A89AAF; }
+.input:focus { border-color: #E8508A; box-shadow: 0 0 0 3px rgba(232,80,138,0.12); }
+.input-error { border-color: #E8505A; }
+.input-error:focus { box-shadow: 0 0 0 3px rgba(232,80,90,0.12); }
+.helper { font-size: 11px; color: #A89AAF; margin-top: 4px; }
+.error-text { font-size: 11px; color: #E8505A; margin-top: 4px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+</style></head><body>
+<div class="label">Form Inputs</div>
+<div class="row">
+  <div class="form-group">
+    <label class="field-label">Tu nombre</label>
+    <input class="input" placeholder="Ej. María García">
+    <div class="helper">Para personalizar tu pieza</div>
+  </div>
+  <div class="form-group">
+    <label class="field-label">Email</label>
+    <input class="input" value="maria@email.com">
+  </div>
+  <div class="form-group">
+    <label class="field-label">Correo electrónico</label>
+    <input class="input input-error" value="correo-invalido">
+    <div class="error-text">Por favor ingresa un email válido</div>
+  </div>
+  <div class="form-group">
+    <label class="field-label">Mensaje de grabado</label>
+    <input class="input" style="border-color:#E8508A;box-shadow:0 0 0 3px rgba(232,80,138,0.12)" placeholder="Ej. Para siempre tuya">
+    <div class="helper" style="color:#E8508A">Campo activo</div>
+  </div>
+</div>
+</body></html>

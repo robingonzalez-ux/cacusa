@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Outfit', sans-serif; background: #FDFAF8; padding: 24px 28px; }
+.label { font-size: 9px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #A89AAF; margin-bottom: 12px; }
+.row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.btn-primary { background: #E8508A; color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; border: none; border-radius: 999px; padding: 12px 28px; cursor: pointer; box-shadow: 0 2px 12px rgba(232,80,138,0.30); transition: all 0.2s; }
+.btn-primary:hover { background: #C0336E; transform: scale(1.02); }
+.btn-gradient { background: linear-gradient(135deg, #E8508A, #B07FEC); color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; border: none; border-radius: 999px; padding: 12px 28px; cursor: pointer; box-shadow: 0 2px 16px rgba(176,127,236,0.35); }
+.btn-secondary { background: transparent; color: #E8508A; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; border: 1.5px solid #E8508A; border-radius: 999px; padding: 11px 28px; cursor: pointer; }
+.btn-ghost { background: transparent; color: #1A1118; font-family: 'Outfit', sans-serif; font-weight: 500; font-size: 13px; border: none; padding: 11px 20px; cursor: pointer; }
+.btn-gold { background: linear-gradient(135deg, #C9A46A, #DEC28F); color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; border: none; border-radius: 999px; padding: 12px 28px; cursor: pointer; box-shadow: 0 2px 12px rgba(201,164,106,0.35); }
+.btn-sm { background: #E8508A; color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: 0.06em; border: none; border-radius: 999px; padding: 8px 18px; cursor: pointer; }
+.btn-dark { background: #2D1B2E; color: white; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.05em; border: none; border-radius: 999px; padding: 12px 28px; cursor: pointer; }
+.btn-disabled { background: #EDE8EA; color: #A89AAF; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 13px; border: none; border-radius: 999px; padding: 12px 28px; cursor: not-allowed; }
+</style></head><body>
+<div class="label">Primary</div>
+<div class="row">
+  <button class="btn-primary">Ver colección</button>
+  <button class="btn-gradient">Personaliza tu pieza</button>
+  <button class="btn-gold">Colección Gold</button>
+  <button class="btn-dark">Hombres</button>
+</div>
+<div class="label">Secondary & Ghost</div>
+<div class="row">
+  <button class="btn-secondary">Ver más</button>
+  <button class="btn-ghost">Saber más →</button>
+  <button class="btn-sm">Añadir al carrito</button>
+  <button class="btn-disabled">Agotado</button>
+</div>
+</body></html>
