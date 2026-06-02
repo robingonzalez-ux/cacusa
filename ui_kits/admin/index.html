@@ -27,7 +27,7 @@ const {useState,useEffect,useRef,useCallback}=React;
 const GH_OWNER='robingonzalez-ux',GH_REPO='cacusa';
 const PRODUCTS_PATH='data/products.json';
 const IMAGES_PATH='ui_kits/store/images';
-const STORE_URL='https://robingonzalez-ux.github.io/cacusa/ui_kits/store/';
+const STORE_URL='https://cacusabytaitus.com/';
 
 const USERS={
   'tita.jaramillo':{name:'Tita Jaramillo',avatar:'👑',color:'#E85D8A'},
@@ -197,7 +197,9 @@ function ProductCard({p,onEdit,onDelete,onToggle,onMoveUp,onMoveDown,canUp,canDo
         <div style={{display:'flex',gap:5,marginTop:4}}>
           <button onClick={()=>onToggle(p)} style={{flex:1,padding:'5px 0',background:active?'#FEE2E2':'#D1FAE5',color:active?'#DC2626':'#065F46',borderRadius:8,fontSize:11,fontWeight:600}}>{active?'Pausar':'Activar'}</button>
           <button onClick={()=>onEdit(p)} style={{flex:1,padding:'5px 0',background:'#EDE9FE',color:'#7C3AED',borderRadius:8,fontSize:11,fontWeight:600}}>Editar</button>
-          <button onClick={()=>onDelete(p)} style={{width:30,height:28,background:'#FEE2E2',color:'#DC2626',borderRadius:8,fontSize:14,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+          <button onClick={()=>onMoveUp&&onMoveUp(p)} style={{width:26,height:28,background:'#F0F0F0',color:'#666',borderRadius:8,fontSize:11}} title='Subir'>▲</button>
+          <button onClick={()=>onMoveDown&&onMoveDown(p)} style={{width:26,height:28,background:'#F0F0F0',color:'#666',borderRadius:8,fontSize:11}} title='Bajar'>▼</button>
+          <button onClick={()=>onDelete(p)} style={{width:26,height:28,background:'#FEE2E2',color:'#DC2626',borderRadius:8,fontSize:14,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
         </div>
       </div>
     </div>
@@ -384,6 +386,7 @@ function App(){
   const[delConfirm,setDelConfirm]=useState(null);
   const[showPwd,setShowPwd]=useState(false);
   const[showMenu,setShowMenu]=useState(false);
+  const[whatsappNum,setWhatsappNum]=useState('');
 
   useEffect(()=>{if(session){sessionStorage.setItem('cacusa_session',JSON.stringify(session));loadData();}},[session]);
 
@@ -394,6 +397,7 @@ function App(){
         const file=await ghGet(PRODUCTS_PATH,session.token);
         const data=JSON.parse(b64ToStr(file.content));
         setProducts(data.products.map(p=>({...p,available:p.available!==false})));
+        if(data.whatsapp!==undefined)setWhatsappNum(data.whatsapp||'');
         if(data.config?.whatsapp)setWhatsapp(data.config.whatsapp);
         setProductsSha(file.sha);
       }catch(err){
@@ -409,27 +413,22 @@ function App(){
   };
 
   const publish=async()=>{
-    setSyncing(true);setSyncMsg('☁️ Guardando productos en GitHub…');
+    setSyncing(true);setSyncMsg('☁️ Guardando en GitHub…');
     try{
-      const json=JSON.stringify({
-        version:'1.0',
-        lastUpdated:new Date().toISOString(),
-        updatedBy:session.username,
-        config:{whatsapp:whatsapp.trim()},
-        products
-      },null,2);
+      const json=JSON.stringify({version:'1.0',lastUpdated:new Date().toISOString(),updatedBy:session.username,whatsapp:whatsappNum,products},null,2);
       const saved=await ghSave(PRODUCTS_PATH,session.token,json,productsSha,`[Admin] Productos - ${session.username}`);
       setProductsSha(saved.content.sha);
       setDirty(false);
-      setSyncMsg('✅ ¡Publicado! Los cambios aparecen en la tienda en 1–2 minutos.');
+      setSyncMsg('✅ ¡Publicado en cacusabytaitus.com! La tienda se actualiza en 1–2 min.');
       setTimeout(()=>setSyncMsg(''),8000);
     }catch(e){setSyncMsg('❌ Error: '+e.message);}
     setSyncing(false);
   };
-
   const saveProduct=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);return i>-1?prev.map((x,j)=>j===i?p:x):[...prev,p];});setDirty(true);setShowModal(false);setEditProd(null);};
   const toggleProd=p=>{setProducts(prev=>prev.map(x=>x.id===p.id?{...x,available:!x.available}:x));setDirty(true);};
   const deleteProd=p=>{setProducts(prev=>prev.filter(x=>x.id!==p.id));setDelConfirm(null);setDirty(true);};
+  const moveUp=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i<=0)return prev;const a=[...prev];[a[i-1],a[i]]=[a[i],a[i-1]];return a;});setDirty(true);};
+  const moveDown=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=prev.length-1)return prev;const a=[...prev];[a[i],a[i+1]]=[a[i+1],a[i]];return a;});setDirty(true);};
   const moveProd=(p,dir)=>{
     setProducts(prev=>{
       const idx=prev.findIndex(x=>x.id===p.id);
@@ -526,6 +525,7 @@ function App(){
             })}
           </div>
           <button onClick={()=>{setEditProd(null);setShowModal(true);}} style={{padding:'10px 20px',background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:13,boxShadow:'0 4px 16px rgba(155,93,229,.3)',whiteSpace:'nowrap'}}>+ Nuevo Producto</button>
+          <div style={{display:'flex',alignItems:'center',gap:6,background:'white',borderRadius:10,padding:'6px 12px',border:'1.5px solid #e0e0e0',flexShrink:0}}><span style={{fontSize:15}}>📱</span><input value={whatsappNum} onChange={e=>{setWhatsappNum(e.target.value);setDirty(true);}} placeholder='WhatsApp +593...' style={{border:'none',outline:'none',fontSize:13,width:155,color:'#333'}} title='Número WhatsApp para pedidos'/></div>
           <button onClick={publish} disabled={!dirty||syncing} style={{padding:'10px 20px',background:dirty?'linear-gradient(135deg,#1A1124,#2D1B2E)':'#e0e0e0',color:dirty?'white':'#aaa',borderRadius:99,fontWeight:700,fontSize:13,whiteSpace:'nowrap',opacity:syncing?.7:1,transition:'all .2s',boxShadow:dirty?'0 4px 12px rgba(0,0,0,.2)':'none'}}>
             {syncing?'⏳ Publicando…':'☁️ Publicar cambios'}
           </button>
