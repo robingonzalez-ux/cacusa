@@ -372,6 +372,7 @@ function App(){
   const[session,setSession]=useState(()=>{const s=sessionStorage.getItem('cacusa_session');return s?JSON.parse(s):null;});
   const[products,setProducts]=useState([]);
   const[productsSha,setProductsSha]=useState(null);
+  const[whatsapp,setWhatsapp]=useState('');
   const[loading,setLoading]=useState(false);
   const[syncing,setSyncing]=useState(false);
   const[syncMsg,setSyncMsg]=useState('');
@@ -393,6 +394,7 @@ function App(){
         const file=await ghGet(PRODUCTS_PATH,session.token);
         const data=JSON.parse(b64ToStr(file.content));
         setProducts(data.products.map(p=>({...p,available:p.available!==false})));
+        if(data.config?.whatsapp)setWhatsapp(data.config.whatsapp);
         setProductsSha(file.sha);
       }catch(err){
         if(err.status===404){
@@ -413,6 +415,7 @@ function App(){
         version:'1.0',
         lastUpdated:new Date().toISOString(),
         updatedBy:session.username,
+        config:{whatsapp:whatsapp.trim()},
         products
       },null,2);
       const saved=await ghSave(PRODUCTS_PATH,session.token,json,productsSha,`[Admin] Productos - ${session.username}`);
@@ -502,6 +505,15 @@ function App(){
             {syncMsg}
           </div>
         )}
+
+        {/* WhatsApp config bar */}
+        <div style={{background:'white',borderRadius:12,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:10,boxShadow:'0 1px 6px rgba(0,0,0,.05)'}}>
+          <span style={{fontSize:18}}>📱</span>
+          <span style={{fontSize:12,fontWeight:600,color:'#555',whiteSpace:'nowrap'}}>WhatsApp</span>
+          <input value={whatsapp} onChange={e=>{setWhatsapp(e.target.value);setDirty(true);}} placeholder="+15551234567 (número para pedidos)"
+            style={{flex:1,padding:'7px 11px',border:'1.5px solid #e0e0e0',borderRadius:8,fontSize:13,outline:'none',background:'white',color:'#333'}}/>
+          <span style={{fontSize:11,color:'#bbb',whiteSpace:'nowrap'}}>Aparece en la tienda</span>
+        </div>
 
         {/* Toolbar */}
         <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
