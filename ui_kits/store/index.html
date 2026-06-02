@@ -582,17 +582,6 @@ const App = () => {
       .catch(()=>{});
   },[]);
 
-  // Fetch live products from data/products.json (updates global PRODUCTS var)
-  useEffect(() => {
-    fetch(PRODUCTS_JSON_URL + '?_=' + Date.now())
-      .then(r => r.json())
-      .then(d => {
-        const live = (d.products || []).filter(p => p.available !== false);
-        if (d.config && d.config.whatsapp) WHATSAPP_NUMBER = d.config.whatsapp;
-        if (live.length) { PRODUCTS = live; _tick(n => n + 1); }
-      })
-      .catch(() => {}); // keep hardcoded FALLBACK_PRODUCTS on error
-  }, []);
 
   const addToCart = (product) => { setCart(c => [...c, product]); setCartOpen(true); };
   const removeItem = (i) => setCart(c => c.filter((_,idx) => idx !== i));
