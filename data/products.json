@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-02T02:58:59.568Z",
-  "updatedBy": "robin.gonzalez",
+  "lastUpdated": "2026-06-02T03:04:23.879Z",
+  "updatedBy": "tita.jaramillo",
   "config": {
     "whatsapp": "+17867375336"
   },
@@ -16,7 +16,9 @@
       "tag": "Bestseller",
       "description": "Collar delicado con tu nombre grabado a mano. Disponible en plata 925 y baño de oro 18k. Personaliza la tipografía y el largo de la cadena.",
       "personalized": true,
-      "available": true
+      "available": true,
+      "oldPrice": null,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369452657_e1d3a277_c1d9_476e_9517_15e3939543d7_jpe.jpg"
     },
     {
       "id": 2,
