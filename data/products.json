@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-02T03:05:42.740Z",
+  "lastUpdated": "2026-06-02T03:09:02.015Z",
   "updatedBy": "tita.jaramillo",
   "config": {
     "whatsapp": "+17867375336"
@@ -94,6 +94,20 @@
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369510896_img_6282_jpeg.jpg",
       "id": 1780369527965
+    },
+    {
+      "name": "Pulsera de mano con anillo",
+      "category": "Personalizado",
+      "price": 35,
+      "oldPrice": 38,
+      "img": "bracelet",
+      "color": "gold",
+      "tag": "Nuevo",
+      "description": "Hermosas pulseras hechas a tu gusto ",
+      "personalized": true,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369644513_3691ae2e_f758_4374_803e_41390d61c357_jpe.jpg",
+      "id": 1780369728627
     }
   ]
 }
