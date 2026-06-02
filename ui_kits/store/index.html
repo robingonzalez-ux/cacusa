@@ -569,7 +569,9 @@ const App = () => {
       .then(r=>r.json())
       .then(d=>{
         const live=(d.products||[]).filter(p=>p.available!==false);
-        if(live.length){PRODUCTS=live;_tick(n=>n+1);} if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp; else if(d.config&&d.config.whatsapp) WHATSAPP_NUMBER=d.config.whatsapp;
+        if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp; else if(d.config&&d.config.whatsapp) WHATSAPP_NUMBER=d.config.whatsapp;
+        if(live.length) PRODUCTS=live;
+        _tick(n=>n+1);
       })
       .catch(()=>{});
   },[]);
