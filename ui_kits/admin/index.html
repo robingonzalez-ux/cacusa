@@ -26,6 +26,7 @@ const {useState,useEffect,useRef,useCallback}=React;
 // ── Constants ─────────────────────────────────────────────────────────────
 const GH_OWNER='robingonzalez-ux',GH_REPO='cacusa';
 const PRODUCTS_PATH='data/products.json';
+const ORDERS_PATH='data/orders.json';
 const IMAGES_PATH='ui_kits/store/images';
 const STORE_URL='https://cacusabytaitus.com/';
 
@@ -172,6 +173,103 @@ function LoginScreen({onLogin}){
 }
 
 // ── Product Card ──────────────────────────────────────────────────────────
+
+// ORDER STATES
+const ORDER_STATES=['Nuevo','Confirmado','En proceso','Enviado','Entregado','Cancelado'];
+const STATE_COLORS={'Nuevo':'#E8508A','Confirmado':'#3B82F6','En proceso':'#F59E0B','Enviado':'#8B5CF6','Entregado':'#22C55E','Cancelado':'#94A3B8'};
+
+function OrderCard({order,onStatusChange,onDelete}){
+  const dateStr=new Date(order.fecha).toLocaleDateString('es-EC',{day:'2-digit',month:'short',year:'numeric'});
+  const estado=order.estado||'Nuevo';
+  const nextIdx=Math.min(ORDER_STATES.indexOf(estado)+1,ORDER_STATES.length-2);
+  const nextState=ORDER_STATES[nextIdx];
+  const waNum=(order.cliente&&order.cliente.telefono||'').replace(/[^0-9]/g,'');
+  return(
+    <div style={{background:'white',borderRadius:16,padding:18,boxShadow:'0 2px 12px rgba(0,0,0,0.07)',border:'1px solid #f0ecf0',display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:15,color:'#1A1118'}}>{order.cliente&&order.cliente.nombre||'Cliente'}</div>
+          <div style={{fontSize:12,color:'#7A6880',marginTop:2}}>{order.cliente&&order.cliente.telefono} &middot; {order.cliente&&order.cliente.ciudad}</div>
+        </div>
+        <span style={{background:STATE_COLORS[estado]||'#E8508A',color:'white',fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:99}}>{estado}</span>
+      </div>
+      <div style={{fontSize:12,color:'#A89AAF'}}>{dateStr} &middot; {order.pago||'Sin método'}</div>
+      <div style={{background:'#FAF7FB',borderRadius:10,padding:'10px 12px'}}>
+        {(order.productos||[]).map((p,i)=>(
+          <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1A1118',padding:'2px 0'}}>
+            <span>{p.name}{p.personalization?<span style={{color:'#E8508A'}}> &quot;{p.personalization}&quot;</span>:null}</span>
+            <span style={{fontWeight:700}}>${p.price}</span>
+          </div>
+        ))}
+        <div style={{borderTop:'1px solid #EDE8EA',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',fontWeight:800,fontSize:14,color:'#1A1118'}}>
+          <span>Total</span><span style={{color:'#E8508A'}}>${order.total}</span>
+        </div>
+      </div>
+      {order.notas&&<div style={{fontSize:12,color:'#7A6880',fontStyle:'italic'}}>📝 {order.notas}</div>}
+      <div style={{display:'flex',gap:8,marginTop:4}}>
+        {estado!=='Entregado'&&estado!=='Cancelado'&&(
+          <button onClick={()=>onStatusChange(order,nextState)} style={{flex:1,padding:'8px',background:STATE_COLORS[nextState]||'#E8508A',color:'white',borderRadius:99,fontSize:12,fontWeight:700,border:'none',cursor:'pointer'}}>
+            &rarr; {nextState}
+          </button>
+        )}
+        <button onClick={()=>onStatusChange(order,'Cancelado')} style={{padding:'8px 12px',background:'#FEE2E2',color:'#DC2626',borderRadius:99,fontSize:12,fontWeight:700,border:'none',cursor:'pointer'}} title="Cancelar">✕</button>
+        {waNum&&<a href={'https://wa.me/'+waNum} target="_blank" rel="noopener noreferrer" style={{padding:'8px 12px',background:'#DCF8C6',color:'#128C7E',borderRadius:99,fontSize:12,fontWeight:700,textDecoration:'none',display:'flex',alignItems:'center'}}>💬</a>}
+      </div>
+    </div>
+  );
+}
+
+function NewOrderModal({open,onClose,onSave}){
+  const [form,setForm]=React.useState({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:'',prodNombre:'',prodPersonal:'',prodPrecio:''});
+  if(!open)return null;
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const inp={border:'1.5px solid #e0e0e0',borderRadius:10,padding:'9px 13px',fontSize:13,width:'100%',outline:'none',fontFamily:'inherit'};
+  const submit=(e)=>{
+    e.preventDefault();
+    const order={
+      id:Date.now(),fecha:new Date().toISOString(),
+      cliente:{nombre:form.nombre,telefono:form.telefono,ciudad:form.ciudad},
+      productos:form.prodNombre?[{name:form.prodNombre,personalization:form.prodPersonal,price:Number(form.prodPrecio)||0}]:[],
+      total:Number(form.prodPrecio)||0,
+      pago:form.pago,estado:'Nuevo',notas:form.notas
+    };
+    onSave(order);
+    setForm({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:'',prodNombre:'',prodPersonal:'',prodPrecio:''});
+    onClose();
+  };
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{background:'white',borderRadius:20,padding:28,width:'100%',maxWidth:440,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+          <div style={{fontWeight:800,fontSize:18,color:'#1A1118'}}>Nuevo pedido</div>
+          <button onClick={onClose} style={{width:32,height:32,borderRadius:'50%',background:'#F9F5F7',display:'flex',alignItems:'center',justifyContent:'center',color:'#7A6880',border:'none',cursor:'pointer',fontSize:16}}>✕</button>
+        </div>
+        <form onSubmit={submit}>
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1}}>DATOS DEL CLIENTE</div>
+            <input required placeholder="Nombre completo *" value={form.nombre} onChange={e=>set('nombre',e.target.value)} style={inp}/>
+            <input required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e=>set('telefono',e.target.value)} style={inp}/>
+            <input required placeholder="Ciudad, País *" value={form.ciudad} onChange={e=>set('ciudad',e.target.value)} style={inp}/>
+            <select value={form.pago} onChange={e=>set('pago',e.target.value)} style={{...inp,cursor:'pointer'}}>
+              <option>Transferencia bancaria</option><option>Zelle</option>
+              <option>PayPal Friends and Family</option><option>Efectivo (entrega local)</option>
+            </select>
+            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1,marginTop:4}}>PRODUCTO</div>
+            <input placeholder="Nombre del producto" value={form.prodNombre} onChange={e=>set('prodNombre',e.target.value)} style={inp}/>
+            <input placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e=>set('prodPersonal',e.target.value)} style={inp}/>
+            <input type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e=>set('prodPrecio',e.target.value)} style={inp}/>
+            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1,marginTop:4}}>NOTAS</div>
+            <textarea placeholder="Notas adicionales..." value={form.notas} onChange={e=>set('notas',e.target.value)} rows={3} style={{...inp,resize:'vertical'}}/>
+            <button type="submit" style={{background:'linear-gradient(135deg,#E8508A,#9B5DE5)',color:'white',borderRadius:99,padding:'12px',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',marginTop:4}}>
+              Guardar pedido
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function ProductCard({p,onEdit,onDelete,onToggle,onMoveUp,onMoveDown,canUp,canDown}){
   const active=p.available!==false;
   return(
@@ -387,6 +485,10 @@ function App(){
   const[showPwd,setShowPwd]=useState(false);
   const[showMenu,setShowMenu]=useState(false);
   const[whatsappNum,setWhatsappNum]=useState('');
+  const[orders,setOrders]=useState([]);
+  const[ordersSha,setOrdersSha]=useState(null);
+  const[activeTab,setActiveTab]=useState('products');
+  const[showOrderModal,setShowOrderModal]=useState(false);
 
   useEffect(()=>{if(session){sessionStorage.setItem('cacusa_session',JSON.stringify(session));loadData();}},[session]);
 
@@ -402,7 +504,14 @@ function App(){
         setProductsSha(file.sha);
       }catch(err){
         if(err.status===404){
-          // products.json doesn't exist yet — start with empty list
+          // products.json doesn't exist yet
+      // Load orders
+      try{
+        const oFile=await ghGet(ORDERS_PATH,session.token);
+        const oData=JSON.parse(b64ToStr(oFile.content));
+        setOrders(oData.orders||[]);
+        setOrdersSha(oFile.sha);
+      }catch(oErr){ if(oErr.status===404){ setOrders([]); setOrdersSha(null); } } — start with empty list
           setProducts([]);
           setProductsSha(null);
           setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
@@ -419,6 +528,7 @@ function App(){
       const saved=await ghSave(PRODUCTS_PATH,session.token,json,productsSha,`[Admin] Productos - ${session.username}`);
       setProductsSha(saved.content.sha);
       setDirty(false);
+      try{const oJson=JSON.stringify({version:'1.0',lastUpdated:new Date().toISOString(),orders},null,2);const oSaved=await ghSave(ORDERS_PATH,session.token,oJson,ordersSha,'[Admin] Ordenes');setOrdersSha(oSaved.content.sha);}catch(oe){console.warn('orders:',oe);}
       setSyncMsg('✅ ¡Publicado en cacusabytaitus.com! La tienda se actualiza en 1–2 min.');
       setTimeout(()=>setSyncMsg(''),8000);
     }catch(e){setSyncMsg('❌ Error: '+e.message);}
@@ -532,7 +642,19 @@ function App(){
         </div>
 
         {/* Grid */}
-        {loading?(
+        {
+        {/* Tab navigation */}
+        <div style={{display:'flex',marginBottom:20,background:'white',borderRadius:12,overflow:'hidden',border:'1px solid #EDE8EA'}}>
+          {[['products','💎 Productos',products.length],['orders','📦 Pedidos',orders.filter(o=>o.estado==='Nuevo'||o.estado==='Confirmado'||o.estado==='En proceso').length]].map(([tab,label,badge])=>(
+            <button key={tab} onClick={()=>setActiveTab(tab)}
+              style={{flex:1,padding:'13px 16px',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',background:activeTab===tab?'white':'#F9F5F7',color:activeTab===tab?'#E8508A':'#7A6880',borderBottom:activeTab===tab?'2.5px solid #E8508A':'2.5px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',gap:6,transition:'all .15s'}}>
+              {label}
+              {badge>0&&<span style={{background:activeTab===tab?'#E8508A':'#C4B5C8',color:'white',borderRadius:99,fontSize:11,padding:'1px 7px',fontWeight:800}}>{badge}</span>}
+            </button>
+          ))}
+        </div>
+        {activeTab==='products'&&(
+loading?(
           <div style={{textAlign:'center',padding:'80px 0',color:'#aaa'}}>
             <div style={{fontSize:44,marginBottom:12}}>⏳</div>
             <div style={{fontSize:16}}>Cargando productos…</div>
@@ -561,7 +683,51 @@ function App(){
         )}
       </div>
 
-      {showModal&&<ProductModal product={editProduct} token={session.token} onSave={saveProduct} onClose={()=>{setShowModal(false);setEditProd(null);}}/>}
+              )}
+        {activeTab==='orders'&&(
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+            <div style={{fontWeight:800,fontSize:18,color:'#1A1118'}}>Pedidos <span style={{color:'#A89AAF',fontWeight:400,fontSize:14}}>{orders.length} total</span></div>
+            <button onClick={()=>setShowOrderModal(true)} style={{padding:'10px 20px',background:'linear-gradient(135deg,#E8508A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:13,border:'none',cursor:'pointer',boxShadow:'0 4px 12px rgba(232,80,138,.3)'}}>+ Nuevo pedido</button>
+          </div>
+          {orders.length===0?(
+            <div style={{textAlign:'center',padding:'80px 0',color:'#aaa'}}>
+              <div style={{fontSize:52,marginBottom:12}}>📦</div>
+              <div style={{fontSize:16,marginBottom:8}}>No hay pedidos aún</div>
+              <div style={{fontSize:13,color:'#ccc'}}>Los pedidos aparecerán aquí cuando clientes completen el formulario en la tienda</div>
+            </div>
+          ):(
+            <div>
+              {['Nuevo','Confirmado','En proceso','Enviado','Entregado','Cancelado'].map(estado=>{
+                const grupo=orders.filter(o=>(o.estado||'Nuevo')===estado);
+                if(grupo.length===0)return null;
+                return(
+                  <div key={estado} style={{marginBottom:24}}>
+                    <div style={{fontWeight:700,fontSize:12,color:'#7A6880',letterSpacing:1,marginBottom:10,display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{background:STATE_COLORS[estado],color:'white',padding:'3px 10px',borderRadius:99,fontSize:11}}>{estado}</span>
+                      <span>{grupo.length} pedido{grupo.length!==1?'s':''}</span>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:14}}>
+                      {grupo.map(o=>(
+                        <OrderCard key={o.id} order={o}
+                          onStatusChange={(ord,newState)=>{
+                            setOrders(prev=>prev.map(x=>x.id===ord.id?{...x,estado:newState}:x));
+                            setDirty(true);
+                          }}
+                          onDelete={ord=>{setOrders(prev=>prev.filter(x=>x.id!==ord.id));setDirty(true);}}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        )}
+        {showOrderModal&&<NewOrderModal open={showOrderModal} onClose={()=>setShowOrderModal(false)} onSave={o=>{setOrders(prev=>[o,...prev]);setDirty(true);}}/> }
+
+        {showModal&&<ProductModal product={editProduct} token={session.token} onSave={saveProduct} onClose={()=>{setShowModal(false);setEditProd(null);}}/>}
 
       {delConfirm&&(
         <div style={{position:'fixed',inset:0,background:'rgba(26,17,36,.65)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
