@@ -218,6 +218,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   .modal-box{grid-template-columns:1fr}
   .modal-img{min-height:260px;border-radius:28px 28px 0 0}
 }
+/* Mobile: hide custom cursor, restore native pointer */
+@media(hover:none){
+  #cursor,#cursor-ring{display:none}
+  body{cursor:auto}
+  .pcard,.cart-btn,.filter-btn,.sort-select,.pcard-add,.pcard-wish,
+  .modal-close,.modal-select,.modal-input,.modal-add,.qty-btn,
+  .checkout-btn,.cart-close,.pay-btn,.success-back,.ci-remove,
+  .nav-back,.nav-logo,#checkoutBack,.pcard-quick{cursor:pointer}
+}
   </style>
 </head>
 <body>
@@ -419,6 +428,35 @@ const FALLBACK_PRODUCTS = [
   {id:8,name:'Collar infinito',cat:'Gold Edition',price:48,grad:'linear-gradient(135deg,#F5C8A8,#EE6FA8)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Símbolo infinito con grabado interior personalizable. Plata 925 o baño de oro 18k.'},
 ];
 
+// ─── PRODUCT NORMALIZER ─────────────────────────────────────
+// Maps JSON color keys → gradient strings so products without imageUrl get a nice bg
+const COLOR_GRADS = {
+  rose:   'linear-gradient(135deg,#F9A8C9,#EE6FA8,#FCE8F3)',
+  gold:   'linear-gradient(135deg,#FEF0E4,#F4C430,#F5C8A8)',
+  violet: 'linear-gradient(135deg,#EEE4FA,#C4A0EC,#88C8F0)',
+  sky:    'linear-gradient(135deg,#DCF0FC,#88C8F0,#EEE4FA)',
+  plum:   'linear-gradient(135deg,#2D1B2E,#4A1942,#9B5DE5)'
+};
+function normalizeProd(p) {
+  // Resolve badge class from tag string
+  const tag = p.tag || null;
+  let badge = p.badge || null;
+  if (!badge && tag) {
+    const t = tag.toLowerCase();
+    if (t === 'bestseller' || t === 'best seller') badge = 'badge-best';
+    else if (t === 'nuevo' || t === 'new') badge = 'badge-new';
+    else badge = 'badge-sale';
+  }
+  return {
+    ...p,
+    cat:   p.category || p.cat || '',
+    desc:  p.description || p.desc || '',
+    grad:  p.grad || COLOR_GRADS[p.color] || 'linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC)',
+    badge: badge,
+    available: p.available !== false
+  };
+}
+
 // ─── ESTADO ─────────────────────────────────────────────────
 let cart = JSON.parse(localStorage.getItem('cacusa-cart') || '[]');
 let currentProduct = null, qty = 1, activeFilter = 'all';
@@ -429,14 +467,12 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     const res = await fetch(PRODUCTS_JSON_URL);
     if (!res.ok) throw new Error('no json');
     const data = await res.json();
-    if (Array.isArray(data)) {
-      PRODUCTS = data;
-    } else {
-      PRODUCTS = data.products || FALLBACK_PRODUCTS;
-      WHATSAPP_NUMBER = data.whatsapp || (data.config && data.config.whatsapp) || '';
-    }
+    const raw = Array.isArray(data) ? data : (data.products || []);
+    WHATSAPP_NUMBER = (!Array.isArray(data) && (data.whatsapp || (data.config && data.config.whatsapp))) || '';
+    PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
+    if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   } catch(e) {
-    PRODUCTS = FALLBACK_PRODUCTS;
+    PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   }
   renderProducts();
   updateCartUI();
@@ -493,9 +529,9 @@ function renderProducts() {
       <button class="pcard-wish" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
-      <div class="pcard-img">
+      <div class="pcard-img" onclick="openModal(${p.id})">
         <div class="pcard-img-bg" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div>
-        <div class="pcard-quick" onclick="openModal(${p.id})">Vista rápida →</div>
+        <div class="pcard-quick">Vista rápida →</div>
       </div>
       <div class="pcard-body">
         <div class="pcard-cat">${p.cat || ''}</div>
@@ -620,7 +656,7 @@ function updateCartUI() {
           <div class="ci-mat">${item.material || 'Plata 925'}</div>
           <div class="ci-foot">
             <span class="ci-price">$${item.price}</span>
-            <button class="ci-remove" onclick="removeItem(${i})">✕</button>
+            <button class="ci-remove" onclick="removeItem(${item.cartId})">✕</button>
           </div>
         </div>
       </div>`).join('');
@@ -632,7 +668,7 @@ function updateCartUI() {
     footEl.style.display = 'block';
   }
 }
-function removeItem(i) { cart.splice(i, 1); saveCart(); updateCartUI(); }
+function removeItem(cartId) { cart = cart.filter(i => i.cartId !== cartId); saveCart(); updateCartUI(); }
 
 document.getElementById('checkoutBtn').addEventListener('click', () => { closeCart(); openCheckout(); });
 document.getElementById('checkoutBack').addEventListener('click', () => { closeCheckout(); openCart(); });
@@ -649,6 +685,15 @@ function closeCheckout() {
 }
 document.getElementById('checkout-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('checkout-overlay')) closeCheckout();
+});
+
+// ─── ESCAPE KEY ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('success-overlay').classList.contains('open')) return;
+  if (document.getElementById('checkout-overlay').classList.contains('open')) { closeCheckout(); return; }
+  if (document.getElementById('modal-overlay').classList.contains('open')) { closeModal(); return; }
+  if (document.getElementById('cart-drawer').classList.contains('open')) { closeCart(); return; }
 });
 
 function renderCheckoutSummary() {

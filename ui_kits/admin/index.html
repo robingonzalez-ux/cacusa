@@ -276,9 +276,7 @@ function ProductModal({ product, onSave, onClose, token }) {
       price: Number(form.price),
       oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
       tag: form.tag || null,
-      available: form.available !== false,
-      // Map category to cat for store compatibility
-      cat: form.category
+      available: form.available !== false
     });
   };
 

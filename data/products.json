@@ -2,6 +2,7 @@
   "version": "1.0",
   "lastUpdated": "2026-06-02T03:09:02.015Z",
   "updatedBy": "tita.jaramillo",
+  "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336"
   },
@@ -23,7 +24,7 @@
     {
       "id": 2,
       "name": "Anillo estrella",
-      "category": "Colección Gold",
+      "category": "Gold Edition",
       "price": 38,
       "oldPrice": 50,
       "img": "ring",
@@ -80,20 +81,6 @@
       "description": "Collar con colgante de corazón grabado con mensaje o fecha especial. El regalo perfecto.",
       "personalized": true,
       "available": true
-    },
-    {
-      "name": "Test ",
-      "category": "Personalizado",
-      "price": 20,
-      "oldPrice": null,
-      "img": "ring",
-      "color": "rose",
-      "tag": null,
-      "description": "Lo mejor ",
-      "personalized": false,
-      "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369510896_img_6282_jpeg.jpg",
-      "id": 1780369527965
     },
     {
       "name": "Pulsera de mano con anillo",
