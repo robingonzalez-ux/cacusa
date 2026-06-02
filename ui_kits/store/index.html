@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#E8508A">
 <meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
 <meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
+<meta property="og:description" content="Joyería artesanal única diseñada con amor. Cada pieza lleva tu historia.">
+<meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
+<meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
 <meta property="og:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
 <title>CACUSA by Taitus — Joyería Personalizada</title>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -84,6 +87,11 @@ const COLLECTIONS = [
 let PRODUCTS = FALLBACK_PRODUCTS;
 const PRODUCTS_JSON_URL = 'https://robingonzalez-ux.github.io/cacusa/data/products.json';
 let WHATSAPP_NUMBER = ''; // loaded from data/products.json (config.whatsapp)
+
+// ─── DYNAMIC PRODUCTS ────────────────────────────────────────────
+let PRODUCTS = FALLBACK_PRODUCTS;
+const PRODUCTS_JSON_URL = "../../data/products.json";
+const WHATSAPP_NUMBER = ""; // e.g. "+15551234567"
 
 // ─── PRODUCT ILLUSTRATION ────────────────────────────────────────────────────
 const ProductIllustration = ({ type, color }) => {
@@ -560,7 +568,19 @@ const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [, _tick] = useState(0); // used to trigger re-render after product fetch
 
-  useEffect(() => { localStorage.setItem('cacusa-screen', screen); }, [screen]);
+  const [,_tick]=useState(0);
+
+  useEffect(()=>{ localStorage.setItem('cacusa-screen',screen); },[screen]);
+
+  useEffect(()=>{
+    fetch(PRODUCTS_JSON_URL+'?_='+Date.now())
+      .then(r=>r.json())
+      .then(d=>{
+        const live=(d.products||[]).filter(p=>p.available!==false);
+        if(live.length){PRODUCTS=live;_tick(n=>n+1);} if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp;
+      })
+      .catch(()=>{});
+  },[]);
 
   // Fetch live products from data/products.json (updates global PRODUCTS var)
   useEffect(() => {
