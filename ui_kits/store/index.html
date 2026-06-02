@@ -2,11 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#E8508A">
-<meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
-<meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
-<meta property="og:description" content="Joyería artesanal única diseñada con amor. Cada pieza lleva tu historia.">
 <meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
 <meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
 <meta property="og:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
@@ -571,7 +569,7 @@ const App = () => {
       .then(r=>r.json())
       .then(d=>{
         const live=(d.products||[]).filter(p=>p.available!==false);
-        if(live.length){PRODUCTS=live;_tick(n=>n+1);} if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp;
+        if(live.length){PRODUCTS=live;_tick(n=>n+1);} if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp; else if(d.config&&d.config.whatsapp) WHATSAPP_NUMBER=d.config.whatsapp;
       })
       .catch(()=>{});
   },[]);
