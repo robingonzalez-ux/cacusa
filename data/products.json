@@ -1,16 +1,83 @@
 {
   "version": "1.0",
-  "lastUpdated": "2025-06-01T00:00:00Z",
-  "updatedBy": "admin",
+  "lastUpdated": "2026-06-02T02:58:59.568Z",
+  "updatedBy": "robin.gonzalez",
   "config": {
-    "whatsapp": ""
+    "whatsapp": "+17867375336"
   },
   "products": [
-    { "id": 1, "name": "Collar con nombre", "category": "Personalizado", "price": 45, "img": "collar", "color": "rose", "tag": "Bestseller", "description": "Collar delicado con tu nombre grabado a mano. Disponible en plata 925 y baño de oro 18k. Personaliza la tipografía y el largo de la cadena.", "personalized": true, "available": true },
-    { "id": 2, "name": "Anillo estrella", "category": "Colección Gold", "price": 38, "oldPrice": 50, "img": "ring", "color": "gold", "tag": "Nuevo", "description": "Anillo minimalista con estrella en relieve. Chapado en oro 18k. Símbolo de tu propia luz interior.", "personalized": false, "available": true },
-    { "id": 3, "name": "Pulsera inicial", "category": "Personalizado", "price": 32, "img": "bracelet", "color": "violet", "tag": null, "description": "Pulsera fina con tu inicial en plata 925. Diseño delicado, perfecto para usar solo o en stack.", "personalized": true, "available": true },
-    { "id": 4, "name": "Aretes luna", "category": "Colección", "price": 28, "img": "earrings", "color": "sky", "tag": null, "description": "Aretes en forma de luna menguante. Plata 925 con baño de rodio. Ligeros y elegantes.", "personalized": false, "available": true },
-    { "id": 5, "name": "Pulsera hombre", "category": "Hombres", "price": 29, "img": "bracelet-m", "color": "plum", "tag": "Nuevo", "description": "Pulsera de cuero genuino con cierre magnético en acero inoxidable. Diseño urbano y minimalista.", "personalized": false, "available": true },
-    { "id": 6, "name": "Collar corazón", "category": "Personalizado", "price": 42, "img": "heart", "color": "rose", "tag": null, "description": "Collar con colgante de corazón grabado con mensaje o fecha especial. El regalo perfecto.", "personalized": true, "available": true }
+    {
+      "id": 1,
+      "name": "Collar con nombre",
+      "category": "Personalizado",
+      "price": 45,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Bestseller",
+      "description": "Collar delicado con tu nombre grabado a mano. Disponible en plata 925 y baño de oro 18k. Personaliza la tipografía y el largo de la cadena.",
+      "personalized": true,
+      "available": true
+    },
+    {
+      "id": 2,
+      "name": "Anillo estrella",
+      "category": "Colección Gold",
+      "price": 38,
+      "oldPrice": 50,
+      "img": "ring",
+      "color": "gold",
+      "tag": "Nuevo",
+      "description": "Anillo minimalista con estrella en relieve. Chapado en oro 18k. Símbolo de tu propia luz interior.",
+      "personalized": false,
+      "available": true
+    },
+    {
+      "id": 3,
+      "name": "Pulsera inicial",
+      "category": "Personalizado",
+      "price": 32,
+      "img": "bracelet",
+      "color": "violet",
+      "tag": null,
+      "description": "Pulsera fina con tu inicial en plata 925. Diseño delicado, perfecto para usar solo o en stack.",
+      "personalized": true,
+      "available": true
+    },
+    {
+      "id": 4,
+      "name": "Aretes luna",
+      "category": "Colección",
+      "price": 28,
+      "img": "earrings",
+      "color": "sky",
+      "tag": null,
+      "description": "Aretes en forma de luna menguante. Plata 925 con baño de rodio. Ligeros y elegantes.",
+      "personalized": false,
+      "available": true
+    },
+    {
+      "id": 5,
+      "name": "Pulsera hombre",
+      "category": "Hombres",
+      "price": 29,
+      "img": "bracelet-m",
+      "color": "plum",
+      "tag": "Nuevo",
+      "description": "Pulsera de cuero genuino con cierre magnético en acero inoxidable. Diseño urbano y minimalista.",
+      "personalized": false,
+      "available": true
+    },
+    {
+      "id": 6,
+      "name": "Collar corazón",
+      "category": "Personalizado",
+      "price": 42,
+      "img": "heart",
+      "color": "rose",
+      "tag": null,
+      "description": "Collar con colgante de corazón grabado con mensaje o fecha especial. El regalo perfecto.",
+      "personalized": true,
+      "available": true
+    }
   ]
 }
