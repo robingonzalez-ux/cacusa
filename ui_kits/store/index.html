@@ -43,6 +43,13 @@ input, textarea, select { font-family: inherit; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+@keyframes sparkle { 0%,100%{opacity:0;transform:scale(0.3) rotate(0deg)} 50%{opacity:1;transform:scale(1) rotate(180deg)} }
+@keyframes float { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-14px)} }
+@keyframes shimmer { 0%{background-position:200% center} 100%{background-position:-200% center} }
+@keyframes pulse-soft { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.06);opacity:0.85} }
+@keyframes slide-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes badge-glow { 0%,100%{box-shadow:0 4px 20px rgba(232,80,138,0.45)} 50%{box-shadow:0 4px 32px rgba(232,80,138,0.8)} }
+@keyframes orb-drift { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(20px,-15px) scale(1.05)} 66%{transform:translate(-10px,10px) scale(0.97)} }
 </style>
 </head>
 <body>
@@ -81,10 +88,9 @@ const COLLECTIONS = [
 ];
 
 // ─── DYNAMIC PRODUCTS ───────────────────────────────────────────────────────
-// Products loaded from data/products.json at runtime; FALLBACK_PRODUCTS used if fetch fails
 let PRODUCTS = FALLBACK_PRODUCTS;
 const PRODUCTS_JSON_URL = "../../data/products.json";
-let WHATSAPP_NUMBER = ""; // set via data/products.json
+let WHATSAPP_NUMBER = "";
 
 // ─── PRODUCT ILLUSTRATION ────────────────────────────────────────────────────
 const ProductIllustration = ({ type, color }) => {
@@ -173,53 +179,65 @@ const Header = ({ screen, setScreen, cartCount, setCartOpen }) => {
 const HeroSection = ({ setScreen }) => {
   const w = useWindowWidth();
   const isMobile = w < 768;
+  const sparks = [['✨',5,15,16,0],['💫',88,10,12,0.8],['💖',12,78,20,1.5],['⭐',90,70,14,0.4],['✨',45,5,18,2.1],['💝',55,90,13,1.2]];
   return (
-    <section style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center'}}>
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg, #FEF0E7 0%, #FCE4EE 30%, #F0E8FC 60%, #E2F3FC 100%)',zIndex:0}} />
-      <div style={{position:'absolute',top:-80,right:-80,width:500,height:500,borderRadius:'50%',background:'radial-gradient(circle, rgba(232,80,138,0.12) 0%, transparent 70%)',zIndex:0}} />
-      <div style={{position:'absolute',bottom:-60,left:-40,width:380,height:380,borderRadius:'50%',background:'radial-gradient(circle, rgba(176,127,236,0.1) 0%, transparent 70%)',zIndex:0}} />
-      <div style={{maxWidth:1200,margin:'0 auto',padding: isMobile ? '48px 20px 36px' : '80px 32px',position:'relative',zIndex:1,width:'100%',display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap: isMobile ? 32 : 64,alignItems:'center'}}>
-        <div>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:16}}>Joyería Artesanal Personalizada</div>
-          <h1 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 40 : 56,letterSpacing:'-0.02em',lineHeight:1.05,color:'var(--ink)',marginBottom:16}}>
+    <section style={{position:'relative',overflow:'hidden',minHeight: isMobile ? '100svh' : '92vh',display:'flex',alignItems:'center',background:'linear-gradient(150deg,#FFF5FB 0%,#FEE8F5 20%,#F3E8FF 50%,#E8F4FF 100%)'}}>
+      {sparks.map(([e,l,t,sz,d],i) => (
+        <div key={i} style={{position:'absolute',left:l+'%',top:t+'%',fontSize:sz,animation:'sparkle 3s ease-in-out infinite',animationDelay:d+'s',zIndex:0,pointerEvents:'none',userSelect:'none'}}>{e}</div>
+      ))}
+      <div style={{position:'absolute',top:-120,right:-120,width:isMobile?350:620,height:isMobile?350:620,borderRadius:'50%',background:'radial-gradient(circle,rgba(232,80,138,0.2) 0%,rgba(176,127,236,0.1) 40%,transparent 70%)',zIndex:0,animation:'orb-drift 8s ease-in-out infinite'}}/>
+      <div style={{position:'absolute',bottom:-80,left:-60,width:isMobile?250:400,height:isMobile?250:400,borderRadius:'50%',background:'radial-gradient(circle,rgba(107,186,237,0.18) 0%,transparent 70%)',zIndex:0,animation:'orb-drift 11s ease-in-out infinite reverse'}}/>
+      <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile?'80px 20px 60px':'80px 48px',position:'relative',zIndex:1,width:'100%',display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:isMobile?36:64,alignItems:'center'}}>
+        <div style={{animation:'slide-up 0.7s ease both'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',borderRadius:99,padding:'7px 18px',fontSize:12,fontWeight:700,letterSpacing:'0.04em',marginBottom:22,animation:'badge-glow 2.5s ease-in-out infinite'}}>
+            💎 Joyería Artesanal Personalizada
+          </div>
+          <h1 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?44:64,letterSpacing:'-0.02em',lineHeight:1.02,color:'var(--ink)',marginBottom:18}}>
             Creada<br/>
-            <span style={{background:'var(--grad-brand)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>para ti.</span>
+            <span style={{background:'linear-gradient(135deg,#E8508A 0%,#B07FEC 50%,#6BBAED 100%)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>para ti.</span>
           </h1>
-          <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 17 : 19,lineHeight:1.65,color:'var(--plum-mid)',marginBottom:12,fontStyle:'italic'}}>
+          <p style={{fontFamily:'var(--font-serif)',fontSize:isMobile?17:20,lineHeight:1.7,color:'var(--plum-mid)',marginBottom:10,fontStyle:'italic'}}>
             "creamos para que luzcas más bella de lo que ya eres"
           </p>
-          <p style={{fontFamily:'var(--font-sans)',fontSize:15,color:'var(--muted)',lineHeight:1.6,marginBottom:32,maxWidth:420}}>
+          <p style={{fontFamily:'var(--font-sans)',fontSize:15,color:'var(--muted)',lineHeight:1.65,marginBottom:32,maxWidth:420}}>
             Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.
           </p>
-          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-            <button onClick={() => setScreen('shop')} style={{background:'var(--rose)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,letterSpacing:'0.05em',border:'none',borderRadius:999,padding:'14px 32px',boxShadow:'var(--shadow-btn)'}}>
-              Ver colección
+          <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:28}}>
+            <button onClick={() => setScreen('shop')}
+              onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 10px 32px rgba(232,80,138,0.6)';}}
+              onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 6px 24px rgba(232,80,138,0.45)';}}
+              style={{background:'linear-gradient(135deg,#E8508A,#C0336E)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,border:'none',borderRadius:999,padding:'15px 36px',boxShadow:'0 6px 24px rgba(232,80,138,0.45)',cursor:'pointer',transition:'transform 0.2s,box-shadow 0.2s'}}>
+              Ver colección ✨
             </button>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'13px 28px'}}>
-              Personaliza →
+            <button onClick={() => setScreen('shop')} style={{background:'rgba(232,80,138,0.09)',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid rgba(232,80,138,0.35)',borderRadius:999,padding:'14px 28px',cursor:'pointer'}}>
+              Personaliza tu joya →
             </button>
           </div>
-          <div style={{display:'flex',gap:20,marginTop:28,alignItems:'center',flexWrap:'wrap'}}>
-            {[['Ecuador & USA','🌎'],['Envío express','📦'],['Hecho a mano','✨']].map(([l,e]) => (
-              <div key={l} style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:14}}>{e}</span>
-                <span style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--muted)'}}>{l}</span>
+          <div style={{display:'flex',gap:28,flexWrap:'wrap'}}>
+            {[['500+','Piezas creadas'],['⭐ 4.9','Valoración'],['🌎 2','Países']].map(([v,l]) => (
+              <div key={l}>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:22,color:'var(--rose)',lineHeight:1}}>{v}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--muted)',marginTop:3}}>{l}</div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap: isMobile ? 10 : 16}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:isMobile?10:16}}>
           {PRODUCTS.slice(0,4).map((p,i) => (
-            <div key={p.id} style={{borderRadius:20,overflow:'hidden',boxShadow:'var(--shadow-card)',background:'white',transform: !isMobile && i%2===1 ? 'translateY(24px)' : 'none'}}>
-              <div style={{height: isMobile ? 90 : 120}}><ProductIllustration type={p.img} color={p.color}/></div>
+            <div key={p.id}
+              onMouseOver={e=>e.currentTarget.style.transform=(!isMobile&&i%2===1?'translateY(18px)':'translateY(-6px)')+' scale(1.03)'}
+              onMouseOut={e=>e.currentTarget.style.transform=!isMobile&&i%2===1?'translateY(24px)':'none'}
+              style={{borderRadius:20,overflow:'hidden',boxShadow:'0 8px 28px rgba(232,80,138,0.15)',background:'white',transform:!isMobile&&i%2===1?'translateY(24px)':'none',transition:'transform 0.3s,box-shadow 0.3s',cursor:'pointer',animation:'slide-up 0.6s ease both',animationDelay:(0.15*i)+'s'}}>
+              <div style={{height:isMobile?90:130,background:'linear-gradient(135deg,#FFF5FB,#F3E8FF)'}}><ProductIllustration type={p.img} color={p.color}/></div>
               <div style={{padding:'10px 12px'}}>
                 <div style={{fontFamily:'var(--font-serif)',fontSize:13,color:'var(--ink)'}}>{p.name}</div>
-                <div style={{fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,color:'var(--gold)',marginTop:2}}>${p.price}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:12,fontWeight:700,color:'var(--rose)',marginTop:2}}>${p.price}</div>
               </div>
             </div>
           ))}
         </div>
       </div>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:56,background:'var(--surface)',clipPath:'ellipse(55% 100% at 50% 100%)'}}/>
     </section>
   );
 };
@@ -274,7 +292,7 @@ const ShopScreen = ({ setSelected, addToCart }) => {
       </div>
       <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:40,flexWrap:'wrap'}}>
         {COLLECTIONS.map(c => (
-          <button key={c.id} onClick={() => setFilter(c.id)} style={{fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,padding:'8px 20px',borderRadius:999,border:`1.5px solid ${filter===c.id ? 'var(--rose)' : 'var(--border)'}`,background: filter===c.id ? 'var(--rose)' : 'white',color: filter===c.id ? 'white' : 'var(--muted)',transition:'all 0.2s'}}>
+          <button key={c.id} onClick={() => setFilter(c.id)} style={{fontFamily:'var(--font-sans)',fontSize:13,fontWeight:500,padding:'8px 20px',borderRadius:999,border:'1.5px solid '+(filter===c.id ? 'var(--rose)' : 'var(--border)'),background: filter===c.id ? 'var(--rose)' : 'white',color: filter===c.id ? 'white' : 'var(--muted)',transition:'all 0.2s'}}>
             {c.label}
           </button>
         ))}
@@ -324,7 +342,7 @@ const ProductDetail = ({ product, addToCart, setScreen }) => {
             <label style={{fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,color:'var(--ink)',display:'block',marginBottom:6}}>Material</label>
             <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
               {['Plata 925','Baño oro 18k','Acero inoxidable'].map(m => (
-                <button key={m} onClick={() => setMaterial(m)} style={{fontFamily:'var(--font-sans)',fontSize:12,padding:'7px 14px',borderRadius:999,border:`1.5px solid ${material===m ? 'var(--rose)' : 'var(--border)'}`,background: material===m ? 'var(--rose-pale)' : 'white',color: material===m ? 'var(--rose)' : 'var(--muted)',fontWeight: material===m ? 600 : 400}}>
+                <button key={m} onClick={() => setMaterial(m)} style={{fontFamily:'var(--font-sans)',fontSize:12,padding:'7px 14px',borderRadius:999,border:'1.5px solid '+(material===m ? 'var(--rose)' : 'var(--border)'),background: material===m ? 'var(--rose-pale)' : 'white',color: material===m ? 'var(--rose)' : 'var(--muted)',fontWeight: material===m ? 600 : 400}}>
                   {m}
                 </button>
               ))}
@@ -363,9 +381,7 @@ const ProductDetail = ({ product, addToCart, setScreen }) => {
   );
 };
 
-// ─── CART DRAWER ──────────────────────────────────────────────────────────────
-
-// ORDER FORM MODAL
+// ─── ORDER FORM MODAL ─────────────────────────────────────────────────────────
 const OrderModal = ({ open, onClose, items, total }) => {
   const [form, setForm] = React.useState({ nombre:'', telefono:'', ciudad:'', pago:'Transferencia bancaria', notas:'' });
   if (!open) return null;
@@ -373,7 +389,79 @@ const OrderModal = ({ open, onClose, items, total }) => {
   const inp = {border:'1.5px solid #e0e0e0',borderRadius:10,padding:'10px 14px',fontSize:14,width:'100%',outline:'none',fontFamily:'inherit',color:'#1A1118'};
   const submit = (e) => {
     e.preventDefault();
-    const lines = items.map((it,i)=>(i+1)+'. '+it.name+(it.personalization?' ("'+it.personalization+'")':'')+' — { open, onClose, items, removeItem }) => {
+    const lines = items.map((it,i)=>(i+1)+'. '+it.name+(it.personalization?' ("'+it.personalization+'")':'')+' — $'+it.price).join('%0A');
+    const msg = 'NUEVO PEDIDO CACUSA%0A%0ACliente: '+encodeURIComponent(form.nombre)+'%0ATel: '+encodeURIComponent(form.telefono)+'%0ACiudad: '+encodeURIComponent(form.ciudad)+'%0APago: '+encodeURIComponent(form.pago)+'%0A%0AProductos:%0A'+lines+'%0A%0ATotal: $'+total+(form.notas?'%0ANotas: '+encodeURIComponent(form.notas):'');
+    window.open('https://wa.me/'+(WHATSAPP_NUMBER.replace(/[^0-9]/g,'')||'')+'?text='+msg,'_blank');
+    setForm({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:''});
+    onClose();
+  };
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(26,17,24,0.65)',zIndex:1001,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',backdropFilter:'blur(4px)'}}>
+      <div style={{background:'white',borderRadius:24,width:'100%',maxWidth:460,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
+        <div style={{padding:'28px 28px 0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+            <div>
+              <div style={{fontFamily:'var(--font-display)',fontSize:22,fontWeight:800,color:'var(--ink)'}}>Finalizar pedido</div>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--muted)',marginTop:2}}>{items.length} {items.length===1?'producto':'productos'} &middot; ${total}</div>
+            </div>
+            <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',background:'var(--surface)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',fontSize:18,border:'none',cursor:'pointer'}}>&#x2715;</button>
+          </div>
+        </div>
+        <form onSubmit={submit} style={{padding:'0 28px 28px'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:14,marginBottom:20}}>
+            <div>
+              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>NOMBRE COMPLETO *</label>
+              <input required value={form.nombre} onChange={e=>set('nombre',e.target.value)} placeholder="Tu nombre completo" style={inp}/>
+            </div>
+            <div>
+              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>WHATSAPP / TELÉFONO *</label>
+              <input required value={form.telefono} onChange={e=>set('telefono',e.target.value)} placeholder="+593 99 999 9999" style={inp}/>
+            </div>
+            <div>
+              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>CIUDAD Y PAÍS *</label>
+              <input required value={form.ciudad} onChange={e=>set('ciudad',e.target.value)} placeholder="Quito, Ecuador" style={inp}/>
+            </div>
+            <div>
+              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>MÉTODO DE PAGO</label>
+              <select value={form.pago} onChange={e=>set('pago',e.target.value)} style={{border:'1.5px solid #e0e0e0',borderRadius:10,padding:'10px 14px',fontSize:14,width:'100%',outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
+                <option>Transferencia bancaria</option>
+                <option>Zelle</option>
+                <option>PayPal Friends and Family</option>
+                <option>Efectivo (entrega local)</option>
+              </select>
+            </div>
+            <div>
+              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>NOTAS / PERSONALIZACIÓN</label>
+              <textarea value={form.notas} onChange={e=>set('notas',e.target.value)} placeholder="Detalles especiales, talla, diseño, fecha..." rows={3} style={{border:'1.5px solid #e0e0e0',borderRadius:10,padding:'10px 14px',fontSize:14,width:'100%',outline:'none',fontFamily:'inherit',resize:'vertical'}}/>
+            </div>
+          </div>
+          <div style={{background:'var(--surface)',borderRadius:14,padding:'16px',marginBottom:20}}>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,marginBottom:10}}>RESUMEN DEL PEDIDO</div>
+            {items.map((it,i)=>(
+              <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',fontFamily:'var(--font-sans)',fontSize:13,color:'var(--ink)',padding:'4px 0'}}>
+                <span style={{flex:1,paddingRight:8}}>{it.name}{it.personalization?<span style={{color:'var(--rose)'}}> &mdash; &quot;{it.personalization}&quot;</span>:null}</span>
+                <span style={{fontWeight:700,flexShrink:0}}>${it.price}</span>
+              </div>
+            ))}
+            <div style={{borderTop:'1px solid var(--border)',marginTop:10,paddingTop:10,display:'flex',justifyContent:'space-between',fontFamily:'var(--font-sans)',fontSize:15,fontWeight:800,color:'var(--ink)'}}>
+              <span>Total</span><span style={{color:'var(--rose)'}}>${total}</span>
+            </div>
+          </div>
+          <button type="submit" style={{width:'100%',background:'#25D366',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:16,borderRadius:999,padding:'16px',display:'flex',alignItems:'center',justifyContent:'center',gap:10,boxShadow:'0 4px 20px rgba(37,211,102,0.4)',border:'none',cursor:'pointer'}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Enviar pedido por WhatsApp
+          </button>
+          <div style={{textAlign:'center',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--subtle)',marginTop:12}}>
+            Te confirmaremos y coordinaremos el pago por WhatsApp 💕
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ─── CART DRAWER ──────────────────────────────────────────────────────────────
+const CartDrawer = ({ open, onClose, items, removeItem, onCheckout }) => {
   const w = useWindowWidth();
   const isMobile = w < 768;
   const total = items.reduce((s,i) => s+i.price,0);
@@ -420,7 +508,7 @@ const OrderModal = ({ open, onClose, items, total }) => {
               <span style={{fontFamily:'var(--font-sans)',fontSize:14,color:'var(--muted)'}}>Subtotal</span>
               <span style={{fontFamily:'var(--font-sans)',fontSize:16,fontWeight:700,color:'var(--ink)'}}>${total}</span>
             </div>
-                        <button onClick={onCheckout} style={{width:'100%',background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'0 4px 16px rgba(232,80,138,0.4)',display:'flex',alignItems:'center',justifyContent:'center',gap:8,border:'none',cursor:'pointer'}}>
+            <button onClick={onCheckout} style={{width:'100%',background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'0 4px 16px rgba(232,80,138,0.4)',display:'flex',alignItems:'center',justifyContent:'center',gap:8,border:'none',cursor:'pointer'}}>
               🛒 Hacer pedido
             </button>
             <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--subtle)',textAlign:'center',marginTop:10}}>Envíos a Ecuador y Estados Unidos 🌎</div>
@@ -524,31 +612,97 @@ const HomeScreen = ({ setScreen, setSelected, addToCart }) => {
   const isMobile = w < 640;
   const isTablet = w < 1024;
   const cols = isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
+
+  const categories = [
+    { id:'Personalizado', label:'Personalizado', emoji:'✍️', color:'#FCE4EE', border:'#E8508A', text:'#C0336E', desc:'Tu nombre, tu historia' },
+    { id:'Colección Gold', label:'Gold Edition', emoji:'✨', color:'#F7F0E3', border:'#C9A46A', text:'#8B6914', desc:'Lujo artesanal' },
+    { id:'Colección', label:'Colecciones', emoji:'💎', color:'#F0E8FC', border:'#B07FEC', text:'#7A3DD4', desc:'Piezas icónicas' },
+    { id:'Hombres', label:'Para ellos', emoji:'⚡', color:'#EDE8EA', border:'#4A3050', text:'#2D1B2E', desc:'Estilo sin límites' },
+  ];
+
+  const features = [
+    { emoji:'✋', title:'100% Artesanal', desc:'Cada pieza elaborada a mano con amor y detalle' },
+    { emoji:'💌', title:'Personalizable', desc:'Grabamos tu nombre, fecha o mensaje especial' },
+    { emoji:'🌎', title:'Ecuador & USA', desc:'Enviamos a todo Ecuador y Estados Unidos' },
+    { emoji:'⭐', title:'4.9 Estrellas', desc:'Más de 500 clientas satisfechas nos respaldan' },
+  ];
+
   return (
     <div>
       <HeroSection setScreen={setScreen}/>
+
+      {/* ── Categorías ── */}
       <div style={{background:'var(--surface)',padding: isMobile ? '48px 16px' : '64px 32px'}}>
         <div style={{maxWidth:1200,margin:'0 auto'}}>
-          <div style={{textAlign:'center',marginBottom:40}}>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Más vendidos</div>
-            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 28 : 36,color:'var(--ink)'}}>Favoritos de la semana</h2>
+          <div style={{textAlign:'center',marginBottom:36}}>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Explora</div>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 26 : 34,color:'var(--ink)'}}>Nuestra colección</h2>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',gap: isMobile ? 12 : 20,marginBottom:48}}>
+            {categories.map(cat => (
+              <button key={cat.id} onClick={() => setScreen('shop')}
+                onMouseOver={e=>e.currentTarget.style.transform='translateY(-4px) scale(1.02)'}
+                onMouseOut={e=>e.currentTarget.style.transform='none'}
+                style={{background:cat.color,border:'2px solid '+cat.border,borderRadius:20,padding: isMobile ? '20px 12px' : '28px 20px',display:'flex',flexDirection:'column',alignItems:'center',textAlign:'center',gap:8,cursor:'pointer',transition:'transform 0.25s',boxShadow:'0 4px 16px rgba(0,0,0,0.06)'}}>
+                <span style={{fontSize: isMobile ? 28 : 36}}>{cat.emoji}</span>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize: isMobile ? 14 : 16,color:cat.text}}>{cat.label}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize: isMobile ? 10 : 12,color:'var(--muted)'}}>{cat.desc}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* ── Bestsellers ── */}
+          <div style={{textAlign:'center',marginBottom:32}}>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Más amados</div>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 26 : 34,color:'var(--ink)'}}>Favoritos de la semana 💫</h2>
           </div>
           <div style={{display:'grid',gridTemplateColumns:cols,gap: isMobile ? 16 : 24}}>
             {PRODUCTS.slice(0, isMobile ? 4 : 3).map(p => <ProductCard key={p.id} product={p} onSelect={setSelected} addToCart={addToCart}/>)}
           </div>
-          <div style={{textAlign:'center',marginTop:40}}>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'12px 32px'}}>
-              Ver toda la colección
+          <div style={{textAlign:'center',marginTop:36}}>
+            <button onClick={() => setScreen('shop')}
+              onMouseOver={e=>e.currentTarget.style.background='var(--rose-pale)'}
+              onMouseOut={e=>e.currentTarget.style.background='transparent'}
+              style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'2px solid var(--rose)',borderRadius:999,padding:'12px 36px',transition:'background 0.2s'}}>
+              Ver toda la colección →
             </button>
           </div>
         </div>
       </div>
-      <div style={{padding: isMobile ? '48px 20px' : '64px 32px',maxWidth:1200,margin:'0 auto',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 28 : 36,color:'var(--violet)',marginBottom:8}}>¿Tu primera vez?</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize: isMobile ? 24 : 32,color:'var(--ink)',marginBottom:16}}>Personaliza tu pieza</h2>
-        <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 16 : 18,color:'var(--muted)',lineHeight:1.7,maxWidth:500,margin:'0 auto 32px',fontStyle:'italic'}}>Cuéntanos tu historia y creamos la joya perfecta para ti. Nombre, fecha, mensaje — lo que la hace tuya.</p>
-        <button onClick={() => setScreen('shop')} style={{background:'var(--grad-brand)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,letterSpacing:'0.05em',borderRadius:999,padding:'15px 40px',boxShadow:'var(--shadow-btn)'}}>
-          Comenzar ahora →
+
+      {/* ── Por qué CACUSA ── */}
+      <div style={{background:'linear-gradient(135deg,#FFF0F7 0%,#F5EEFF 50%,#EEF7FF 100%)',padding: isMobile ? '48px 16px' : '64px 32px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto',textAlign:'center'}}>
+          <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 30 : 40,color:'var(--violet)',marginBottom:4}}>¿Por qué elegirnos?</div>
+          <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 24 : 32,color:'var(--ink)',marginBottom:8}}>El amor artesanal marca la diferencia</h2>
+          <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 15 : 17,color:'var(--muted)',fontStyle:'italic',marginBottom:40,maxWidth:480,margin:'0 auto 40px'}}>Cada joya de CACUSA es una obra única, creada para durar y para contar tu historia.</p>
+          <div style={{display:'grid',gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)',gap: isMobile ? 14 : 24}}>
+            {features.map(f => (
+              <div key={f.title}
+                onMouseOver={e=>e.currentTarget.style.transform='translateY(-4px)'}
+                onMouseOut={e=>e.currentTarget.style.transform='none'}
+                style={{background:'white',borderRadius:20,padding: isMobile ? '20px 14px' : '28px 20px',boxShadow:'var(--shadow-card)',textAlign:'center',transition:'transform 0.25s',cursor:'default'}}>
+                <div style={{fontSize: isMobile ? 28 : 36,marginBottom:12,animation:'pulse-soft 3s ease-in-out infinite',display:'inline-block'}}>{f.emoji}</div>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize: isMobile ? 14 : 16,color:'var(--ink)',marginBottom:6}}>{f.title}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize: isMobile ? 11 : 13,color:'var(--muted)',lineHeight:1.5}}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── CTA final ── */}
+      <div style={{padding: isMobile ? '48px 20px' : '72px 32px',textAlign:'center',background:'var(--white)'}}>
+        <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 28 : 36,color:'var(--rose)',marginBottom:8}}>¿Lista para tu joya?</div>
+        <h2 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize: isMobile ? 24 : 34,color:'var(--ink)',marginBottom:16}}>Personaliza tu pieza ahora</h2>
+        <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 15 : 18,color:'var(--muted)',lineHeight:1.7,maxWidth:500,margin:'0 auto 36px',fontStyle:'italic'}}>
+          Cuéntanos tu historia y creamos la joya perfecta. Nombre, fecha, mensaje — lo que la hace tuya.
+        </p>
+        <button onClick={() => setScreen('shop')}
+          onMouseOver={e=>e.currentTarget.style.transform='translateY(-2px) scale(1.02)'}
+          onMouseOut={e=>e.currentTarget.style.transform='none'}
+          style={{background:'var(--grad-brand)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize: isMobile ? 14 : 16,letterSpacing:'0.05em',borderRadius:999,padding: isMobile ? '14px 36px' : '17px 52px',boxShadow:'0 8px 28px rgba(232,80,138,0.45)',border:'none',cursor:'pointer',transition:'transform 0.2s,box-shadow 0.2s'}}>
+          Comenzar ahora ✨
         </button>
       </div>
     </div>
@@ -561,9 +715,8 @@ const App = () => {
   const [selected, setSelected] = useState(null);
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [, _tick] = useState(0); // used to trigger re-render after product fetch
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-
+  const [, _tick] = useState(0);
 
   useEffect(()=>{ localStorage.setItem('cacusa-screen',screen); },[screen]);
 
@@ -579,7 +732,6 @@ const App = () => {
       .catch(()=>{});
   },[]);
 
-
   const addToCart = (product) => { setCart(c => [...c, product]); setCartOpen(true); };
   const removeItem = (i) => setCart(c => c.filter((_,idx) => idx !== i));
   const goDetail = (p) => { setSelected(p); setScreen('detail'); };
@@ -594,7 +746,6 @@ const App = () => {
         {screen === 'collections' && <CollectionsScreen setSelected={goDetail} setScreen={setScreen} addToCart={addToCart}/>}
       </main>
       <Footer/>
-      {/* Floating WhatsApp button */}
       {WHATSAPP_NUMBER && (
         <a href={'https://wa.me/'+WHATSAPP_NUMBER.replace(/[^0-9]/g,'')+"?text=Hola+CACUSA!+%F0%9F%8C%B8+Me+interesa+ver+sus+joyas"}
           target="_blank" rel="noopener noreferrer"
@@ -606,569 +757,6 @@ const App = () => {
       )}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} removeItem={removeItem} onCheckout={()=>{setCartOpen(false);setOrderModalOpen(true);}}/>
       <OrderModal open={orderModalOpen} onClose={()=>setOrderModalOpen(false)} items={cart} total={cart.reduce((s,i)=>s+i.price,0)}/>
-    </div>
-  );
-};
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
-</body>
-</html>
-+it.price).join('%0A');
-    const msg = 'NUEVO PEDIDO CACUSA%0A%0ACliente: '+encodeURIComponent(form.nombre)+'%0ATel: '+encodeURIComponent(form.telefono)+'%0ACiudad: '+encodeURIComponent(form.ciudad)+'%0APago: '+encodeURIComponent(form.pago)+'%0A%0AProductos:%0A'+lines+'%0A%0ATotal: { open, onClose, items, removeItem }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  const total = items.reduce((s,i) => s+i.price,0);
-  return (
-    <>
-      {open && <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(26,17,24,0.4)',zIndex:199,backdropFilter:'blur(2px)'}}/>}
-      <div style={{position:'fixed',top:0,right:0,bottom:0,width: isMobile ? '100%' : 380,background:'var(--white)',zIndex:200,boxShadow:'-8px 0 40px rgba(26,17,24,0.15)',transform: open ? 'translateX(0)' : 'translateX(100%)',transition:'transform 0.35s cubic-bezier(0.4,0,0.2,1)',display:'flex',flexDirection:'column'}}>
-        <div style={{padding:'24px 24px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--ink)'}}>Tu carrito</div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--muted)',marginTop:2}}>{items.length} {items.length===1 ? 'producto' : 'productos'}</div>
-          </div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:'50%',background:'var(--surface)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div style={{flex:1,overflowY:'auto',padding:'16px 24px'}}>
-          {items.length === 0 ? (
-            <div style={{textAlign:'center',padding:'48px 0'}}>
-              <div style={{fontSize:40,marginBottom:12}}>🛍️</div>
-              <div style={{fontFamily:'var(--font-serif)',fontSize:18,color:'var(--muted)',fontStyle:'italic'}}>Tu carrito está vacío</div>
-              <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--subtle)',marginTop:8}}>Agrega tus joyas favoritas</div>
-            </div>
-          ) : items.map((item,i) => (
-            <div key={i} style={{display:'flex',gap:12,padding:'12px 0',borderBottom:'1px solid var(--border)'}}>
-              <div style={{width:64,height:64,borderRadius:12,overflow:'hidden',flexShrink:0}}>
-                <ProductIllustration type={item.img} color={item.color}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:'var(--font-serif)',fontSize:15,color:'var(--ink)'}}>{item.name}</div>
-                {item.personalization && <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--rose)',marginTop:2}}>"{item.personalization}"</div>}
-                {item.material && <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--muted)',marginTop:1}}>{item.material}</div>}
-                <div style={{fontFamily:'var(--font-sans)',fontSize:14,fontWeight:600,color:'var(--gold)',marginTop:4}}>${item.price}</div>
-              </div>
-              <button onClick={() => removeItem(i)} style={{color:'var(--subtle)',alignSelf:'flex-start',padding:4}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-          ))}
-        </div>
-        {items.length > 0 && (
-          <div style={{padding:'20px 24px',borderTop:'1px solid var(--border)'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
-              <span style={{fontFamily:'var(--font-sans)',fontSize:14,color:'var(--muted)'}}>Subtotal</span>
-              <span style={{fontFamily:'var(--font-sans)',fontSize:16,fontWeight:700,color:'var(--ink)'}}>${total}</span>
-            </div>
-            <button onClick={() => {
-              const lines = items.map((it,i) =>
-                (i+1)+'. '+it.name+(it.personalization?' ("'+it.personalization+'")'  :'')+
-                (it.material?' — '+it.material:'')+' — $'+it.price
-              ).join('%0A');
-              const msg = 'Hola CACUSA! 🌸 Me interesa pedir:%0A'+lines+'%0A%0ATotal: $'+total+'%0A%0A¿Me confirman disponibilidad?';
-              window.open('https://wa.me/'+(WHATSAPP_NUMBER.replace(/[^0-9]/g,'')||'')+'?text='+msg,'_blank');
-            }} style={{width:'100%',background:'#25D366',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'0 2px 12px rgba(37,211,102,.35)',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-              📱 Pedir por WhatsApp
-            </button>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--subtle)',textAlign:'center',marginTop:10}}>Envíos a Ecuador y Estados Unidos 🌎</div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-// ─── COLLECTIONS SCREEN ───────────────────────────────────────────────────────
-const CollectionsScreen = ({ setSelected, setScreen, addToCart }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  return (
-    <div>
-      <div style={{background:'var(--plum)',padding: isMobile ? '48px 20px' : '64px 32px',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:12}}>Nuestras colecciones</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 32 : 44,color:'white',marginBottom:12}}>Joyas para cada historia</h2>
-        <p style={{fontFamily:'var(--font-script)',fontSize:22,color:'rgba(255,255,255,0.7)'}}>by Taitus</p>
-      </div>
-      <div style={{maxWidth:1200,margin:'0 auto',padding: isMobile ? '32px 16px' : '48px 32px'}}>
-        <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)',gap:24,marginBottom:24}}>
-          {[
-            {title:'Colección Personalizada',desc:'Tu nombre, tu historia, tu pieza',color:'rose',products:PRODUCTS.filter(p=>p.personalized)},
-            {title:'Gold Edition',desc:'Lujo artesanal para momentos únicos',color:'gold',products:PRODUCTS.filter(p=>p.category.includes('Gold'))},
-          ].map(col => (
-            <div key={col.title} style={{borderRadius:20,overflow:'hidden',background:'white',boxShadow:'var(--shadow-card)'}}>
-              <div style={{height:160,background: col.color==='rose' ? 'var(--grad-soft)' : 'linear-gradient(135deg,#F7F0E3,#FEF0E7)',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,padding:16}}>
-                {col.products.slice(0,3).map(p => <div key={p.id} style={{borderRadius:12,overflow:'hidden'}}><ProductIllustration type={p.img} color={p.color}/></div>)}
-              </div>
-              <div style={{padding:'16px 20px'}}>
-                <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:18,color:'var(--ink)',marginBottom:4}}>{col.title}</div>
-                <div style={{fontFamily:'var(--font-serif)',fontSize:15,color:'var(--muted)',fontStyle:'italic',marginBottom:12}}>{col.desc}</div>
-                <button onClick={() => setScreen('shop')} style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:12,color:'var(--rose)'}}>Ver todo →</button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{borderRadius:20,overflow:'hidden',background:'var(--plum)',padding: isMobile ? '28px 20px' : '40px',display:'flex',alignItems:'center',justifyContent:'space-between',flexDirection: isMobile ? 'column' : 'row',gap: isMobile ? 24 : 0}}>
-          <div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:8}}>Para ellos</div>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:28,color:'white',marginBottom:8}}>Colección Hombres</div>
-            <div style={{fontFamily:'var(--font-serif)',fontSize:16,color:'rgba(255,255,255,0.6)',fontStyle:'italic',marginBottom:16}}>Estilo sin límites</div>
-            <button onClick={() => setScreen('shop')} style={{background:'white',color:'var(--plum)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:13,borderRadius:999,padding:'10px 24px'}}>Ver colección</button>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,width: isMobile ? '100%' : 220}}>
-            {PRODUCTS.filter(p=>p.category==='Hombres').concat(PRODUCTS.slice(0,3)).slice(0,4).map(p => (
-              <div key={p.id} style={{borderRadius:12,overflow:'hidden',height:80}}><ProductIllustration type={p.img} color={p.color}/></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── FOOTER ───────────────────────────────────────────────────────────────────
-const Footer = () => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  return (
-    <footer style={{background:'var(--plum)',color:'white',padding: isMobile ? '40px 20px 28px' : '48px 32px 32px'}}>
-      <div style={{maxWidth:1200,margin:'0 auto'}}>
-        <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr 1fr' : '2fr 1fr 1fr 1fr',gap: isMobile ? '32px 16px' : 48,marginBottom:40}}>
-          <div style={{gridColumn: isMobile ? 'span 2' : 'auto'}}>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,letterSpacing:'0.14em',background:'var(--grad-brand)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>CACUSA</div>
-            <div style={{fontFamily:'var(--font-script)',fontSize:16,color:'rgba(255,255,255,0.5)',marginTop:-2,marginBottom:12}}>by Taitus</div>
-            <p style={{fontFamily:'var(--font-serif)',fontSize:15,color:'rgba(255,255,255,0.6)',lineHeight:1.7,fontStyle:'italic',maxWidth:240}}>
-              "creamos para que luzcas más bella de lo que ya eres"
-            </p>
-            <div style={{display:'flex',gap:12,marginTop:16}}>
-              <a href="https://www.instagram.com/cacusabytaitus" target="_blank" rel="noopener" style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="white"/></svg>
-              </a>
-            </div>
-          </div>
-          {[
-            ['Tienda',['Mujeres','Hombres','Personalizado','Gold Edition','Novedades']],
-            ['Ayuda',['Envíos','Devoluciones','Tamaños','Cuidados','Contacto']],
-            isMobile ? null : ['Nosotros',['Nuestra historia','Proceso artesanal','Instagram','Ecuador','USA']],
-          ].filter(Boolean).map(([title, links]) => (
-            <div key={title}>
-              <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:12,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)',marginBottom:14}}>{title}</div>
-              {links.map(l => <div key={l} style={{fontFamily:'var(--font-sans)',fontSize:13,color:'rgba(255,255,255,0.65)',marginBottom:8,cursor:'pointer'}}>{l}</div>)}
-            </div>
-          ))}
-        </div>
-        <div style={{borderTop:'1px solid rgba(255,255,255,0.1)',paddingTop:20,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'rgba(255,255,255,0.35)'}}>© 2025 CACUSA by Taitus · Ecuador & USA</div>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'rgba(255,255,255,0.35)'}}>Hecho con amor 🤍</div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
-// ─── HOME SCREEN ──────────────────────────────────────────────────────────────
-const HomeScreen = ({ setScreen, setSelected, addToCart }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 640;
-  const isTablet = w < 1024;
-  const cols = isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
-  return (
-    <div>
-      <HeroSection setScreen={setScreen}/>
-      <div style={{background:'var(--surface)',padding: isMobile ? '48px 16px' : '64px 32px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
-          <div style={{textAlign:'center',marginBottom:40}}>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Más vendidos</div>
-            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 28 : 36,color:'var(--ink)'}}>Favoritos de la semana</h2>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:cols,gap: isMobile ? 16 : 24}}>
-            {PRODUCTS.slice(0, isMobile ? 4 : 3).map(p => <ProductCard key={p.id} product={p} onSelect={setSelected} addToCart={addToCart}/>)}
-          </div>
-          <div style={{textAlign:'center',marginTop:40}}>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'12px 32px'}}>
-              Ver toda la colección
-            </button>
-          </div>
-        </div>
-      </div>
-      <div style={{padding: isMobile ? '48px 20px' : '64px 32px',maxWidth:1200,margin:'0 auto',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 28 : 36,color:'var(--violet)',marginBottom:8}}>¿Tu primera vez?</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize: isMobile ? 24 : 32,color:'var(--ink)',marginBottom:16}}>Personaliza tu pieza</h2>
-        <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 16 : 18,color:'var(--muted)',lineHeight:1.7,maxWidth:500,margin:'0 auto 32px',fontStyle:'italic'}}>Cuéntanos tu historia y creamos la joya perfecta para ti. Nombre, fecha, mensaje — lo que la hace tuya.</p>
-        <button onClick={() => setScreen('shop')} style={{background:'var(--grad-brand)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,letterSpacing:'0.05em',borderRadius:999,padding:'15px 40px',boxShadow:'var(--shadow-btn)'}}>
-          Comenzar ahora →
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── APP ──────────────────────────────────────────────────────────────────────
-const App = () => {
-  const [screen, setScreen] = useState(() => localStorage.getItem('cacusa-screen') || 'home');
-  const [selected, setSelected] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [, _tick] = useState(0); // used to trigger re-render after product fetch
-
-
-  useEffect(()=>{ localStorage.setItem('cacusa-screen',screen); },[screen]);
-
-  useEffect(()=>{
-    fetch(PRODUCTS_JSON_URL+'?_='+Date.now())
-      .then(r=>r.json())
-      .then(d=>{
-        const live=(d.products||[]).filter(p=>p.available!==false);
-        if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp; else if(d.config&&d.config.whatsapp) WHATSAPP_NUMBER=d.config.whatsapp;
-        if(live.length) PRODUCTS=live;
-        _tick(n=>n+1);
-      })
-      .catch(()=>{});
-  },[]);
-
-
-  const addToCart = (product) => { setCart(c => [...c, product]); setCartOpen(true); };
-  const removeItem = (i) => setCart(c => c.filter((_,idx) => idx !== i));
-  const goDetail = (p) => { setSelected(p); setScreen('detail'); };
-
-  return (
-    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
-      <Header screen={screen} setScreen={setScreen} cartCount={cart.length} setCartOpen={setCartOpen}/>
-      <main style={{flex:1}}>
-        {screen === 'home' && <HomeScreen setScreen={setScreen} setSelected={goDetail} addToCart={addToCart}/>}
-        {screen === 'shop' && <ShopScreen setSelected={goDetail} addToCart={addToCart}/>}
-        {screen === 'detail' && selected && <ProductDetail product={selected} addToCart={addToCart} setScreen={setScreen}/>}
-        {screen === 'collections' && <CollectionsScreen setSelected={goDetail} setScreen={setScreen} addToCart={addToCart}/>}
-      </main>
-      <Footer/>
-      {/* Floating WhatsApp button */}
-      {WHATSAPP_NUMBER && (
-        <a href={'https://wa.me/'+WHATSAPP_NUMBER.replace(/[^0-9]/g,'')+"?text=Hola+CACUSA!+%F0%9F%8C%B8+Me+interesa+ver+sus+joyas"}
-          target="_blank" rel="noopener noreferrer"
-          style={{position:'fixed',bottom:24,right:24,zIndex:999,width:56,height:56,borderRadius:'50%',background:'#25D366',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(37,211,102,0.5)',textDecoration:'none',transition:'transform 0.2s'}}
-          onMouseOver={e=>e.currentTarget.style.transform='scale(1.1)'}
-          onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        </a>
-      )}
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} removeItem={removeItem}/>
-    </div>
-  );
-};
-
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-</script>
-</body>
-</html>
-+total+(form.notas?'%0ANotas: '+encodeURIComponent(form.notas):'');
-    window.open('https://wa.me/'+(WHATSAPP_NUMBER.replace(/[^0-9]/g,'')||'')+'?text='+msg,'_blank');
-    setForm({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:''});
-    onClose();
-  };
-  return (
-    <div style={{position:'fixed',inset:0,background:'rgba(26,17,24,0.65)',zIndex:1001,display:'flex',alignItems:'center',justifyContent:'center',padding:'16px',backdropFilter:'blur(4px)'}}>
-      <div style={{background:'white',borderRadius:24,width:'100%',maxWidth:460,maxHeight:'92vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.3)'}}>
-        <div style={{padding:'28px 28px 0'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-            <div>
-              <div style={{fontFamily:'var(--font-display)',fontSize:22,fontWeight:800,color:'var(--ink)'}}>Finalizar pedido</div>
-              <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--muted)',marginTop:2}}>{items.length} {items.length===1?'producto':'productos'} &middot; ${total}</div>
-            </div>
-            <button onClick={onClose} style={{width:36,height:36,borderRadius:'50%',background:'var(--surface)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)',fontSize:18,border:'none',cursor:'pointer'}}>&#x2715;</button>
-          </div>
-        </div>
-        <form onSubmit={submit} style={{padding:'0 28px 28px'}}>
-          <div style={{display:'flex',flexDirection:'column',gap:14,marginBottom:20}}>
-            <div>
-              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>NOMBRE COMPLETO *</label>
-              <input required value={form.nombre} onChange={e=>set('nombre',e.target.value)} placeholder="Tu nombre completo" style={inp}/>
-            </div>
-            <div>
-              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>WHATSAPP / TELÉFONO *</label>
-              <input required value={form.telefono} onChange={e=>set('telefono',e.target.value)} placeholder="+593 99 999 9999" style={inp}/>
-            </div>
-            <div>
-              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>CIUDAD Y PAÍS *</label>
-              <input required value={form.ciudad} onChange={e=>set('ciudad',e.target.value)} placeholder="Quito, Ecuador" style={inp}/>
-            </div>
-            <div>
-              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>MÉTODO DE PAGO</label>
-              <select value={form.pago} onChange={e=>set('pago',e.target.value)} style={{border:'1.5px solid #e0e0e0',borderRadius:10,padding:'10px 14px',fontSize:14,width:'100%',outline:'none',fontFamily:'inherit',cursor:'pointer'}}>
-                <option>Transferencia bancaria</option>
-                <option>Zelle</option>
-                <option>PayPal Friends and Family</option>
-                <option>Efectivo (entrega local)</option>
-              </select>
-            </div>
-            <div>
-              <label style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,display:'block',marginBottom:6}}>NOTAS / PERSONALIZACIÓN</label>
-              <textarea value={form.notas} onChange={e=>set('notas',e.target.value)} placeholder="Detalles especiales, talla, diseño, fecha..." rows={3} style={{border:'1.5px solid #e0e0e0',borderRadius:10,padding:'10px 14px',fontSize:14,width:'100%',outline:'none',fontFamily:'inherit',resize:'vertical'}}/>
-            </div>
-          </div>
-          <div style={{background:'var(--surface)',borderRadius:14,padding:'16px',marginBottom:20}}>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,color:'var(--muted)',letterSpacing:1,marginBottom:10}}>RESUMEN DEL PEDIDO</div>
-            {items.map((it,i)=>(
-              <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',fontFamily:'var(--font-sans)',fontSize:13,color:'var(--ink)',padding:'4px 0'}}>
-                <span style={{flex:1,paddingRight:8}}>{it.name}{it.personalization?<span style={{color:'var(--rose)'}}> &mdash; &quot;{it.personalization}&quot;</span>:null}</span>
-                <span style={{fontWeight:700,flexShrink:0}}>${it.price}</span>
-              </div>
-            ))}
-            <div style={{borderTop:'1px solid var(--border)',marginTop:10,paddingTop:10,display:'flex',justifyContent:'space-between',fontFamily:'var(--font-sans)',fontSize:15,fontWeight:800,color:'var(--ink)'}}>
-              <span>Total</span><span style={{color:'var(--rose)'}}>${total}</span>
-            </div>
-          </div>
-          <button type="submit" style={{width:'100%',background:'#25D366',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:16,borderRadius:999,padding:'16px',display:'flex',alignItems:'center',justifyContent:'center',gap:10,boxShadow:'0 4px 20px rgba(37,211,102,0.4)',border:'none',cursor:'pointer'}}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            Enviar pedido por WhatsApp
-          </button>
-          <div style={{textAlign:'center',fontFamily:'var(--font-sans)',fontSize:12,color:'var(--subtle)',marginTop:12}}>
-            Te confirmaremos y coordinaremos el pago por WhatsApp 💕
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-const CartDrawer = ({ open, onClose, items, removeItem, onCheckout }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  const total = items.reduce((s,i) => s+i.price,0);
-  return (
-    <>
-      {open && <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(26,17,24,0.4)',zIndex:199,backdropFilter:'blur(2px)'}}/>}
-      <div style={{position:'fixed',top:0,right:0,bottom:0,width: isMobile ? '100%' : 380,background:'var(--white)',zIndex:200,boxShadow:'-8px 0 40px rgba(26,17,24,0.15)',transform: open ? 'translateX(0)' : 'translateX(100%)',transition:'transform 0.35s cubic-bezier(0.4,0,0.2,1)',display:'flex',flexDirection:'column'}}>
-        <div style={{padding:'24px 24px 16px',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-          <div>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:18,color:'var(--ink)'}}>Tu carrito</div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--muted)',marginTop:2}}>{items.length} {items.length===1 ? 'producto' : 'productos'}</div>
-          </div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:'50%',background:'var(--surface)',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--muted)'}}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div style={{flex:1,overflowY:'auto',padding:'16px 24px'}}>
-          {items.length === 0 ? (
-            <div style={{textAlign:'center',padding:'48px 0'}}>
-              <div style={{fontSize:40,marginBottom:12}}>🛍️</div>
-              <div style={{fontFamily:'var(--font-serif)',fontSize:18,color:'var(--muted)',fontStyle:'italic'}}>Tu carrito está vacío</div>
-              <div style={{fontFamily:'var(--font-sans)',fontSize:13,color:'var(--subtle)',marginTop:8}}>Agrega tus joyas favoritas</div>
-            </div>
-          ) : items.map((item,i) => (
-            <div key={i} style={{display:'flex',gap:12,padding:'12px 0',borderBottom:'1px solid var(--border)'}}>
-              <div style={{width:64,height:64,borderRadius:12,overflow:'hidden',flexShrink:0}}>
-                <ProductIllustration type={item.img} color={item.color}/>
-              </div>
-              <div style={{flex:1}}>
-                <div style={{fontFamily:'var(--font-serif)',fontSize:15,color:'var(--ink)'}}>{item.name}</div>
-                {item.personalization && <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--rose)',marginTop:2}}>"{item.personalization}"</div>}
-                {item.material && <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--muted)',marginTop:1}}>{item.material}</div>}
-                <div style={{fontFamily:'var(--font-sans)',fontSize:14,fontWeight:600,color:'var(--gold)',marginTop:4}}>${item.price}</div>
-              </div>
-              <button onClick={() => removeItem(i)} style={{color:'var(--subtle)',alignSelf:'flex-start',padding:4}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-          ))}
-        </div>
-        {items.length > 0 && (
-          <div style={{padding:'20px 24px',borderTop:'1px solid var(--border)'}}>
-            <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
-              <span style={{fontFamily:'var(--font-sans)',fontSize:14,color:'var(--muted)'}}>Subtotal</span>
-              <span style={{fontFamily:'var(--font-sans)',fontSize:16,fontWeight:700,color:'var(--ink)'}}>${total}</span>
-            </div>
-            <button onClick={() => {
-              const lines = items.map((it,i) =>
-                (i+1)+'. '+it.name+(it.personalization?' ("'+it.personalization+'")'  :'')+
-                (it.material?' — '+it.material:'')+' — $'+it.price
-              ).join('%0A');
-              const msg = 'Hola CACUSA! 🌸 Me interesa pedir:%0A'+lines+'%0A%0ATotal: $'+total+'%0A%0A¿Me confirman disponibilidad?';
-              window.open('https://wa.me/'+(WHATSAPP_NUMBER.replace(/[^0-9]/g,'')||'')+'?text='+msg,'_blank');
-            }} style={{width:'100%',background:'#25D366',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'0 2px 12px rgba(37,211,102,.35)',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-              📱 Pedir por WhatsApp
-            </button>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--subtle)',textAlign:'center',marginTop:10}}>Envíos a Ecuador y Estados Unidos 🌎</div>
-          </div>
-        )}
-      </div>
-    </>
-  );
-};
-
-// ─── COLLECTIONS SCREEN ───────────────────────────────────────────────────────
-const CollectionsScreen = ({ setSelected, setScreen, addToCart }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  return (
-    <div>
-      <div style={{background:'var(--plum)',padding: isMobile ? '48px 20px' : '64px 32px',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:12}}>Nuestras colecciones</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 32 : 44,color:'white',marginBottom:12}}>Joyas para cada historia</h2>
-        <p style={{fontFamily:'var(--font-script)',fontSize:22,color:'rgba(255,255,255,0.7)'}}>by Taitus</p>
-      </div>
-      <div style={{maxWidth:1200,margin:'0 auto',padding: isMobile ? '32px 16px' : '48px 32px'}}>
-        <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr' : 'repeat(2,1fr)',gap:24,marginBottom:24}}>
-          {[
-            {title:'Colección Personalizada',desc:'Tu nombre, tu historia, tu pieza',color:'rose',products:PRODUCTS.filter(p=>p.personalized)},
-            {title:'Gold Edition',desc:'Lujo artesanal para momentos únicos',color:'gold',products:PRODUCTS.filter(p=>p.category.includes('Gold'))},
-          ].map(col => (
-            <div key={col.title} style={{borderRadius:20,overflow:'hidden',background:'white',boxShadow:'var(--shadow-card)'}}>
-              <div style={{height:160,background: col.color==='rose' ? 'var(--grad-soft)' : 'linear-gradient(135deg,#F7F0E3,#FEF0E7)',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,padding:16}}>
-                {col.products.slice(0,3).map(p => <div key={p.id} style={{borderRadius:12,overflow:'hidden'}}><ProductIllustration type={p.img} color={p.color}/></div>)}
-              </div>
-              <div style={{padding:'16px 20px'}}>
-                <div style={{fontFamily:'var(--font-display)',fontWeight:700,fontSize:18,color:'var(--ink)',marginBottom:4}}>{col.title}</div>
-                <div style={{fontFamily:'var(--font-serif)',fontSize:15,color:'var(--muted)',fontStyle:'italic',marginBottom:12}}>{col.desc}</div>
-                <button onClick={() => setScreen('shop')} style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:12,color:'var(--rose)'}}>Ver todo →</button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{borderRadius:20,overflow:'hidden',background:'var(--plum)',padding: isMobile ? '28px 20px' : '40px',display:'flex',alignItems:'center',justifyContent:'space-between',flexDirection: isMobile ? 'column' : 'row',gap: isMobile ? 24 : 0}}>
-          <div>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:8}}>Para ellos</div>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:28,color:'white',marginBottom:8}}>Colección Hombres</div>
-            <div style={{fontFamily:'var(--font-serif)',fontSize:16,color:'rgba(255,255,255,0.6)',fontStyle:'italic',marginBottom:16}}>Estilo sin límites</div>
-            <button onClick={() => setScreen('shop')} style={{background:'white',color:'var(--plum)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:13,borderRadius:999,padding:'10px 24px'}}>Ver colección</button>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,width: isMobile ? '100%' : 220}}>
-            {PRODUCTS.filter(p=>p.category==='Hombres').concat(PRODUCTS.slice(0,3)).slice(0,4).map(p => (
-              <div key={p.id} style={{borderRadius:12,overflow:'hidden',height:80}}><ProductIllustration type={p.img} color={p.color}/></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── FOOTER ───────────────────────────────────────────────────────────────────
-const Footer = () => {
-  const w = useWindowWidth();
-  const isMobile = w < 768;
-  return (
-    <footer style={{background:'var(--plum)',color:'white',padding: isMobile ? '40px 20px 28px' : '48px 32px 32px'}}>
-      <div style={{maxWidth:1200,margin:'0 auto'}}>
-        <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr 1fr' : '2fr 1fr 1fr 1fr',gap: isMobile ? '32px 16px' : 48,marginBottom:40}}>
-          <div style={{gridColumn: isMobile ? 'span 2' : 'auto'}}>
-            <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24,letterSpacing:'0.14em',background:'var(--grad-brand)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>CACUSA</div>
-            <div style={{fontFamily:'var(--font-script)',fontSize:16,color:'rgba(255,255,255,0.5)',marginTop:-2,marginBottom:12}}>by Taitus</div>
-            <p style={{fontFamily:'var(--font-serif)',fontSize:15,color:'rgba(255,255,255,0.6)',lineHeight:1.7,fontStyle:'italic',maxWidth:240}}>
-              "creamos para que luzcas más bella de lo que ya eres"
-            </p>
-            <div style={{display:'flex',gap:12,marginTop:16}}>
-              <a href="https://www.instagram.com/cacusabytaitus" target="_blank" rel="noopener" style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="white"/></svg>
-              </a>
-            </div>
-          </div>
-          {[
-            ['Tienda',['Mujeres','Hombres','Personalizado','Gold Edition','Novedades']],
-            ['Ayuda',['Envíos','Devoluciones','Tamaños','Cuidados','Contacto']],
-            isMobile ? null : ['Nosotros',['Nuestra historia','Proceso artesanal','Instagram','Ecuador','USA']],
-          ].filter(Boolean).map(([title, links]) => (
-            <div key={title}>
-              <div style={{fontFamily:'var(--font-sans)',fontWeight:600,fontSize:12,letterSpacing:'0.14em',textTransform:'uppercase',color:'rgba(255,255,255,0.4)',marginBottom:14}}>{title}</div>
-              {links.map(l => <div key={l} style={{fontFamily:'var(--font-sans)',fontSize:13,color:'rgba(255,255,255,0.65)',marginBottom:8,cursor:'pointer'}}>{l}</div>)}
-            </div>
-          ))}
-        </div>
-        <div style={{borderTop:'1px solid rgba(255,255,255,0.1)',paddingTop:20,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'rgba(255,255,255,0.35)'}}>© 2025 CACUSA by Taitus · Ecuador & USA</div>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'rgba(255,255,255,0.35)'}}>Hecho con amor 🤍</div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
-// ─── HOME SCREEN ──────────────────────────────────────────────────────────────
-const HomeScreen = ({ setScreen, setSelected, addToCart }) => {
-  const w = useWindowWidth();
-  const isMobile = w < 640;
-  const isTablet = w < 1024;
-  const cols = isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
-  return (
-    <div>
-      <HeroSection setScreen={setScreen}/>
-      <div style={{background:'var(--surface)',padding: isMobile ? '48px 16px' : '64px 32px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
-          <div style={{textAlign:'center',marginBottom:40}}>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Más vendidos</div>
-            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 28 : 36,color:'var(--ink)'}}>Favoritos de la semana</h2>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:cols,gap: isMobile ? 16 : 24}}>
-            {PRODUCTS.slice(0, isMobile ? 4 : 3).map(p => <ProductCard key={p.id} product={p} onSelect={setSelected} addToCart={addToCart}/>)}
-          </div>
-          <div style={{textAlign:'center',marginTop:40}}>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'12px 32px'}}>
-              Ver toda la colección
-            </button>
-          </div>
-        </div>
-      </div>
-      <div style={{padding: isMobile ? '48px 20px' : '64px 32px',maxWidth:1200,margin:'0 auto',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 28 : 36,color:'var(--violet)',marginBottom:8}}>¿Tu primera vez?</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize: isMobile ? 24 : 32,color:'var(--ink)',marginBottom:16}}>Personaliza tu pieza</h2>
-        <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 16 : 18,color:'var(--muted)',lineHeight:1.7,maxWidth:500,margin:'0 auto 32px',fontStyle:'italic'}}>Cuéntanos tu historia y creamos la joya perfecta para ti. Nombre, fecha, mensaje — lo que la hace tuya.</p>
-        <button onClick={() => setScreen('shop')} style={{background:'var(--grad-brand)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,letterSpacing:'0.05em',borderRadius:999,padding:'15px 40px',boxShadow:'var(--shadow-btn)'}}>
-          Comenzar ahora →
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── APP ──────────────────────────────────────────────────────────────────────
-const App = () => {
-  const [screen, setScreen] = useState(() => localStorage.getItem('cacusa-screen') || 'home');
-  const [selected, setSelected] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [, _tick] = useState(0); // used to trigger re-render after product fetch
-
-
-  useEffect(()=>{ localStorage.setItem('cacusa-screen',screen); },[screen]);
-
-  useEffect(()=>{
-    fetch(PRODUCTS_JSON_URL+'?_='+Date.now())
-      .then(r=>r.json())
-      .then(d=>{
-        const live=(d.products||[]).filter(p=>p.available!==false);
-        if(d.whatsapp) WHATSAPP_NUMBER=d.whatsapp; else if(d.config&&d.config.whatsapp) WHATSAPP_NUMBER=d.config.whatsapp;
-        if(live.length) PRODUCTS=live;
-        _tick(n=>n+1);
-      })
-      .catch(()=>{});
-  },[]);
-
-
-  const addToCart = (product) => { setCart(c => [...c, product]); setCartOpen(true); };
-  const removeItem = (i) => setCart(c => c.filter((_,idx) => idx !== i));
-  const goDetail = (p) => { setSelected(p); setScreen('detail'); };
-
-  return (
-    <div style={{minHeight:'100vh',display:'flex',flexDirection:'column'}}>
-      <Header screen={screen} setScreen={setScreen} cartCount={cart.length} setCartOpen={setCartOpen}/>
-      <main style={{flex:1}}>
-        {screen === 'home' && <HomeScreen setScreen={setScreen} setSelected={goDetail} addToCart={addToCart}/>}
-        {screen === 'shop' && <ShopScreen setSelected={goDetail} addToCart={addToCart}/>}
-        {screen === 'detail' && selected && <ProductDetail product={selected} addToCart={addToCart} setScreen={setScreen}/>}
-        {screen === 'collections' && <CollectionsScreen setSelected={goDetail} setScreen={setScreen} addToCart={addToCart}/>}
-      </main>
-      <Footer/>
-      {/* Floating WhatsApp button */}
-      {WHATSAPP_NUMBER && (
-        <a href={'https://wa.me/'+WHATSAPP_NUMBER.replace(/[^0-9]/g,'')+"?text=Hola+CACUSA!+%F0%9F%8C%B8+Me+interesa+ver+sus+joyas"}
-          target="_blank" rel="noopener noreferrer"
-          style={{position:'fixed',bottom:24,right:24,zIndex:999,width:56,height:56,borderRadius:'50%',background:'#25D366',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 20px rgba(37,211,102,0.5)',textDecoration:'none',transition:'transform 0.2s'}}
-          onMouseOver={e=>e.currentTarget.style.transform='scale(1.1)'}
-          onMouseOut={e=>e.currentTarget.style.transform='scale(1)'}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        </a>
-      )}
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} removeItem={removeItem}/>
     </div>
   );
 };
