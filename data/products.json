@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-02T03:04:23.879Z",
+  "lastUpdated": "2026-06-02T03:05:42.740Z",
   "updatedBy": "tita.jaramillo",
   "config": {
     "whatsapp": "+17867375336"
@@ -80,6 +80,20 @@
       "description": "Collar con colgante de corazón grabado con mensaje o fecha especial. El regalo perfecto.",
       "personalized": true,
       "available": true
+    },
+    {
+      "name": "Test ",
+      "category": "Personalizado",
+      "price": 20,
+      "oldPrice": null,
+      "img": "ring",
+      "color": "rose",
+      "tag": null,
+      "description": "Lo mejor ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369510896_img_6282_jpeg.jpg",
+      "id": 1780369527965
     }
   ]
 }
