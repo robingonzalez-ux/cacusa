@@ -86,7 +86,7 @@ const COLLECTIONS = [
 // Products loaded from data/products.json at runtime; FALLBACK_PRODUCTS used if fetch fails
 let PRODUCTS = FALLBACK_PRODUCTS;
 const PRODUCTS_JSON_URL = "../../data/products.json";
-const WHATSAPP_NUMBER = ""; // e.g. "+15551234567"
+let WHATSAPP_NUMBER = ""; // set via data/products.json
 
 // ─── PRODUCT ILLUSTRATION ────────────────────────────────────────────────────
 const ProductIllustration = ({ type, color }) => {
@@ -563,7 +563,6 @@ const App = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [, _tick] = useState(0); // used to trigger re-render after product fetch
 
-  const [,_tick]=useState(0);
 
   useEffect(()=>{ localStorage.setItem('cacusa-screen',screen); },[screen]);
 
