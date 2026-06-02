@@ -26,7 +26,6 @@ const {useState,useEffect,useRef,useCallback}=React;
 // ── Constants ─────────────────────────────────────────────────────────────
 const GH_OWNER='robingonzalez-ux',GH_REPO='cacusa';
 const PRODUCTS_PATH='data/products.json';
-const STORE_PATH='ui_kits/store/index.html';
 const IMAGES_PATH='ui_kits/store/images';
 const STORE_URL='https://robingonzalez-ux.github.io/cacusa/ui_kits/store/';
 
@@ -173,7 +172,7 @@ function LoginScreen({onLogin}){
 }
 
 // ── Product Card ──────────────────────────────────────────────────────────
-function ProductCard({p,onEdit,onDelete,onToggle}){
+function ProductCard({p,onEdit,onDelete,onToggle,onMoveUp,onMoveDown,canUp,canDown}){
   const active=p.available!==false;
   return(
     <div style={{background:'white',borderRadius:18,overflow:'hidden',boxShadow:'0 2px 14px rgba(0,0,0,.07)',opacity:active?1:.52,transition:'all .25s',display:'flex',flexDirection:'column',animation:'fadeIn .3s ease'}}>
@@ -181,6 +180,11 @@ function ProductCard({p,onEdit,onDelete,onToggle}){
         {p.imageUrl?<img src={p.imageUrl} alt={p.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<Illustration type={p.img} color={p.color}/>}
         {p.tag&&<span style={{position:'absolute',top:9,left:9,background:'#E85D8A',color:'white',fontSize:9,fontWeight:700,padding:'3px 9px',borderRadius:99,letterSpacing:'.1em',textTransform:'uppercase'}}>{p.tag}</span>}
         <span style={{position:'absolute',top:9,right:9,background:active?'#D1FAE5':'#FEE2E2',color:active?'#065F46':'#DC2626',fontSize:9,fontWeight:700,padding:'3px 9px',borderRadius:99}}>{active?'ACTIVO':'INACTIVO'}</span>
+        {/* Reorder arrows */}
+        <div style={{position:'absolute',bottom:6,right:6,display:'flex',flexDirection:'column',gap:2}}>
+          <button onClick={e=>{e.stopPropagation();onMoveUp(p);}} disabled={!canUp} style={{width:20,height:18,background:'rgba(0,0,0,.4)',color:'white',borderRadius:4,fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',opacity:canUp?1:.3}}>▲</button>
+          <button onClick={e=>{e.stopPropagation();onMoveDown(p);}} disabled={!canDown} style={{width:20,height:18,background:'rgba(0,0,0,.4)',color:'white',borderRadius:4,fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',opacity:canDown?1:.3}}>▼</button>
+        </div>
       </div>
       <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:5}}>
         <div style={{fontSize:10,fontWeight:700,color:'#E85D8A',textTransform:'uppercase',letterSpacing:'.1em'}}>{p.category}</div>
@@ -392,15 +396,10 @@ function App(){
         setProductsSha(file.sha);
       }catch(err){
         if(err.status===404){
-          setSyncMsg('📦 Primera vez: cargando productos desde la tienda…');
-          const sf=await ghGet(STORE_PATH,session.token);
-          const html=b64ToStr(sf.content);
-          const m=html.match(/const PRODUCTS = \[([\s\S]*?)\];/);
-          let prods=[];
-          if(m){try{prods=eval(`[${m[1]}]`);}catch{}}
-          setProducts(prods.map(p=>({...p,available:true})));
+          // products.json doesn't exist yet — start with empty list
+          setProducts([]);
           setProductsSha(null);
-          setSyncMsg('✅ Productos cargados. Haz clic en "Publicar" para guardar los datos.');
+          setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
         }else throw err;
       }
     }catch(e){setSyncMsg('❌ Error cargando datos: '+e.message);}
@@ -408,35 +407,19 @@ function App(){
   };
 
   const publish=async()=>{
-    setSyncing(true);setSyncMsg('☁️ Guardando en GitHub…');
+    setSyncing(true);setSyncMsg('☁️ Guardando productos en GitHub…');
     try{
-      // Save products.json
-      const json=JSON.stringify({version:'1.0',lastUpdated:new Date().toISOString(),updatedBy:session.username,products},null,2);
+      const json=JSON.stringify({
+        version:'1.0',
+        lastUpdated:new Date().toISOString(),
+        updatedBy:session.username,
+        products
+      },null,2);
       const saved=await ghSave(PRODUCTS_PATH,session.token,json,productsSha,`[Admin] Productos - ${session.username}`);
       setProductsSha(saved.content.sha);
-
-      // Update store PRODUCTS array
-      setSyncMsg('🔄 Actualizando tienda en vivo…');
-      const sf=await ghGet(STORE_PATH,session.token);
-      const html=b64ToStr(sf.content);
-      const prodStr=products.map(p=>{
-        const parts=[
-          `id:${p.id}`,`name:${JSON.stringify(p.name)}`,`category:${JSON.stringify(p.category)}`,
-          `price:${p.price}`,p.oldPrice?`oldPrice:${p.oldPrice}`:'',
-          `img:${JSON.stringify(p.img||'collar')}`,`color:${JSON.stringify(p.color||'rose')}`,
-          `tag:${p.tag?JSON.stringify(p.tag):'null'}`,
-          `description:${JSON.stringify(p.description||'')}`,
-          `personalized:${!!p.personalized}`,`available:${p.available!==false}`,
-          p.imageUrl?`imageUrl:${JSON.stringify(p.imageUrl)}`:''
-        ].filter(Boolean);
-        return `  { ${parts.join(', ')} }`;
-      }).join(',\n');
-      const newHtml=html.replace(/const PRODUCTS = \[[\s\S]*?\];/,`const PRODUCTS = [\n${prodStr}\n];`);
-      await ghSave(STORE_PATH,session.token,newHtml,sf.sha,`[Admin] Tienda actualizada - ${session.username}`);
-
       setDirty(false);
-      setSyncMsg('✅ ¡Publicado! La tienda se actualizará en 1–2 minutos.');
-      setTimeout(()=>setSyncMsg(''),7000);
+      setSyncMsg('✅ ¡Publicado! Los cambios aparecen en la tienda en 1–2 minutos.');
+      setTimeout(()=>setSyncMsg(''),8000);
     }catch(e){setSyncMsg('❌ Error: '+e.message);}
     setSyncing(false);
   };
@@ -444,6 +427,18 @@ function App(){
   const saveProduct=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);return i>-1?prev.map((x,j)=>j===i?p:x):[...prev,p];});setDirty(true);setShowModal(false);setEditProd(null);};
   const toggleProd=p=>{setProducts(prev=>prev.map(x=>x.id===p.id?{...x,available:!x.available}:x));setDirty(true);};
   const deleteProd=p=>{setProducts(prev=>prev.filter(x=>x.id!==p.id));setDelConfirm(null);setDirty(true);};
+  const moveProd=(p,dir)=>{
+    setProducts(prev=>{
+      const idx=prev.findIndex(x=>x.id===p.id);
+      if(dir==='up'&&idx<=0)return prev;
+      if(dir==='down'&&idx>=prev.length-1)return prev;
+      const next=[...prev];
+      const swap=dir==='up'?idx-1:idx+1;
+      [next[idx],next[swap]]=[next[swap],next[idx]];
+      return next;
+    });
+    setDirty(true);
+  };
 
   if(!session)return<LoginScreen onLogin={s=>setSession(s)}/>;
 
@@ -538,7 +533,18 @@ function App(){
           </div>
         ):(
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
-            {filtered.map(p=><ProductCard key={p.id} p={p} onEdit={p=>{setEditProd(p);setShowModal(true);}} onDelete={setDelConfirm} onToggle={toggleProd}/>)}
+            {filtered.map((p,i)=>{
+            const globalIdx=products.findIndex(x=>x.id===p.id);
+            return <ProductCard key={p.id} p={p}
+              onEdit={p=>{setEditProd(p);setShowModal(true);}}
+              onDelete={setDelConfirm}
+              onToggle={toggleProd}
+              onMoveUp={p=>moveProd(p,'up')}
+              onMoveDown={p=>moveProd(p,'down')}
+              canUp={globalIdx>0}
+              canDown={globalIdx<products.length-1}
+            />;
+          })}
           </div>
         )}
       </div>

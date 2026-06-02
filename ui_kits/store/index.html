@@ -4,10 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#E8508A">
+<meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
+<meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
+<meta property="og:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
 <title>CACUSA by Taitus — Joyería Personalizada</title>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,7 +62,7 @@ function useWindowWidth() {
 }
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
-const PRODUCTS = [
+const FALLBACK_PRODUCTS = [
   { id:1, name:'Collar con nombre', category:'Personalizado', price:45, img:'collar', color:'rose', tag:'Bestseller', description:'Collar delicado con tu nombre grabado a mano. Disponible en plata 925 y baño de oro 18k. Personaliza la tipografía y el largo de la cadena.', personalized:true },
   { id:2, name:'Anillo estrella', category:'Colección Gold', price:38, oldPrice:50, img:'ring', color:'gold', tag:'Nuevo', description:'Anillo minimalista con estrella en relieve. Chapado en oro 18k. Símbolo de tu propia luz interior.', personalized:false },
   { id:3, name:'Pulsera inicial', category:'Personalizado', price:32, img:'bracelet', color:'violet', tag:null, description:'Pulsera fina con tu inicial en plata 925. Diseño delicado, perfecto para usar solo o en stack.', personalized:true },
@@ -75,6 +78,12 @@ const COLLECTIONS = [
   { id:'Hombres', label:'Hombres' },
   { id:'Colección Gold', label:'Gold' },
 ];
+
+// ─── DYNAMIC PRODUCTS ───────────────────────────────────────────────────────
+// Products loaded from data/products.json at runtime; FALLBACK_PRODUCTS used if fetch fails
+let PRODUCTS = FALLBACK_PRODUCTS;
+const PRODUCTS_JSON_URL = 'https://robingonzalez-ux.github.io/cacusa/data/products.json';
+const WHATSAPP_NUMBER = ''; // admin: set your WhatsApp e.g. '+15551234567'
 
 // ─── PRODUCT ILLUSTRATION ────────────────────────────────────────────────────
 const ProductIllustration = ({ type, color }) => {
@@ -223,7 +232,10 @@ const ProductCard = ({ product, onSelect, addToCart }) => {
     <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
       style={{background:'white',borderRadius:16,overflow:'hidden',boxShadow: hovered ? 'var(--shadow-hover)' : 'var(--shadow-card)',transform: hovered ? 'translateY(-4px)' : 'none',transition:'all 0.3s ease',cursor:'pointer'}}>
       <div style={{height:180,position:'relative'}} onClick={() => onSelect(product)}>
-        <ProductIllustration type={product.img} color={product.color}/>
+        {product.imageUrl
+          ? <img src={product.imageUrl} alt={product.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+          : <ProductIllustration type={product.img} color={product.color}/>
+        }
         {product.tag && <span style={{position:'absolute',top:12,left:12,background:tc.bg,color:tc.color,fontSize:9,fontWeight:700,letterSpacing:'0.1em',textTransform:'uppercase',borderRadius:999,padding:'4px 10px'}}>{product.tag}</span>}
         {product.personalized && <span style={{position:'absolute',top:12,right:12,background:'rgba(255,255,255,0.9)',fontSize:9,fontWeight:600,color:'var(--violet-deep)',borderRadius:999,padding:'4px 8px'}}>Personalizable</span>}
       </div>
@@ -294,7 +306,10 @@ const ProductDetail = ({ product, addToCart, setScreen }) => {
       </button>
       <div style={{display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap: isMobile ? 24 : 64,alignItems:'start'}}>
         <div style={{borderRadius:24,overflow:'hidden',boxShadow:'var(--shadow-card)',height: isMobile ? 260 : 400}}>
-          <ProductIllustration type={product.img} color={product.color}/>
+          {product.imageUrl
+            ? <img src={product.imageUrl} alt={product.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
+            : <ProductIllustration type={product.img} color={product.color}/>
+          }
         </div>
         <div>
           <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.18em',textTransform:'uppercase',color:'var(--rose)',marginBottom:8}}>{product.category}</div>
@@ -395,10 +410,17 @@ const CartDrawer = ({ open, onClose, items, removeItem }) => {
               <span style={{fontFamily:'var(--font-sans)',fontSize:14,color:'var(--muted)'}}>Subtotal</span>
               <span style={{fontFamily:'var(--font-sans)',fontSize:16,fontWeight:700,color:'var(--ink)'}}>${total}</span>
             </div>
-            <button style={{width:'100%',background:'var(--grad-rose)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'var(--shadow-btn)'}}>
-              Proceder al pago
+            <button onClick={() => {
+              const lines = items.map((it,i) =>
+                (i+1)+'. '+it.name+(it.personalization?' ("'+it.personalization+'")'  :'')+
+                (it.material?' — '+it.material:'')+' — $'+it.price
+              ).join('%0A');
+              const msg = 'Hola CACUSA! 🌸 Me interesa pedir:%0A'+lines+'%0A%0ATotal: $'+total+'%0A%0A¿Me confirman disponibilidad?';
+              window.open('https://wa.me/'+(WHATSAPP_NUMBER.replace(/[^0-9]/g,'')||'')+'?text='+msg,'_blank');
+            }} style={{width:'100%',background:'#25D366',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,borderRadius:999,padding:'14px',boxShadow:'0 2px 12px rgba(37,211,102,.35)',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              📱 Pedir por WhatsApp
             </button>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--subtle)',textAlign:'center',marginTop:10}}>Envíos a Ecuador y Estados Unidos</div>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,color:'var(--subtle)',textAlign:'center',marginTop:10}}>Envíos a Ecuador y Estados Unidos 🌎</div>
           </div>
         )}
       </div>
@@ -435,7 +457,7 @@ const CollectionsScreen = ({ setSelected, setScreen, addToCart }) => {
             </div>
           ))}
         </div>
-        <div style={{borderRadius:20,overflow:'hidden',background:'var(--plum)',padding: isM/bile ? '28px 20px' : '40px',display:'flex',alignItems:'center',justifyContent:'space-between',flexDirection: isMobile ? 'column' : 'row',gap: isMobile ? 24 : 0}}>
+        <div style={{borderRadius:20,overflow:'hidden',background:'var(--plum)',padding: isMobile ? '28px 20px' : '40px',display:'flex',alignItems:'center',justifyContent:'space-between',flexDirection: isMobile ? 'column' : 'row',gap: isMobile ? 24 : 0}}>
           <div>
             <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.18em',textTransform:'uppercase',color:'rgba(255,255,255,0.5)',marginBottom:8}}>Para ellos</div>
             <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:28,color:'white',marginBottom:8}}>Colección Hombres</div>
@@ -536,8 +558,20 @@ const App = () => {
   const [selected, setSelected] = useState(null);
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [, _tick] = useState(0); // used to trigger re-render after product fetch
 
   useEffect(() => { localStorage.setItem('cacusa-screen', screen); }, [screen]);
+
+  // Fetch live products from data/products.json (updates global PRODUCTS var)
+  useEffect(() => {
+    fetch(PRODUCTS_JSON_URL + '?_=' + Date.now())
+      .then(r => r.json())
+      .then(d => {
+        const live = (d.products || []).filter(p => p.available !== false);
+        if (live.length) { PRODUCTS = live; _tick(n => n + 1); }
+      })
+      .catch(() => {}); // keep hardcoded FALLBACK_PRODUCTS on error
+  }, []);
 
   const addToCart = (product) => { setCart(c => [...c, product]); setCartOpen(true); };
   const removeItem = (i) => setCart(c => c.filter((_,idx) => idx !== i));
