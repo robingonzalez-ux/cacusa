@@ -21,150 +21,176 @@ a{text-decoration:none;color:inherit}
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect,useRef,useCallback}=React;
+const {useState, useEffect, useRef} = React;
 
-// ── Constants ─────────────────────────────────────────────────────────────
-const GH_OWNER='robingonzalez-ux',GH_REPO='cacusa';
-const PRODUCTS_PATH='data/products.json';
-const ORDERS_PATH='data/orders.json';
-const IMAGES_PATH='ui_kits/store/images';
-const STORE_URL='https://cacusabytaitus.com/';
+// ── Constants ──────────────────────────────────────────────────────────────
+const GH_OWNER = 'robingonzalez-ux', GH_REPO = 'cacusa';
+const PRODUCTS_PATH = 'data/products.json';
+const ORDERS_PATH   = 'data/orders.json';
+const IMAGES_PATH   = 'ui_kits/store/images';
+const STORE_URL     = 'https://cacusabytaitus.com/';
 
-const USERS={
-  'tita.jaramillo':{name:'Tita Jaramillo',avatar:'👑',color:'#E85D8A'},
-  'robin.gonzalez': {name:'Robin González', avatar:'🌸',color:'#9B5DE5'}
+const USERS = {
+  'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👑', color: '#E85D8A' },
+  'robin.gonzalez':  { name: 'Robin González',  avatar: '🌸', color: '#9B5DE5' }
 };
-const DEFAULT_PASSWORDS={'tita.jaramillo':'TitaCACUSA25','robin.gonzalez':'RobinCACUSA25'};
-const CATEGORIES=['Personalizado','Colección','Colección Gold','Hombres'];
-const IMG_TYPES=['collar','ring','bracelet','earrings','heart','bracelet-m','necklace'];
-const COLORS={rose:'#F9A8C9',gold:'#F4C430',violet:'#9B5DE5',sky:'#87CEEB',plum:'#4A1942'};
-
-// ── Utils ─────────────────────────────────────────────────────────────────
-const sha256=async str=>{
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+const DEFAULT_PASSWORDS = {
+  'tita.jaramillo': 'TitaCACUSA25',
+  'robin.gonzalez': 'RobinCACUSA25'
 };
-function strToB64(str){
-  const bytes=new TextEncoder().encode(str);
-  let bin='';
-  for(let i=0;i<bytes.length;i+=8192)bin+=String.fromCharCode(...bytes.subarray(i,i+8192));
+const CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
+const IMG_TYPES  = ['collar', 'ring', 'bracelet', 'earrings', 'heart', 'bracelet-m', 'necklace'];
+const COLORS     = { rose: '#F9A8C9', gold: '#F4C430', violet: '#9B5DE5', sky: '#87CEEB', plum: '#4A1942' };
+
+const ORDER_STATES  = ['Nuevo', 'Confirmado', 'En proceso', 'Enviado', 'Entregado', 'Cancelado'];
+const STATE_COLORS  = {
+  Nuevo: '#E8508A', Confirmado: '#3B82F6', 'En proceso': '#F59E0B',
+  Enviado: '#8B5CF6', Entregado: '#22C55E', Cancelado: '#94A3B8'
+};
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+const sha256 = async str => {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+};
+function strToB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return btoa(bin);
 }
-function b64ToStr(b64){
-  const bin=atob(b64.replace(/\n/g,''));
-  const bytes=new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+function b64ToStr(b64) {
+  const bin = atob(b64.replace(/\n/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-// ── GitHub API ────────────────────────────────────────────────────────────
-const ghH=tok=>({Authorization:`token ${tok}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'});
-async function ghGet(path,tok){
-  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,{headers:ghH(tok)});
-  if(!r.ok){const e=new Error(`GH ${r.status}`);e.status=r.status;throw e;}
+// ── GitHub API ─────────────────────────────────────────────────────────────
+const ghH = tok => ({ Authorization: `token ${tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' });
+
+async function ghGet(path, tok) {
+  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { headers: ghH(tok) });
+  if (!r.ok) { const e = new Error(`GH ${r.status}`); e.status = r.status; throw e; }
   return r.json();
 }
-async function ghSave(path,tok,content,sha,msg){
-  const body={message:msg,content:strToB64(content)};
-  if(sha)body.sha=sha;
-  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,{method:'PUT',headers:ghH(tok),body:JSON.stringify(body)});
-  if(!r.ok)throw new Error(`PUT ${r.status}: ${await r.text()}`);
+async function ghSave(path, tok, content, sha, msg) {
+  const body = { message: msg, content: strToB64(content) };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: 'PUT', headers: ghH(tok), body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
   return r.json();
 }
-async function ghUpload(path,tok,b64raw,sha,msg){
-  const body={message:msg,content:b64raw};
-  if(sha)body.sha=sha;
-  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,{method:'PUT',headers:ghH(tok),body:JSON.stringify(body)});
-  if(!r.ok)throw new Error(`Upload ${r.status}: ${await r.text()}`);
+async function ghUpload(path, tok, b64raw, sha, msg) {
+  const body = { message: msg, content: b64raw };
+  if (sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: 'PUT', headers: ghH(tok), body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`Upload ${r.status}: ${await r.text()}`);
   return r.json();
 }
-function compressImage(file,maxPx=900){
-  return new Promise(resolve=>{
-    const img=new Image(),url=URL.createObjectURL(file);
-    img.onload=()=>{
-      let{width:w,height:h}=img;
-      if(w>maxPx||h>maxPx){if(w>=h){h=Math.round(h*maxPx/w);w=maxPx;}else{w=Math.round(w*maxPx/h);h=maxPx;}}
-      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
-      cv.toBlob(blob=>{const fr=new FileReader();fr.onload=e=>resolve(e.target.result.split(',')[1]);fr.readAsDataURL(blob);},'image/jpeg',0.88);
-    };img.src=url;
+
+function compressImage(file, maxPx = 900) {
+  return new Promise(resolve => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      let { width: w, height: h } = img;
+      if (w > maxPx || h > maxPx) {
+        if (w >= h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else        { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      cv.toBlob(blob => {
+        const fr = new FileReader();
+        fr.onload = e => resolve(e.target.result.split(',')[1]);
+        fr.readAsDataURL(blob);
+      }, 'image/jpeg', 0.88);
+    };
+    img.src = url;
   });
 }
 
-// ── SVG Illustration ──────────────────────────────────────────────────────
-function Illustration({type,color}){
-  const c=COLORS[color]||color||'#E8D5B7';
-  const shapes={
-    collar:     <g><ellipse cx="50" cy="62" rx="26" ry="16" fill="none" stroke={c} strokeWidth="3.5"/><circle cx="50" cy="78" r="9" fill={c}/><line x1="24" y1="62" x2="12" y2="44" stroke={c} strokeWidth="2.5"/><line x1="76" y1="62" x2="88" y2="44" stroke={c} strokeWidth="2.5"/></g>,
-    ring:       <g><circle cx="50" cy="52" r="22" fill="none" stroke={c} strokeWidth="7"/><path d="M34 39 Q50 29 66 39" stroke={c} strokeWidth="3" fill="none"/><circle cx="50" cy="30" r="8" fill={c}/></g>,
-    bracelet:   <g><path d="M18 56 Q36 34 50 32 Q64 34 82 56" stroke={c} strokeWidth="6" fill="none" strokeLinecap="round"/><circle cx="50" cy="32" r="9" fill={c}/></g>,
-    earrings:   <g><circle cx="34" cy="34" r="8" fill={c}/><path d="M34 42 Q26 58 28 72" stroke={c} strokeWidth="3" fill="none"/><circle cx="28" cy="74" r="7" fill={c} opacity=".75"/><circle cx="66" cy="34" r="8" fill={c}/><path d="M66 42 Q58 58 60 72" stroke={c} strokeWidth="3" fill="none"/><circle cx="60" cy="74" r="7" fill={c} opacity=".75"/></g>,
-    heart:      <g><path d="M50 76 L18 50 Q12 30 33 27 Q50 26 50 44 Q50 26 67 27 Q88 30 82 50 Z" fill={c}/></g>,
+// ── SVG Illustration ───────────────────────────────────────────────────────
+function Illustration({ type, color }) {
+  const c = COLORS[color] || color || '#E8D5B7';
+  const shapes = {
+    collar:      <g><ellipse cx="50" cy="62" rx="26" ry="16" fill="none" stroke={c} strokeWidth="3.5"/><circle cx="50" cy="78" r="9" fill={c}/><line x1="24" y1="62" x2="12" y2="44" stroke={c} strokeWidth="2.5"/><line x1="76" y1="62" x2="88" y2="44" stroke={c} strokeWidth="2.5"/></g>,
+    ring:        <g><circle cx="50" cy="52" r="22" fill="none" stroke={c} strokeWidth="7"/><path d="M34 39 Q50 29 66 39" stroke={c} strokeWidth="3" fill="none"/><circle cx="50" cy="30" r="8" fill={c}/></g>,
+    bracelet:    <g><path d="M18 56 Q36 34 50 32 Q64 34 82 56" stroke={c} strokeWidth="6" fill="none" strokeLinecap="round"/><circle cx="50" cy="32" r="9" fill={c}/></g>,
+    earrings:    <g><circle cx="34" cy="34" r="8" fill={c}/><path d="M34 42 Q26 58 28 72" stroke={c} strokeWidth="3" fill="none"/><circle cx="28" cy="74" r="7" fill={c} opacity=".75"/><circle cx="66" cy="34" r="8" fill={c}/><path d="M66 42 Q58 58 60 72" stroke={c} strokeWidth="3" fill="none"/><circle cx="60" cy="74" r="7" fill={c} opacity=".75"/></g>,
+    heart:       <g><path d="M50 76 L18 50 Q12 30 33 27 Q50 26 50 44 Q50 26 67 27 Q88 30 82 50 Z" fill={c}/></g>,
     'bracelet-m':<g><rect x="16" y="42" width="68" height="16" rx="8" fill={c}/><rect x="20" y="47" width="9" height="6" rx="1.5" fill="rgba(0,0,0,.18)"/><rect x="33" y="47" width="9" height="6" rx="1.5" fill="rgba(0,0,0,.18)"/><rect x="46" y="47" width="9" height="6" rx="1.5" fill="rgba(0,0,0,.18)"/></g>,
-    necklace:   <g><path d="M14 30 Q50 82 86 30" stroke={c} strokeWidth="3.5" fill="none"/><circle cx="50" cy="74" r="11" fill={c}/></g>
+    necklace:    <g><path d="M14 30 Q50 82 86 30" stroke={c} strokeWidth="3.5" fill="none"/><circle cx="50" cy="74" r="11" fill={c}/></g>
   };
-  return <svg viewBox="0 0 100 100" style={{width:'100%',height:'100%',background:`${c}20`}}>{shapes[type]||shapes.collar}</svg>;
+  return <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%', background: `${c}20` }}>{shapes[type] || shapes.collar}</svg>;
 }
 
-// ── Login ─────────────────────────────────────────────────────────────────
-function LoginScreen({onLogin}){
-  const[username,setUsername]=useState('tita.jaramillo');
-  const[password,setPassword]=useState('');
-  const[token,setToken]=useState(localStorage.getItem('cacusa_gh_token')||'');
-  const[showTok,setShowTok]=useState(false);
-  const[error,setError]=useState('');
-  const[loading,setLoading]=useState(false);
+// ── Login ──────────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [username, setUsername] = useState('tita.jaramillo');
+  const [password, setPassword] = useState('');
+  const [token, setToken] = useState(localStorage.getItem('cacusa_gh_token') || '');
+  const [showTok, setShowTok] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const submit=async e=>{
-    e.preventDefault();setLoading(true);setError('');
-    try{
-      const hash=await sha256(password);
-      const stored=localStorage.getItem(`cacusa_pwd_${username}`);
-      const defHash=await sha256(DEFAULT_PASSWORDS[username]||'');
-      if(stored?hash!==stored:hash!==defHash){setError('Contraseña incorrecta.');return;}
-      if(!token.trim()){setError('Se requiere un GitHub Personal Access Token.');return;}
-      const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`,{headers:ghH(token)});
-      if(!r.ok){setError('Token de GitHub inválido o sin acceso al repositorio.');return;}
-      localStorage.setItem('cacusa_gh_token',token);
-      onLogin({username,name:USERS[username].name,token});
-    }catch(e){setError(e.message);}finally{setLoading(false);}
+  const submit = async e => {
+    e.preventDefault(); setLoading(true); setError('');
+    try {
+      const hash = await sha256(password);
+      const stored = localStorage.getItem(`cacusa_pwd_${username}`);
+      const defHash = await sha256(DEFAULT_PASSWORDS[username] || '');
+      if (stored ? hash !== stored : hash !== defHash) { setError('Contraseña incorrecta.'); return; }
+      if (!token.trim()) { setError('Se requiere un GitHub Personal Access Token.'); return; }
+      const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`, { headers: ghH(token) });
+      if (!r.ok) { setError('Token de GitHub inválido o sin acceso al repositorio.'); return; }
+      localStorage.setItem('cacusa_gh_token', token);
+      onLogin({ username, name: USERS[username].name, token });
+    } catch (e) { setError(e.message); } finally { setLoading(false); }
   };
 
-  const inp={padding:'11px 14px',border:'1.5px solid #e0e0e0',borderRadius:10,fontSize:14,outline:'none',width:'100%',boxSizing:'border-box'};
-  const lbl={display:'block',fontSize:11,fontWeight:600,color:'#777',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:6};
+  const inp = { padding: '11px 14px', border: '1.5px solid #e0e0e0', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 6 };
 
-  return(
-    <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(135deg,#1A1124 0%,#2D1B2E 55%,#1A1124 100%)'}}>
-      <div style={{width:400,background:'white',borderRadius:28,padding:'44px 40px',boxShadow:'0 32px 80px rgba(0,0,0,.45)',animation:'fadeIn .4s ease'}}>
-        <div style={{textAlign:'center',marginBottom:36}}>
-          <div style={{fontFamily:'Georgia,serif',fontSize:34,fontWeight:900,letterSpacing:'.15em',background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>CACUSA</div>
-          <div style={{fontFamily:'Georgia,serif',fontSize:13,color:'#aaa',fontStyle:'italic',marginTop:3}}>Panel de Administración</div>
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#1A1124 0%,#2D1B2E 55%,#1A1124 100%)' }}>
+      <div style={{ width: 400, background: 'white', borderRadius: 28, padding: '44px 40px', boxShadow: '0 32px 80px rgba(0,0,0,.45)', animation: 'fadeIn .4s ease' }}>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontFamily: 'Georgia,serif', fontSize: 34, fontWeight: 900, letterSpacing: '.15em', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CACUSA</div>
+          <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, color: '#aaa', fontStyle: 'italic', marginTop: 3 }}>Panel de Administración</div>
         </div>
         <form onSubmit={submit}>
-          <div style={{marginBottom:16}}>
+          <div style={{ marginBottom: 16 }}>
             <label style={lbl}>Usuario</label>
-            <select value={username} onChange={e=>setUsername(e.target.value)} style={{...inp,background:'white',cursor:'pointer'}}>
-              {Object.entries(USERS).map(([k,v])=><option key={k} value={k}>{v.avatar} {v.name}</option>)}
+            <select value={username} onChange={e => setUsername(e.target.value)} style={{ ...inp, background: 'white', cursor: 'pointer' }}>
+              {Object.entries(USERS).map(([k, v]) => <option key={k} value={k}>{v.avatar} {v.name}</option>)}
             </select>
           </div>
-          <div style={{marginBottom:16}}>
+          <div style={{ marginBottom: 16 }}>
             <label style={lbl}>Contraseña</label>
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Contraseña" required style={inp}/>
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required style={inp} />
           </div>
-          <div style={{marginBottom:24}}>
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
-              <label style={{...lbl,margin:0}}>GitHub Token</label>
-              <a href="https://github.com/settings/tokens/new?scopes=repo&description=CACUSA+Admin" target="_blank" rel="noopener" style={{fontSize:11,color:'#9B5DE5',fontWeight:600}}>Crear token ↗</a>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <label style={{ ...lbl, margin: 0 }}>GitHub Token</label>
+              <a href="https://github.com/settings/tokens/new?scopes=repo&description=CACUSA+Admin" target="_blank" rel="noopener" style={{ fontSize: 11, color: '#9B5DE5', fontWeight: 600 }}>Crear token ↗</a>
             </div>
-            <div style={{position:'relative'}}>
-              <input type={showTok?'text':'password'} value={token} onChange={e=>setToken(e.target.value)} placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style={{...inp,paddingRight:68}} required/>
-              <button type="button" onClick={()=>setShowTok(s=>!s)} style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',color:'#aaa',fontSize:12,fontWeight:600}}>{showTok?'Ocultar':'Mostrar'}</button>
+            <div style={{ position: 'relative' }}>
+              <input type={showTok ? 'text' : 'password'} value={token} onChange={e => setToken(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style={{ ...inp, paddingRight: 68 }} required />
+              <button type="button" onClick={() => setShowTok(s => !s)}
+                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa', fontSize: 12, fontWeight: 600 }}>
+                {showTok ? 'Ocultar' : 'Mostrar'}
+              </button>
             </div>
-            <div style={{fontSize:11,color:'#bbb',marginTop:5}}>Permiso <code style={{background:'#f0f0f0',padding:'1px 5px',borderRadius:4,fontSize:11}}>repo</code> requerido</div>
+            <div style={{ fontSize: 11, color: '#bbb', marginTop: 5 }}>Permiso <code style={{ background: '#f0f0f0', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>repo</code> requerido</div>
           </div>
-          {error&&<div style={{background:'#FEE2E2',color:'#DC2626',borderRadius:10,padding:'10px 14px',fontSize:13,marginBottom:16,fontWeight:500}}>{error}</div>}
-          <button type="submit" disabled={loading} style={{width:'100%',padding:14,background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:15,letterSpacing:'.04em',boxShadow:'0 4px 20px rgba(155,93,229,.4)',opacity:loading?.7:1,transition:'opacity .2s'}}>
-            {loading?'Verificando…':'Ingresar →'}
+          {error && <div style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>{error}</div>}
+          <button type="submit" disabled={loading}
+            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s' }}>
+            {loading ? 'Verificando…' : 'Ingresar →'}
           </button>
         </form>
       </div>
@@ -172,95 +198,282 @@ function LoginScreen({onLogin}){
   );
 }
 
-// ── Product Card ──────────────────────────────────────────────────────────
-
-// ORDER STATES
-const ORDER_STATES=['Nuevo','Confirmado','En proceso','Enviado','Entregado','Cancelado'];
-const STATE_COLORS={'Nuevo':'#E8508A','Confirmado':'#3B82F6','En proceso':'#F59E0B','Enviado':'#8B5CF6','Entregado':'#22C55E','Cancelado':'#94A3B8'};
-
-function OrderCard({order,onStatusChange,onDelete}){
-  const dateStr=new Date(order.fecha).toLocaleDateString('es-EC',{day:'2-digit',month:'short',year:'numeric'});
-  const estado=order.estado||'Nuevo';
-  const nextIdx=Math.min(ORDER_STATES.indexOf(estado)+1,ORDER_STATES.length-2);
-  const nextState=ORDER_STATES[nextIdx];
-  const waNum=(order.cliente&&order.cliente.telefono||'').replace(/[^0-9]/g,'');
-  return(
-    <div style={{background:'white',borderRadius:16,padding:18,boxShadow:'0 2px 12px rgba(0,0,0,0.07)',border:'1px solid #f0ecf0',display:'flex',flexDirection:'column',gap:10}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-        <div>
-          <div style={{fontWeight:700,fontSize:15,color:'#1A1118'}}>{order.cliente&&order.cliente.nombre||'Cliente'}</div>
-          <div style={{fontSize:12,color:'#7A6880',marginTop:2}}>{order.cliente&&order.cliente.telefono} &middot; {order.cliente&&order.cliente.ciudad}</div>
-        </div>
-        <span style={{background:STATE_COLORS[estado]||'#E8508A',color:'white',fontSize:11,fontWeight:700,padding:'4px 10px',borderRadius:99}}>{estado}</span>
-      </div>
-      <div style={{fontSize:12,color:'#A89AAF'}}>{dateStr} &middot; {order.pago||'Sin método'}</div>
-      <div style={{background:'#FAF7FB',borderRadius:10,padding:'10px 12px'}}>
-        {(order.productos||[]).map((p,i)=>(
-          <div key={i} style={{display:'flex',justifyContent:'space-between',fontSize:13,color:'#1A1118',padding:'2px 0'}}>
-            <span>{p.name}{p.personalization?<span style={{color:'#E8508A'}}> &quot;{p.personalization}&quot;</span>:null}</span>
-            <span style={{fontWeight:700}}>${p.price}</span>
-          </div>
-        ))}
-        <div style={{borderTop:'1px solid #EDE8EA',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',fontWeight:800,fontSize:14,color:'#1A1118'}}>
-          <span>Total</span><span style={{color:'#E8508A'}}>${order.total}</span>
+// ── Product Card ───────────────────────────────────────────────────────────
+function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canUp, canDown }) {
+  const active = p.available !== false;
+  return (
+    <div style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 14px rgba(0,0,0,.07)', opacity: active ? 1 : .52, transition: 'all .25s', display: 'flex', flexDirection: 'column', animation: 'fadeIn .3s ease' }}>
+      <div style={{ height: 128, position: 'relative', flexShrink: 0 }}>
+        {p.imageUrl
+          ? <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <Illustration type={p.img} color={p.color} />}
+        {p.tag && <span style={{ position: 'absolute', top: 9, left: 9, background: '#E85D8A', color: 'white', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 99, letterSpacing: '.1em', textTransform: 'uppercase' }}>{p.tag}</span>}
+        <span style={{ position: 'absolute', top: 9, right: 9, background: active ? '#D1FAE5' : '#FEE2E2', color: active ? '#065F46' : '#DC2626', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 99 }}>{active ? 'ACTIVO' : 'INACTIVO'}</span>
+        <div style={{ position: 'absolute', bottom: 6, right: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <button onClick={e => { e.stopPropagation(); onMoveUp(p); }} disabled={!canUp}
+            style={{ width: 20, height: 18, background: 'rgba(0,0,0,.4)', color: 'white', borderRadius: 4, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canUp ? 1 : .3, border: 'none', cursor: canUp ? 'pointer' : 'default' }}>▲</button>
+          <button onClick={e => { e.stopPropagation(); onMoveDown(p); }} disabled={!canDown}
+            style={{ width: 20, height: 18, background: 'rgba(0,0,0,.4)', color: 'white', borderRadius: 4, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: canDown ? 1 : .3, border: 'none', cursor: canDown ? 'pointer' : 'default' }}>▼</button>
         </div>
       </div>
-      {order.notas&&<div style={{fontSize:12,color:'#7A6880',fontStyle:'italic'}}>📝 {order.notas}</div>}
-      <div style={{display:'flex',gap:8,marginTop:4}}>
-        {estado!=='Entregado'&&estado!=='Cancelado'&&(
-          <button onClick={()=>onStatusChange(order,nextState)} style={{flex:1,padding:'8px',background:STATE_COLORS[nextState]||'#E8508A',color:'white',borderRadius:99,fontSize:12,fontWeight:700,border:'none',cursor:'pointer'}}>
-            &rarr; {nextState}
+      <div style={{ padding: '12px 14px', flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#E85D8A', textTransform: 'uppercase', letterSpacing: '.1em' }}>{p.category}</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.3, flex: 1 }}>{p.name}</div>
+        {p.personalized && <div style={{ fontSize: 10, color: '#9B5DE5', fontWeight: 600 }}>✦ Personalizable</div>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 800, color: '#C9A84C', fontSize: 15 }}>${p.price}</span>
+          {p.oldPrice && <span style={{ fontSize: 12, color: '#bbb', textDecoration: 'line-through' }}>${p.oldPrice}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
+          <button onClick={() => onToggle(p)} style={{ flex: 1, padding: '5px 0', background: active ? '#FEE2E2' : '#D1FAE5', color: active ? '#DC2626' : '#065F46', borderRadius: 8, fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+            {active ? 'Pausar' : 'Activar'}
           </button>
-        )}
-        <button onClick={()=>onStatusChange(order,'Cancelado')} style={{padding:'8px 12px',background:'#FEE2E2',color:'#DC2626',borderRadius:99,fontSize:12,fontWeight:700,border:'none',cursor:'pointer'}} title="Cancelar">✕</button>
-        {waNum&&<a href={'https://wa.me/'+waNum} target="_blank" rel="noopener noreferrer" style={{padding:'8px 12px',background:'#DCF8C6',color:'#128C7E',borderRadius:99,fontSize:12,fontWeight:700,textDecoration:'none',display:'flex',alignItems:'center'}}>💬</a>}
+          <button onClick={() => onEdit(p)} style={{ flex: 1, padding: '5px 0', background: '#EDE9FE', color: '#7C3AED', borderRadius: 8, fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer' }}>Editar</button>
+          <button onClick={() => onDelete(p)} style={{ width: 28, height: 28, background: '#FEE2E2', color: '#DC2626', borderRadius: 8, fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
+        </div>
       </div>
     </div>
   );
 }
 
-function NewOrderModal({open,onClose,onSave}){
-  const [form,setForm]=React.useState({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:'',prodNombre:'',prodPersonal:'',prodPrecio:''});
-  if(!open)return null;
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const inp={border:'1.5px solid #e0e0e0',borderRadius:10,padding:'9px 13px',fontSize:13,width:'100%',outline:'none',fontFamily:'inherit'};
-  const submit=(e)=>{
+// ── Product Modal ──────────────────────────────────────────────────────────
+function ProductModal({ product, onSave, onClose, token }) {
+  const isNew = !product?.id;
+  const blank = { name: '', category: 'Personalizado', price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '' };
+  const [form, setForm] = useState(product ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '' } : blank);
+  const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
+  const [uploading, setUploading] = useState(false);
+  const [uploadMsg, setUploadMsg] = useState('');
+  const fileRef = useRef();
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleFile = async e => {
+    const file = e.target.files[0]; if (!file) return;
+    setUploading(true); setUploadMsg('');
+    try {
+      setImgPrev(URL.createObjectURL(file));
+      const b64 = await compressImage(file);
+      const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40);
+      const fname = `${Date.now()}_${slug}.jpg`;
+      const path = `${IMAGES_PATH}/${fname}`;
+      let sha = null;
+      try { const ex = await ghGet(path, token); sha = ex.sha; } catch (_) {}
+      await ghUpload(path, token, b64, sha, `Imagen: ${fname}`);
+      const url = `https://robingonzalez-ux.github.io/cacusa/${path}`;
+      set('imageUrl', url);
+      setUploadMsg('✅ Imagen subida correctamente');
+    } catch (e) {
+      setUploadMsg('❌ Error: ' + e.message);
+      setImgPrev(form.imageUrl || '');
+    } finally { setUploading(false); }
+  };
+
+  const save = () => {
+    if (!form.name.trim() || !form.price) return;
+    onSave({
+      ...form,
+      id: form.id || Date.now(),
+      price: Number(form.price),
+      oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
+      tag: form.tag || null,
+      available: form.available !== false,
+      // Map category to cat for store compatibility
+      cat: form.category
+    });
+  };
+
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box', background: 'white' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px', overflowY: 'auto' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: 'white', borderRadius: 24, padding: '32px 28px', width: '100%', maxWidth: 540, boxShadow: '0 24px 80px rgba(0,0,0,.35)', marginTop: 20, animation: 'fadeIn .3s ease' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a' }}>{isNew ? '➕ Nuevo Producto' : '✏️ Editar Producto'}</h2>
+          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f0', color: '#666', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
+        </div>
+
+        {/* Image upload */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={lbl}>Foto del Producto</label>
+          <div onClick={() => fileRef.current.click()}
+            style={{ height: 140, borderRadius: 14, border: '2px dashed #e0e0e0', cursor: 'pointer', overflow: 'hidden', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'border-color .2s' }}>
+            {imgPrev
+              ? <img src={imgPrev} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="preview" />
+              : <div style={{ textAlign: 'center', color: '#bbb' }}>
+                  <div style={{ fontSize: 36, marginBottom: 6 }}>📸</div>
+                  <div style={{ fontSize: 13 }}>Clic o arrastra una foto aquí</div>
+                  <div style={{ fontSize: 11, marginTop: 3 }}>JPG · PNG · WebP (máx 5MB)</div>
+                </div>}
+            {uploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9B5DE5', fontWeight: 600 }}>⏳ Subiendo imagen…</div>}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
+          {uploadMsg && <div style={{ fontSize: 12, marginTop: 5, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
+          {form.imageUrl && !uploadMsg && <div style={{ fontSize: 10, color: '#aaa', marginTop: 4, wordBreak: 'break-all' }}>📎 {form.imageUrl.split('/').pop()}</div>}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={lbl}>Nombre del producto *</label>
+            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Collar con nombre personalizado" style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Categoría</label>
+            <select value={form.category} onChange={e => set('category', e.target.value)} style={inp}>
+              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Etiqueta</label>
+            <select value={form.tag || ''} onChange={e => set('tag', e.target.value || null)} style={inp}>
+              <option value="">Sin etiqueta</option>
+              <option>Bestseller</option>
+              <option>Nuevo</option>
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Precio USD *</label>
+            <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45" style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Precio anterior (tachado)</label>
+            <input type="number" min="0" step="0.01" value={form.oldPrice || ''} onChange={e => set('oldPrice', e.target.value)} placeholder="60" style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Ícono (sin foto)</label>
+            <select value={form.img} onChange={e => set('img', e.target.value)} style={inp}>
+              {IMG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Color de acento</label>
+            <select value={form.color} onChange={e => set('color', e.target.value)} style={inp}>
+              {Object.keys(COLORS).map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={lbl}>Descripción</label>
+            <textarea value={form.description || ''} onChange={e => set('description', e.target.value)} rows={3}
+              placeholder="Descripción del producto…" style={{ ...inp, resize: 'vertical' }} />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 24, margin: '18px 0 24px' }}>
+          {[['personalized', '✦ Personalizable'], ['available', '✅ Disponible en tienda']].map(([k, label]) => (
+            <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 500 }}>
+              <input type="checkbox" checked={!!form[k] && form[k] !== false} onChange={e => set(k, e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#9B5DE5' }} />
+              {label}
+            </label>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={save} disabled={!form.name || !form.price}
+            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price) ? .5 : 1, cursor: 'pointer', border: 'none' }}>
+            {isNew ? '+ Agregar Producto' : '💾 Guardar Cambios'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Order Card ─────────────────────────────────────────────────────────────
+function OrderCard({ order, onStatusChange, onDelete }) {
+  const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
+  const estado = order.estado || 'Nuevo';
+  const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
+  const nextState = ORDER_STATES[nextIdx];
+  const waNum = ((order.cliente && order.cliente.telefono) || '').replace(/[^0-9]/g, '');
+  return (
+    <div style={{ background: 'white', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #f0ecf0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118' }}>{(order.cliente && order.cliente.nombre) || 'Cliente'}</div>
+          <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>{order.cliente && order.cliente.telefono} · {order.cliente && order.cliente.ciudad}</div>
+        </div>
+        <span style={{ background: STATE_COLORS[estado] || '#E8508A', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 }}>{estado}</span>
+      </div>
+      <div style={{ fontSize: 12, color: '#A89AAF' }}>{dateStr} · {order.pago || 'Sin método'}</div>
+      <div style={{ background: '#FAF7FB', borderRadius: 10, padding: '10px 12px' }}>
+        {(order.productos || []).map((p, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#1A1118', padding: '2px 0' }}>
+            <span>{p.name}{p.personalization ? <span style={{ color: '#E8508A' }}> "{p.personalization}"</span> : null}</span>
+            <span style={{ fontWeight: 700 }}>${p.price}</span>
+          </div>
+        ))}
+        <div style={{ borderTop: '1px solid #EDE8EA', marginTop: 6, paddingTop: 6, display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 14, color: '#1A1118' }}>
+          <span>Total</span><span style={{ color: '#E8508A' }}>${order.total}</span>
+        </div>
+      </div>
+      {order.notas && <div style={{ fontSize: 12, color: '#7A6880', fontStyle: 'italic' }}>📝 {order.notas}</div>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        {estado !== 'Entregado' && estado !== 'Cancelado' && (
+          <button onClick={() => onStatusChange(order, nextState)}
+            style={{ flex: 1, padding: '8px', background: STATE_COLORS[nextState] || '#E8508A', color: 'white', borderRadius: 99, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+            → {nextState}
+          </button>
+        )}
+        <button onClick={() => onStatusChange(order, 'Cancelado')}
+          style={{ padding: '8px 12px', background: '#FEE2E2', color: '#DC2626', borderRadius: 99, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer' }} title="Cancelar">✕</button>
+        {waNum && <a href={'https://wa.me/' + waNum} target="_blank" rel="noopener noreferrer"
+          style={{ padding: '8px 12px', background: '#DCF8C6', color: '#128C7E', borderRadius: 99, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>💬</a>}
+        <button onClick={() => onDelete(order)}
+          style={{ padding: '8px 12px', background: '#F9F5F7', color: '#A89AAF', borderRadius: 99, fontSize: 12, border: 'none', cursor: 'pointer' }} title="Eliminar">🗑</button>
+      </div>
+    </div>
+  );
+}
+
+// ── New Order Modal ────────────────────────────────────────────────────────
+function NewOrderModal({ open, onClose, onSave }) {
+  const [form, setForm] = useState({ nombre: '', telefono: '', ciudad: '', pago: 'Transferencia bancaria', notas: '', prodNombre: '', prodPersonal: '', prodPrecio: '' });
+  if (!open) return null;
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const inp = { border: '1.5px solid #e0e0e0', borderRadius: 10, padding: '9px 13px', fontSize: 13, width: '100%', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+  const submit = e => {
     e.preventDefault();
-    const order={
-      id:Date.now(),fecha:new Date().toISOString(),
-      cliente:{nombre:form.nombre,telefono:form.telefono,ciudad:form.ciudad},
-      productos:form.prodNombre?[{name:form.prodNombre,personalization:form.prodPersonal,price:Number(form.prodPrecio)||0}]:[],
-      total:Number(form.prodPrecio)||0,
-      pago:form.pago,estado:'Nuevo',notas:form.notas
+    const order = {
+      id: Date.now(), fecha: new Date().toISOString(),
+      cliente: { nombre: form.nombre, telefono: form.telefono, ciudad: form.ciudad },
+      productos: form.prodNombre ? [{ name: form.prodNombre, personalization: form.prodPersonal, price: Number(form.prodPrecio) || 0 }] : [],
+      total: Number(form.prodPrecio) || 0,
+      pago: form.pago, estado: 'Nuevo', notas: form.notas
     };
     onSave(order);
-    setForm({nombre:'',telefono:'',ciudad:'',pago:'Transferencia bancaria',notas:'',prodNombre:'',prodPersonal:'',prodPrecio:''});
+    setForm({ nombre: '', telefono: '', ciudad: '', pago: 'Transferencia bancaria', notas: '', prodNombre: '', prodPersonal: '', prodPrecio: '' });
     onClose();
   };
-  return(
-    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{background:'white',borderRadius:20,padding:28,width:'100%',maxWidth:440,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-          <div style={{fontWeight:800,fontSize:18,color:'#1A1118'}}>Nuevo pedido</div>
-          <button onClick={onClose} style={{width:32,height:32,borderRadius:'50%',background:'#F9F5F7',display:'flex',alignItems:'center',justifyContent:'center',color:'#7A6880',border:'none',cursor:'pointer',fontSize:16}}>✕</button>
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>Nuevo pedido manual</div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
         <form onSubmit={submit}>
-          <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1}}>DATOS DEL CLIENTE</div>
-            <input required placeholder="Nombre completo *" value={form.nombre} onChange={e=>set('nombre',e.target.value)} style={inp}/>
-            <input required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e=>set('telefono',e.target.value)} style={inp}/>
-            <input required placeholder="Ciudad, País *" value={form.ciudad} onChange={e=>set('ciudad',e.target.value)} style={inp}/>
-            <select value={form.pago} onChange={e=>set('pago',e.target.value)} style={{...inp,cursor:'pointer'}}>
-              <option>Transferencia bancaria</option><option>Zelle</option>
-              <option>PayPal Friends and Family</option><option>Efectivo (entrega local)</option>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1 }}>DATOS DEL CLIENTE</div>
+            <input required placeholder="Nombre completo *" value={form.nombre} onChange={e => set('nombre', e.target.value)} style={inp} />
+            <input required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e => set('telefono', e.target.value)} style={inp} />
+            <input required placeholder="Ciudad, País *" value={form.ciudad} onChange={e => set('ciudad', e.target.value)} style={inp} />
+            <select value={form.pago} onChange={e => set('pago', e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+              <option>Transferencia bancaria</option>
+              <option>Zelle</option>
+              <option>PayPal Friends and Family</option>
+              <option>Efectivo (entrega local)</option>
+              <option>WhatsApp Pay</option>
             </select>
-            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1,marginTop:4}}>PRODUCTO</div>
-            <input placeholder="Nombre del producto" value={form.prodNombre} onChange={e=>set('prodNombre',e.target.value)} style={inp}/>
-            <input placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e=>set('prodPersonal',e.target.value)} style={inp}/>
-            <input type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e=>set('prodPrecio',e.target.value)} style={inp}/>
-            <div style={{fontWeight:700,fontSize:11,color:'#A89AAF',letterSpacing:1,marginTop:4}}>NOTAS</div>
-            <textarea placeholder="Notas adicionales..." value={form.notas} onChange={e=>set('notas',e.target.value)} rows={3} style={{...inp,resize:'vertical'}}/>
-            <button type="submit" style={{background:'linear-gradient(135deg,#E8508A,#9B5DE5)',color:'white',borderRadius:99,padding:'12px',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',marginTop:4}}>
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1, marginTop: 4 }}>PRODUCTO</div>
+            <input placeholder="Nombre del producto" value={form.prodNombre} onChange={e => set('prodNombre', e.target.value)} style={inp} />
+            <input placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e => set('prodPersonal', e.target.value)} style={inp} />
+            <input type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e => set('prodPrecio', e.target.value)} style={inp} />
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1, marginTop: 4 }}>NOTAS</div>
+            <textarea placeholder="Notas adicionales..." value={form.notas} onChange={e => set('notas', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
+            <button type="submit" style={{ background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, padding: '12px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', marginTop: 4 }}>
               Guardar pedido
             </button>
           </div>
@@ -270,196 +483,40 @@ function NewOrderModal({open,onClose,onSave}){
   );
 }
 
-function ProductCard({p,onEdit,onDelete,onToggle,onMoveUp,onMoveDown,canUp,canDown}){
-  const active=p.available!==false;
-  return(
-    <div style={{background:'white',borderRadius:18,overflow:'hidden',boxShadow:'0 2px 14px rgba(0,0,0,.07)',opacity:active?1:.52,transition:'all .25s',display:'flex',flexDirection:'column',animation:'fadeIn .3s ease'}}>
-      <div style={{height:128,position:'relative',flexShrink:0}}>
-        {p.imageUrl?<img src={p.imageUrl} alt={p.name} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<Illustration type={p.img} color={p.color}/>}
-        {p.tag&&<span style={{position:'absolute',top:9,left:9,background:'#E85D8A',color:'white',fontSize:9,fontWeight:700,padding:'3px 9px',borderRadius:99,letterSpacing:'.1em',textTransform:'uppercase'}}>{p.tag}</span>}
-        <span style={{position:'absolute',top:9,right:9,background:active?'#D1FAE5':'#FEE2E2',color:active?'#065F46':'#DC2626',fontSize:9,fontWeight:700,padding:'3px 9px',borderRadius:99}}>{active?'ACTIVO':'INACTIVO'}</span>
-        {/* Reorder arrows */}
-        <div style={{position:'absolute',bottom:6,right:6,display:'flex',flexDirection:'column',gap:2}}>
-          <button onClick={e=>{e.stopPropagation();onMoveUp(p);}} disabled={!canUp} style={{width:20,height:18,background:'rgba(0,0,0,.4)',color:'white',borderRadius:4,fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',opacity:canUp?1:.3}}>▲</button>
-          <button onClick={e=>{e.stopPropagation();onMoveDown(p);}} disabled={!canDown} style={{width:20,height:18,background:'rgba(0,0,0,.4)',color:'white',borderRadius:4,fontSize:10,display:'flex',alignItems:'center',justifyContent:'center',opacity:canDown?1:.3}}>▼</button>
-        </div>
-      </div>
-      <div style={{padding:'12px 14px',flex:1,display:'flex',flexDirection:'column',gap:5}}>
-        <div style={{fontSize:10,fontWeight:700,color:'#E85D8A',textTransform:'uppercase',letterSpacing:'.1em'}}>{p.category}</div>
-        <div style={{fontSize:14,fontWeight:700,color:'#1a1a1a',lineHeight:1.3,flex:1}}>{p.name}</div>
-        {p.personalized&&<div style={{fontSize:10,color:'#9B5DE5',fontWeight:600}}>✦ Personalizable</div>}
-        <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <span style={{fontWeight:800,color:'#C9A84C',fontSize:15}}>${p.price}</span>
-          {p.oldPrice&&<span style={{fontSize:12,color:'#bbb',textDecoration:'line-through'}}>${p.oldPrice}</span>}
-        </div>
-        <div style={{display:'flex',gap:5,marginTop:4}}>
-          <button onClick={()=>onToggle(p)} style={{flex:1,padding:'5px 0',background:active?'#FEE2E2':'#D1FAE5',color:active?'#DC2626':'#065F46',borderRadius:8,fontSize:11,fontWeight:600}}>{active?'Pausar':'Activar'}</button>
-          <button onClick={()=>onEdit(p)} style={{flex:1,padding:'5px 0',background:'#EDE9FE',color:'#7C3AED',borderRadius:8,fontSize:11,fontWeight:600}}>Editar</button>
-          <button onClick={()=>onMoveUp&&onMoveUp(p)} style={{width:26,height:28,background:'#F0F0F0',color:'#666',borderRadius:8,fontSize:11}} title='Subir'>▲</button>
-          <button onClick={()=>onMoveDown&&onMoveDown(p)} style={{width:26,height:28,background:'#F0F0F0',color:'#666',borderRadius:8,fontSize:11}} title='Bajar'>▼</button>
-          <button onClick={()=>onDelete(p)} style={{width:26,height:28,background:'#FEE2E2',color:'#DC2626',borderRadius:8,fontSize:14,fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Product Modal ─────────────────────────────────────────────────────────
-function ProductModal({product,onSave,onClose,token}){
-  const isNew=!product?.id;
-  const blank={name:'',category:'Personalizado',price:'',oldPrice:'',img:'collar',color:'rose',tag:'',description:'',personalized:false,available:true,imageUrl:''};
-  const[form,setForm]=useState(product?{...product,tag:product.tag||'',oldPrice:product.oldPrice||''}:blank);
-  const[imgPrev,setImgPrev]=useState(product?.imageUrl||'');
-  const[uploading,setUploading]=useState(false);
-  const[uploadMsg,setUploadMsg]=useState('');
-  const fileRef=useRef();
-  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
-
-  const handleFile=async e=>{
-    const file=e.target.files[0];if(!file)return;
-    setUploading(true);setUploadMsg('');
-    try{
-      setImgPrev(URL.createObjectURL(file));
-      const b64=await compressImage(file);
-      const slug=file.name.replace(/[^a-z0-9]+/gi,'_').toLowerCase().substring(0,40);
-      const fname=`${Date.now()}_${slug}.jpg`;
-      const path=`${IMAGES_PATH}/${fname}`;
-      let sha=null;
-      try{const ex=await ghGet(path,token);sha=ex.sha;}catch{}
-      await ghUpload(path,token,b64,sha,`Imagen: ${fname}`);
-      const url=`https://robingonzalez-ux.github.io/cacusa/${path}`;
-      set('imageUrl',url);setUploadMsg('✅ Imagen subida correctamente');
-    }catch(e){setUploadMsg('❌ Error: '+e.message);setImgPrev(form.imageUrl||'');}
-    finally{setUploading(false);}
-  };
-
-  const save=()=>{
-    if(!form.name.trim()||!form.price)return;
-    onSave({...form,id:form.id||Date.now(),price:Number(form.price),oldPrice:form.oldPrice?Number(form.oldPrice):null,tag:form.tag||null,available:form.available!==false});
-  };
-
-  const inp={padding:'10px 13px',border:'1.5px solid #e4e4e4',borderRadius:10,fontSize:14,outline:'none',width:'100%',boxSizing:'border-box',background:'white'};
-  const lbl={display:'block',fontSize:11,fontWeight:600,color:'#777',letterSpacing:'.11em',textTransform:'uppercase',marginBottom:5};
-
-  return(
-    <div style={{position:'fixed',inset:0,background:'rgba(26,17,36,.65)',zIndex:1000,display:'flex',alignItems:'flex-start',justifyContent:'center',padding:'20px 16px',overflowY:'auto'}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:'white',borderRadius:24,padding:'32px 28px',width:'100%',maxWidth:540,boxShadow:'0 24px 80px rgba(0,0,0,.35)',marginTop:20,animation:'fadeIn .3s ease'}}>
-        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:24}}>
-          <h2 style={{fontSize:20,fontWeight:800,color:'#1a1a1a'}}>{isNew?'➕ Nuevo Producto':'✏️ Editar Producto'}</h2>
-          <button onClick={onClose} style={{width:34,height:34,borderRadius:'50%',background:'#f0f0f0',color:'#666',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
-        </div>
-
-        <div style={{marginBottom:20}}>
-          <label style={lbl}>Foto del Producto</label>
-          <div onClick={()=>fileRef.current.click()} style={{height:140,borderRadius:14,border:'2px dashed #e0e0e0',cursor:'pointer',overflow:'hidden',background:'#fafafa',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',transition:'border-color .2s'}}>
-            {imgPrev?<img src={imgPrev} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="preview"/>:
-              <div style={{textAlign:'center',color:'#bbb'}}><div style={{fontSize:36,marginBottom:6}}>📸</div><div style={{fontSize:13}}>Clic o arrastra una foto aquí</div><div style={{fontSize:11,marginTop:3}}>JPG · PNG · WebP (máx 5MB)</div></div>}
-            {uploading&&<div style={{position:'absolute',inset:0,background:'rgba(255,255,255,.88)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#9B5DE5',fontWeight:600}}>⏳ Subiendo imagen…</div>}
-          </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:'none'}}/>
-          {uploadMsg&&<div style={{fontSize:12,marginTop:5,color:uploadMsg.startsWith('✅')?'#065F46':'#DC2626',fontWeight:500}}>{uploadMsg}</div>}
-          {form.imageUrl&&!uploadMsg&&<div style={{fontSize:10,color:'#aaa',marginTop:4,wordBreak:'break-all'}}>📎 {form.imageUrl.split('/').pop()}</div>}
-        </div>
-
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-          <div style={{gridColumn:'span 2'}}>
-            <label style={lbl}>Nombre del producto *</label>
-            <input value={form.name} onChange={e=>set('name',e.target.value)} placeholder="Ej: Collar con nombre personalizado" style={inp}/>
-          </div>
-          <div>
-            <label style={lbl}>Categoría</label>
-            <select value={form.category} onChange={e=>set('category',e.target.value)} style={inp}>
-              {CATEGORIES.map(c=><option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={lbl}>Etiqueta</label>
-            <select value={form.tag||''} onChange={e=>set('tag',e.target.value||null)} style={inp}>
-              <option value="">Sin etiqueta</option>
-              <option>Bestseller</option>
-              <option>Nuevo</option>
-            </select>
-          </div>
-          <div>
-            <label style={lbl}>Precio USD *</label>
-            <input type="number" min="0" step="0.01" value={form.price} onChange={e=>set('price',e.target.value)} placeholder="45" style={inp}/>
-          </div>
-          <div>
-            <label style={lbl}>Precio anterior</label>
-            <input type="number" min="0" step="0.01" value={form.oldPrice||''} onChange={e=>set('oldPrice',e.target.value)} placeholder="60 (tachado)" style={inp}/>
-          </div>
-          <div>
-            <label style={lbl}>Ícono (sin foto)</label>
-            <select value={form.img} onChange={e=>set('img',e.target.value)} style={inp}>
-              {IMG_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={lbl}>Color de acento</label>
-            <select value={form.color} onChange={e=>set('color',e.target.value)} style={inp}>
-              {Object.keys(COLORS).map(c=><option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div style={{gridColumn:'span 2'}}>
-            <label style={lbl}>Descripción</label>
-            <textarea value={form.description} onChange={e=>set('description',e.target.value)} rows={3} placeholder="Descripción del producto…" style={{...inp,resize:'vertical'}}/>
-          </div>
-        </div>
-
-        <div style={{display:'flex',gap:24,margin:'18px 0 24px'}}>
-          {[['personalized','✦ Personalizable'],['available','✅ Disponible en tienda']].map(([k,label])=>(
-            <label key={k} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color:'#555',fontWeight:500}}>
-              <input type="checkbox" checked={!!form[k]&&form[k]!==false} onChange={e=>set(k,e.target.checked)} style={{width:16,height:16,cursor:'pointer',accentColor:'#9B5DE5'}}/>
-              {label}
-            </label>
-          ))}
-        </div>
-
-        <div style={{display:'flex',gap:10}}>
-          <button onClick={onClose} style={{flex:1,padding:13,border:'1.5px solid #ddd',borderRadius:99,color:'#666',fontSize:14,fontWeight:600}}>Cancelar</button>
-          <button onClick={save} disabled={!form.name||!form.price} style={{flex:2,padding:13,background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',color:'white',borderRadius:99,fontSize:14,fontWeight:700,boxShadow:'0 4px 16px rgba(155,93,229,.35)',opacity:(!form.name||!form.price)?.5:1}}>
-            {isNew?'+ Agregar Producto':'💾 Guardar Cambios'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Change Password ───────────────────────────────────────────────────────
-function ChangePasswordModal({username,onClose}){
-  const[cur,setCur]=useState('');
-  const[next,setNext]=useState('');
-  const[conf,setConf]=useState('');
-  const[msg,setMsg]=useState('');
-  const submit=async e=>{
-    e.preventDefault();setMsg('');
-    const curH=await sha256(cur);
-    const stored=localStorage.getItem(`cacusa_pwd_${username}`);
-    const defH=await sha256(DEFAULT_PASSWORDS[username]||'');
-    if(stored?curH!==stored:curH!==defH){setMsg('❌ Contraseña actual incorrecta');return;}
-    if(next.length<8){setMsg('❌ Mínimo 8 caracteres');return;}
-    if(next!==conf){setMsg('❌ Las contraseñas no coinciden');return;}
-    localStorage.setItem(`cacusa_pwd_${username}`,await sha256(next));
+// ── Change Password Modal ──────────────────────────────────────────────────
+function ChangePasswordModal({ username, onClose }) {
+  const [cur, setCur] = useState('');
+  const [next, setNext] = useState('');
+  const [conf, setConf] = useState('');
+  const [msg, setMsg] = useState('');
+  const submit = async e => {
+    e.preventDefault(); setMsg('');
+    const curH = await sha256(cur);
+    const stored = localStorage.getItem(`cacusa_pwd_${username}`);
+    const defH = await sha256(DEFAULT_PASSWORDS[username] || '');
+    if (stored ? curH !== stored : curH !== defH) { setMsg('❌ Contraseña actual incorrecta'); return; }
+    if (next.length < 8) { setMsg('❌ Mínimo 8 caracteres'); return; }
+    if (next !== conf) { setMsg('❌ Las contraseñas no coinciden'); return; }
+    localStorage.setItem(`cacusa_pwd_${username}`, await sha256(next));
     setMsg('✅ Contraseña actualizada');
-    setTimeout(onClose,1500);
+    setTimeout(onClose, 1500);
   };
-  const inp={padding:'10px 13px',border:'1.5px solid #e4e4e4',borderRadius:10,fontSize:14,outline:'none',width:'100%',boxSizing:'border-box'};
-  return(
-    <div style={{position:'fixed',inset:0,background:'rgba(26,17,36,.65)',zIndex:1001,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div style={{background:'white',borderRadius:20,padding:28,width:'100%',maxWidth:360,animation:'fadeIn .3s ease'}}>
-        <h3 style={{fontSize:17,fontWeight:800,marginBottom:20,color:'#1a1a1a'}}>🔑 Cambiar Contraseña</h3>
-        <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:13}}>
-          {[['Contraseña actual',cur,setCur],['Nueva contraseña',next,setNext],['Confirmar nueva',conf,setConf]].map(([label,val,setter])=>(
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 360, animation: 'fadeIn .3s ease' }}>
+        <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 20, color: '#1a1a1a' }}>🔑 Cambiar Contraseña</h3>
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+          {[['Contraseña actual', cur, setCur], ['Nueva contraseña', next, setNext], ['Confirmar nueva', conf, setConf]].map(([label, val, setter]) => (
             <div key={label}>
-              <label style={{display:'block',fontSize:11,fontWeight:600,color:'#777',textTransform:'uppercase',letterSpacing:'.1em',marginBottom:5}}>{label}</label>
-              <input type="password" value={val} onChange={e=>setter(e.target.value)} required style={inp}/>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 5 }}>{label}</label>
+              <input type="password" value={val} onChange={e => setter(e.target.value)} required style={inp} />
             </div>
           ))}
-          {msg&&<div style={{fontSize:13,color:msg.startsWith('✅')?'#065F46':'#DC2626',fontWeight:500}}>{msg}</div>}
-          <div style={{display:'flex',gap:10,marginTop:4}}>
-            <button type="button" onClick={onClose} style={{flex:1,padding:12,border:'1.5px solid #ddd',borderRadius:99,color:'#666',fontWeight:600}}>Cancelar</button>
-            <button type="submit" style={{flex:1,padding:12,background:'#1A1124',color:'white',borderRadius:99,fontWeight:700}}>Guardar</button>
+          {msg && <div style={{ fontSize: 13, color: msg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{msg}</div>}
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, padding: 12, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+            <button type="submit" style={{ flex: 1, padding: 12, background: '#1A1124', color: 'white', borderRadius: 99, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Guardar</button>
           </div>
         </form>
       </div>
@@ -467,288 +524,340 @@ function ChangePasswordModal({username,onClose}){
   );
 }
 
-// ── App ───────────────────────────────────────────────────────────────────
-function App(){
-  const[session,setSession]=useState(()=>{const s=sessionStorage.getItem('cacusa_session');return s?JSON.parse(s):null;});
-  const[products,setProducts]=useState([]);
-  const[productsSha,setProductsSha]=useState(null);
-  const[whatsapp,setWhatsapp]=useState('');
-  const[loading,setLoading]=useState(false);
-  const[syncing,setSyncing]=useState(false);
-  const[syncMsg,setSyncMsg]=useState('');
-  const[dirty,setDirty]=useState(false);
-  const[filter,setFilter]=useState('all');
-  const[search,setSearch]=useState('');
-  const[editProduct,setEditProd]=useState(null);
-  const[showModal,setShowModal]=useState(false);
-  const[delConfirm,setDelConfirm]=useState(null);
-  const[showPwd,setShowPwd]=useState(false);
-  const[showMenu,setShowMenu]=useState(false);
-  const[whatsappNum,setWhatsappNum]=useState('');
-  const[orders,setOrders]=useState([]);
-  const[ordersSha,setOrdersSha]=useState(null);
-  const[activeTab,setActiveTab]=useState('products');
-  const[showOrderModal,setShowOrderModal]=useState(false);
+// ── App ────────────────────────────────────────────────────────────────────
+function App() {
+  const [session, setSession]         = useState(() => { const s = sessionStorage.getItem('cacusa_session'); return s ? JSON.parse(s) : null; });
+  const [products, setProducts]       = useState([]);
+  const [productsSha, setProductsSha] = useState(null);
+  const [whatsappNum, setWhatsappNum] = useState('');
+  const [orders, setOrders]           = useState([]);
+  const [ordersSha, setOrdersSha]     = useState(null);
+  const [loading, setLoading]         = useState(false);
+  const [syncing, setSyncing]         = useState(false);
+  const [syncMsg, setSyncMsg]         = useState('');
+  const [dirty, setDirty]             = useState(false);
+  const [filter, setFilter]           = useState('all');
+  const [search, setSearch]           = useState('');
+  const [editProduct, setEditProd]    = useState(null);
+  const [showModal, setShowModal]     = useState(false);
+  const [delConfirm, setDelConfirm]   = useState(null);
+  const [showPwd, setShowPwd]         = useState(false);
+  const [showMenu, setShowMenu]       = useState(false);
+  const [activeTab, setActiveTab]     = useState('products');
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
-  useEffect(()=>{if(session){sessionStorage.setItem('cacusa_session',JSON.stringify(session));loadData();}},[session]);
+  useEffect(() => {
+    if (session) {
+      sessionStorage.setItem('cacusa_session', JSON.stringify(session));
+      loadData();
+    }
+  }, [session]);
 
-  const loadData=async()=>{
-    setLoading(true);setSyncMsg('');
-    try{
-      try{
-        const file=await ghGet(PRODUCTS_PATH,session.token);
-        const data=JSON.parse(b64ToStr(file.content));
-        setProducts(data.products.map(p=>({...p,available:p.available!==false})));
-        if(data.whatsapp!==undefined)setWhatsappNum(data.whatsapp||'');
-        if(data.config?.whatsapp)setWhatsapp(data.config.whatsapp);
-        setProductsSha(file.sha);
-      }catch(err){
-        if(err.status===404){
-          // products.json doesn't exist yet
-      // Load orders
-      try{
-        const oFile=await ghGet(ORDERS_PATH,session.token);
-        const oData=JSON.parse(b64ToStr(oFile.content));
-        setOrders(oData.orders||[]);
-        setOrdersSha(oFile.sha);
-      }catch(oErr){ if(oErr.status===404){ setOrders([]); setOrdersSha(null); } } — start with empty list
-          setProducts([]);
-          setProductsSha(null);
-          setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
-        }else throw err;
+  const loadData = async () => {
+    setLoading(true); setSyncMsg('');
+    // Load products
+    try {
+      const file = await ghGet(PRODUCTS_PATH, session.token);
+      const data = JSON.parse(b64ToStr(file.content));
+      const prods = Array.isArray(data) ? data : (data.products || []);
+      setProducts(prods.map(p => ({ ...p, available: p.available !== false })));
+      const wa = (data.whatsapp || (data.config && data.config.whatsapp) || '');
+      setWhatsappNum(wa);
+      setProductsSha(file.sha);
+    } catch (err) {
+      if (err.status === 404) {
+        setProducts([]);
+        setProductsSha(null);
+        setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
+      } else {
+        setSyncMsg('❌ Error cargando productos: ' + err.message);
       }
-    }catch(e){setSyncMsg('❌ Error cargando datos: '+e.message);}
+    }
+    // Load orders (independent of products)
+    try {
+      const oFile = await ghGet(ORDERS_PATH, session.token);
+      const oData = JSON.parse(b64ToStr(oFile.content));
+      setOrders(oData.orders || []);
+      setOrdersSha(oFile.sha);
+    } catch (oErr) {
+      if (oErr.status === 404) { setOrders([]); setOrdersSha(null); }
+      // else silently ignore
+    }
     setLoading(false);
   };
 
-  const publish=async()=>{
-    setSyncing(true);setSyncMsg('☁️ Guardando en GitHub…');
-    try{
-      const json=JSON.stringify({version:'1.0',lastUpdated:new Date().toISOString(),updatedBy:session.username,whatsapp:whatsappNum,products},null,2);
-      const saved=await ghSave(PRODUCTS_PATH,session.token,json,productsSha,`[Admin] Productos - ${session.username}`);
+  const publish = async () => {
+    setSyncing(true); setSyncMsg('☁️ Guardando en GitHub…');
+    try {
+      // Save products.json
+      const json = JSON.stringify({
+        version: '1.0',
+        lastUpdated: new Date().toISOString(),
+        updatedBy: session.username,
+        whatsapp: whatsappNum,
+        products
+      }, null, 2);
+      const saved = await ghSave(PRODUCTS_PATH, session.token, json, productsSha, `[Admin] Productos - ${session.username}`);
       setProductsSha(saved.content.sha);
+      // Save orders.json
+      try {
+        const oJson = JSON.stringify({ version: '1.0', lastUpdated: new Date().toISOString(), orders }, null, 2);
+        const oSaved = await ghSave(ORDERS_PATH, session.token, oJson, ordersSha, '[Admin] Pedidos');
+        setOrdersSha(oSaved.content.sha);
+      } catch (oe) { console.warn('orders save:', oe); }
       setDirty(false);
-      try{const oJson=JSON.stringify({version:'1.0',lastUpdated:new Date().toISOString(),orders},null,2);const oSaved=await ghSave(ORDERS_PATH,session.token,oJson,ordersSha,'[Admin] Ordenes');setOrdersSha(oSaved.content.sha);}catch(oe){console.warn('orders:',oe);}
       setSyncMsg('✅ ¡Publicado en cacusabytaitus.com! La tienda se actualiza en 1–2 min.');
-      setTimeout(()=>setSyncMsg(''),8000);
-    }catch(e){setSyncMsg('❌ Error: '+e.message);}
+      setTimeout(() => setSyncMsg(''), 8000);
+    } catch (e) { setSyncMsg('❌ Error: ' + e.message); }
     setSyncing(false);
   };
-  const saveProduct=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);return i>-1?prev.map((x,j)=>j===i?p:x):[...prev,p];});setDirty(true);setShowModal(false);setEditProd(null);};
-  const toggleProd=p=>{setProducts(prev=>prev.map(x=>x.id===p.id?{...x,available:!x.available}:x));setDirty(true);};
-  const deleteProd=p=>{setProducts(prev=>prev.filter(x=>x.id!==p.id));setDelConfirm(null);setDirty(true);};
-  const moveUp=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i<=0)return prev;const a=[...prev];[a[i-1],a[i]]=[a[i],a[i-1]];return a;});setDirty(true);};
-  const moveDown=p=>{setProducts(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=prev.length-1)return prev;const a=[...prev];[a[i],a[i+1]]=[a[i+1],a[i]];return a;});setDirty(true);};
-  const moveProd=(p,dir)=>{
-    setProducts(prev=>{
-      const idx=prev.findIndex(x=>x.id===p.id);
-      if(dir==='up'&&idx<=0)return prev;
-      if(dir==='down'&&idx>=prev.length-1)return prev;
-      const next=[...prev];
-      const swap=dir==='up'?idx-1:idx+1;
-      [next[idx],next[swap]]=[next[swap],next[idx]];
+
+  const saveProduct = p => {
+    setProducts(prev => {
+      const i = prev.findIndex(x => x.id === p.id);
+      return i > -1 ? prev.map((x, j) => j === i ? p : x) : [...prev, p];
+    });
+    setDirty(true); setShowModal(false); setEditProd(null);
+  };
+  const toggleProd = p => { setProducts(prev => prev.map(x => x.id === p.id ? { ...x, available: !x.available } : x)); setDirty(true); };
+  const deleteProd = p => { setProducts(prev => prev.filter(x => x.id !== p.id)); setDelConfirm(null); setDirty(true); };
+  const moveProd = (p, dir) => {
+    setProducts(prev => {
+      const idx = prev.findIndex(x => x.id === p.id);
+      if (dir === 'up' && idx <= 0) return prev;
+      if (dir === 'down' && idx >= prev.length - 1) return prev;
+      const next = [...prev];
+      const swap = dir === 'up' ? idx - 1 : idx + 1;
+      [next[idx], next[swap]] = [next[swap], next[idx]];
       return next;
     });
     setDirty(true);
   };
 
-  if(!session)return<LoginScreen onLogin={s=>setSession(s)}/>;
+  if (!session) return <LoginScreen onLogin={s => setSession(s)} />;
 
-  const filtered=products.filter(p=>{
-    if(filter!=='all'&&p.category!==filter)return false;
-    if(search&&!p.name.toLowerCase().includes(search.toLowerCase())&&!(p.description||'').toLowerCase().includes(search.toLowerCase()))return false;
+  const filtered = products.filter(p => {
+    if (filter !== 'all' && p.category !== filter) return false;
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase()) && !(p.description || '').toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
-  const active=products.filter(p=>p.available!==false).length;
+  const activeCount = products.filter(p => p.available !== false).length;
+  const pendingOrders = orders.filter(o => ['Nuevo', 'Confirmado', 'En proceso'].includes(o.estado || 'Nuevo')).length;
 
-  return(
-    <div style={{minHeight:'100vh',background:'#F0EFF5'}} onClick={()=>showMenu&&setShowMenu(false)}>
-      {/* Header */}
-      <div style={{background:'linear-gradient(135deg,#1A1124,#2D1B2E)',color:'white',padding:'0 20px',display:'flex',alignItems:'center',gap:10,height:56,position:'sticky',top:0,zIndex:200,boxShadow:'0 2px 16px rgba(0,0,0,.3)'}}>
-        <div style={{fontFamily:'Georgia,serif',fontWeight:900,fontSize:20,letterSpacing:'.15em',background:'linear-gradient(135deg,#E85D8A,#C9A84C)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>CACUSA</div>
-        <div style={{color:'rgba(255,255,255,.3)',fontSize:12}}>/admin</div>
-        <div style={{flex:1}}/>
-        {dirty&&<span style={{fontSize:11,color:'#FBBF24',fontWeight:700}}>● Cambios sin publicar</span>}
-        <a href={STORE_URL} target="_blank" rel="noopener" style={{color:'rgba(255,255,255,.5)',fontSize:12,fontWeight:500,display:'flex',alignItems:'center',gap:4}}>🌐 Tienda</a>
-        <button onClick={e=>{e.stopPropagation();setShowMenu(s=>!s);}} style={{width:34,height:34,borderRadius:'50%',background:'rgba(255,255,255,.1)',color:'rgba(255,255,255,.75)',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>
+  return (
+    <div style={{ minHeight: '100vh', background: '#F0EFF5' }} onClick={() => showMenu && setShowMenu(false)}>
+
+      {/* ── Header ── */}
+      <div style={{ background: 'linear-gradient(135deg,#1A1124,#2D1B2E)', color: 'white', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 10, height: 56, position: 'sticky', top: 0, zIndex: 200, boxShadow: '0 2px 16px rgba(0,0,0,.3)' }}>
+        <div style={{ fontFamily: 'Georgia,serif', fontWeight: 900, fontSize: 20, letterSpacing: '.15em', background: 'linear-gradient(135deg,#E85D8A,#C9A84C)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CACUSA</div>
+        <div style={{ color: 'rgba(255,255,255,.3)', fontSize: 12 }}>/admin</div>
+        <div style={{ flex: 1 }} />
+        {dirty && <span style={{ fontSize: 11, color: '#FBBF24', fontWeight: 700 }}>● Cambios sin publicar</span>}
+        <a href={STORE_URL} target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>🌐 Tienda</a>
+        <button onClick={e => { e.stopPropagation(); setShowMenu(s => !s); }}
+          style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none' }}>
           {USERS[session.username].avatar}
         </button>
       </div>
 
-      {showMenu&&(
-        <div style={{position:'fixed',top:63,right:16,background:'white',borderRadius:14,padding:'8px',boxShadow:'0 8px 32px rgba(0,0,0,.15)',zIndex:300,minWidth:210,animation:'fadeIn .2s ease'}} onClick={e=>e.stopPropagation()}>
-          <div style={{padding:'8px 12px',fontSize:12,color:'#aaa',fontWeight:600,borderBottom:'1px solid #f0f0f0',marginBottom:4}}>{USERS[session.username].avatar} {session.name}</div>
+      {showMenu && (
+        <div style={{ position: 'fixed', top: 63, right: 16, background: 'white', borderRadius: 14, padding: '8px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 300, minWidth: 210, animation: 'fadeIn .2s ease' }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '8px 12px', fontSize: 12, color: '#aaa', fontWeight: 600, borderBottom: '1px solid #f0f0f0', marginBottom: 4 }}>{USERS[session.username].avatar} {session.name}</div>
           {[
-            ['🔑 Cambiar contraseña',()=>{setShowPwd(true);setShowMenu(false);}],
-            ['🔄 Recargar productos',()=>{loadData();setShowMenu(false);}],
-            ['🌐 Ver tienda',()=>{window.open(STORE_URL,'_blank');setShowMenu(false);}],
-            ['↩ Cerrar sesión',()=>{sessionStorage.clear();setSession(null);}]
-          ].map(([l,fn])=>(
-            <button key={l} onClick={fn} style={{display:'block',width:'100%',textAlign:'left',padding:'9px 12px',fontSize:13,color:'#333',borderRadius:8,transition:'background .15s'}}>
-              {l}
-            </button>
+            ['🔑 Cambiar contraseña', () => { setShowPwd(true); setShowMenu(false); }],
+            ['🔄 Recargar datos', () => { loadData(); setShowMenu(false); }],
+            ['🌐 Ver tienda', () => { window.open(STORE_URL, '_blank'); setShowMenu(false); }],
+            ['↩ Cerrar sesión', () => { sessionStorage.clear(); setSession(null); }]
+          ].map(([l, fn]) => (
+            <button key={l} onClick={fn} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', fontSize: 13, color: '#333', borderRadius: 8, transition: 'background .15s', border: 'none', cursor: 'pointer', background: 'none', fontFamily: 'inherit' }}>{l}</button>
           ))}
         </div>
       )}
 
-      <div style={{maxWidth:1200,margin:'0 auto',padding:'20px 16px'}}>
-        {/* Stats */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:10,marginBottom:20}}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 16px' }}>
+
+        {/* ── Stats ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(110px,1fr))', gap: 10, marginBottom: 20 }}>
           {[
-            {label:'Total joyas',val:products.length,col:'#9B5DE5',icon:'💎'},
-            {label:'Activas',val:active,col:'#10B981',icon:'✅'},
-            {label:'Inactivas',val:products.length-active,col:'#F59E0B',icon:'⏸'},
-            ...CATEGORIES.map(c=>({label:c,val:products.filter(p=>p.category===c).length,col:'#E85D8A',icon:'🏷'}))
-          ].map((s,i)=>(
-            <div key={i} style={{background:'white',borderRadius:14,padding:'13px 14px',boxShadow:'0 1px 6px rgba(0,0,0,.06)',borderLeft:`4px solid ${s.col}`,cursor:'pointer',transition:'transform .15s'}}
-              onClick={()=>setFilter(i<3?'all':s.label)}>
-              <div style={{fontSize:22,fontWeight:800,color:s.col}}>{s.val}</div>
-              <div style={{fontSize:10,color:'#888',marginTop:2}}>{s.icon} {s.label}</div>
+            { label: 'Total joyas', val: products.length,              col: '#9B5DE5', icon: '💎' },
+            { label: 'Activas',     val: activeCount,                   col: '#10B981', icon: '✅' },
+            { label: 'Inactivas',   val: products.length - activeCount, col: '#F59E0B', icon: '⏸' },
+            { label: 'Pedidos act', val: pendingOrders,                 col: '#E85D8A', icon: '📦' },
+            ...CATEGORIES.map(c => ({ label: c, val: products.filter(p => p.category === c).length, col: '#6B7280', icon: '🏷' }))
+          ].map((s, i) => (
+            <div key={i} style={{ background: 'white', borderRadius: 14, padding: '13px 14px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', borderLeft: `4px solid ${s.col}`, cursor: 'pointer', transition: 'transform .15s' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: s.col }}>{s.val}</div>
+              <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{s.icon} {s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Sync Message */}
-        {syncMsg&&(
-          <div style={{borderRadius:12,padding:'11px 16px',marginBottom:14,fontSize:13,fontWeight:600,background:syncMsg.startsWith('✅')?'#D1FAE5':syncMsg.startsWith('❌')?'#FEE2E2':'#FEF3C7',color:syncMsg.startsWith('✅')?'#065F46':syncMsg.startsWith('❌')?'#DC2626':'#92400E'}}>
+        {/* ── Sync message ── */}
+        {syncMsg && (
+          <div style={{ borderRadius: 12, padding: '11px 16px', marginBottom: 14, fontSize: 13, fontWeight: 600, background: syncMsg.startsWith('✅') ? '#D1FAE5' : syncMsg.startsWith('❌') ? '#FEE2E2' : '#FEF3C7', color: syncMsg.startsWith('✅') ? '#065F46' : syncMsg.startsWith('❌') ? '#DC2626' : '#92400E' }}>
             {syncMsg}
           </div>
         )}
 
-        {/* WhatsApp config bar */}
-        <div style={{background:'white',borderRadius:12,padding:'10px 14px',marginBottom:12,display:'flex',alignItems:'center',gap:10,boxShadow:'0 1px 6px rgba(0,0,0,.05)'}}>
-          <span style={{fontSize:18}}>📱</span>
-          <span style={{fontSize:12,fontWeight:600,color:'#555',whiteSpace:'nowrap'}}>WhatsApp</span>
-          <input value={whatsapp} onChange={e=>{setWhatsapp(e.target.value);setDirty(true);}} placeholder="+15551234567 (número para pedidos)"
-            style={{flex:1,padding:'7px 11px',border:'1.5px solid #e0e0e0',borderRadius:8,fontSize:13,outline:'none',background:'white',color:'#333'}}/>
-          <span style={{fontSize:11,color:'#bbb',whiteSpace:'nowrap'}}>Aparece en la tienda</span>
-        </div>
-
-        {/* Toolbar */}
-        <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap',alignItems:'center'}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar por nombre o descripción…"
-            style={{flex:1,minWidth:200,padding:'10px 14px',border:'1.5px solid #e0e0e0',borderRadius:10,fontSize:14,outline:'none',background:'white'}}/>
-          <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-            {['all',...CATEGORIES].map(cat=>{
-              const cnt=cat==='all'?products.length:products.filter(p=>p.category===cat).length;
-              return<button key={cat} onClick={()=>setFilter(cat)} style={{padding:'8px 13px',borderRadius:99,fontSize:12,fontWeight:600,background:filter===cat?'#E85D8A':'white',color:filter===cat?'white':'#666',border:filter===cat?'none':'1.5px solid #e0e0e0',boxShadow:filter===cat?'0 2px 8px rgba(232,93,138,.3)':'none',transition:'all .2s'}}>{cat==='all'?'Todo':cat} ({cnt})</button>;
-            })}
-          </div>
-          <button onClick={()=>{setEditProd(null);setShowModal(true);}} style={{padding:'10px 20px',background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:13,boxShadow:'0 4px 16px rgba(155,93,229,.3)',whiteSpace:'nowrap'}}>+ Nuevo Producto</button>
-          <div style={{display:'flex',alignItems:'center',gap:6,background:'white',borderRadius:10,padding:'6px 12px',border:'1.5px solid #e0e0e0',flexShrink:0}}><span style={{fontSize:15}}>📱</span><input value={whatsappNum} onChange={e=>{setWhatsappNum(e.target.value);setDirty(true);}} placeholder='WhatsApp +593...' style={{border:'none',outline:'none',fontSize:13,width:155,color:'#333'}} title='Número WhatsApp para pedidos'/></div>
-          <button onClick={publish} disabled={!dirty||syncing} style={{padding:'10px 20px',background:dirty?'linear-gradient(135deg,#1A1124,#2D1B2E)':'#e0e0e0',color:dirty?'white':'#aaa',borderRadius:99,fontWeight:700,fontSize:13,whiteSpace:'nowrap',opacity:syncing?.7:1,transition:'all .2s',boxShadow:dirty?'0 4px 12px rgba(0,0,0,.2)':'none'}}>
-            {syncing?'⏳ Publicando…':'☁️ Publicar cambios'}
+        {/* ── WhatsApp + Publish bar ── */}
+        <div style={{ background: 'white', borderRadius: 12, padding: '12px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 6px rgba(0,0,0,.05)', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 18 }}>📱</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#555', whiteSpace: 'nowrap' }}>WhatsApp para pedidos:</span>
+          <input value={whatsappNum} onChange={e => { setWhatsappNum(e.target.value); setDirty(true); }}
+            placeholder="+593 99 999 9999"
+            style={{ flex: 1, minWidth: 180, padding: '8px 12px', border: '1.5px solid #e0e0e0', borderRadius: 8, fontSize: 13, outline: 'none', color: '#333' }} />
+          <button onClick={publish} disabled={!dirty || syncing}
+            style={{ padding: '10px 22px', background: dirty ? 'linear-gradient(135deg,#1A1124,#2D1B2E)' : '#e0e0e0', color: dirty ? 'white' : '#aaa', borderRadius: 99, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', opacity: syncing ? .7 : 1, transition: 'all .2s', boxShadow: dirty ? '0 4px 12px rgba(0,0,0,.2)' : 'none', border: 'none', cursor: dirty && !syncing ? 'pointer' : 'default' }}>
+            {syncing ? '⏳ Publicando…' : '☁️ Publicar cambios'}
           </button>
         </div>
 
-        {/* Grid */}
-        {
-        {/* Tab navigation */}
-        <div style={{display:'flex',marginBottom:20,background:'white',borderRadius:12,overflow:'hidden',border:'1px solid #EDE8EA'}}>
-          {[['products','💎 Productos',products.length],['orders','📦 Pedidos',orders.filter(o=>o.estado==='Nuevo'||o.estado==='Confirmado'||o.estado==='En proceso').length]].map(([tab,label,badge])=>(
-            <button key={tab} onClick={()=>setActiveTab(tab)}
-              style={{flex:1,padding:'13px 16px',fontWeight:700,fontSize:14,border:'none',cursor:'pointer',background:activeTab===tab?'white':'#F9F5F7',color:activeTab===tab?'#E8508A':'#7A6880',borderBottom:activeTab===tab?'2.5px solid #E8508A':'2.5px solid transparent',display:'flex',alignItems:'center',justifyContent:'center',gap:6,transition:'all .15s'}}>
+        {/* ── Tab navigation ── */}
+        <div style={{ display: 'flex', marginBottom: 20, background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #EDE8EA' }}>
+          {[
+            ['products', '💎 Productos',       products.length],
+            ['orders',   '📦 Pedidos',          pendingOrders]
+          ].map(([tab, label, badge]) => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{ flex: 1, padding: '13px 16px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', background: activeTab === tab ? 'white' : '#F9F5F7', color: activeTab === tab ? '#E8508A' : '#7A6880', borderBottom: activeTab === tab ? '2.5px solid #E8508A' : '2.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s', fontFamily: 'inherit' }}>
               {label}
-              {badge>0&&<span style={{background:activeTab===tab?'#E8508A':'#C4B5C8',color:'white',borderRadius:99,fontSize:11,padding:'1px 7px',fontWeight:800}}>{badge}</span>}
+              {badge > 0 && <span style={{ background: activeTab === tab ? '#E8508A' : '#C4B5C8', color: 'white', borderRadius: 99, fontSize: 11, padding: '1px 7px', fontWeight: 800 }}>{badge}</span>}
             </button>
           ))}
         </div>
-        {activeTab==='products'&&(
-loading?(
-          <div style={{textAlign:'center',padding:'80px 0',color:'#aaa'}}>
-            <div style={{fontSize:44,marginBottom:12}}>⏳</div>
-            <div style={{fontSize:16}}>Cargando productos…</div>
-          </div>
-        ):filtered.length===0?(
-          <div style={{textAlign:'center',padding:'80px 0',color:'#aaa'}}>
-            <div style={{fontSize:52,marginBottom:12}}>💎</div>
-            <div style={{fontSize:16,marginBottom:8}}>{search?'Sin resultados para "'+search+'"':'Sin productos en esta categoría'}</div>
-            {!search&&<button onClick={()=>{setEditProd(null);setShowModal(true);}} style={{padding:'10px 24px',background:'linear-gradient(135deg,#E85D8A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:13,marginTop:8,boxShadow:'0 4px 12px rgba(232,93,138,.3)'}}>+ Agregar primer producto</button>}
-          </div>
-        ):(
-          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:14}}>
-            {filtered.map((p,i)=>{
-            const globalIdx=products.findIndex(x=>x.id===p.id);
-            return <ProductCard key={p.id} p={p}
-              onEdit={p=>{setEditProd(p);setShowModal(true);}}
-              onDelete={setDelConfirm}
-              onToggle={toggleProd}
-              onMoveUp={p=>moveProd(p,'up')}
-              onMoveDown={p=>moveProd(p,'down')}
-              canUp={globalIdx>0}
-              canDown={globalIdx<products.length-1}
-            />;
-          })}
+
+        {/* ── Products tab ── */}
+        {activeTab === 'products' && (
+          <div>
+            {/* Toolbar */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Buscar por nombre o descripción…"
+                style={{ flex: 1, minWidth: 200, padding: '10px 14px', border: '1.5px solid #e0e0e0', borderRadius: 10, fontSize: 14, outline: 'none', background: 'white' }} />
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                {['all', ...CATEGORIES].map(cat => {
+                  const cnt = cat === 'all' ? products.length : products.filter(p => p.category === cat).length;
+                  return (
+                    <button key={cat} onClick={() => setFilter(cat)}
+                      style={{ padding: '8px 13px', borderRadius: 99, fontSize: 12, fontWeight: 600, background: filter === cat ? '#E85D8A' : 'white', color: filter === cat ? 'white' : '#666', border: filter === cat ? 'none' : '1.5px solid #e0e0e0', boxShadow: filter === cat ? '0 2px 8px rgba(232,93,138,.3)' : 'none', transition: 'all .2s', cursor: 'pointer' }}>
+                      {cat === 'all' ? 'Todo' : cat} ({cnt})
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => { setEditProd(null); setShowModal(true); }}
+                style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 16px rgba(155,93,229,.3)', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
+                + Nuevo Producto
+              </button>
+            </div>
+
+            {/* Grid */}
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                <div style={{ fontSize: 44, marginBottom: 12 }}>⏳</div>
+                <div style={{ fontSize: 16 }}>Cargando…</div>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>💎</div>
+                <div style={{ fontSize: 16, marginBottom: 8 }}>{search ? `Sin resultados para "${search}"` : 'Sin productos en esta categoría'}</div>
+                {!search && <button onClick={() => { setEditProd(null); setShowModal(true); }}
+                  style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, marginTop: 8, border: 'none', cursor: 'pointer' }}>
+                  + Agregar primer producto
+                </button>}
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 14 }}>
+                {filtered.map(p => {
+                  const globalIdx = products.findIndex(x => x.id === p.id);
+                  return (
+                    <ProductCard key={p.id} p={p}
+                      onEdit={p => { setEditProd(p); setShowModal(true); }}
+                      onDelete={setDelConfirm}
+                      onToggle={toggleProd}
+                      onMoveUp={p => moveProd(p, 'up')}
+                      onMoveDown={p => moveProd(p, 'down')}
+                      canUp={globalIdx > 0}
+                      canDown={globalIdx < products.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
+
+        {/* ── Orders tab ── */}
+        {activeTab === 'orders' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>
+                Pedidos <span style={{ color: '#A89AAF', fontWeight: 400, fontSize: 14 }}>{orders.length} total</span>
+              </div>
+              <button onClick={() => setShowOrderModal(true)}
+                style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(232,80,138,.3)' }}>
+                + Nuevo pedido
+              </button>
+            </div>
+
+            {orders.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
+                <div style={{ fontSize: 16, marginBottom: 8 }}>No hay pedidos aún</div>
+                <div style={{ fontSize: 13, color: '#ccc' }}>Los pedidos aparecerán aquí cuando los registres manualmente</div>
+              </div>
+            ) : (
+              <div>
+                {ORDER_STATES.map(estado => {
+                  const grupo = orders.filter(o => (o.estado || 'Nuevo') === estado);
+                  if (grupo.length === 0) return null;
+                  return (
+                    <div key={estado} style={{ marginBottom: 24 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: '#7A6880', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ background: STATE_COLORS[estado], color: 'white', padding: '3px 10px', borderRadius: 99, fontSize: 11 }}>{estado}</span>
+                        <span>{grupo.length} pedido{grupo.length !== 1 ? 's' : ''}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+                        {grupo.map(o => (
+                          <OrderCard key={o.id} order={o}
+                            onStatusChange={(ord, newState) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); setDirty(true); }}
+                            onDelete={ord => { setOrders(prev => prev.filter(x => x.id !== ord.id)); setDirty(true); }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Modals ── */}
+        {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
+        {showModal && <ProductModal product={editProduct} token={session.token} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
+        {showPwd && <ChangePasswordModal username={session.username} onClose={() => setShowPwd(false)} />}
+
+        {delConfirm && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div style={{ background: 'white', borderRadius: 22, padding: 32, maxWidth: 340, width: '100%', textAlign: 'center', boxShadow: '0 24px 60px rgba(0,0,0,.3)', animation: 'fadeIn .3s ease' }}>
+              <div style={{ fontSize: 48, marginBottom: 14 }}>🗑️</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>¿Eliminar producto?</div>
+              <div style={{ color: '#666', marginBottom: 24, fontSize: 14, lineHeight: 1.5 }}>"{delConfirm.name}" se eliminará de la tienda. Esta acción se aplica al publicar cambios.</div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setDelConfirm(null)} style={{ flex: 1, padding: 13, border: '1.5px solid #e0e0e0', borderRadius: 99, fontWeight: 600, color: '#666', fontSize: 14, cursor: 'pointer', background: 'white' }}>Cancelar</button>
+                <button onClick={() => deleteProd(delConfirm)} style={{ flex: 1, padding: 13, background: '#DC2626', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }}>Eliminar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
-
-              )}
-        {activeTab==='orders'&&(
-        <div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
-            <div style={{fontWeight:800,fontSize:18,color:'#1A1118'}}>Pedidos <span style={{color:'#A89AAF',fontWeight:400,fontSize:14}}>{orders.length} total</span></div>
-            <button onClick={()=>setShowOrderModal(true)} style={{padding:'10px 20px',background:'linear-gradient(135deg,#E8508A,#9B5DE5)',color:'white',borderRadius:99,fontWeight:700,fontSize:13,border:'none',cursor:'pointer',boxShadow:'0 4px 12px rgba(232,80,138,.3)'}}>+ Nuevo pedido</button>
-          </div>
-          {orders.length===0?(
-            <div style={{textAlign:'center',padding:'80px 0',color:'#aaa'}}>
-              <div style={{fontSize:52,marginBottom:12}}>📦</div>
-              <div style={{fontSize:16,marginBottom:8}}>No hay pedidos aún</div>
-              <div style={{fontSize:13,color:'#ccc'}}>Los pedidos aparecerán aquí cuando clientes completen el formulario en la tienda</div>
-            </div>
-          ):(
-            <div>
-              {['Nuevo','Confirmado','En proceso','Enviado','Entregado','Cancelado'].map(estado=>{
-                const grupo=orders.filter(o=>(o.estado||'Nuevo')===estado);
-                if(grupo.length===0)return null;
-                return(
-                  <div key={estado} style={{marginBottom:24}}>
-                    <div style={{fontWeight:700,fontSize:12,color:'#7A6880',letterSpacing:1,marginBottom:10,display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{background:STATE_COLORS[estado],color:'white',padding:'3px 10px',borderRadius:99,fontSize:11}}>{estado}</span>
-                      <span>{grupo.length} pedido{grupo.length!==1?'s':''}</span>
-                    </div>
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:14}}>
-                      {grupo.map(o=>(
-                        <OrderCard key={o.id} order={o}
-                          onStatusChange={(ord,newState)=>{
-                            setOrders(prev=>prev.map(x=>x.id===ord.id?{...x,estado:newState}:x));
-                            setDirty(true);
-                          }}
-                          onDelete={ord=>{setOrders(prev=>prev.filter(x=>x.id!==ord.id));setDirty(true);}}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        )}
-        {showOrderModal&&<NewOrderModal open={showOrderModal} onClose={()=>setShowOrderModal(false)} onSave={o=>{setOrders(prev=>[o,...prev]);setDirty(true);}}/> }
-
-        {showModal&&<ProductModal product={editProduct} token={session.token} onSave={saveProduct} onClose={()=>{setShowModal(false);setEditProd(null);}}/>}
-
-      {delConfirm&&(
-        <div style={{position:'fixed',inset:0,background:'rgba(26,17,36,.65)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-          <div style={{background:'white',borderRadius:22,padding:32,maxWidth:340,width:'100%',textAlign:'center',boxShadow:'0 24px 60px rgba(0,0,0,.3)',animation:'fadeIn .3s ease'}}>
-            <div style={{fontSize:48,marginBottom:14}}>🗑️</div>
-            <div style={{fontSize:18,fontWeight:800,marginBottom:8}}>¿Eliminar producto?</div>
-            <div style={{color:'#666',marginBottom:24,fontSize:14,lineHeight:1.5}}>"{delConfirm.name}" se eliminará de la tienda. Esta acción se aplica al publicar cambios.</div>
-            <div style={{display:'flex',gap:10}}>
-              <button onClick={()=>setDelConfirm(null)} style={{flex:1,padding:13,border:'1.5px solid #e0e0e0',borderRadius:99,fontWeight:600,color:'#666',fontSize:14}}>Cancelar</button>
-              <button onClick={()=>deleteProd(delConfirm)} style={{flex:1,padding:13,background:'#DC2626',color:'white',borderRadius:99,fontWeight:700,fontSize:14}}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showPwd&&<ChangePasswordModal username={session.username} onClose={()=>setShowPwd(false)}/>}
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 </script>
 </body>
 </html>
