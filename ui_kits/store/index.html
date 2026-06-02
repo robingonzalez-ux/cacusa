@@ -43,6 +43,18 @@ input, textarea, select { font-family: inherit; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--surface); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+@keyframes float { 0%,100%{transform:translateY(0px) rotate(0deg)} 50%{transform:translateY(-14px) rotate(3deg)} }
+@keyframes floatR { 0%,100%{transform:translateY(0px) rotate(0deg)} 50%{transform:translateY(-10px) rotate(-4deg)} }
+@keyframes sparkle { 0%,100%{opacity:0;transform:scale(0) rotate(0deg)} 40%,60%{opacity:1;transform:scale(1) rotate(180deg)} }
+@keyframes shimmer { 0%{background-position:-400% center} 100%{background-position:400% center} }
+@keyframes pulse-soft { 0%,100%{transform:scale(1);box-shadow:0 8px 30px rgba(232,80,138,0.3)} 50%{transform:scale(1.03);box-shadow:0 12px 40px rgba(232,80,138,0.5)} }
+@keyframes slide-up { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes badge-glow { 0%,100%{box-shadow:0 0 8px rgba(232,80,138,0.4)} 50%{box-shadow:0 0 20px rgba(232,80,138,0.8)} }
+.product-card-hover { transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s; }
+.product-card-hover:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 16px 48px rgba(232,80,138,0.2) !important; }
+.btn-primary { transition: transform 0.2s, box-shadow 0.2s; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,80,138,0.5) !important; }
+
 </style>
 </head>
 <body>
@@ -173,53 +185,89 @@ const Header = ({ screen, setScreen, cartCount, setCartOpen }) => {
 const HeroSection = ({ setScreen }) => {
   const w = useWindowWidth();
   const isMobile = w < 768;
+  const sparklePos = [[8,18],[82,12],[15,72],[88,65],[50,8],[35,85],[70,40],[25,45]];
+  const sparkleEmoji = ['✨','💫','⭐','✨','💖','⭐','💫','✨'];
+  const sparkleSizes = [18,14,20,12,22,16,13,19];
+  const sparkleTimes = [3.5,4.2,2.8,5,3.2,4.8,3.8,2.5];
+  const sparkleDelays = [0,0.7,1.4,0.3,2,1,0.5,1.8];
   return (
-    <section style={{position:'relative',overflow:'hidden',display:'flex',alignItems:'center'}}>
-      <div style={{position:'absolute',inset:0,background:'linear-gradient(135deg, #FEF0E7 0%, #FCE4EE 30%, #F0E8FC 60%, #E2F3FC 100%)',zIndex:0}} />
-      <div style={{position:'absolute',top:-80,right:-80,width:500,height:500,borderRadius:'50%',background:'radial-gradient(circle, rgba(232,80,138,0.12) 0%, transparent 70%)',zIndex:0}} />
-      <div style={{position:'absolute',bottom:-60,left:-40,width:380,height:380,borderRadius:'50%',background:'radial-gradient(circle, rgba(176,127,236,0.1) 0%, transparent 70%)',zIndex:0}} />
-      <div style={{maxWidth:1200,margin:'0 auto',padding: isMobile ? '48px 20px 36px' : '80px 32px',position:'relative',zIndex:1,width:'100%',display:'grid',gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',gap: isMobile ? 32 : 64,alignItems:'center'}}>
-        <div>
-          <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:16}}>Joyería Artesanal Personalizada</div>
-          <h1 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 40 : 56,letterSpacing:'-0.02em',lineHeight:1.05,color:'var(--ink)',marginBottom:16}}>
-            Creada<br/>
-            <span style={{background:'var(--grad-brand)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text'}}>para ti.</span>
-          </h1>
-          <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 17 : 19,lineHeight:1.65,color:'var(--plum-mid)',marginBottom:12,fontStyle:'italic'}}>
-            "creamos para que luzcas más bella de lo que ya eres"
-          </p>
-          <p style={{fontFamily:'var(--font-sans)',fontSize:15,color:'var(--muted)',lineHeight:1.6,marginBottom:32,maxWidth:420}}>
-            Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.
-          </p>
-          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-            <button onClick={() => setScreen('shop')} style={{background:'var(--rose)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,letterSpacing:'0.05em',border:'none',borderRadius:999,padding:'14px 32px',boxShadow:'var(--shadow-btn)'}}>
-              Ver colección
-            </button>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'13px 28px'}}>
-              Personaliza →
-            </button>
-          </div>
-          <div style={{display:'flex',gap:20,marginTop:28,alignItems:'center',flexWrap:'wrap'}}>
-            {[['Ecuador & USA','🌎'],['Envío express','📦'],['Hecho a mano','✨']].map(([l,e]) => (
-              <div key={l} style={{display:'flex',alignItems:'center',gap:6}}>
-                <span style={{fontSize:14}}>{e}</span>
-                <span style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--muted)'}}>{l}</span>
-              </div>
-            ))}
-          </div>
+    <section style={{position:'relative',overflow:'hidden',minHeight:isMobile?'100svh':'96vh',display:'flex',alignItems:'center',background:'linear-gradient(150deg, #FFF5FB 0%, #FEE8F5 25%, #F3E8FF 55%, #E8F4FF 100%)'}}>
+      {/* Sparkles */}
+      {sparklePos.map(([l,t],i) => (
+        <div key={i} style={{position:'absolute',left:l+'%',top:t+'%',fontSize:sparkleSizes[i],animation:'sparkle '+sparkleTimes[i]+'s ease-in-out infinite',animationDelay:sparkleDelays[i]+'s',zIndex:0,pointerEvents:'none',userSelect:'none'}}>
+          {sparkleEmoji[i]}
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap: isMobile ? 10 : 16}}>
-          {PRODUCTS.slice(0,4).map((p,i) => (
-            <div key={p.id} style={{borderRadius:20,overflow:'hidden',boxShadow:'var(--shadow-card)',background:'white',transform: !isMobile && i%2===1 ? 'translateY(24px)' : 'none'}}>
-              <div style={{height: isMobile ? 90 : 120}}><ProductIllustration type={p.img} color={p.color}/></div>
-              <div style={{padding:'10px 12px'}}>
-                <div style={{fontFamily:'var(--font-serif)',fontSize:13,color:'var(--ink)'}}>{p.name}</div>
-                <div style={{fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600,color:'var(--gold)',marginTop:2}}>${p.price}</div>
-              </div>
+      ))}
+      {/* Gradient orbs */}
+      <div style={{position:'absolute',top:-120,right:-120,width:isMobile?400:650,height:isMobile?400:650,borderRadius:'50%',background:'radial-gradient(circle, rgba(232,80,138,0.18) 0%, rgba(176,127,236,0.12) 40%, transparent 70%)',zIndex:0}}/>
+      <div style={{position:'absolute',bottom:-80,left:-60,width:isMobile?280:420,height:isMobile?280:420,borderRadius:'50%',background:'radial-gradient(circle, rgba(107,186,237,0.15) 0%, rgba(176,127,236,0.08) 50%, transparent 70%)',zIndex:0}}/>
+      <div style={{position:'absolute',top:'40%',left:'40%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle, rgba(245,169,127,0.1) 0%, transparent 70%)',zIndex:0}}/>
+
+      <div style={{maxWidth:1200,margin:'0 auto',padding:isMobile?'80px 20px 60px':'80px 48px',position:'relative',zIndex:1,width:'100%'}}>
+        <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'1fr 1fr',gap:isMobile?36:64,alignItems:'center'}}>
+
+          {/* LEFT: Text */}
+          <div style={{animation:'slide-up 0.8s ease both'}}>
+            <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',borderRadius:99,padding:'7px 18px',fontSize:12,fontWeight:700,letterSpacing:'0.05em',marginBottom:24,animation:'badge-glow 3s ease-in-out infinite',boxShadow:'0 4px 20px rgba(232,80,138,0.4)'}}>
+              💎 Joyería Artesanal Personalizada
             </div>
-          ))}
+            <h1 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?42:62,letterSpacing:'-0.02em',lineHeight:1.02,color:'var(--ink)',marginBottom:20}}>
+              Creada<br/>
+              <span style={{background:'linear-gradient(135deg,#E8508A 0%,#B07FEC 50%,#6BBAED 100%)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',backgroundClip:'text',backgroundSize:'200%',animation:'shimmer 4s linear infinite'}}>para ti.</span>
+            </h1>
+            <p style={{fontFamily:'var(--font-serif)',fontSize:isMobile?17:20,lineHeight:1.7,color:'var(--plum-mid)',marginBottom:10,fontStyle:'italic'}}>
+              &ldquo;creamos para que luzcas más bella de lo que ya eres&rdquo;
+            </p>
+            <p style={{fontFamily:'var(--font-sans)',fontSize:15,color:'var(--muted)',lineHeight:1.65,marginBottom:32,maxWidth:420}}>
+              Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.
+            </p>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap',marginBottom:36}}>
+              <button onClick={()=>setScreen('shop')} className="btn-primary" style={{background:'linear-gradient(135deg,#E8508A,#C0336E)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,border:'none',borderRadius:999,padding:'15px 36px',boxShadow:'0 6px 24px rgba(232,80,138,0.45)',cursor:'pointer'}}>
+                Ver colección ✨
+              </button>
+              <button onClick={()=>setScreen('shop')} style={{background:'rgba(232,80,138,0.08)',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid rgba(232,80,138,0.3)',borderRadius:999,padding:'14px 28px',cursor:'pointer',backdropFilter:'blur(8px)'}}>
+                Personaliza tu joya →
+              </button>
+            </div>
+            {/* Stats */}
+            <div style={{display:'flex',gap:24,flexWrap:'wrap'}}>
+              {[['500+','Piezas creadas'],['⭐ 4.9','Calificación'],['🌎 2','Países']].map(([v,l]) => (
+                <div key={l} style={{textAlign:'left'}}>
+                  <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:22,color:'var(--rose)',lineHeight:1}}>{v}</div>
+                  <div style={{fontFamily:'var(--font-sans)',fontSize:12,color:'var(--muted)',marginTop:3}}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT: Floating jewelry visual */}
+          {!isMobile && (
+            <div style={{position:'relative',height:460}}>
+              {/* Main floating piece */}
+              <div style={{position:'absolute',top:30,right:20,width:220,height:220,borderRadius:32,background:'linear-gradient(135deg,#FCE4EE,#F0E8FC)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 24px 64px rgba(232,80,138,0.3)',animation:'float 4s ease-in-out infinite'}}>
+                <ProductIllustration type="collar" color="rose"/>
+              </div>
+              {/* Second piece */}
+              <div style={{position:'absolute',bottom:40,left:10,width:170,height:170,borderRadius:28,background:'linear-gradient(135deg,#F7F0E3,#F0E8FC)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 16px 48px rgba(176,127,236,0.35)',animation:'floatR 3.5s ease-in-out infinite',animationDelay:'0.8s'}}>
+                <ProductIllustration type="ring" color="gold"/>
+              </div>
+              {/* Third piece */}
+              <div style={{position:'absolute',top:200,left:50,width:130,height:130,borderRadius:24,background:'linear-gradient(135deg,#E2F3FC,#EDE8EA)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 12px 36px rgba(107,186,237,0.4)',animation:'float 5s ease-in-out infinite',animationDelay:'1.5s'}}>
+                <ProductIllustration type="bracelet" color="sky"/>
+              </div>
+              {/* Tag label */}
+              <div style={{position:'absolute',top:10,left:30,background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',borderRadius:99,padding:'8px 18px',fontSize:12,fontWeight:700,boxShadow:'0 6px 20px rgba(232,80,138,0.5)',animation:'float 3s ease-in-out infinite',animationDelay:'0.4s'}}>✨ Nuevo diseño</div>
+              {/* Heart */}
+              <div style={{position:'absolute',bottom:160,right:5,fontSize:36,animation:'float 4.5s ease-in-out infinite',animationDelay:'1.2s'}}>💖</div>
+              {/* Star */}
+              <div style={{position:'absolute',top:130,right:10,fontSize:28,animation:'sparkle 3s ease-in-out infinite',animationDelay:'0.6s'}}>⭐</div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Wave bottom */}
+      <div style={{position:'absolute',bottom:0,left:0,right:0,height:60,background:'white',clipPath:'ellipse(55% 100% at 50% 100%)'}}></div>
     </section>
   );
 };
@@ -524,32 +572,115 @@ const HomeScreen = ({ setScreen, setSelected, addToCart }) => {
   const isMobile = w < 640;
   const isTablet = w < 1024;
   const cols = isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
+  const catCols = isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)';
+  const cats = [
+    {name:'Personalizado',emoji:'💝',bg:'linear-gradient(135deg,#E8508A,#C0336E)',desc:'Con tu nombre'},
+    {name:'Colección Gold',emoji:'✨',bg:'linear-gradient(135deg,#C9A46A,#A07840)',desc:'Chapado 18k'},
+    {name:'Colección',emoji:'💎',bg:'linear-gradient(135deg,#6BBAED,#4299CA)',desc:'Plata 925'},
+    {name:'Hombres',emoji:'🔗',bg:'linear-gradient(135deg,#4A3050,#2D1B2E)',desc:'Estilo urbano'},
+  ];
   return (
     <div>
       <HeroSection setScreen={setScreen}/>
-      <div style={{background:'var(--surface)',padding: isMobile ? '48px 16px' : '64px 32px'}}>
+
+      {/* ── STATS BAR ── */}
+      <div style={{background:'linear-gradient(135deg,#E8508A 0%,#9B5DE5 50%,#6BBAED 100%)',padding:isMobile?'28px 20px':'32px 48px'}}>
+        <div style={{maxWidth:900,margin:'0 auto',display:'grid',gridTemplateColumns:isMobile?'repeat(3,1fr)':'repeat(3,1fr)',gap:16,textAlign:'center'}}>
+          {[['500+','Piezas creadas'],['⭐ 4.9','Valoración clientes'],['🌎 Ecuador & USA','Enviamos aquí']].map(([v,l]) => (
+            <div key={l}>
+              <div style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?18:24,color:'white',lineHeight:1.1}}>{v}</div>
+              <div style={{fontFamily:'var(--font-sans)',fontSize:isMobile?10:12,color:'rgba(255,255,255,0.85)',marginTop:4}}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── FEATURED PRODUCTS ── */}
+      <div style={{background:'var(--surface)',padding:isMobile?'52px 16px':'72px 48px'}}>
         <div style={{maxWidth:1200,margin:'0 auto'}}>
           <div style={{textAlign:'center',marginBottom:40}}>
-            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:600,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Más vendidos</div>
-            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize: isMobile ? 28 : 36,color:'var(--ink)'}}>Favoritos de la semana</h2>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>★ Más vendidos</div>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?28:38,color:'var(--ink)',marginBottom:12}}>Favoritas de la semana</h2>
+            <p style={{fontFamily:'var(--font-serif)',fontSize:isMobile?15:17,color:'var(--muted)',fontStyle:'italic',maxWidth:480,margin:'0 auto'}}>Las piezas que más enamoran a nuestras clientas</p>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:cols,gap: isMobile ? 16 : 24}}>
-            {PRODUCTS.slice(0, isMobile ? 4 : 3).map(p => <ProductCard key={p.id} product={p} onSelect={setSelected} addToCart={addToCart}/>)}
+          <div style={{display:'grid',gridTemplateColumns:cols,gap:isMobile?14:24}}>
+            {PRODUCTS.slice(0,isMobile?4:3).map(p => <ProductCard key={p.id} product={p} onSelect={setSelected} addToCart={addToCart}/>)}
           </div>
           <div style={{textAlign:'center',marginTop:40}}>
-            <button onClick={() => setScreen('shop')} style={{background:'transparent',color:'var(--rose)',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:14,border:'1.5px solid var(--rose)',borderRadius:999,padding:'12px 32px'}}>
-              Ver toda la colección
+            <button onClick={()=>setScreen('shop')} className="btn-primary" style={{background:'linear-gradient(135deg,#E8508A,#B07FEC)',color:'white',fontFamily:'var(--font-sans)',fontWeight:700,fontSize:15,border:'none',borderRadius:999,padding:'15px 40px',boxShadow:'0 6px 24px rgba(232,80,138,0.4)',cursor:'pointer'}}>
+              Ver toda la colección ✨
             </button>
           </div>
         </div>
       </div>
-      <div style={{padding: isMobile ? '48px 20px' : '64px 32px',maxWidth:1200,margin:'0 auto',textAlign:'center'}}>
-        <div style={{fontFamily:'var(--font-script)',fontSize: isMobile ? 28 : 36,color:'var(--violet)',marginBottom:8}}>¿Tu primera vez?</div>
-        <h2 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize: isMobile ? 24 : 32,color:'var(--ink)',marginBottom:16}}>Personaliza tu pieza</h2>
-        <p style={{fontFamily:'var(--font-serif)',fontSize: isMobile ? 16 : 18,color:'var(--muted)',lineHeight:1.7,maxWidth:500,margin:'0 auto 32px',fontStyle:'italic'}}>Cuéntanos tu historia y creamos la joya perfecta para ti. Nombre, fecha, mensaje — lo que la hace tuya.</p>
-        <button onClick={() => setScreen('shop')} style={{background:'var(--grad-brand)',color:'white',fontFamily:'var(--font-sans)',fontWeight:600,fontSize:15,letterSpacing:'0.05em',borderRadius:999,padding:'15px 40px',boxShadow:'var(--shadow-btn)'}}>
-          Comenzar ahora →
-        </button>
+
+      {/* ── CATEGORIES ── */}
+      <div style={{background:'white',padding:isMobile?'52px 16px':'72px 48px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:36}}>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--violet)',marginBottom:10}}>Explora</div>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?26:36,color:'var(--ink)'}}>Nuestra colección</h2>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:catCols,gap:isMobile?12:20}}>
+            {cats.map(cat => (
+              <button key={cat.name} onClick={()=>setScreen('shop')} style={{background:cat.bg,borderRadius:isMobile?18:24,padding:isMobile?'28px 12px':'36px 20px',display:'flex',flexDirection:'column',alignItems:'center',gap:10,color:'white',border:'none',cursor:'pointer',boxShadow:'0 8px 28px rgba(0,0,0,0.18)',transition:'transform 0.25s, box-shadow 0.25s',animation:'slide-up 0.6s ease both'}}
+                onMouseOver={e=>{e.currentTarget.style.transform='translateY(-6px) scale(1.04)';e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,0.25)';}}
+                onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 8px 28px rgba(0,0,0,0.18)';}}>
+                <div style={{fontSize:isMobile?32:40}}>{cat.emoji}</div>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:isMobile?13:16}}>{cat.name}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:isMobile?10:12,opacity:0.85}}>{cat.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── WHY CACUSA ── */}
+      <div style={{background:'linear-gradient(150deg,#FFF0F8 0%,#F3E8FF 50%,#E8F4FF 100%)',padding:isMobile?'52px 16px':'80px 48px'}}>
+        <div style={{maxWidth:1100,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:48}}>
+            <div style={{fontFamily:'var(--font-sans)',fontSize:11,fontWeight:700,letterSpacing:'0.2em',textTransform:'uppercase',color:'var(--rose)',marginBottom:10}}>Con amor</div>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?26:38,color:'var(--ink)',marginBottom:12}}>¿Por qué CACUSA?</h2>
+            <p style={{fontFamily:'var(--font-serif)',fontSize:isMobile?15:17,color:'var(--muted)',fontStyle:'italic'}}>Cada joya tiene un propósito, una historia y un corazón detrás</p>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:isMobile?'1fr':'repeat(3,1fr)',gap:isMobile?16:24}}>
+            {[
+              {e:'✋',t:'Hecho a mano',d:'Cada pieza es única, modelada con cuidado y dedicación artesanal. No hay dos iguales.',color:'#E8508A'},
+              {e:'💝',t:'100% Personalizado',d:'Tu nombre, tu fecha, tu historia. Diseñamos joyas que son completamente tuyas.',color:'#9B5DE5'},
+              {e:'⚡',t:'Envío rápido',d:'Empacamos con amor y enviamos a toda Ecuador y Estados Unidos con seguimiento.',color:'#6BBAED'},
+            ].map((item,i) => (
+              <div key={i} style={{background:'white',borderRadius:24,padding:isMobile?'28px 20px':'36px 28px',textAlign:'center',boxShadow:'0 4px 24px rgba(0,0,0,0.07)',animation:'slide-up 0.6s ease '+i*0.15+'s both'}}>
+                <div style={{width:72,height:72,borderRadius:'50%',background:'linear-gradient(135deg,'+item.color+'22,'+item.color+'11)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px',fontSize:32,border:'2px solid '+item.color+'33'}}>{item.e}</div>
+                <div style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:isMobile?18:20,color:'var(--ink)',marginBottom:10}}>{item.t}</div>
+                <div style={{fontFamily:'var(--font-sans)',fontSize:14,color:'var(--muted)',lineHeight:1.65}}>{item.d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── PERSONALIZATION CTA ── */}
+      <div style={{background:'linear-gradient(135deg,#E8508A 0%,#9B5DE5 60%,#6BBAED 100%)',padding:isMobile?'60px 20px':'80px 48px',textAlign:'center',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:-60,right:-60,width:250,height:250,borderRadius:'50%',background:'rgba(255,255,255,0.07)'}}></div>
+        <div style={{position:'absolute',bottom:-40,left:-40,width:200,height:200,borderRadius:'50%',background:'rgba(255,255,255,0.07)'}}></div>
+        <div style={{position:'relative',zIndex:1}}>
+          <div style={{fontSize:48,marginBottom:16,animation:'float 3s ease-in-out infinite'}}>💖</div>
+          <div style={{fontFamily:'var(--font-script)',fontSize:isMobile?32:44,color:'rgba(255,255,255,0.9)',marginBottom:8}}>¿Tu primera vez?</div>
+          <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:isMobile?26:40,color:'white',marginBottom:16}}>Crea tu joya única</h2>
+          <p style={{fontFamily:'var(--font-serif)',fontSize:isMobile?15:18,color:'rgba(255,255,255,0.88)',lineHeight:1.7,maxWidth:520,margin:'0 auto 36px',fontStyle:'italic'}}>
+            Cuéntanos tu historia y creamos la joya perfecta. Nombre, fecha, mensaje — lo que la hace tuya.
+          </p>
+          <button onClick={()=>setScreen('shop')} style={{background:'white',color:'#E8508A',fontFamily:'var(--font-sans)',fontWeight:800,fontSize:16,border:'none',borderRadius:999,padding:'16px 48px',boxShadow:'0 8px 32px rgba(0,0,0,0.25)',cursor:'pointer',animation:'pulse-soft 3s ease-in-out infinite'}}>
+            Comenzar ahora ✨
+          </button>
+          <div style={{display:'flex',gap:20,justifyContent:'center',marginTop:28,flexWrap:'wrap'}}>
+            {[['🌍','Ecuador & USA'],['📦','Envío express'],['💎','Plata 925 & Oro 18k'],['🔒','Compra segura']].map(([e,t]) => (
+              <div key={t} style={{display:'flex',alignItems:'center',gap:6,color:'rgba(255,255,255,0.9)',fontFamily:'var(--font-sans)',fontSize:12,fontWeight:600}}>
+                <span>{e}</span><span>{t}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
