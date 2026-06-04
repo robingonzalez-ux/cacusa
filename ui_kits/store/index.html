@@ -150,8 +150,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .cart-subtotal span{font-family:var(--fu);font-size:13px;color:var(--ink-muted)}
 .cart-subtotal strong{font-family:var(--fu);font-size:18px;font-weight:700;color:var(--ink)}
 .cart-shipping{font-family:var(--fu);font-size:11px;color:var(--pink);text-align:center;margin-bottom:14px}
-.checkout-btn{width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:white;font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:16px;cursor:none;box-shadow:0 4px 24px rgba(37,211,102,.35);transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px}
-.checkout-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(37,211,102,.45)}
+.checkout-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:16px;cursor:none;box-shadow:0 4px 24px rgba(238,111,168,.35);transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px}
+.checkout-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(238,111,168,.45)}
 .wa-badge{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-family:var(--fu);font-size:10px;color:var(--ink-muted)}
 
 /* CHECKOUT MODAL */
@@ -170,8 +170,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .co-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;transition:border-color .2s,box-shadow .2s}
 .co-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.12)}
 .co-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pay-btn{width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:none;box-shadow:0 4px 24px rgba(37,211,102,.4);transition:all .3s;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
-.pay-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(37,211,102,.5)}
+.pay-btn{width:100%;background:linear-gradient(135deg,#1A1A2E,#2D2D4E);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:none;box-shadow:0 4px 24px rgba(26,26,46,.4);transition:all .3s;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+.pay-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 32px rgba(26,26,46,.5)}
+.pay-btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.pay-btn .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;display:none}
+.pay-btn.loading .spinner{display:block}
+.pay-btn.loading .btn-label{display:none}
+.wa-fallback{text-align:center;margin-top:14px}
+.wa-fallback a{font-family:var(--fu);font-size:12px;color:var(--ink-muted);text-decoration:underline;cursor:none}
+.wa-fallback a:hover{color:var(--pink)}
 .co-wa-note{text-align:center;margin-top:12px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
 .co-error{color:#c0336e;font-family:var(--fu);font-size:12px;margin-top:8px;min-height:18px}
 .co-summary-title{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:20px}
@@ -337,14 +344,14 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
     </div>
     <div class="cart-shipping" id="cartShipping"></div>
     <button class="checkout-btn" id="checkoutBtn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.139 1.547 5.874L0 24l6.304-1.52A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.937 0-3.756-.499-5.33-1.375l-.383-.226-3.963.956.985-3.877-.249-.402A9.961 9.961 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-      Pedir por WhatsApp
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+      Finalizar pedido
     </button>
-    <div class="wa-badge">Conectaremos contigo directamente &#x1F4AC;</div>
+    <div class="wa-badge">Pago seguro con Square &#x1F512;</div>
   </div>
 </div>
 
-<!-- CHECKOUT MODAL — WhatsApp -->
+<!-- CHECKOUT MODAL — Square -->
 <div id="checkout-overlay">
   <div class="checkout-box">
     <div class="checkout-inner">
@@ -378,10 +385,16 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-error" id="coError"></div>
 
         <button class="pay-btn" id="payBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.564 4.139 1.547 5.874L0 24l6.304-1.52A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.937 0-3.756-.499-5.33-1.375l-.383-.226-3.963.956.985-3.877-.249-.402A9.961 9.961 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-          Enviar pedido por WhatsApp
+          <div class="spinner"></div>
+          <span class="btn-label" style="display:flex;align-items:center;gap:8px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            Pagar con Square
+          </span>
         </button>
-        <div class="co-wa-note">Se abrir&#xE1; WhatsApp con los detalles de tu pedido &#x2728;</div>
+        <div class="co-wa-note">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
+        <div class="wa-fallback">
+          <a href="#" id="waFallbackBtn">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
+        </div>
       </div>
 
       <div class="checkout-right">
@@ -414,6 +427,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────
 const PRODUCTS_JSON_URL = '../../data/products.json';
+
+// Cloudflare Worker URL — actualizar después del primer deploy
+const SQUARE_WORKER_URL = 'https://cacusa-square.REEMPLAZAR.workers.dev';
+
 let PRODUCTS = [];
 let WHATSAPP_NUMBER = '';
 
@@ -717,23 +734,66 @@ function renderCheckoutSummary() {
     </div>`).join('');
 }
 
-// ─── WHATSAPP ORDER ──────────────────────────────────────────
-document.getElementById('payBtn').addEventListener('click', () => {
+// ─── SQUARE PAYMENT ──────────────────────────────────────────
+document.getElementById('payBtn').addEventListener('click', async () => {
   const errorEl = document.getElementById('coError');
-  const nombre = document.getElementById('coNombre').value.trim();
-  const apellido = document.getElementById('coApellido').value.trim();
-  const tel = document.getElementById('coTel').value.trim();
+  const nombre  = document.getElementById('coNombre').value.trim();
+  const tel     = document.getElementById('coTel').value.trim();
+
   if (!nombre || !tel) {
     errorEl.textContent = 'Por favor ingresa tu nombre y teléfono WhatsApp.';
     return;
   }
   errorEl.textContent = '';
-  const ciudad = document.getElementById('coCiudad').value.trim();
-  const pais = document.getElementById('coPais').value;
+
+  const btn = document.getElementById('payBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  const customer = {
+    name:     nombre,
+    lastname: document.getElementById('coApellido').value.trim(),
+    phone:    tel,
+    city:     document.getElementById('coCiudad').value.trim(),
+    address:  document.getElementById('coDireccion').value.trim(),
+    notes:    document.getElementById('coNotas').value.trim()
+  };
+
+  try {
+    const resp = await fetch(SQUARE_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: cart, customer })
+    });
+    const data = await resp.json();
+
+    if (!resp.ok || !data.checkoutUrl) {
+      throw new Error(data.error || 'No se pudo crear el pago');
+    }
+
+    // Guardar carrito en sessionStorage para recuperar si el usuario cancela
+    sessionStorage.setItem('cacusa-pending-cart', JSON.stringify(cart));
+    cart = []; saveCart(); updateCartUI();
+    window.location.href = data.checkoutUrl;
+
+  } catch (err) {
+    errorEl.textContent = '⚠️ ' + err.message + '. Intenta de nuevo o usa WhatsApp.';
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+});
+
+// ─── WHATSAPP FALLBACK ────────────────────────────────────────
+function buildWhatsAppUrl() {
+  const nombre  = document.getElementById('coNombre').value.trim();
+  const apellido= document.getElementById('coApellido').value.trim();
+  const tel     = document.getElementById('coTel').value.trim();
+  const ciudad  = document.getElementById('coCiudad').value.trim();
+  const pais    = document.getElementById('coPais').value;
   const direccion = document.getElementById('coDireccion').value.trim();
-  const notas = document.getElementById('coNotas').value.trim();
-  const total = cart.reduce((s, i) => s + i.price, 0);
-  const envio = total >= 60 ? 'Gratis' : '$5.00';
+  const notas   = document.getElementById('coNotas').value.trim();
+  const total   = cart.reduce((s, i) => s + i.price, 0);
+  const envio   = total >= 60 ? 'Gratis' : '$5.00';
   const totalFinal = total >= 60 ? total : total + 5;
 
   let msg = '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
@@ -754,11 +814,22 @@ document.getElementById('payBtn').addEventListener('click', () => {
   msg += '\n✨ *Total:* $' + totalFinal;
 
   const waNumber = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
-  const waUrl = waNumber
+  return waNumber
     ? 'https://wa.me/' + waNumber + '?text=' + encodeURIComponent(msg)
     : 'https://wa.me/?text=' + encodeURIComponent(msg);
+}
 
-  window.open(waUrl, '_blank');
+document.getElementById('waFallbackBtn').addEventListener('click', e => {
+  e.preventDefault();
+  const errorEl = document.getElementById('coError');
+  const nombre  = document.getElementById('coNombre').value.trim();
+  const tel     = document.getElementById('coTel').value.trim();
+  if (!nombre || !tel) {
+    errorEl.textContent = 'Por favor ingresa tu nombre y teléfono WhatsApp.';
+    return;
+  }
+  errorEl.textContent = '';
+  window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
   showSuccess();
@@ -774,6 +845,15 @@ document.getElementById('successBack').addEventListener('click', () => {
 // ─── INIT ───────────────────────────────────────────────────
 updateCartUI();
 refreshCursorTargets();
+
+// Detectar regreso desde Square (?paid=1) → mostrar success
+if (new URLSearchParams(window.location.search).get('paid') === '1') {
+  // Limpiar URL sin recargar
+  history.replaceState({}, '', window.location.pathname);
+  // Recuperar carrito pendiente si el usuario volvió sin pagar
+  sessionStorage.removeItem('cacusa-pending-cart');
+  showSuccess();
+}
 </script>
 </body>
 </html>
