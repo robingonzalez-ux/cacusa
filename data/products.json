@@ -13,6 +13,17 @@
       "heroSubtitle": "by Taitus",
       "instagram": "@cacusabytaitus",
       "perks": ["Hecho a mano", "Envío express", "5–7 días hábiles", "Gift wrap gratis"]
+    },
+    "home": {
+      "storyLabel": "Nuestra historia",
+      "storyTitle": "Artesanos del corazón",
+      "storyQuote": "Cada pieza, una historia única",
+      "storyBody": "Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.",
+      "stats": [
+        { "num": "500", "label": "Piezas creadas" },
+        { "num": "2", "label": "Países" },
+        { "num": "100", "label": "% Artesanal" }
+      ]
     }
   },
   "products": [
