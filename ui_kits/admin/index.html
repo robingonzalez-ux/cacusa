@@ -244,16 +244,25 @@ function ProductModal({ product, onSave, onClose, token }) {
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
-  const handleFile = async e => {
-    const file = e.target.files[0]; if (!file) return;
+  const uploadFile = async file => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setUploadMsg('❌ Ese archivo no es una imagen. Usa JPG, PNG o WebP.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadMsg('❌ La imagen es muy pesada (máx 10MB). Toma otra foto.');
+      return;
+    }
     setUploading(true); setUploadMsg('');
     try {
       setImgPrev(URL.createObjectURL(file));
       const b64 = await compressImage(file);
-      const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40);
+      const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40) || 'foto';
       const fname = `${Date.now()}_${slug}.jpg`;
       const path = `${IMAGES_PATH}/${fname}`;
       let sha = null;
@@ -261,11 +270,17 @@ function ProductModal({ product, onSave, onClose, token }) {
       await ghUpload(path, token, b64, sha, `Imagen: ${fname}`);
       const url = `https://robingonzalez-ux.github.io/cacusa/${path}`;
       set('imageUrl', url);
-      setUploadMsg('✅ Imagen subida correctamente');
+      setUploadMsg('✅ Foto subida correctamente');
     } catch (e) {
-      setUploadMsg('❌ Error: ' + e.message);
+      setUploadMsg('❌ Error al subir: ' + e.message);
       setImgPrev(form.imageUrl || '');
     } finally { setUploading(false); }
+  };
+
+  const handleFile = e => uploadFile(e.target.files[0]);
+  const handleDrop = e => {
+    e.preventDefault(); setDragOver(false);
+    uploadFile(e.dataTransfer.files[0]);
   };
 
   const save = () => {
@@ -295,20 +310,27 @@ function ProductModal({ product, onSave, onClose, token }) {
         {/* Image upload */}
         <div style={{ marginBottom: 20 }}>
           <label style={lbl}>Foto del Producto</label>
-          <div onClick={() => fileRef.current.click()}
-            style={{ height: 140, borderRadius: 14, border: '2px dashed #e0e0e0', cursor: 'pointer', overflow: 'hidden', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'border-color .2s' }}>
+          <div onClick={() => !uploading && fileRef.current.click()}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
+            onDrop={handleDrop}
+            style={{ height: 160, borderRadius: 14, border: dragOver ? '2px dashed #9B5DE5' : '2px dashed #e0e0e0', cursor: uploading ? 'wait' : 'pointer', overflow: 'hidden', background: dragOver ? '#F6F0FE' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'border-color .2s, background .2s' }}>
             {imgPrev
               ? <img src={imgPrev} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="preview" />
-              : <div style={{ textAlign: 'center', color: '#bbb' }}>
-                  <div style={{ fontSize: 36, marginBottom: 6 }}>📸</div>
-                  <div style={{ fontSize: 13 }}>Clic o arrastra una foto aquí</div>
-                  <div style={{ fontSize: 11, marginTop: 3 }}>JPG · PNG · WebP (máx 5MB)</div>
+              : <div style={{ textAlign: 'center', color: dragOver ? '#9B5DE5' : '#bbb', pointerEvents: 'none' }}>
+                  <div style={{ fontSize: 40, marginBottom: 6 }}>{dragOver ? '⬇️' : '📸'}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600 }}>{dragOver ? 'Suelta la foto aquí' : 'Toca para elegir una foto'}</div>
+                  <div style={{ fontSize: 12, marginTop: 3 }}>o arrástrala aquí · JPG · PNG · WebP</div>
                 </div>}
-            {uploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9B5DE5', fontWeight: 600 }}>⏳ Subiendo imagen…</div>}
+            {imgPrev && !uploading &&
+              <button onClick={e => { e.stopPropagation(); setImgPrev(''); set('imageUrl', ''); setUploadMsg(''); }}
+                style={{ position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: '50%', background: 'rgba(26,17,36,.7)', color: 'white', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}
+                title="Quitar foto">✕</button>}
+            {uploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9B5DE5', fontWeight: 600 }}>⏳ Subiendo foto…</div>}
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
-          {uploadMsg && <div style={{ fontSize: 12, marginTop: 5, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
-          {form.imageUrl && !uploadMsg && <div style={{ fontSize: 10, color: '#aaa', marginTop: 4, wordBreak: 'break-all' }}>📎 {form.imageUrl.split('/').pop()}</div>}
+          {uploadMsg && <div style={{ fontSize: 12, marginTop: 6, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
+          {!uploadMsg && <div style={{ fontSize: 11, color: '#aaa', marginTop: 6 }}>💡 La foto se optimiza automáticamente para cargar rápido en la tienda.</div>}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -338,24 +360,33 @@ function ProductModal({ product, onSave, onClose, token }) {
             <label style={lbl}>Precio anterior (tachado)</label>
             <input type="number" min="0" step="0.01" value={form.oldPrice || ''} onChange={e => set('oldPrice', e.target.value)} placeholder="60" style={inp} />
           </div>
-          <div>
-            <label style={lbl}>Ícono (sin foto)</label>
-            <select value={form.img} onChange={e => set('img', e.target.value)} style={inp}>
-              {IMG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={lbl}>Color de acento</label>
-            <select value={form.color} onChange={e => set('color', e.target.value)} style={inp}>
-              {Object.keys(COLORS).map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={lbl}>Descripción</label>
             <textarea value={form.description || ''} onChange={e => set('description', e.target.value)} rows={3}
-              placeholder="Descripción del producto…" style={{ ...inp, resize: 'vertical' }} />
+              placeholder="Describe el material, medidas y detalles especiales…" style={{ ...inp, resize: 'vertical' }} />
           </div>
         </div>
+
+        {/* Fallback appearance — only used when there is no photo */}
+        <details style={{ marginTop: 16, background: '#FAF7FB', borderRadius: 12, padding: '10px 14px' }}>
+          <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#7A6880', listStyle: 'none' }}>
+            🎨 Apariencia sin foto (opcional) — solo si no subes una foto
+          </summary>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 12 }}>
+            <div>
+              <label style={lbl}>Ícono de respaldo</label>
+              <select value={form.img} onChange={e => set('img', e.target.value)} style={inp}>
+                {IMG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>Color de respaldo</label>
+              <select value={form.color} onChange={e => set('color', e.target.value)} style={inp}>
+                {Object.keys(COLORS).map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+        </details>
 
         <div style={{ display: 'flex', gap: 24, margin: '18px 0 24px' }}>
           {[['personalized', '✦ Personalizable'], ['available', '✅ Disponible en tienda']].map(([k, label]) => (
