@@ -270,11 +270,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- FILTERS -->
 <div class="filters">
   <span class="filter-label">Filtrar:</span>
-  <button class="filter-btn active" data-filter="all">Todo</button>
-  <button class="filter-btn" data-filter="Personalizado">Personalizado</button>
-  <button class="filter-btn" data-filter="Colección">Colecciones</button>
-  <button class="filter-btn" data-filter="Gold Edition">Gold</button>
-  <button class="filter-btn" data-filter="Hombres">Hombres</button>
+  <span id="filterBtns" style="display:contents">
+    <button class="filter-btn active" data-filter="all">Todo</button>
+  </span>
   <select class="sort-select" id="sortSelect">
     <option value="default">Ordenar: Destacados</option>
     <option value="price-asc">Precio: menor a mayor</option>
@@ -407,7 +405,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
           <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--pink);margin-bottom:6px;letter-spacing:.1em">&#xBF;NECESITAS AYUDA?</div>
-          <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)">@cacusabytaitus</strong></div>
+          <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)" id="igHandle">@cacusabytaitus</strong></div>
         </div>
         <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack">&#x2190; Volver al carrito</button>
       </div>
@@ -433,6 +431,17 @@ const SQUARE_WORKER_URL = 'https://cacusa-square.REEMPLAZAR.workers.dev';
 
 let PRODUCTS = [];
 let WHATSAPP_NUMBER = '';
+
+// Config dinámica (se sobreescribe con products.json → config)
+let CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
+let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
+let TEXTS = {
+  heroLabel: 'Joyería artesanal personalizada',
+  heroTitle: 'Nuestra Tienda',
+  heroSubtitle: 'by Taitus',
+  instagram: '@cacusabytaitus',
+  perks: ['Hecho a mano', 'Envío express', '5–7 días hábiles', 'Gift wrap gratis']
+};
 
 const FALLBACK_PRODUCTS = [
   {id:1,name:'Collar con nombre',cat:'Personalizado',price:45,grad:'linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Collar delicado con tu nombre grabado a mano. Plata 925 o baño de oro 18k. Cadena ajustable 40–45cm.'},
@@ -485,15 +494,57 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     if (!res.ok) throw new Error('no json');
     const data = await res.json();
     const raw = Array.isArray(data) ? data : (data.products || []);
-    WHATSAPP_NUMBER = (!Array.isArray(data) && (data.whatsapp || (data.config && data.config.whatsapp))) || '';
+    const cfg = (!Array.isArray(data) && data.config) || {};
+    WHATSAPP_NUMBER = (!Array.isArray(data) && (data.whatsapp || cfg.whatsapp)) || '';
+    if (Array.isArray(cfg.categories) && cfg.categories.length) CATEGORIES = cfg.categories;
+    if (Array.isArray(cfg.materials)  && cfg.materials.length)  MATERIALS  = cfg.materials;
+    if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
     if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   } catch(e) {
     PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   }
+  applyTexts();
+  renderFilters();
+  renderMaterials();
   renderProducts();
   updateCartUI();
 })();
+
+// ─── APLICAR CONFIG DINÁMICA ────────────────────────────────
+function applyTexts() {
+  const set = (sel, val) => { const el = document.querySelector(sel); if (el && val != null) el.textContent = val; };
+  set('.store-hero-label', TEXTS.heroLabel);
+  set('.store-hero-h', TEXTS.heroTitle);
+  set('.store-hero-s', TEXTS.heroSubtitle);
+  const ig = document.getElementById('igHandle');
+  if (ig && TEXTS.instagram) ig.textContent = TEXTS.instagram;
+  const perksEl = document.querySelector('.modal-perks');
+  if (perksEl && Array.isArray(TEXTS.perks)) {
+    perksEl.innerHTML = TEXTS.perks.map(p =>
+      '<div class="perk"><div class="perk-dot"></div>' + p + '</div>').join('');
+  }
+}
+function renderFilters() {
+  const wrap = document.getElementById('filterBtns');
+  if (!wrap) return;
+  wrap.innerHTML = '<button class="filter-btn active" data-filter="all">Todo</button>' +
+    CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + c + '</button>').join('');
+  wrap.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      renderProducts();
+    });
+  });
+}
+function renderMaterials() {
+  const sel = document.getElementById('modalMat');
+  if (sel && MATERIALS.length) {
+    sel.innerHTML = MATERIALS.map(m => '<option>' + m + '</option>').join('');
+  }
+}
 
 // ─── CURSOR ─────────────────────────────────────────────────
 const cur = document.getElementById('cursor');
@@ -567,15 +618,7 @@ function renderProducts() {
   refreshCursorTargets();
 }
 
-// ─── FILTERS ────────────────────────────────────────────────
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeFilter = btn.dataset.filter;
-    renderProducts();
-  });
-});
+// ─── FILTERS (los botones se generan en renderFilters) ──────
 document.getElementById('sortSelect').addEventListener('change', renderProducts);
 
 // ─── WISHLIST ────────────────────────────────────────────────

@@ -4,7 +4,16 @@
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
-    "whatsapp": "+17867375336"
+    "whatsapp": "+17867375336",
+    "categories": ["Personalizado", "Colección", "Gold Edition", "Hombres"],
+    "materials": ["Plata 925", "Baño de oro 18k", "Acero inoxidable"],
+    "texts": {
+      "heroLabel": "Joyería artesanal personalizada",
+      "heroTitle": "Nuestra Tienda",
+      "heroSubtitle": "by Taitus",
+      "instagram": "@cacusabytaitus",
+      "perks": ["Hecho a mano", "Envío express", "5–7 días hábiles", "Gift wrap gratis"]
+    }
   },
   "products": [
     {
