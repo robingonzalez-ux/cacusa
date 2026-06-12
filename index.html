@@ -404,11 +404,11 @@ footer{background:var(--grad-full);padding:64px 0 32px}
   <div class="container">
     <div class="story-grid">
       <div>
-        <div class="reveal-left"><div class="story-label">Nuestra historia</div></div>
-        <div class="reveal-left" data-delay="1"><h2 class="story-h">Artesanos<br>del <em>corazón</em></h2></div>
-        <div class="reveal-left" data-delay="2"><div class="story-quote">"Cada pieza, una historia única"</div></div>
-        <div class="reveal-left" data-delay="3"><p class="story-body">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
-        <div class="story-stats reveal-left" data-delay="4">
+        <div class="reveal-left"><div class="story-label" id="hStoryLabel">Nuestra historia</div></div>
+        <div class="reveal-left" data-delay="1"><h2 class="story-h" id="hStoryTitle">Artesanos<br>del <em>corazón</em></h2></div>
+        <div class="reveal-left" data-delay="2"><div class="story-quote" id="hStoryQuote">"Cada pieza, una historia única"</div></div>
+        <div class="reveal-left" data-delay="3"><p class="story-body" id="hStoryBody">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
+        <div class="story-stats reveal-left" data-delay="4" id="hStoryStats">
           <div><div class="stat-num" data-count="500">0</div><div class="stat-label">Piezas creadas</div></div>
           <div><div class="stat-num" data-count="2">0</div><div class="stat-label">Países</div></div>
           <div><div class="stat-num" data-count="100">0</div><div class="stat-label">% Artesanal</div></div>
@@ -542,6 +542,34 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 </div>
 
 <script>
+// ── CONTENIDO DINÁMICO (Quiénes somos) ──────────────────────
+// Corre antes del count-up para que las cifras animen con los valores guardados en products.json
+(function applyHomeContent(){
+  try {
+    const req = new XMLHttpRequest();
+    req.open('GET', './data/products.json?v=' + Date.now(), false); // síncrono
+    req.send(null);
+    if (req.status < 200 || req.status >= 300) return;
+    const home = (JSON.parse(req.responseText).config || {}).home;
+    if (!home) return;
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
+    setTxt('hStoryLabel', home.storyLabel);
+    setTxt('hStoryTitle', home.storyTitle);
+    if (home.storyQuote) setTxt('hStoryQuote', '"' + String(home.storyQuote).replace(/^"|"$/g, '') + '"');
+    setTxt('hStoryBody', home.storyBody);
+    if (Array.isArray(home.stats)) {
+      const wraps = document.querySelectorAll('#hStoryStats > div');
+      home.stats.forEach((s, i) => {
+        if (!wraps[i]) return;
+        const numEl = wraps[i].querySelector('.stat-num');
+        const labEl = wraps[i].querySelector('.stat-label');
+        if (numEl && s.num != null) { numEl.dataset.count = String(s.num).replace(/\D/g, '') || '0'; numEl.textContent = '0'; }
+        if (labEl && s.label) labEl.textContent = s.label;
+      });
+    }
+  } catch (e) { /* mantiene el contenido por defecto */ }
+})();
+
 // ── CURSOR ──────────────────────────────────────────────────
 const cur = document.getElementById('cursor');
 const ring = document.getElementById('cursor-ring');

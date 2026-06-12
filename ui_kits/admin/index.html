@@ -48,6 +48,17 @@ const DEFAULT_TEXTS = {
   instagram: '@cacusabytaitus',
   perks: ['Hecho a mano', 'Envío express', '5–7 días hábiles', 'Gift wrap gratis']
 };
+const DEFAULT_HOME = {
+  storyLabel: 'Nuestra historia',
+  storyTitle: 'Artesanos del corazón',
+  storyQuote: 'Cada pieza, una historia única',
+  storyBody: 'Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.',
+  stats: [
+    { num: '500', label: 'Piezas creadas' },
+    { num: '2', label: 'Países' },
+    { num: '100', label: '% Artesanal' }
+  ]
+};
 const IMG_TYPES  = ['collar', 'ring', 'bracelet', 'earrings', 'heart', 'bracelet-m', 'necklace'];
 const COLORS     = { rose: '#F9A8C9', gold: '#F4C430', violet: '#9B5DE5', sky: '#87CEEB', plum: '#4A1942' };
 
@@ -630,12 +641,14 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
 }
 
 // ── Settings tab ─────────────────────────────────────────────────────────────
-function SettingsTab({ categories, setCategories, materials, setMaterials, texts, setTexts, products, setProducts, setDirty }) {
+function SettingsTab({ categories, setCategories, materials, setMaterials, texts, setTexts, home, setHome, products, setProducts, setDirty }) {
   const markDirty = fn => (...a) => { fn(...a); setDirty(true); };
   const renameCategory = (oldName, newName) => {
     setProducts(prev => prev.map(p => p.category === oldName ? { ...p, category: newName } : p));
   };
   const setText = (k, v) => { setTexts(t => ({ ...t, [k]: v })); setDirty(true); };
+  const setHomeField = (k, v) => { setHome(h => ({ ...h, [k]: v })); setDirty(true); };
+  const setStat = (i, k, v) => { setHome(h => ({ ...h, stats: h.stats.map((s, j) => j === i ? { ...s, [k]: v } : s) })); setDirty(true); };
   const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
   const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
 
@@ -686,8 +699,43 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, texts
           />
         </div>
       </div>
+
+      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginTop: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🏛️ Página de inicio · Quiénes somos</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>La sección "Nuestra historia" que aparece en la portada principal de la web.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label style={lbl}>Etiqueta</label>
+            <input value={home.storyLabel || ''} onChange={e => setHomeField('storyLabel', e.target.value)} style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Título</label>
+            <input value={home.storyTitle || ''} onChange={e => setHomeField('storyTitle', e.target.value)} style={inp} />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={lbl}>Frase destacada</label>
+            <input value={home.storyQuote || ''} onChange={e => setHomeField('storyQuote', e.target.value)} style={inp} />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={lbl}>Texto / descripción</label>
+            <textarea value={home.storyBody || ''} onChange={e => setHomeField('storyBody', e.target.value)} rows={4} style={{ ...inp, resize: 'vertical' }} />
+          </div>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', margin: '18px 0 8px' }}>Cifras destacadas</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          {(home.stats || []).map((s, i) => (
+            <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
+              <input value={s.num || ''} onChange={e => setStat(i, 'num', e.target.value)} placeholder="500"
+                style={{ ...inp, fontWeight: 800, fontSize: 18, textAlign: 'center', marginBottom: 8 }} />
+              <input value={s.label || ''} onChange={e => setStat(i, 'label', e.target.value)} placeholder="Piezas creadas"
+                style={{ ...inp, fontSize: 12, textAlign: 'center' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
-        💡 Recuerda hacer clic en <strong>"☁️ Publicar cambios"</strong> arriba para que se reflejen en la tienda.
+        💡 Recuerda hacer clic en <strong>"☁️ Publicar cambios"</strong> arriba para que se reflejen en la web.
       </div>
     </div>
   );
@@ -702,6 +750,7 @@ function App() {
   const [categories, setCategories]   = useState(DEFAULT_CATEGORIES);
   const [materials, setMaterials]     = useState(DEFAULT_MATERIALS);
   const [texts, setTexts]             = useState(DEFAULT_TEXTS);
+  const [home, setHome]               = useState(DEFAULT_HOME);
   const [orders, setOrders]           = useState([]);
   const [ordersSha, setOrdersSha]     = useState(null);
   const [loading, setLoading]         = useState(false);
@@ -739,6 +788,7 @@ function App() {
       if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
       if (Array.isArray(cfg.materials)  && cfg.materials.length)  setMaterials(cfg.materials);
       if (cfg.texts && typeof cfg.texts === 'object') setTexts({ ...DEFAULT_TEXTS, ...cfg.texts });
+      if (cfg.home && typeof cfg.home === 'object') setHome({ ...DEFAULT_HOME, ...cfg.home, stats: Array.isArray(cfg.home.stats) ? cfg.home.stats : DEFAULT_HOME.stats });
       setProductsSha(file.sha);
     } catch (err) {
       if (err.status === 404) {
@@ -775,7 +825,8 @@ function App() {
           whatsapp: whatsappNum,
           categories,
           materials,
-          texts
+          texts,
+          home
         },
         products
       }, null, 2);
@@ -1022,6 +1073,7 @@ function App() {
             categories={categories} setCategories={setCategories}
             materials={materials} setMaterials={setMaterials}
             texts={texts} setTexts={setTexts}
+            home={home} setHome={setHome}
             products={products} setProducts={setProducts}
             setDirty={setDirty}
           />
