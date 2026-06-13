@@ -441,12 +441,16 @@ footer{background:var(--grad-full);padding:64px 0 32px}
         <div class="person-form">
           <div class="pf-title">Comienza tu pieza</div>
           <div class="pf-row">
-            <div class="pf-field"><label class="pf-label">Tipo de joya</label><input class="pf-input" placeholder="Collar, anillo…"></div>
-            <div class="pf-field"><label class="pf-label">Material</label><input class="pf-input" placeholder="Plata, oro…"></div>
+            <div class="pf-field"><label class="pf-label">Tu nombre</label><input class="pf-input" id="pfName" placeholder="Tu nombre"></div>
+            <div class="pf-field"><label class="pf-label">Tu WhatsApp</label><input class="pf-input" id="pfWhats" placeholder="+593 99 999 9999"></div>
           </div>
-          <div class="pf-field"><label class="pf-label">Personalización</label><input class="pf-input" placeholder="Nombre, fecha, mensaje…"></div>
-          <div class="pf-field"><label class="pf-label">Tu email</label><input class="pf-input" placeholder="para enviarte el diseño"></div>
-          <button class="pf-btn" onclick="window.location.href='./ui_kits/store/'">Crear mi pieza →</button>
+          <div class="pf-row">
+            <div class="pf-field"><label class="pf-label">Tipo de joya</label><input class="pf-input" id="pfType" placeholder="Collar, anillo…"></div>
+            <div class="pf-field"><label class="pf-label">Material</label><input class="pf-input" id="pfMaterial" placeholder="Plata, oro…"></div>
+          </div>
+          <div class="pf-field"><label class="pf-label">Personalización</label><input class="pf-input" id="pfDetail" placeholder="Nombre, fecha, mensaje…"></div>
+          <div class="pf-error" id="pfError" style="color:#C0336E;font-family:var(--fu);font-size:12px;min-height:16px;margin-bottom:6px"></div>
+          <button class="pf-btn" id="pfSendBtn">Enviar por WhatsApp →</button>
         </div>
       </div>
     </div>
@@ -544,13 +548,17 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 <script>
 // ── CONTENIDO DINÁMICO (Quiénes somos) ──────────────────────
 // Corre antes del count-up para que las cifras animen con los valores guardados en products.json
+let CACUSA_WHATSAPP = '';
 (function applyHomeContent(){
   try {
     const req = new XMLHttpRequest();
     req.open('GET', './data/products.json?v=' + Date.now(), false); // síncrono
     req.send(null);
     if (req.status < 200 || req.status >= 300) return;
-    const home = (JSON.parse(req.responseText).config || {}).home;
+    const data = JSON.parse(req.responseText);
+    const cfg = data.config || {};
+    CACUSA_WHATSAPP = data.whatsapp || cfg.whatsapp || '';
+    const home = cfg.home;
     if (!home) return;
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
     setTxt('hStoryLabel', home.storyLabel);
@@ -568,6 +576,37 @@ footer{background:var(--grad-full);padding:64px 0 32px}
       });
     }
   } catch (e) { /* mantiene el contenido por defecto */ }
+})();
+
+// ── FORMULARIO "Comienza tu pieza" → WhatsApp ───────────────
+(function wirePersonForm(){
+  const btn = document.getElementById('pfSendBtn');
+  if (!btn) return;
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  btn.addEventListener('click', () => {
+    const errEl = document.getElementById('pfError');
+    const nombre = val('pfName');
+    const whats  = val('pfWhats');
+    if (!nombre || !whats) {
+      if (errEl) errEl.textContent = 'Por favor escribe tu nombre y tu WhatsApp.';
+      return;
+    }
+    if (errEl) errEl.textContent = '';
+    const tipo   = val('pfType');
+    const mat    = val('pfMaterial');
+    const detail = val('pfDetail');
+
+    let msg = '🌸 *Nueva solicitud de pieza personalizada*\n*CACUSA by Taitus*\n\n';
+    msg += '👤 *Nombre:* ' + nombre + '\n';
+    msg += '📱 *WhatsApp:* ' + whats + '\n';
+    if (tipo)   msg += '💍 *Tipo de joya:* ' + tipo + '\n';
+    if (mat)    msg += '✨ *Material:* ' + mat + '\n';
+    if (detail) msg += '📝 *Personalización:* ' + detail + '\n';
+
+    const num = (CACUSA_WHATSAPP || '').replace(/\D/g, '');
+    const url = (num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+  });
 })();
 
 // ── CURSOR ──────────────────────────────────────────────────
