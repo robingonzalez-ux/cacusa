@@ -41,6 +41,7 @@ const DEFAULT_PASSWORDS = {
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
 const DEFAULT_CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
 const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
+const DEFAULT_SHIPPING   = { freeThreshold: 60, cost: 5 };
 const DEFAULT_TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -659,7 +660,8 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
 }
 
 // ── Settings tab ─────────────────────────────────────────────────────────────
-function SettingsTab({ categories, setCategories, materials, setMaterials, texts, setTexts, home, setHome, products, setProducts, setDirty }) {
+function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, home, setHome, products, setProducts, setDirty }) {
+  const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
   const markDirty = fn => (...a) => { fn(...a); setDirty(true); };
   const renameCategory = (oldName, newName) => {
     setProducts(prev => prev.map(p => p.category === oldName ? { ...p, category: newName } : p));
@@ -692,6 +694,23 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, texts
         items={materials}
         onChange={markDirty(setMaterials)}
       />
+      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🚚 Envíos</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Controla el costo de envío y desde qué monto es gratis. Se refleja en el carrito y al finalizar el pedido.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label style={lbl}>Envío gratis desde ($)</label>
+            <input type="number" min="0" step="1" value={shipping.freeThreshold} onChange={e => setShip('freeThreshold', e.target.value)} placeholder="60" style={inp} />
+          </div>
+          <div>
+            <label style={lbl}>Costo de envío ($)</label>
+            <input type="number" min="0" step="0.01" value={shipping.cost} onChange={e => setShip('cost', e.target.value)} placeholder="5" style={inp} />
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: '#7A6880', marginTop: 12, background: '#FAF7FB', borderRadius: 10, padding: '10px 12px' }}>
+          Vista previa: compras de <strong>${shipping.freeThreshold || 0}</strong> o más → <strong>envío gratis</strong>. Menos de eso → <strong>${Number(shipping.cost || 0).toFixed(2)}</strong> de envío.
+        </div>
+      </div>
       <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)' }}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📝 Textos de la tienda</div>
         <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Lo que se muestra en la portada de la tienda.</div>
@@ -822,6 +841,7 @@ function App() {
   const [whatsappNum, setWhatsappNum] = useState('');
   const [categories, setCategories]   = useState(DEFAULT_CATEGORIES);
   const [materials, setMaterials]     = useState(DEFAULT_MATERIALS);
+  const [shipping, setShipping]       = useState(DEFAULT_SHIPPING);
   const [texts, setTexts]             = useState(DEFAULT_TEXTS);
   const [home, setHome]               = useState(DEFAULT_HOME);
   const [orders, setOrders]           = useState([]);
@@ -860,6 +880,7 @@ function App() {
       setWhatsappNum(wa);
       if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
       if (Array.isArray(cfg.materials)  && cfg.materials.length)  setMaterials(cfg.materials);
+      if (cfg.shipping && typeof cfg.shipping === 'object') setShipping({ ...DEFAULT_SHIPPING, ...cfg.shipping });
       if (cfg.texts && typeof cfg.texts === 'object') setTexts({ ...DEFAULT_TEXTS, ...cfg.texts });
       if (cfg.home && typeof cfg.home === 'object') {
         const h = cfg.home;
@@ -909,6 +930,7 @@ function App() {
           whatsapp: whatsappNum,
           categories,
           materials,
+          shipping,
           texts,
           home
         },
@@ -1156,6 +1178,7 @@ function App() {
           <SettingsTab
             categories={categories} setCategories={setCategories}
             materials={materials} setMaterials={setMaterials}
+            shipping={shipping} setShipping={setShipping}
             texts={texts} setTexts={setTexts}
             home={home} setHome={setHome}
             products={products} setProducts={setProducts}
