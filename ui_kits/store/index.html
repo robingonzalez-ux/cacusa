@@ -435,6 +435,7 @@ let WHATSAPP_NUMBER = '';
 // Config dinámica (se sobreescribe con products.json → config)
 let CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
 let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
+let SHIPPING   = { freeThreshold: 60, cost: 5 };
 let TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -498,6 +499,10 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     WHATSAPP_NUMBER = (!Array.isArray(data) && (data.whatsapp || cfg.whatsapp)) || '';
     if (Array.isArray(cfg.categories) && cfg.categories.length) CATEGORIES = cfg.categories;
     if (Array.isArray(cfg.materials)  && cfg.materials.length)  MATERIALS  = cfg.materials;
+    if (cfg.shipping && typeof cfg.shipping === 'object') {
+      const ft = Number(cfg.shipping.freeThreshold), c = Number(cfg.shipping.cost);
+      SHIPPING = { freeThreshold: isNaN(ft) ? 60 : ft, cost: isNaN(c) ? 5 : c };
+    }
     if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
     if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
@@ -721,10 +726,10 @@ function updateCartUI() {
         </div>
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total;
-    const free = total >= 60;
+    const free = total >= SHIPPING.freeThreshold;
     document.getElementById('cartShipping').textContent = free
       ? '🎉 ¡Envío gratis desbloqueado!'
-      : 'Agrega $' + (60 - total) + ' más para envío gratis';
+      : 'Agrega $' + (SHIPPING.freeThreshold - total) + ' más para envío gratis';
     footEl.style.display = 'block';
   }
 }
@@ -758,8 +763,9 @@ document.addEventListener('keydown', e => {
 
 function renderCheckoutSummary() {
   const total = cart.reduce((s, i) => s + i.price, 0);
-  const envio = total >= 60 ? 'Gratis' : '$5.00';
-  const totalFinal = total >= 60 ? total : total + 5;
+  const free = total >= SHIPPING.freeThreshold;
+  const envio = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
+  const totalFinal = free ? total : total + SHIPPING.cost;
   document.getElementById('coSubtotal').textContent = '$' + total;
   document.getElementById('coEnvio').textContent = envio;
   document.getElementById('coTotal').textContent = '$' + totalFinal;
@@ -836,8 +842,9 @@ function buildWhatsAppUrl() {
   const direccion = document.getElementById('coDireccion').value.trim();
   const notas   = document.getElementById('coNotas').value.trim();
   const total   = cart.reduce((s, i) => s + i.price, 0);
-  const envio   = total >= 60 ? 'Gratis' : '$5.00';
-  const totalFinal = total >= 60 ? total : total + 5;
+  const free    = total >= SHIPPING.freeThreshold;
+  const envio   = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
+  const totalFinal = free ? total : total + SHIPPING.cost;
 
   let msg = '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
   msg += '👤 *Cliente:* ' + nombre + (apellido ? ' ' + apellido : '') + '\n';
