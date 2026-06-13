@@ -24,7 +24,9 @@ a{text-decoration:none;color:inherit}
 const {useState, useEffect, useRef} = React;
 
 // ── Constants ──────────────────────────────────────────────────────────────
-const GH_OWNER = 'robingonzalez-ux', GH_REPO = 'cacusa';
+// Backend seguro (Cloudflare Worker). Mantiene el token de GitHub y las
+// contraseñas FUERA de este archivo / del navegador.
+const ADMIN_API     = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 const PRODUCTS_PATH = 'data/products.json';
 const ORDERS_PATH   = 'data/orders.json';
 const IMAGES_PATH   = 'ui_kits/store/images';
@@ -33,10 +35,6 @@ const STORE_URL     = 'https://cacusabytaitus.com/';
 const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👑', color: '#E85D8A' },
   'robin.gonzalez':  { name: 'Robin González',  avatar: '🌸', color: '#9B5DE5' }
-};
-const DEFAULT_PASSWORDS = {
-  'tita.jaramillo': 'TitaCACUSA25',
-  'robin.gonzalez': 'RobinCACUSA25'
 };
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
 const DEFAULT_CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
@@ -105,28 +103,26 @@ function b64ToStr(b64) {
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-// ── GitHub API ─────────────────────────────────────────────────────────────
-const ghH = tok => ({ Authorization: `token ${tok}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' });
-
-async function ghGet(path, tok) {
-  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { headers: ghH(tok) });
-  if (!r.ok) { const e = new Error(`GH ${r.status}`); e.status = r.status; throw e; }
-  return r.json();
+// ── Backend API (Cloudflare Worker) ──────────────────────────────────────────
+async function apiCall(endpoint, payload) {
+  const r = await fetch(`${ADMIN_API}/${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload || {})
+  });
+  let data = {};
+  try { data = await r.json(); } catch (_) {}
+  if (!r.ok) { const e = new Error(data.error || `Error ${r.status}`); e.status = r.status; throw e; }
+  return data;
 }
-async function ghSave(path, tok, content, sha, msg) {
-  const body = { message: msg, content: strToB64(content) };
-  if (sha) body.sha = sha;
-  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: 'PUT', headers: ghH(tok), body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(`PUT ${r.status}: ${await r.text()}`);
-  return r.json();
-}
-async function ghUpload(path, tok, b64raw, sha, msg) {
-  const body = { message: msg, content: b64raw };
-  if (sha) body.sha = sha;
-  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`, { method: 'PUT', headers: ghH(tok), body: JSON.stringify(body) });
-  if (!r.ok) throw new Error(`Upload ${r.status}: ${await r.text()}`);
-  return r.json();
-}
+// Inicia sesión → devuelve un token de sesión temporal (no credenciales)
+const apiLogin  = (user, pass)            => apiCall('login', { user, pass });
+// Lee productos y pedidos frescos desde el backend
+const apiLoad   = (token)                 => apiCall('load', { token });
+// Guarda un archivo JSON (productos o pedidos) en el repo, vía backend
+const apiSave   = (token, path, content, message) => apiCall('save', { token, path, content, message });
+// Sube una imagen (base64) vía backend
+const apiUpload = (token, path, contentBase64, message) => apiCall('upload', { token, path, contentBase64, message });
 
 function compressImage(file, maxPx = 900) {
   return new Promise(resolve => {
@@ -170,24 +166,17 @@ function Illustration({ type, color }) {
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('tita.jaramillo');
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState(localStorage.getItem('cacusa_gh_token') || '');
-  const [showTok, setShowTok] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async e => {
     e.preventDefault(); setLoading(true); setError('');
     try {
-      const hash = await sha256(password);
-      const stored = localStorage.getItem(`cacusa_pwd_${username}`);
-      const defHash = await sha256(DEFAULT_PASSWORDS[username] || '');
-      if (stored ? hash !== stored : hash !== defHash) { setError('Contraseña incorrecta.'); return; }
-      if (!token.trim()) { setError('Se requiere un GitHub Personal Access Token.'); return; }
-      const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}`, { headers: ghH(token) });
-      if (!r.ok) { setError('Token de GitHub inválido o sin acceso al repositorio.'); return; }
-      localStorage.setItem('cacusa_gh_token', token);
-      onLogin({ username, name: USERS[username].name, token });
-    } catch (e) { setError(e.message); } finally { setLoading(false); }
+      const data = await apiLogin(username, password);
+      onLogin({ username, name: USERS[username].name, token: data.token });
+    } catch (e) {
+      setError(e.status === 401 ? 'Usuario o contraseña incorrectos.' : (e.message || 'No se pudo conectar con el servidor.'));
+    } finally { setLoading(false); }
   };
 
   const inp = { padding: '11px 14px', border: '1.5px solid #e0e0e0', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
@@ -211,21 +200,7 @@ function LoginScreen({ onLogin }) {
             <label style={lbl}>Contraseña</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required style={inp} />
           </div>
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <label style={{ ...lbl, margin: 0 }}>GitHub Token</label>
-              <a href="https://github.com/settings/tokens/new?scopes=repo&description=CACUSA+Admin" target="_blank" rel="noopener" style={{ fontSize: 11, color: '#9B5DE5', fontWeight: 600 }}>Crear token ↗</a>
-            </div>
-            <div style={{ position: 'relative' }}>
-              <input type={showTok ? 'text' : 'password'} value={token} onChange={e => setToken(e.target.value)}
-                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style={{ ...inp, paddingRight: 68 }} required />
-              <button type="button" onClick={() => setShowTok(s => !s)}
-                style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa', fontSize: 12, fontWeight: 600 }}>
-                {showTok ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-            <div style={{ fontSize: 11, color: '#bbb', marginTop: 5 }}>Permiso <code style={{ background: '#f0f0f0', padding: '1px 5px', borderRadius: 4, fontSize: 11 }}>repo</code> requerido</div>
-          </div>
+          <div style={{ marginBottom: 8 }} />
           {error && <div style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>{error}</div>}
           <button type="submit" disabled={loading}
             style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s' }}>
@@ -305,14 +280,11 @@ function ProductModal({ product, onSave, onClose, token, categories }) {
       const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40) || 'foto';
       const fname = `${Date.now()}_${slug}.jpg`;
       const path = `${IMAGES_PATH}/${fname}`;
-      let sha = null;
-      try { const ex = await ghGet(path, token); sha = ex.sha; } catch (_) {}
-      await ghUpload(path, token, b64, sha, `Imagen: ${fname}`);
-      const url = `https://robingonzalez-ux.github.io/cacusa/${path}`;
-      set('imageUrl', url);
+      const res = await apiUpload(token, path, b64, `Imagen: ${fname}`);
+      set('imageUrl', res.url);
       setUploadMsg('✅ Foto subida correctamente');
     } catch (e) {
-      setUploadMsg('❌ Error al subir: ' + e.message);
+      setUploadMsg(e.status === 401 ? '⚠️ Sesión expirada. Cierra sesión y vuelve a entrar.' : '❌ Error al subir: ' + e.message);
       setImgPrev(form.imageUrl || '');
     } finally { setUploading(false); }
   };
@@ -545,47 +517,6 @@ function NewOrderModal({ open, onClose, onSave }) {
             <button type="submit" style={{ background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, padding: '12px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', marginTop: 4 }}>
               Guardar pedido
             </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-// ── Change Password Modal ──────────────────────────────────────────────────
-function ChangePasswordModal({ username, onClose }) {
-  const [cur, setCur] = useState('');
-  const [next, setNext] = useState('');
-  const [conf, setConf] = useState('');
-  const [msg, setMsg] = useState('');
-  const submit = async e => {
-    e.preventDefault(); setMsg('');
-    const curH = await sha256(cur);
-    const stored = localStorage.getItem(`cacusa_pwd_${username}`);
-    const defH = await sha256(DEFAULT_PASSWORDS[username] || '');
-    if (stored ? curH !== stored : curH !== defH) { setMsg('❌ Contraseña actual incorrecta'); return; }
-    if (next.length < 8) { setMsg('❌ Mínimo 8 caracteres'); return; }
-    if (next !== conf) { setMsg('❌ Las contraseñas no coinciden'); return; }
-    localStorage.setItem(`cacusa_pwd_${username}`, await sha256(next));
-    setMsg('✅ Contraseña actualizada');
-    setTimeout(onClose, 1500);
-  };
-  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 360, animation: 'fadeIn .3s ease' }}>
-        <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 20, color: '#1a1a1a' }}>🔑 Cambiar Contraseña</h3>
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-          {[['Contraseña actual', cur, setCur], ['Nueva contraseña', next, setNext], ['Confirmar nueva', conf, setConf]].map(([label, val, setter]) => (
-            <div key={label}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#777', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: 5 }}>{label}</label>
-              <input type="password" value={val} onChange={e => setter(e.target.value)} required style={inp} />
-            </div>
-          ))}
-          {msg && <div style={{ fontSize: 13, color: msg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{msg}</div>}
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button type="button" onClick={onClose} style={{ flex: 1, padding: 12, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-            <button type="submit" style={{ flex: 1, padding: 12, background: '#1A1124', color: 'white', borderRadius: 99, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Guardar</button>
           </div>
         </form>
       </div>
@@ -867,87 +798,75 @@ function App() {
     }
   }, [session]);
 
+  const sessionExpired = () => {
+    setSyncMsg('⚠️ Tu sesión expiró por seguridad. Cierra sesión y vuelve a entrar.');
+  };
+
   const loadData = async () => {
     setLoading(true); setSyncMsg('');
-    // Load products
     try {
-      const file = await ghGet(PRODUCTS_PATH, session.token);
-      const data = JSON.parse(b64ToStr(file.content));
-      const prods = Array.isArray(data) ? data : (data.products || []);
-      setProducts(prods.map(p => ({ ...p, available: p.available !== false })));
-      const cfg = (data.config || {});
-      const wa = (data.whatsapp || cfg.whatsapp || '');
-      setWhatsappNum(wa);
-      if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
-      if (Array.isArray(cfg.materials)  && cfg.materials.length)  setMaterials(cfg.materials);
-      if (cfg.shipping && typeof cfg.shipping === 'object') setShipping({ ...DEFAULT_SHIPPING, ...cfg.shipping });
-      if (cfg.texts && typeof cfg.texts === 'object') setTexts({ ...DEFAULT_TEXTS, ...cfg.texts });
-      if (cfg.home && typeof cfg.home === 'object') {
-        const h = cfg.home;
-        setHome({
-          ...DEFAULT_HOME, ...h,
-          stats: Array.isArray(h.stats) ? h.stats : DEFAULT_HOME.stats,
-          person: (h.person && typeof h.person === 'object')
-            ? { ...DEFAULT_HOME.person, ...h.person, steps: Array.isArray(h.person.steps) ? h.person.steps : DEFAULT_HOME.person.steps }
-            : DEFAULT_HOME.person,
-          testimonials: Array.isArray(h.testimonials) ? h.testimonials : DEFAULT_HOME.testimonials,
-          footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
-        });
-      }
-      setProductsSha(file.sha);
-    } catch (err) {
-      if (err.status === 404) {
-        setProducts([]);
-        setProductsSha(null);
-        setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
+      const res = await apiLoad(session.token);
+      // ── Productos + configuración ──
+      if (res.products) {
+        const data = JSON.parse(res.products);
+        const prods = Array.isArray(data) ? data : (data.products || []);
+        setProducts(prods.map(p => ({ ...p, available: p.available !== false })));
+        const cfg = (data.config || {});
+        setWhatsappNum(data.whatsapp || cfg.whatsapp || '');
+        if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
+        if (Array.isArray(cfg.materials)  && cfg.materials.length)  setMaterials(cfg.materials);
+        if (cfg.shipping && typeof cfg.shipping === 'object') setShipping({ ...DEFAULT_SHIPPING, ...cfg.shipping });
+        if (cfg.texts && typeof cfg.texts === 'object') setTexts({ ...DEFAULT_TEXTS, ...cfg.texts });
+        if (cfg.home && typeof cfg.home === 'object') {
+          const h = cfg.home;
+          setHome({
+            ...DEFAULT_HOME, ...h,
+            stats: Array.isArray(h.stats) ? h.stats : DEFAULT_HOME.stats,
+            person: (h.person && typeof h.person === 'object')
+              ? { ...DEFAULT_HOME.person, ...h.person, steps: Array.isArray(h.person.steps) ? h.person.steps : DEFAULT_HOME.person.steps }
+              : DEFAULT_HOME.person,
+            testimonials: Array.isArray(h.testimonials) ? h.testimonials : DEFAULT_HOME.testimonials,
+            footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
+          });
+        }
       } else {
-        setSyncMsg('❌ Error cargando productos: ' + err.message);
+        setProducts([]);
+        setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
       }
-    }
-    // Load orders (independent of products)
-    try {
-      const oFile = await ghGet(ORDERS_PATH, session.token);
-      const oData = JSON.parse(b64ToStr(oFile.content));
-      setOrders(oData.orders || []);
-      setOrdersSha(oFile.sha);
-    } catch (oErr) {
-      if (oErr.status === 404) { setOrders([]); setOrdersSha(null); }
-      // else silently ignore
+      // ── Pedidos ──
+      if (res.orders) {
+        try { setOrders(JSON.parse(res.orders).orders || []); } catch (_) { setOrders([]); }
+      } else { setOrders([]); }
+    } catch (err) {
+      if (err.status === 401) sessionExpired();
+      else setSyncMsg('❌ Error cargando datos: ' + err.message);
     }
     setLoading(false);
   };
 
   const publish = async () => {
-    setSyncing(true); setSyncMsg('☁️ Guardando en GitHub…');
+    setSyncing(true); setSyncMsg('☁️ Guardando de forma segura…');
     try {
-      // Save products.json
       const json = JSON.stringify({
         version: '1.0',
         lastUpdated: new Date().toISOString(),
         updatedBy: session.username,
         whatsapp: whatsappNum,
-        config: {
-          whatsapp: whatsappNum,
-          categories,
-          materials,
-          shipping,
-          texts,
-          home
-        },
+        config: { whatsapp: whatsappNum, categories, materials, shipping, texts, home },
         products
       }, null, 2);
-      const saved = await ghSave(PRODUCTS_PATH, session.token, json, productsSha, `[Admin] Productos - ${session.username}`);
-      setProductsSha(saved.content.sha);
-      // Save orders.json
+      await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
+      // Pedidos (no bloquea si falla)
       try {
         const oJson = JSON.stringify({ version: '1.0', lastUpdated: new Date().toISOString(), orders }, null, 2);
-        const oSaved = await ghSave(ORDERS_PATH, session.token, oJson, ordersSha, '[Admin] Pedidos');
-        setOrdersSha(oSaved.content.sha);
+        await apiSave(session.token, ORDERS_PATH, oJson, `[Admin] Pedidos - ${session.username}`);
       } catch (oe) { console.warn('orders save:', oe); }
       setDirty(false);
       setSyncMsg('✅ ¡Publicado en cacusabytaitus.com! La tienda se actualiza en 1–2 min.');
       setTimeout(() => setSyncMsg(''), 8000);
-    } catch (e) { setSyncMsg('❌ Error: ' + e.message); }
+    } catch (e) {
+      setSyncMsg(e.status === 401 ? '⚠️ Tu sesión expiró. Cierra sesión y vuelve a entrar (tus cambios siguen aquí).' : '❌ Error: ' + e.message);
+    }
     setSyncing(false);
   };
 
@@ -1004,7 +923,6 @@ function App() {
           onClick={e => e.stopPropagation()}>
           <div style={{ padding: '8px 12px', fontSize: 12, color: '#aaa', fontWeight: 600, borderBottom: '1px solid #f0f0f0', marginBottom: 4 }}>{USERS[session.username].avatar} {session.name}</div>
           {[
-            ['🔑 Cambiar contraseña', () => { setShowPwd(true); setShowMenu(false); }],
             ['🔄 Recargar datos', () => { loadData(); setShowMenu(false); }],
             ['🌐 Ver tienda', () => { window.open(STORE_URL, '_blank'); setShowMenu(false); }],
             ['↩ Cerrar sesión', () => { sessionStorage.clear(); setSession(null); }]
@@ -1189,7 +1107,6 @@ function App() {
         {/* ── Modals ── */}
         {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
         {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
-        {showPwd && <ChangePasswordModal username={session.username} onClose={() => setShowPwd(false)} />}
 
         {delConfirm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
