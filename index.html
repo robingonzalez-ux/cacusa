@@ -428,10 +428,10 @@ footer{background:var(--grad-full);padding:64px 0 32px}
   <div class="container">
     <div class="person-grid">
       <div>
-        <div class="reveal"><div class="section-label">Personalización</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h">Tu pieza,<br><em>tu historia</em></h2></div>
-        <div class="reveal" data-delay="2"><p class="section-sub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
-        <div class="person-steps">
+        <div class="reveal"><div class="section-label" id="hPersonLabel">Personalización</div></div>
+        <div class="reveal" data-delay="1"><h2 class="section-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
+        <div class="reveal" data-delay="2"><p class="section-sub" id="hPersonSub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
+        <div class="person-steps" id="hPersonSteps">
           <div class="step reveal" data-delay="2"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
           <div class="step reveal" data-delay="3"><div class="step-num">2</div><div><div class="step-title">Personaliza</div><div class="step-desc">Nombre, fecha o mensaje especial</div></div></div>
           <div class="step reveal" data-delay="4"><div class="step-num">3</div><div><div class="step-title">Nosotros creamos</div><div class="step-desc">Hecho a mano, listo en 5–7 días</div></div></div>
@@ -504,14 +504,14 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 <footer>
   <div class="container">
     <div class="footer-grid">
-      <div><div class="fb-w">CACUSA</div><div class="fb-s">by Taitus</div><div class="fb-tag">"creamos para que luzcas más bella de lo que ya eres"</div></div>
+      <div><div class="fb-w">CACUSA</div><div class="fb-s">by Taitus</div><div class="fb-tag" id="hFooterTag">"creamos para que luzcas más bella de lo que ya eres"</div></div>
       <div>
         <div class="ft">Tienda</div>
         <a class="fl" href="./ui_kits/store/">Mujeres</a><a class="fl" href="./ui_kits/store/">Hombres</a><a class="fl" href="./ui_kits/store/">Personalizado</a><a class="fl" href="./ui_kits/store/">Gold Edition</a><a class="fl" href="./ui_kits/store/">Novedades</a>
       </div>
       <div>
         <div class="ft">Ayuda</div>
-        <a class="fl">Envíos</a><a class="fl">Devoluciones</a><a class="fl">Tamaños</a><a class="fl">Cuidados</a><a class="fl">Contacto</a>
+        <a class="fl">Envíos</a><a class="fl">Devoluciones</a><a class="fl">Tamaños</a><a class="fl">Cuidados</a><a class="fl" id="hFooterContact" target="_blank" rel="noopener">Contacto</a>
       </div>
       <div>
         <div class="ft">Nosotros</div>
@@ -519,7 +519,7 @@ footer{background:var(--grad-full);padding:64px 0 32px}
       </div>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Hecho con amor 🤍</div>
+      <div class="footer-copy" id="hFooterCopy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Hecho con amor 🤍</div>
       <div style="font-family:var(--fs);font-size:20px;color:rgba(255,255,255,.5)">by Taitus</div>
     </div>
   </div>
@@ -549,6 +549,7 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 // ── CONTENIDO DINÁMICO (Quiénes somos) ──────────────────────
 // Corre antes del count-up para que las cifras animen con los valores guardados en products.json
 let CACUSA_WHATSAPP = '';
+let CACUSA_HOME = {};
 (function applyHomeContent(){
   try {
     const req = new XMLHttpRequest();
@@ -560,7 +561,9 @@ let CACUSA_WHATSAPP = '';
     CACUSA_WHATSAPP = data.whatsapp || cfg.whatsapp || '';
     const home = cfg.home;
     if (!home) return;
+    CACUSA_HOME = home;
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
+    // — Quiénes somos —
     setTxt('hStoryLabel', home.storyLabel);
     setTxt('hStoryTitle', home.storyTitle);
     if (home.storyQuote) setTxt('hStoryQuote', '"' + String(home.storyQuote).replace(/^"|"$/g, '') + '"');
@@ -574,6 +577,34 @@ let CACUSA_WHATSAPP = '';
         if (numEl && s.num != null) { numEl.dataset.count = String(s.num).replace(/\D/g, '') || '0'; numEl.textContent = '0'; }
         if (labEl && s.label) labEl.textContent = s.label;
       });
+    }
+    // — Personalización (pasos) —
+    const person = home.person;
+    if (person) {
+      setTxt('hPersonLabel', person.label);
+      setTxt('hPersonTitle', person.title);
+      setTxt('hPersonSub', person.subtitle);
+      if (Array.isArray(person.steps)) {
+        const stepEls = document.querySelectorAll('#hPersonSteps > .step');
+        person.steps.forEach((st, i) => {
+          if (!stepEls[i]) return;
+          const tEl = stepEls[i].querySelector('.step-title');
+          const dEl = stepEls[i].querySelector('.step-desc');
+          if (tEl && st.title) tEl.textContent = st.title;
+          if (dEl && st.desc)  dEl.textContent = st.desc;
+        });
+      }
+    }
+    // — Footer / contacto —
+    const footer = home.footer;
+    if (footer) {
+      if (footer.tagline) setTxt('hFooterTag', '"' + String(footer.tagline).replace(/^"|"$/g, '') + '"');
+      setTxt('hFooterCopy', footer.copyright);
+    }
+    const contactEl = document.getElementById('hFooterContact');
+    if (contactEl) {
+      const num = (CACUSA_WHATSAPP || '').replace(/\D/g, '');
+      if (num) contactEl.href = 'https://wa.me/' + num;
     }
   } catch (e) { /* mantiene el contenido por defecto */ }
 })();
@@ -728,9 +759,18 @@ const testis=[
   {t:'"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."',n:'Valentina M.',l:'Quito, Ecuador'},
   {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
 ];
+// Usa los testimonios guardados en products.json si existen; si no, los de arriba
+const cfgTestis = (CACUSA_HOME.testimonials && CACUSA_HOME.testimonials.length)
+  ? CACUSA_HOME.testimonials.map(x => ({
+      t: '"' + String(x.t || x.text || '').replace(/^"|"$/g, '') + '"',
+      n: x.n || x.name || '',
+      l: x.l || x.location || ''
+    }))
+  : testis;
 const tt2=document.getElementById('tTrack2');
-testis.forEach(t=>{
-  tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${t.t}</div><div class="tcard-name">${t.n}</div><div class="tcard-loc">${t.l}</div></div>`;
+const escHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+cfgTestis.forEach(t=>{
+  tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${escHtml(t.t)}</div><div class="tcard-name">${escHtml(t.n)}</div><div class="tcard-loc">${escHtml(t.l)}</div></div>`;
 });
 
 // ── INSTAGRAM GRID (placeholder hasta conectar feed real) ───
@@ -909,9 +949,18 @@ const testis=[
   {t:'"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."',n:'Valentina M.',l:'Quito, Ecuador'},
   {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
 ];
+// Usa los testimonios guardados en products.json si existen; si no, los de arriba
+const cfgTestis = (CACUSA_HOME.testimonials && CACUSA_HOME.testimonials.length)
+  ? CACUSA_HOME.testimonials.map(x => ({
+      t: '"' + String(x.t || x.text || '').replace(/^"|"$/g, '') + '"',
+      n: x.n || x.name || '',
+      l: x.l || x.location || ''
+    }))
+  : testis;
 const tt2=document.getElementById('tTrack2');
-testis.forEach(t=>{
-  tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${t.t}</div><div class="tcard-name">${t.n}</div><div class="tcard-loc">${t.l}</div></div>`;
+const escHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+cfgTestis.forEach(t=>{
+  tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${escHtml(t.t)}</div><div class="tcard-name">${escHtml(t.n)}</div><div class="tcard-loc">${escHtml(t.l)}</div></div>`;
 });
 
 // ── INSTAGRAM GRID (placeholder hasta conectar feed real) ───

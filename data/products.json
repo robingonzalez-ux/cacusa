@@ -23,7 +23,29 @@
         { "num": "500", "label": "Piezas creadas" },
         { "num": "2", "label": "Países" },
         { "num": "100", "label": "% Artesanal" }
-      ]
+      ],
+      "person": {
+        "label": "Personalización",
+        "title": "Tu pieza, tu historia",
+        "subtitle": "Cuéntanos qué la hace especial y la creamos para ti.",
+        "steps": [
+          { "title": "Elige tu pieza", "desc": "Collar, pulsera, anillo o aretes" },
+          { "title": "Personaliza", "desc": "Nombre, fecha o mensaje especial" },
+          { "title": "Nosotros creamos", "desc": "Hecho a mano, listo en 5–7 días" }
+        ]
+      },
+      "testimonials": [
+        { "t": "Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad.", "n": "Valentina M.", "l": "Quito, Ecuador" },
+        { "t": "El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento.", "n": "Carlos R.", "l": "Miami, USA" },
+        { "t": "La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos.", "n": "Sofía L.", "l": "Guayaquil, Ecuador" },
+        { "t": "Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA.", "n": "Isabella T.", "l": "Nueva York, USA" },
+        { "t": "Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!", "n": "Camila V.", "l": "Cuenca, Ecuador" },
+        { "t": "Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí.", "n": "Andrea P.", "l": "Los Ángeles, USA" }
+      ],
+      "footer": {
+        "tagline": "creamos para que luzcas más bella de lo que ya eres",
+        "copyright": "© 2025 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍"
+      }
     }
   },
   "products": [
