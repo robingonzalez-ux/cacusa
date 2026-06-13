@@ -808,11 +808,14 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     notes:    document.getElementById('coNotas').value.trim()
   };
 
+  const _subtotal = cart.reduce((s, i) => s + i.price, 0);
+  const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
+
   try {
     const resp = await fetch(SQUARE_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: cart, customer })
+      body: JSON.stringify({ items: cart, customer, shippingCost: _shippingCost })
     });
     const data = await resp.json();
 
