@@ -538,7 +538,7 @@ footer{background:var(--grad-full);padding:64px 0 32px}
       <div class="vig-label">Oferta exclusiva</div>
       <div class="vig-title">Tu primera joya te espera</div>
       <div class="vig-desc">Suscríbete y recibe 20% de descuento en tu primera compra. Solo por tiempo limitado.</div>
-      <input class="vig-email" placeholder="tu@email.com">
+      <input class="vig-email" id="vigEmail" placeholder="tu@email.com">
       <button class="vig-btn" id="vigBtn">Quiero mi descuento →</button>
       <div class="vig-skip" id="vigSkip">No gracias, prefiero pagar precio completo</div>
     </div>
@@ -775,6 +775,13 @@ if(!localStorage.getItem('cacusa-vig2')) setTimeout(()=>vig.classList.add('show'
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
 }));
 document.getElementById('vigBtn').addEventListener('click',()=>{
+  const emailEl=document.getElementById('vigEmail');
+  const email=(emailEl?emailEl.value:'').trim();
+  if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder='Escribe tu correo primero'; emailEl.focus();} return; }
+  let msg='🌸 *Quiero mi 20% de descuento*\n*CACUSA by Taitus*\n\n';
+  msg+='📧 *Email:* '+email+'\n\nHola, vi la oferta del 20% en mi primera compra y quiero aprovecharla. ✨';
+  const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
+  window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
 });
 </script>
