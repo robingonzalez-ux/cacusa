@@ -458,8 +458,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 // ─── CONFIG ─────────────────────────────────────────────────
 const PRODUCTS_JSON_URL = '../../data/products.json';
 
-// Cloudflare Worker URL — actualizar después del primer deploy
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
+const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 
 let PRODUCTS = [];
 let WHATSAPP_NUMBER = '';
@@ -871,8 +871,22 @@ document.getElementById('payBtn').addEventListener('click', async () => {
       throw new Error(data.error || 'No se pudo crear el pago');
     }
 
-    // Guardar carrito en sessionStorage para recuperar si el usuario cancela
-    sessionStorage.setItem('cacusa-pending-cart', JSON.stringify(cart));
+    // Guardar datos del pedido antes de salir a Square
+    const _pending = {
+      cliente: {
+        nombre:   (customer.name + ' ' + (customer.lastname || '')).trim(),
+        telefono: customer.phone,
+        ciudad:   (customer.city || '') + (customer.country ? ', ' + customer.country : ''),
+        pais:     customer.country,
+        direccion: customer.address,
+      },
+      productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
+      total:     parseFloat((_subtotal + _shippingCost).toFixed(2)),
+      pago:      'Square',
+      estado:    'Nuevo',
+      notas:     customer.notes || undefined
+    };
+    sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
     cart = []; saveCart(); updateCartUI();
     window.location.href = data.checkoutUrl;
 
@@ -920,6 +934,15 @@ function buildWhatsAppUrl() {
     : 'https://wa.me/?text=' + encodeURIComponent(msg);
 }
 
+// ─── ENVIAR PEDIDO AL ADMIN (fire-and-forget) ─────────────────
+function submitOrder(order) {
+  fetch(ADMIN_WORKER_URL + '/order', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ order })
+  }).catch(() => {}); // silencioso si falla
+}
+
 document.getElementById('waFallbackBtn').addEventListener('click', e => {
   e.preventDefault();
   const errorEl = document.getElementById('coError');
@@ -930,6 +953,25 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
     return;
   }
   errorEl.textContent = '';
+
+  // Registrar pedido en el admin
+  const apellido   = document.getElementById('coApellido').value.trim();
+  const ciudad     = document.getElementById('coCiudad').value.trim();
+  const pais       = document.getElementById('coPais').value;
+  const direccion  = document.getElementById('coDireccion').value.trim();
+  const notas      = document.getElementById('coNotas').value.trim();
+  const total      = cart.reduce((s, i) => s + i.price, 0);
+  const free       = total >= SHIPPING.freeThreshold;
+  const totalFinal = free ? total : total + SHIPPING.cost;
+  submitOrder({
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
+    productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
+    total:  parseFloat(totalFinal.toFixed(2)),
+    pago:   'WhatsApp',
+    estado: 'Nuevo',
+    notas:  notas || undefined
+  });
+
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -947,12 +989,14 @@ document.getElementById('successBack').addEventListener('click', () => {
 updateCartUI();
 refreshCursorTargets();
 
-// Detectar regreso desde Square (?paid=1) → mostrar success
+// Detectar regreso desde Square (?paid=1) → guardar pedido + mostrar success
 if (new URLSearchParams(window.location.search).get('paid') === '1') {
-  // Limpiar URL sin recargar
   history.replaceState({}, '', window.location.pathname);
-  // Recuperar carrito pendiente si el usuario volvió sin pagar
-  sessionStorage.removeItem('cacusa-pending-cart');
+  const pending = sessionStorage.getItem('cacusa_order_pending');
+  if (pending) {
+    try { submitOrder(JSON.parse(pending)); } catch (_) {}
+    sessionStorage.removeItem('cacusa_order_pending');
+  }
   showSuccess();
 }
 </script>

@@ -24,13 +24,12 @@ a{text-decoration:none;color:inherit}
 const {useState, useEffect, useRef} = React;
 
 // ── Constants ──────────────────────────────────────────────────────────────
-// Backend seguro (Cloudflare Worker). Mantiene el token de GitHub y las
-// contraseñas FUERA de este archivo / del navegador.
-const ADMIN_API     = 'https://cacusa-admin.facturacioncacusa.workers.dev';
-const PRODUCTS_PATH = 'data/products.json';
-const ORDERS_PATH   = 'data/orders.json';
-const IMAGES_PATH   = 'ui_kits/store/images';
-const STORE_URL     = 'https://cacusabytaitus.com/';
+const ADMIN_API      = 'https://cacusa-admin.facturacioncacusa.workers.dev';
+const PRODUCTS_PATH  = 'data/products.json';
+const ORDERS_PATH    = 'data/orders.json';
+const IMAGES_PATH    = 'ui_kits/store/images';
+const STORE_URL      = 'https://cacusabytaitus.com/';
+const VAPID_PUB_KEY  = 'BDj3vzNjIprLSnAzuBzZHBjC0Zoa9033J2Ye7el8Zd0PTat1YFlMEDZbjeVo1zuzI6xRG9QJEtyfRehwYVMo1v8';
 
 const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👑', color: '#E85D8A' },
@@ -123,6 +122,40 @@ const apiLoad   = (token)                 => apiCall('load', { token });
 const apiSave   = (token, path, content, message) => apiCall('save', { token, path, content, message });
 // Sube una imagen (base64) vía backend
 const apiUpload = (token, path, contentBase64, message) => apiCall('upload', { token, path, contentBase64, message });
+// Guarda suscripción push en el backend
+const apiSubscribe = (token, subscription) => apiCall('subscribe', { token, subscription });
+
+// ── Push Notifications ─────────────────────────────────────────────────────
+function vapidKeyToUint8Array(b64url) {
+  const padding = '='.repeat((4 - b64url.length % 4) % 4);
+  const base64  = (b64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+
+async function setupPush(token, onStateChange) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    onStateChange('unsupported'); return;
+  }
+  try {
+    const reg  = await navigator.serviceWorker.register('/ui_kits/admin/sw.js', { scope: '/ui_kits/admin/' });
+    await navigator.serviceWorker.ready;
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { onStateChange('denied'); return; }
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly:      true,
+        applicationServerKey: vapidKeyToUint8Array(VAPID_PUB_KEY)
+      });
+    }
+    await apiSubscribe(token, sub.toJSON());
+    onStateChange('subscribed');
+  } catch (e) {
+    console.error('Push setup error:', e);
+    onStateChange('error');
+  }
+}
 
 function compressImage(file, maxPx = 900) {
   return new Promise(resolve => {
@@ -790,11 +823,13 @@ function App() {
   const [showMenu, setShowMenu]       = useState(false);
   const [activeTab, setActiveTab]     = useState('products');
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [pushState, setPushState]           = useState('');  // ''|'subscribed'|'denied'|'unsupported'|'error'
 
   useEffect(() => {
     if (session) {
       sessionStorage.setItem('cacusa_session', JSON.stringify(session));
       loadData();
+      setupPush(session.token, setPushState);
     }
   }, [session]);
 
@@ -912,6 +947,12 @@ function App() {
         <div style={{ flex: 1 }} />
         {dirty && <span style={{ fontSize: 11, color: '#FBBF24', fontWeight: 700 }}>● Cambios sin publicar</span>}
         <a href={STORE_URL} target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>🌐 Tienda</a>
+        <button
+          onClick={() => pushState !== 'subscribed' && setupPush(session.token, setPushState)}
+          title={pushState === 'subscribed' ? 'Notificaciones activas' : pushState === 'denied' ? 'Notificaciones bloqueadas en el navegador' : 'Activar notificaciones'}
+          style={{ width: 34, height: 34, borderRadius: '50%', background: pushState === 'subscribed' ? 'rgba(34,197,94,.25)' : 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: pushState === 'subscribed' ? 'default' : 'pointer' }}>
+          {pushState === 'subscribed' ? '🔔' : pushState === 'denied' ? '🔕' : '🔔'}
+        </button>
         <button onClick={e => { e.stopPropagation(); setShowMenu(s => !s); }}
           style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none' }}>
           {USERS[session.username].avatar}
@@ -1062,7 +1103,9 @@ function App() {
               <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
                 <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
                 <div style={{ fontSize: 16, marginBottom: 8 }}>No hay pedidos aún</div>
-                <div style={{ fontSize: 13, color: '#ccc' }}>Los pedidos aparecerán aquí cuando los registres manualmente</div>
+                <div style={{ fontSize: 13, color: '#ccc', maxWidth: 300, margin: '0 auto' }}>
+                  Los pedidos de Square y WhatsApp aparecen aquí automáticamente. También puedes agregar uno manual.
+                </div>
               </div>
             ) : (
               <div>
