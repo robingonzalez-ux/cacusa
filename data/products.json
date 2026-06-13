@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-13T11:41:46.095Z",
+  "lastUpdated": "2026-06-13T21:57:09.718Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -197,6 +197,20 @@
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369644513_3691ae2e_f758_4374_803e_41390d61c357_jpe.jpg",
       "id": 1780369728627
+    },
+    {
+      "name": "Cadena jersey Ecuador ",
+      "category": "Hombres",
+      "price": 28,
+      "oldPrice": 35,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Cadena para el mundial de futbol ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781387760417_image_jpg.jpg",
+      "id": 1781387820250
     }
   ]
 }
