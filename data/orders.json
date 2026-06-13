@@ -1,7 +1,27 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-13T23:55:33.619Z",
+  "lastUpdated": "2026-06-13T23:58:07.322Z",
   "orders": [
+    {
+      "cliente": {
+        "nombre": "Robin Giovanny Gonzalez Echeverria",
+        "telefono": "+593994055632",
+        "ciudad": "Guayaquil, EC",
+        "direccion": "Samanes 2 Mz 212 V 18"
+      },
+      "productos": [
+        {
+          "name": "Pulsera inicial",
+          "price": 32,
+          "material": "Plata 925"
+        }
+      ],
+      "total": 42,
+      "pago": "WhatsApp",
+      "estado": "Nuevo",
+      "id": 1781395087322,
+      "fecha": "2026-06-13T23:58:07.322Z"
+    },
     {
       "cliente": {
         "nombre": "Robin Giovanny Gonzalez Echeverria",
