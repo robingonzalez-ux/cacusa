@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-13T21:57:09.718Z",
+  "lastUpdated": "2026-06-13T23:46:43.417Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -18,7 +18,7 @@
     ],
     "shipping": {
       "freeThreshold": 60,
-      "cost": 5
+      "cost": 10
     },
     "texts": {
       "heroLabel": "Joyería artesanal personalizada",
