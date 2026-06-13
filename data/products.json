@@ -1,19 +1,36 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-02T03:09:02.015Z",
-  "updatedBy": "tita.jaramillo",
+  "lastUpdated": "2026-06-13T11:41:46.095Z",
+  "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
-    "categories": ["Personalizado", "Colección", "Gold Edition", "Hombres"],
-    "materials": ["Plata 925", "Baño de oro 18k", "Acero inoxidable"],
-    "shipping": { "freeThreshold": 60, "cost": 5 },
+    "categories": [
+      "Personalizado",
+      "Colección",
+      "Gold Edition",
+      "Hombres"
+    ],
+    "materials": [
+      "Plata 925",
+      "Baño de oro 18k",
+      "Acero inoxidable"
+    ],
+    "shipping": {
+      "freeThreshold": 60,
+      "cost": 5
+    },
     "texts": {
       "heroLabel": "Joyería artesanal personalizada",
       "heroTitle": "Nuestra Tienda",
       "heroSubtitle": "by Taitus",
       "instagram": "@cacusabytaitus",
-      "perks": ["Hecho a mano", "Envío express", "5–7 días hábiles", "Gift wrap gratis"]
+      "perks": [
+        "Hecho a mano",
+        "Envío express",
+        "5–7 días hábiles",
+        "Gift wrap gratis"
+      ]
     },
     "home": {
       "storyLabel": "Nuestra historia",
@@ -21,27 +38,69 @@
       "storyQuote": "Cada pieza, una historia única",
       "storyBody": "Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.",
       "stats": [
-        { "num": "500", "label": "Piezas creadas" },
-        { "num": "2", "label": "Países" },
-        { "num": "100", "label": "% Artesanal" }
+        {
+          "num": "650",
+          "label": "Piezas creadas"
+        },
+        {
+          "num": "5",
+          "label": "Países"
+        },
+        {
+          "num": "100",
+          "label": "% Artesanal"
+        }
       ],
       "person": {
         "label": "Personalización",
         "title": "Tu pieza, tu historia",
         "subtitle": "Cuéntanos qué la hace especial y la creamos para ti.",
         "steps": [
-          { "title": "Elige tu pieza", "desc": "Collar, pulsera, anillo o aretes" },
-          { "title": "Personaliza", "desc": "Nombre, fecha o mensaje especial" },
-          { "title": "Nosotros creamos", "desc": "Hecho a mano, listo en 5–7 días" }
+          {
+            "title": "Elige tu pieza",
+            "desc": "Collar, pulsera, anillo o aretes"
+          },
+          {
+            "title": "Personaliza",
+            "desc": "Nombre, fecha o mensaje especial"
+          },
+          {
+            "title": "Nosotros creamos",
+            "desc": "Hecho a mano, listo en 5–7 días"
+          }
         ]
       },
       "testimonials": [
-        { "t": "Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad.", "n": "Valentina M.", "l": "Quito, Ecuador" },
-        { "t": "El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento.", "n": "Carlos R.", "l": "Miami, USA" },
-        { "t": "La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos.", "n": "Sofía L.", "l": "Guayaquil, Ecuador" },
-        { "t": "Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA.", "n": "Isabella T.", "l": "Nueva York, USA" },
-        { "t": "Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!", "n": "Camila V.", "l": "Cuenca, Ecuador" },
-        { "t": "Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí.", "n": "Andrea P.", "l": "Los Ángeles, USA" }
+        {
+          "t": "Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad.",
+          "n": "Valentina M.",
+          "l": "Quito, Ecuador"
+        },
+        {
+          "t": "El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento.",
+          "n": "Carlos R.",
+          "l": "Miami, USA"
+        },
+        {
+          "t": "La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos.",
+          "n": "Sofía L.",
+          "l": "Guayaquil, Ecuador"
+        },
+        {
+          "t": "Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA.",
+          "n": "Isabella T.",
+          "l": "Nueva York, USA"
+        },
+        {
+          "t": "Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!",
+          "n": "Camila V.",
+          "l": "Cuenca, Ecuador"
+        },
+        {
+          "t": "Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí.",
+          "n": "Andrea P.",
+          "l": "Los Ángeles, USA"
+        }
       ],
       "footer": {
         "tagline": "creamos para que luzcas más bella de lo que ya eres",
