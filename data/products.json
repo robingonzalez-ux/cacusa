@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T01:19:40.863Z",
+  "lastUpdated": "2026-06-14T01:27:38.661Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -228,6 +228,22 @@
       "focalX": 44,
       "focalY": 43,
       "id": 1781399974669
+    },
+    {
+      "name": "Pulsera tejida macramé con dije y perlas ",
+      "category": "Gold Edition",
+      "price": 28,
+      "oldPrice": 35,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Pulsera tejida macramé con perlas balines con baño de oro y dije de la virgen sede Guadalupe  ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781400341079_img_7588_jpeg.jpg",
+      "focalX": 18,
+      "focalY": 49,
+      "id": 1781400451404
     }
   ]
 }
