@@ -330,7 +330,7 @@ function ImageEditor({ imgSrc, focalX, focalY, zoom, onChange }) {
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-        <button style={btnStyle} onClick={() => onChange({ zoom: Math.max(1, parseFloat((z - 0.15).toFixed(2))) })}>−</button>
+        <button style={btnStyle} onClick={() => onChange({ zoom: Math.max(0.5, parseFloat((z - 0.15).toFixed(2))) })}>−</button>
         <div style={{ flex: 1, textAlign: 'center', fontSize: 12, color: '#888' }}>🔍 Zoom</div>
         <button style={btnStyle} onClick={() => onChange({ zoom: Math.min(3, parseFloat((z + 0.15).toFixed(2))) })}>+</button>
       </div>
