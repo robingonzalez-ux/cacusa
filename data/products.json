@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T18:12:00.994Z",
+  "lastUpdated": "2026-06-14T18:13:24.063Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -139,15 +139,20 @@
     },
     {
       "id": 3,
-      "name": "Pulsera inicial",
-      "category": "Personalizado",
-      "price": 32,
+      "name": "Argollas de estrella con circones ",
+      "category": "Gold Edition",
+      "price": 20,
       "img": "bracelet",
       "color": "violet",
       "tag": null,
-      "description": "Pulsera fina con tu inicial en plata 925. Diseño delicado, perfecto para usar solo o en stack.",
-      "personalized": true,
-      "available": true
+      "description": "Argollas de circones en forma de estrella ",
+      "personalized": false,
+      "available": true,
+      "oldPrice": null,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781460742072_img_3335_jpeg.jpg",
+      "focalX": 49.34922014520391,
+      "focalY": 32.750108004690695,
+      "material": "Acero inoxidable"
     },
     {
       "id": 4,
