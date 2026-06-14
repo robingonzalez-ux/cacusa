@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:45:30.075Z",
+  "lastUpdated": "2026-06-14T21:47:19.137Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -301,6 +301,24 @@
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781473526943
+    },
+    {
+      "name": "Cadena con dije de Luna y corazón turquesa ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Cadena veneciana con Dije de Luna y corazón con microcircones turquesas ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473555514_img_3350_jpeg.jpg",
+      "focalX": 46.65313217533437,
+      "focalY": 74.4152317472073,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781473627668
     }
   ]
 }
