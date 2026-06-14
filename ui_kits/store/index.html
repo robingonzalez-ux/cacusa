@@ -307,12 +307,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <div class="modal-name" id="modalName"></div>
       <div class="modal-price" id="modalPrice"></div>
       <p class="modal-desc" id="modalDesc"></p>
-      <label class="modal-label">Material</label>
-      <select class="modal-select" id="modalMat">
-        <option>Plata 925</option>
-        <option>Ba&#xF1;o de oro 18k</option>
-        <option>Acero inoxidable</option>
-      </select>
+      <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
         <label class="modal-label">Personalizaci&#xF3;n</label>
         <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial&hellip;">
@@ -698,12 +693,7 @@ function renderFilters() {
     });
   });
 }
-function renderMaterials() {
-  const sel = document.getElementById('modalMat');
-  if (sel && MATERIALS.length) {
-    sel.innerHTML = MATERIALS.map(m => '<option>' + m + '</option>').join('');
-  }
-}
+function renderMaterials() {} // material fijo por producto, no seleccionable
 
 // ─── CURSOR ─────────────────────────────────────────────────
 const cur = document.getElementById('cursor');
@@ -809,6 +799,8 @@ function openModal(id) {
   document.getElementById('modalName').textContent = p.name;
   document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? ' — antes $' + p.oldPrice : '');
   document.getElementById('modalDesc').textContent = p.desc || '';
+  const matEl = document.getElementById('modalMat');
+  if (matEl) matEl.textContent = p.material || '';
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
@@ -833,9 +825,8 @@ document.getElementById('qtyPlus').addEventListener('click', () => { qty++; docu
 document.getElementById('modalAddBtn').addEventListener('click', () => {
   if (!currentProduct) return;
   const personText = document.getElementById('modalPersonText').value;
-  const mat = document.getElementById('modalMat').value;
   for (let i = 0; i < qty; i++) {
-    cart.push({ ...currentProduct, personalization: personText, material: mat, cartId: Date.now() + i });
+    cart.push({ ...currentProduct, personalization: personText, material: currentProduct.material || '', cartId: Date.now() + i });
   }
   saveCart(); updateCartUI();
   const btn = document.getElementById('modalAddBtn');
