@@ -1,15 +1,16 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T18:13:24.063Z",
+  "lastUpdated": "2026-06-14T21:32:47.197Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
     "categories": [
-      "Personalizado",
-      "Colección",
-      "Gold Edition",
-      "Hombres"
+      "Cadenas",
+      "Aretes",
+      "Anillos",
+      "Hombres",
+      "Pulseras"
     ],
     "materials": [
       "Plata 925",
@@ -111,8 +112,8 @@
   "products": [
     {
       "id": 1,
-      "name": "Collar con nombre",
-      "category": "Gold Edition",
+      "name": "Anillo doble GG",
+      "category": "Anillos",
       "price": 22,
       "img": "collar",
       "color": "rose",
@@ -122,12 +123,14 @@
       "available": true,
       "oldPrice": 28,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369452657_e1d3a277_c1d9_476e_9517_15e3939543d7_jpe.jpg",
-      "material": "Baño de oro 18k"
+      "material": "Baño de oro 18k",
+      "focalX": 42.28361029313203,
+      "focalY": 55.54835524285628
     },
     {
       "id": 2,
       "name": "Anillo estrella",
-      "category": "Gold Edition",
+      "category": "Anillos",
       "price": 38,
       "oldPrice": 50,
       "img": "ring",
@@ -140,7 +143,7 @@
     {
       "id": 3,
       "name": "Argollas de estrella con circones ",
-      "category": "Gold Edition",
+      "category": "Anillos",
       "price": 20,
       "img": "bracelet",
       "color": "violet",
@@ -157,7 +160,7 @@
     {
       "id": 4,
       "name": "Aretes luna",
-      "category": "Colección",
+      "category": "Aretes",
       "price": 28,
       "img": "earrings",
       "color": "sky",
@@ -181,7 +184,7 @@
     {
       "id": 6,
       "name": "Collar corazón",
-      "category": "Personalizado",
+      "category": "Cadenas",
       "price": 42,
       "img": "heart",
       "color": "rose",
@@ -192,7 +195,7 @@
     },
     {
       "name": "Pulsera de mano con anillo",
-      "category": "Personalizado",
+      "category": "Cadenas",
       "price": 35,
       "oldPrice": 38,
       "img": "bracelet",
@@ -224,7 +227,7 @@
     },
     {
       "name": "Cadena San Benito con Cruz ",
-      "category": "Colección",
+      "category": "Aretes",
       "price": 48,
       "oldPrice": 55,
       "img": "collar",
@@ -241,7 +244,7 @@
     },
     {
       "name": "Pulsera tejida macramé con dije y perlas ",
-      "category": "Gold Edition",
+      "category": "Anillos",
       "price": 28,
       "oldPrice": 35,
       "img": "collar",
@@ -257,7 +260,7 @@
     },
     {
       "name": "Collar negro con ojo turco ",
-      "category": "Colección",
+      "category": "Aretes",
       "price": 35,
       "oldPrice": null,
       "img": "collar",
