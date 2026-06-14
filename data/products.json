@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:34:17.437Z",
+  "lastUpdated": "2026-06-14T21:38:34.259Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -158,18 +158,6 @@
       "material": "Acero inoxidable"
     },
     {
-      "id": 4,
-      "name": "Aretes luna",
-      "category": "Aretes",
-      "price": 28,
-      "img": "earrings",
-      "color": "sky",
-      "tag": null,
-      "description": "Aretes en forma de luna menguante. Plata 925 con baño de rodio. Ligeros y elegantes.",
-      "personalized": false,
-      "available": true
-    },
-    {
       "id": 5,
       "name": "Pulsera hombre",
       "category": "Hombres",
@@ -195,7 +183,7 @@
     },
     {
       "name": "Pulsera de mano con anillo",
-      "category": "Cadenas",
+      "category": "Pulseras",
       "price": 35,
       "oldPrice": 38,
       "img": "bracelet",
@@ -208,7 +196,8 @@
       "id": 1780369728627,
       "zoom": 0.85,
       "focalX": 72.2242769732981,
-      "focalY": 56.36566106499314
+      "focalY": 56.36566106499314,
+      "material": "Baño de oro 18k"
     },
     {
       "name": "Cadena jersey Ecuador ",
@@ -227,20 +216,21 @@
     },
     {
       "name": "Cadena San Benito con Cruz ",
-      "category": "Aretes",
+      "category": "Cadenas",
       "price": 48,
       "oldPrice": 55,
       "img": "collar",
       "color": "gold",
       "tag": "Bestseller",
-      "description": "Hermoso dije con micro circones en baño de oro",
+      "description": "Cadena de san Benito con dije de Cruz. Hermosos dijes con micro circones en baño de oro",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781399831949_683f9ffd_c3f0_4715_b64a_bad016f55665_jpe.jpg",
       "focalX": 44.842626615101366,
       "focalY": 48.96780724843091,
       "id": 1781399974669,
-      "zoom": 1.15
+      "zoom": 1.15,
+      "material": "Baño de oro 18k"
     },
     {
       "name": "Pulsera tejida macramé con dije y perlas ",
@@ -293,6 +283,42 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781472855605
+    },
+    {
+      "name": "Pulsera triple con dije de corazón ",
+      "category": "Cadenas",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Pulsera de cristales tricolor con dije de corazón ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781472974038_image_jpg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781473015877
+    },
+    {
+      "name": "Pulsera de cristales tricolor con dije de corazón. ",
+      "category": "Pulseras",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473093474_image_jpg.jpg",
+      "focalX": 43.027358698613256,
+      "focalY": 52.91921249151394,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781473067497
     }
   ]
 }
