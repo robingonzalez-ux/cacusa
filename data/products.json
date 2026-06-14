@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T01:27:38.661Z",
-  "updatedBy": "robin.gonzalez",
+  "lastUpdated": "2026-06-14T01:39:10.297Z",
+  "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -196,7 +196,10 @@
       "personalized": true,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369644513_3691ae2e_f758_4374_803e_41390d61c357_jpe.jpg",
-      "id": 1780369728627
+      "id": 1780369728627,
+      "zoom": 0.85,
+      "focalX": 72.2242769732981,
+      "focalY": 56.36566106499314
     },
     {
       "name": "Cadena jersey Ecuador ",
