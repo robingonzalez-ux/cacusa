@@ -1,7 +1,27 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T00:11:53.196Z",
+  "lastUpdated": "2026-06-14T00:29:32.380Z",
   "orders": [
+    {
+      "cliente": {
+        "nombre": "Robin Giovanny Gonzalez Echeverria",
+        "telefono": "+593994055632",
+        "ciudad": "Guayaquil, EC",
+        "direccion": "Samanes 2 Mz 212 V 18"
+      },
+      "productos": [
+        {
+          "name": "Collar con nombre",
+          "price": 45,
+          "material": "Plata 925"
+        }
+      ],
+      "total": 55,
+      "pago": "WhatsApp",
+      "estado": "Nuevo",
+      "id": 1781396972380,
+      "fecha": "2026-06-14T00:29:32.380Z"
+    },
     {
       "cliente": {
         "nombre": "Robin Giovanny Gonzalez Echeverria",
