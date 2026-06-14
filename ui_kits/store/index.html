@@ -433,6 +433,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-totals">
           <div class="co-line"><span>Subtotal</span><strong id="coSubtotal">$0</strong></div>
           <div class="co-line"><span>Env&#xED;o</span><strong id="coEnvio">Por calcular</strong></div>
+          <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel">Impuesto</span><strong id="coImpuesto">$0</strong></div>
           <div class="co-total"><span>Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
@@ -468,6 +469,14 @@ let WHATSAPP_NUMBER = '';
 let CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
 let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
 let SHIPPING   = { freeThreshold: 60, cost: 5 };
+const US_STATE_TAX = {
+  AL:0.04,AZ:0.056,AR:0.065,CA:0.0725,CO:0.029,CT:0.0635,FL:0.06,GA:0.04,
+  HI:0.04,ID:0.06,IL:0.0625,IN:0.07,IA:0.06,KS:0.065,KY:0.06,LA:0.0445,
+  ME:0.055,MD:0.06,MA:0.0625,MI:0.06,MN:0.06875,MS:0.07,MO:0.04225,NE:0.055,
+  NV:0.0685,NJ:0.06625,NM:0.05,NY:0.04,NC:0.0475,ND:0.05,OH:0.0575,OK:0.045,
+  PA:0.06,RI:0.07,SC:0.06,SD:0.045,TN:0.07,TX:0.0625,UT:0.0485,VT:0.06,
+  VA:0.053,WA:0.065,WV:0.06,WI:0.05,WY:0.04,DC:0.06
+};
 let TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -612,7 +621,11 @@ function imgBgStyle(p) {
   return p && p.imageUrl ? '' : 'background:' + ((p && p.grad) || 'var(--grad)');
 }
 function imgInner(p, alt) {
-  return (p && p.imageUrl) ? '<img src="' + p.imageUrl + '" alt="' + (alt||'') + '" loading="lazy">' : '';
+  if (p && p.imageUrl) {
+    const pos = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
+    return '<img src="' + p.imageUrl + '" alt="' + (alt||'') + '" loading="lazy" style="object-position:' + pos + '">';
+  }
+  return '';
 }
 
 // ─── RENDER PRODUCTS ────────────────────────────────────────
@@ -672,7 +685,8 @@ function openModal(id) {
   currentProduct = p; qty = 1;
   const imgBg = document.getElementById('modalImgBg');
   if (p.imageUrl) {
-    imgBg.innerHTML = '<img src="' + p.imageUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;display:block">';
+    const pos = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
+    imgBg.innerHTML = '<img src="' + p.imageUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;object-position:' + pos + ';display:block">';
     imgBg.style.cssText = 'width:100%;height:100%;min-height:400px';
   } else {
     imgBg.innerHTML = '';
@@ -771,7 +785,9 @@ document.getElementById('coPais').addEventListener('change', function() {
   const isUS = this.value === 'US';
   document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
   document.getElementById('coEstado').value = '';
+  renderCheckoutSummary();
 });
+document.getElementById('coEstado').addEventListener('change', renderCheckoutSummary);
 
 document.getElementById('checkoutBtn').addEventListener('click', () => { closeCart(); openCheckout(); });
 document.getElementById('checkoutBack').addEventListener('click', () => { closeCheckout(); openCart(); });
@@ -800,13 +816,37 @@ document.addEventListener('keydown', e => {
 });
 
 function renderCheckoutSummary() {
-  const total = cart.reduce((s, i) => s + i.price, 0);
-  const free = total >= SHIPPING.freeThreshold;
-  const envio = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
-  const totalFinal = free ? total : total + SHIPPING.cost;
-  document.getElementById('coSubtotal').textContent = '$' + total;
-  document.getElementById('coEnvio').textContent = envio;
-  document.getElementById('coTotal').textContent = '$' + totalFinal;
+  const subtotal   = cart.reduce((s, i) => s + i.price, 0);
+  const free       = subtotal >= SHIPPING.freeThreshold;
+  const shippingCost = free ? 0 : SHIPPING.cost;
+  const pais       = (document.getElementById('coPais').value || '').toUpperCase();
+  const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
+
+  // Calcular impuesto
+  let taxAmt = 0, taxLabel = 'Impuesto';
+  if (pais === 'EC') {
+    taxAmt   = (subtotal + shippingCost) * 0.15;
+    taxLabel = 'IVA Ecuador (15%)';
+  } else if (pais === 'US' && estado && US_STATE_TAX[estado]) {
+    const rate = US_STATE_TAX[estado];
+    taxAmt     = (subtotal + shippingCost) * rate;
+    const pct  = (rate * 100).toFixed(2).replace(/\.?0+$/, '');
+    taxLabel   = `Sales Tax ${estado} (${pct}%)`;
+  }
+
+  const totalFinal = subtotal + shippingCost + taxAmt;
+
+  document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
+  document.getElementById('coEnvio').textContent    = free ? 'Gratis' : '$' + shippingCost.toFixed(2);
+  const taxLine = document.getElementById('coTaxLine');
+  if (taxAmt > 0) {
+    taxLine.style.display = '';
+    document.getElementById('coTaxLabel').textContent   = taxLabel;
+    document.getElementById('coImpuesto').textContent   = '$' + taxAmt.toFixed(2);
+  } else {
+    taxLine.style.display = 'none';
+  }
+  document.getElementById('coTotal').textContent = '$' + totalFinal.toFixed(2);
   document.getElementById('coSummaryItems').innerHTML = cart.map(item => `
     <div class="co-sum-item">
       <div class="co-si-img" style="${imgBgStyle(item)}">

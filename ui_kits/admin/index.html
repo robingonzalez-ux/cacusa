@@ -252,7 +252,7 @@ function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canU
     <div style={{ background: 'white', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 14px rgba(0,0,0,.07)', opacity: active ? 1 : .52, transition: 'all .25s', display: 'flex', flexDirection: 'column', animation: 'fadeIn .3s ease' }}>
       <div style={{ height: 128, position: 'relative', flexShrink: 0 }}>
         {p.imageUrl
-          ? <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ? <img src={p.imageUrl} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${p.focalX ?? 50}% ${p.focalY ?? 50}%` }} />
           : <Illustration type={p.img} color={p.color} />}
         {p.tag && <span style={{ position: 'absolute', top: 9, left: 9, background: '#E85D8A', color: 'white', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 99, letterSpacing: '.1em', textTransform: 'uppercase' }}>{p.tag}</span>}
         <span style={{ position: 'absolute', top: 9, right: 9, background: active ? '#D1FAE5' : '#FEE2E2', color: active ? '#065F46' : '#DC2626', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 99 }}>{active ? 'ACTIVO' : 'INACTIVO'}</span>
@@ -287,7 +287,7 @@ function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canU
 function ProductModal({ product, onSave, onClose, token, categories }) {
   const cats = (categories && categories.length) ? categories : DEFAULT_CATEGORIES;
   const isNew = !product?.id;
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '' };
+  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50 };
   const [form, setForm] = useState(product ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '' } : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
@@ -361,7 +361,7 @@ function ProductModal({ product, onSave, onClose, token, categories }) {
             onDrop={handleDrop}
             style={{ height: 160, borderRadius: 14, border: dragOver ? '2px dashed #9B5DE5' : '2px dashed #e0e0e0', cursor: uploading ? 'wait' : 'pointer', overflow: 'hidden', background: dragOver ? '#F6F0FE' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'border-color .2s, background .2s' }}>
             {imgPrev
-              ? <img src={imgPrev} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="preview" />
+              ? <img src={imgPrev} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${form.focalX ?? 50}% ${form.focalY ?? 50}%` }} alt="preview" />
               : <div style={{ textAlign: 'center', color: dragOver ? '#9B5DE5' : '#bbb', pointerEvents: 'none' }}>
                   <div style={{ fontSize: 40, marginBottom: 6 }}>{dragOver ? '⬇️' : '📸'}</div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{dragOver ? 'Suelta la foto aquí' : 'Toca para elegir una foto'}</div>
@@ -376,6 +376,25 @@ function ProductModal({ product, onSave, onClose, token, categories }) {
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
           {uploadMsg && <div style={{ fontSize: 12, marginTop: 6, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
           {!uploadMsg && <div style={{ fontSize: 11, color: '#aaa', marginTop: 6 }}>💡 La foto se optimiza automáticamente para cargar rápido en la tienda.</div>}
+          {imgPrev && !uploading && (
+            <div style={{ marginTop: 10, background: '#FAF7FB', borderRadius: 10, padding: '10px 14px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#7A6880', marginBottom: 8 }}>🎯 Ajustar posición de la foto</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <label style={{ fontSize: 11, color: '#999' }}>
+                  Izquierda ↔ Derecha ({form.focalX ?? 50}%)
+                  <input type="range" min="0" max="100" value={form.focalX ?? 50}
+                    onChange={e => set('focalX', Number(e.target.value))}
+                    style={{ width: '100%', marginTop: 4, accentColor: '#9B5DE5' }} />
+                </label>
+                <label style={{ fontSize: 11, color: '#999' }}>
+                  Arriba ↕ Abajo ({form.focalY ?? 50}%)
+                  <input type="range" min="0" max="100" value={form.focalY ?? 50}
+                    onChange={e => set('focalY', Number(e.target.value))}
+                    style={{ width: '100%', marginTop: 4, accentColor: '#9B5DE5' }} />
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
