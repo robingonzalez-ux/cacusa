@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:33:10.918Z",
+  "lastUpdated": "2026-06-14T21:34:17.437Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -275,6 +275,24 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781460544331
+    },
+    {
+      "name": "Pulsera Tiffy",
+      "category": "Pulseras",
+      "price": 35,
+      "oldPrice": 45,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Pulsera Tiffy con microcircones centrales. Bañada en oro de 18 k",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781472808363_image_jpg.jpg",
+      "focalX": 47.489849131500776,
+      "focalY": 43.498117632537145,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781472855605
     }
   ]
 }
