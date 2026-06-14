@@ -290,10 +290,11 @@ function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canU
 }
 
 // ── Product Modal ──────────────────────────────────────────────────────────
-function ProductModal({ product, onSave, onClose, token, categories }) {
+function ProductModal({ product, onSave, onClose, token, categories, materials }) {
   const cats = (categories && categories.length) ? categories : DEFAULT_CATEGORIES;
+  const mats = (materials && materials.length) ? materials : DEFAULT_MATERIALS;
   const isNew = !product?.id;
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50 };
+  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, material: mats[0] };
   const [form, setForm] = useState(product ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '' } : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
@@ -412,6 +413,12 @@ function ProductModal({ product, onSave, onClose, token, categories }) {
             <label style={lbl}>Categoría</label>
             <select value={form.category} onChange={e => set('category', e.target.value)} style={inp}>
               {(cats.includes(form.category) ? cats : [form.category, ...cats]).map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Material</label>
+            <select value={form.material || mats[0]} onChange={e => set('material', e.target.value)} style={inp}>
+              {mats.map(m => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div>
@@ -1174,7 +1181,7 @@ function App() {
 
         {/* ── Modals ── */}
         {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
-        {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
+        {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} materials={materials} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
 
         {delConfirm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
