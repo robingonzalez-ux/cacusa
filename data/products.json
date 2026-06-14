@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:41:22.478Z",
+  "lastUpdated": "2026-06-14T21:42:11.268Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -145,18 +145,6 @@
       "material": "Acero inoxidable"
     },
     {
-      "id": 6,
-      "name": "Collar corazón",
-      "category": "Cadenas",
-      "price": 42,
-      "img": "heart",
-      "color": "rose",
-      "tag": null,
-      "description": "Collar con colgante de corazón grabado con mensaje o fecha especial. El regalo perfecto.",
-      "personalized": true,
-      "available": true
-    },
-    {
       "name": "Pulsera de mano con anillo",
       "category": "Pulseras",
       "price": 35,
@@ -209,7 +197,7 @@
     },
     {
       "name": "Pulsera tejida macramé con dije y perlas ",
-      "category": "Anillos",
+      "category": "Pulseras",
       "price": 28,
       "oldPrice": 35,
       "img": "collar",
@@ -221,7 +209,8 @@
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781400341079_img_7588_jpeg.jpg",
       "focalX": 18,
       "focalY": 49,
-      "id": 1781400451404
+      "id": 1781400451404,
+      "material": "Baño de oro 18k"
     },
     {
       "name": "Collar negro con ojo turco ",
@@ -276,24 +265,6 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781473015877
-    },
-    {
-      "name": "Pulsera de cristales tricolor con dije de corazón. ",
-      "category": "Pulseras",
-      "price": 25,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "",
-      "personalized": false,
-      "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473093474_image_jpg.jpg",
-      "focalX": 43.027358698613256,
-      "focalY": 52.91921249151394,
-      "zoom": 1,
-      "material": "Baño de oro 18k",
-      "id": 1781473067497
     }
   ]
 }
