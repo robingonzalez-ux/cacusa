@@ -725,8 +725,9 @@ function imgBgStyle(p) {
 }
 function imgInner(p, alt) {
   if (p && p.imageUrl) {
-    const pos = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
-    return '<img src="' + p.imageUrl + '" alt="' + (alt||'') + '" loading="lazy" style="object-position:' + pos + '">';
+    const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
+    const zoom = p.zoom != null ? p.zoom : 1;
+    return '<img src="' + p.imageUrl + '" alt="' + (alt||'') + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
   }
   return '';
 }
@@ -788,8 +789,9 @@ function openModal(id) {
   currentProduct = p; qty = 1;
   const imgBg = document.getElementById('modalImgBg');
   if (p.imageUrl) {
-    const pos = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
-    imgBg.innerHTML = '<img src="' + p.imageUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;object-position:' + pos + ';display:block">';
+    const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
+    const zoom = p.zoom != null ? p.zoom : 1;
+    imgBg.innerHTML = '<img src="' + p.imageUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + ';display:block">';
     imgBg.style.cssText = 'width:100%;height:100%;min-height:400px';
   } else {
     imgBg.innerHTML = '';
