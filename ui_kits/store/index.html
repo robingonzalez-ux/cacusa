@@ -408,6 +408,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
             <option value="DC">Washington D.C.</option>
           </select>
         </div>
+        <div class="co-field" id="coZipWrap" style="display:none">
+          <label class="co-label">C&#xF3;digo ZIP</label>
+          <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
+          <div id="coZipHint" style="font-size:10px;color:#9B5DE5;margin-top:4px"></div>
+        </div>
         <div class="co-field"><label class="co-label">Ciudad</label><input class="co-input" placeholder="Quito" id="coCiudad"></div>
         <div class="co-field"><label class="co-label">Direcci&#xF3;n completa</label><input class="co-input" placeholder="Calle, n&#xFA;mero, sector&hellip;" id="coDireccion"></div>
         <div class="co-field"><label class="co-label">Notas adicionales (opcional)</label><input class="co-input" placeholder="Color, talla, detalle especial&hellip;" id="coNotas"></div>
@@ -477,6 +482,22 @@ const US_STATE_TAX = {
   PA:0.06,RI:0.07,SC:0.06,SD:0.045,TN:0.07,TX:0.0625,UT:0.0485,VT:0.06,
   VA:0.053,WA:0.065,WV:0.06,WI:0.05,WY:0.04,DC:0.06
 };
+// Florida: surtax por condado según prefijo ZIP (tasa base 6% + surtax)
+const FL_SURTAX = {
+  '320':1.5,'321':1.0,'322':1.5,'323':1.5,'324':1.5,'325':1.5,
+  '326':0.5,'327':0.5,'328':0.5,'329':1.0,
+  '330':1.0,'331':1.0,'332':1.0,'333':1.0,'334':1.0,
+  '335':1.5,'336':1.5,'337':1.0,'338':1.0,'339':0.5,
+  '340':1.5,'341':1.0,'342':1.0,
+  '344':0.5,'345':1.0,'346':1.0,'347':1.0,'348':1.0,'349':1.0
+};
+function getFlTaxRate(zip) {
+  if (zip && zip.length >= 3) {
+    const s = FL_SURTAX[zip.substring(0, 3)];
+    if (s != null) return (6 + s) / 100;
+  }
+  return 0.07; // default Miami-Dade
+}
 let TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -784,10 +805,20 @@ function removeItem(cartId) { cart = cart.filter(i => i.cartId !== cartId); save
 document.getElementById('coPais').addEventListener('change', function() {
   const isUS = this.value === 'US';
   document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
+  document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
   document.getElementById('coEstado').value = '';
+  document.getElementById('coZip').value    = '';
+  document.getElementById('coZipHint').textContent = '';
   renderCheckoutSummary();
 });
-document.getElementById('coEstado').addEventListener('change', renderCheckoutSummary);
+document.getElementById('coEstado').addEventListener('change', function() {
+  const isFL = this.value === 'FL';
+  document.getElementById('coZipHint').textContent = isFL
+    ? '&#x26A1; El ZIP determina el impuesto exacto por condado en Florida'
+    : '';
+  renderCheckoutSummary();
+});
+document.getElementById('coZip').addEventListener('input', renderCheckoutSummary);
 
 document.getElementById('checkoutBtn').addEventListener('click', () => { closeCart(); openCheckout(); });
 document.getElementById('checkoutBack').addEventListener('click', () => { closeCheckout(); openCart(); });
@@ -827,11 +858,19 @@ function renderCheckoutSummary() {
   if (pais === 'EC') {
     taxAmt   = (subtotal + shippingCost) * 0.15;
     taxLabel = 'IVA Ecuador (15%)';
-  } else if (pais === 'US' && estado && US_STATE_TAX[estado]) {
-    const rate = US_STATE_TAX[estado];
-    taxAmt     = (subtotal + shippingCost) * rate;
-    const pct  = (rate * 100).toFixed(2).replace(/\.?0+$/, '');
-    taxLabel   = `Sales Tax ${estado} (${pct}%)`;
+  } else if (pais === 'US' && estado) {
+    let rate;
+    if (estado === 'FL') {
+      const zip = (document.getElementById('coZip').value || '').trim();
+      rate = getFlTaxRate(zip);
+    } else {
+      rate = US_STATE_TAX[estado];
+    }
+    if (rate) {
+      taxAmt   = (subtotal + shippingCost) * rate;
+      const pct = (rate * 100).toFixed(2).replace(/\.?0+$/, '');
+      taxLabel  = `Sales Tax ${estado} (${pct}%)`;
+    }
   }
 
   const totalFinal = subtotal + shippingCost + taxAmt;
@@ -883,6 +922,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     phone:    tel,
     country:  paisVal,
     state:    estadoVal || undefined,
+    zip:      document.getElementById('coZip').value.trim() || undefined,
     city:     document.getElementById('coCiudad').value.trim(),
     address:  document.getElementById('coDireccion').value.trim(),
     notes:    document.getElementById('coNotas').value.trim()
