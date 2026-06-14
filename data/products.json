@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T01:14:32.076Z",
+  "lastUpdated": "2026-06-14T01:19:40.863Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -212,6 +212,22 @@
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781399656199_img_7551_jpeg.jpg",
       "id": 1781387820250,
       "focalY": 70
+    },
+    {
+      "name": "Cadena San Benito con Cruz ",
+      "category": "Colección",
+      "price": 48,
+      "oldPrice": 55,
+      "img": "collar",
+      "color": "gold",
+      "tag": "Bestseller",
+      "description": "Hermoso dije con micro circones en baño de oro",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781399831949_683f9ffd_c3f0_4715_b64a_bad016f55665_jpe.jpg",
+      "focalX": 44,
+      "focalY": 43,
+      "id": 1781399974669
     }
   ]
 }
