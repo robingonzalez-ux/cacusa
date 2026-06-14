@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T01:39:10.297Z",
+  "lastUpdated": "2026-06-14T01:39:58.467Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -228,9 +228,10 @@
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781399831949_683f9ffd_c3f0_4715_b64a_bad016f55665_jpe.jpg",
-      "focalX": 44,
-      "focalY": 43,
-      "id": 1781399974669
+      "focalX": 44.842626615101366,
+      "focalY": 48.96780724843091,
+      "id": 1781399974669,
+      "zoom": 1.15
     },
     {
       "name": "Pulsera tejida macramé con dije y perlas ",
