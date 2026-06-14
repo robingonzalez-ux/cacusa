@@ -2,13 +2,14 @@
   "version": "1.0",
   "subscriptions": [
     {
-      "endpoint": "https://web.push.apple.com/QDSWdto_9v3_PD9cPrUEvkunQUmKgQu_pM1R_tOT_7mizUChmkhhWmukfsO_AStzrjDZvEdsBF2YT8718l3oyQE6Amwi-UcgMjMUtUugXxDnx9dahPe6tvM1SpI0Qj456pdhCBr6YVXdsjxOEmHhMPEOKlyEPo-h2P7_cMoaD7c",
+      "endpoint": "https://fcm.googleapis.com/fcm/send/dMECL4aXJv4:APA91bGvl83Ofpvhr1YuxNExiQwVSI7PEL2yZd8hIGBb_cA3-38UooY-2Tz77VA3RZmGAJrCdmkYzJoTO69LKZ3QX4PPwn0-wKTBXoZcK3WIgQEIYzO3LLObeYM6uGTk1p7uXgCN6ExD",
+      "expirationTime": null,
       "keys": {
-        "p256dh": "BKg4lHsfcIrIQfMd9ZU77GdBsBjYgWhxOgy_KVhsuU3AE5pm3Vlbj3hVfEIa8z8GN-3T9YLbiR2C0V7CTiDlIxw",
-        "auth": "k_LoRbiQU_Vffsw-QaC6Ag"
+        "p256dh": "BLQIO3bvIozxq_QD395m7QRK9PYVb-yKXTozLh3tyqhSdH0xtI_S8_rCPm3pazZtm23dPfKJT0bYp-TdUgExGA0",
+        "auth": "xlk67R2A_a8MG1WfMgwOfA"
       },
       "user": "robin.gonzalez",
-      "updated": "2026-06-14T00:00:48.016Z"
+      "updated": "2026-06-14T00:03:13.329Z"
     }
   ]
 }
