@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:38:34.259Z",
+  "lastUpdated": "2026-06-14T21:41:22.478Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -128,19 +128,6 @@
       "focalY": 55.54835524285628
     },
     {
-      "id": 2,
-      "name": "Anillo estrella",
-      "category": "Anillos",
-      "price": 38,
-      "oldPrice": 50,
-      "img": "ring",
-      "color": "gold",
-      "tag": "Nuevo",
-      "description": "Anillo minimalista con estrella en relieve. Chapado en oro 18k. Símbolo de tu propia luz interior.",
-      "personalized": false,
-      "available": true
-    },
-    {
       "id": 3,
       "name": "Argollas de estrella con circones ",
       "category": "Aretes",
@@ -156,18 +143,6 @@
       "focalX": 49.34922014520391,
       "focalY": 32.750108004690695,
       "material": "Acero inoxidable"
-    },
-    {
-      "id": 5,
-      "name": "Pulsera hombre",
-      "category": "Hombres",
-      "price": 29,
-      "img": "bracelet-m",
-      "color": "plum",
-      "tag": "Nuevo",
-      "description": "Pulsera de cuero genuino con cierre magnético en acero inoxidable. Diseño urbano y minimalista.",
-      "personalized": false,
-      "available": true
     },
     {
       "id": 6,
@@ -286,7 +261,7 @@
     },
     {
       "name": "Pulsera triple con dije de corazón ",
-      "category": "Cadenas",
+      "category": "Pulseras",
       "price": 25,
       "oldPrice": null,
       "img": "collar",
@@ -296,8 +271,8 @@
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781472974038_image_jpg.jpg",
-      "focalX": 50,
-      "focalY": 50,
+      "focalX": 46.18828942190857,
+      "focalY": 50.928840338208985,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781473015877
