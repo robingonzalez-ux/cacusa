@@ -289,6 +289,55 @@ function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canU
   );
 }
 
+// ── Image Editor (drag to pan + +/- zoom) ──────────────────────────────────
+function ImageEditor({ imgSrc, focalX, focalY, zoom, onChange }) {
+  const ref  = React.useRef(null);
+  const drag = React.useRef(null);
+  const fx = focalX ?? 50, fy = focalY ?? 50, z = zoom ?? 1;
+
+  const startDrag = (cx, cy) => { drag.current = { cx, cy, fx, fy }; };
+  const moveDrag  = (cx, cy) => {
+    if (!drag.current || !ref.current) return;
+    const w = ref.current.offsetWidth, h = ref.current.offsetHeight;
+    onChange({
+      focalX: Math.max(0, Math.min(100, drag.current.fx - ((cx - drag.current.cx) / w) * 100)),
+      focalY: Math.max(0, Math.min(100, drag.current.fy - ((cy - drag.current.cy) / h) * 100))
+    });
+  };
+  const endDrag = () => { drag.current = null; };
+
+  const btnStyle = { width: 40, height: 40, borderRadius: 10, border: '1.5px solid #e0e0e0', background: 'white', fontSize: 22, fontWeight: 700, color: '#555', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, userSelect: 'none' };
+
+  return (
+    <div>
+      <div ref={ref}
+        style={{ width: '100%', height: 220, overflow: 'hidden', borderRadius: 12, cursor: drag.current ? 'grabbing' : 'grab', touchAction: 'none', userSelect: 'none', position: 'relative', background: '#eee' }}
+        onMouseDown={e => { startDrag(e.clientX, e.clientY); e.preventDefault(); }}
+        onMouseMove={e => moveDrag(e.clientX, e.clientY)}
+        onMouseUp={endDrag} onMouseLeave={endDrag}
+        onTouchStart={e => { startDrag(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }}
+        onTouchMove={e => { moveDrag(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }}
+        onTouchEnd={endDrag}
+      >
+        <img src={imgSrc} draggable={false}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${fx}% ${fy}%`, transform: `scale(${z})`, transformOrigin: `${fx}% ${fy}%`, pointerEvents: 'none', display: 'block' }}
+        />
+        <div style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,.45)', color: 'white', fontSize: 11, borderRadius: 6, padding: '3px 8px', fontFamily: 'sans-serif', fontWeight: 600 }}>
+          {Math.round(z * 100)}%
+        </div>
+        <div style={{ position: 'absolute', bottom: 8, left: 0, right: 0, textAlign: 'center', color: 'rgba(255,255,255,.8)', fontSize: 10, fontFamily: 'sans-serif', pointerEvents: 'none' }}>
+          ✥ Arrastra para mover
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+        <button style={btnStyle} onClick={() => onChange({ zoom: Math.max(1, parseFloat((z - 0.15).toFixed(2))) })}>−</button>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 12, color: '#888' }}>🔍 Zoom</div>
+        <button style={btnStyle} onClick={() => onChange({ zoom: Math.min(3, parseFloat((z + 0.15).toFixed(2))) })}>+</button>
+      </div>
+    </div>
+  );
+}
+
 // ── Product Modal ──────────────────────────────────────────────────────────
 function ProductModal({ product, onSave, onClose, token, categories, materials }) {
   const cats = (categories && categories.length) ? categories : DEFAULT_CATEGORIES;
@@ -386,26 +435,11 @@ function ProductModal({ product, onSave, onClose, token, categories, materials }
           {imgPrev && !uploading && (
             <div style={{ marginTop: 10, background: '#FAF7FB', borderRadius: 10, padding: '10px 14px' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#7A6880', marginBottom: 8 }}>🎯 Ajustar posición y zoom</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={{ fontSize: 11, color: '#999' }}>
-                  Izquierda ↔ Derecha ({form.focalX ?? 50}%)
-                  <input type="range" min="0" max="100" value={form.focalX ?? 50}
-                    onChange={e => set('focalX', Number(e.target.value))}
-                    style={{ width: '100%', marginTop: 4, accentColor: '#9B5DE5' }} />
-                </label>
-                <label style={{ fontSize: 11, color: '#999' }}>
-                  Arriba ↕ Abajo ({form.focalY ?? 50}%)
-                  <input type="range" min="0" max="100" value={form.focalY ?? 50}
-                    onChange={e => set('focalY', Number(e.target.value))}
-                    style={{ width: '100%', marginTop: 4, accentColor: '#9B5DE5' }} />
-                </label>
-                <label style={{ fontSize: 11, color: '#999' }}>
-                  🔍 Zoom ({Math.round((form.zoom ?? 1) * 100)}%)
-                  <input type="range" min="1" max="3" step="0.05" value={form.zoom ?? 1}
-                    onChange={e => set('zoom', Number(e.target.value))}
-                    style={{ width: '100%', marginTop: 4, accentColor: '#9B5DE5' }} />
-                </label>
-              </div>
+              <ImageEditor
+                imgSrc={imgPrev}
+                focalX={form.focalX} focalY={form.focalY} zoom={form.zoom}
+                onChange={vals => setForm(f => ({ ...f, ...vals }))}
+              />
             </div>
           )}
         </div>
