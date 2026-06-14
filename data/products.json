@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T01:39:58.467Z",
+  "lastUpdated": "2026-06-14T18:09:14.255Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -248,6 +248,24 @@
       "focalX": 18,
       "focalY": 49,
       "id": 1781400451404
+    },
+    {
+      "name": "Collar negro con ojo turco ",
+      "category": "Colección",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Collar de semi cuero con dije de ojo turco revertido en un baño de oro ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781460410482_image_jpg.jpg",
+      "focalX": 47.30391203013046,
+      "focalY": 80.91711411467013,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781460544331
     }
   ]
 }
