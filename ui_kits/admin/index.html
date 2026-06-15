@@ -696,21 +696,153 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
 }
 
 // ── Settings tab ─────────────────────────────────────────────────────────────
-function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, home, setHome, products, setProducts, setDirty }) {
+// ── Landing Tab ────────────────────────────────────────────────────────────
+function LandingTab({ home, setHome, products, setDirty }) {
+  const setHomeField  = (k, v) => { setHome(h => ({ ...h, [k]: v })); setDirty(true); };
+  const setStat       = (i, k, v) => { setHome(h => ({ ...h, stats: h.stats.map((s, j) => j === i ? { ...s, [k]: v } : s) })); setDirty(true); };
+  const setPersonField= (k, v) => { setHome(h => ({ ...h, person: { ...h.person, [k]: v } })); setDirty(true); };
+  const setStep       = (i, k, v) => { setHome(h => ({ ...h, person: { ...h.person, steps: h.person.steps.map((s, j) => j === i ? { ...s, [k]: v } : s) } })); setDirty(true); };
+  const setFooterField= (k, v) => { setHome(h => ({ ...h, footer: { ...h.footer, [k]: v } })); setDirty(true); };
+  const setTesti      = (i, k, v) => { setHome(h => ({ ...h, testimonials: h.testimonials.map((t, j) => j === i ? { ...t, [k]: v } : t) })); setDirty(true); };
+  const addTesti      = () => { setHome(h => ({ ...h, testimonials: [...(h.testimonials || []), { t: '', n: '', l: '' }] })); setDirty(true); };
+  const delTesti      = i => { setHome(h => ({ ...h, testimonials: h.testimonials.filter((_, j) => j !== i) })); setDirty(true); };
+  const toggleFeatured= (id) => {
+    const cur = home.featuredProductIds || [];
+    setHomeField('featuredProductIds', cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id]);
+  };
+
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
+  const card= { background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 };
+
+  const featured   = home.featuredProductIds || [];
+  const availProds = products.filter(p => p.available !== false);
+
+  return (
+    <div style={{ maxWidth: 620, margin: '0 auto' }}>
+
+      {/* ── Productos destacados ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>⭐ Productos destacados en portada</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>
+          Selecciona hasta 4 productos para mostrar en la portada de la web. Si no seleccionas ninguno, se muestran los primeros 4 disponibles automáticamente.
+        </div>
+        {availProds.length === 0
+          ? <div style={{ fontSize: 13, color: '#ccc', textAlign: 'center', padding: '20px 0' }}>No hay productos disponibles aún.</div>
+          : <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {availProds.map(p => {
+                const sel = featured.includes(p.id);
+                return (
+                  <div key={p.id} onClick={() => toggleFeatured(p.id)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, border: `2px solid ${sel ? '#E85D8A' : '#eee'}`, background: sel ? '#FFF0F6' : 'white', cursor: 'pointer', transition: 'all .15s' }}>
+                    {p.imageUrl
+                      ? <img src={p.imageUrl} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" />
+                      : <div style={{ width: 44, height: 44, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 14, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                      <div style={{ fontSize: 12, color: '#A89AAF' }}>{p.category} · ${p.price}</div>
+                    </div>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', border: `2px solid ${sel ? '#E85D8A' : '#ddd'}`, background: sel ? '#E85D8A' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 13, flexShrink: 0 }}>
+                      {sel && '✓'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+        }
+        {featured.length > 4 && (
+          <div style={{ marginTop: 10, fontSize: 12, color: '#E85D8A', fontWeight: 600 }}>⚠️ Tienes {featured.length} seleccionados. Solo se muestran los primeros 4.</div>
+        )}
+      </div>
+
+      {/* ── Quiénes somos ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🏛️ Quiénes somos</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>La sección de historia en la portada principal.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div><label style={lbl}>Etiqueta</label><input value={home.storyLabel || ''} onChange={e => setHomeField('storyLabel', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Título</label><input value={home.storyTitle || ''} onChange={e => setHomeField('storyTitle', e.target.value)} style={inp} /></div>
+          <div style={{ gridColumn: 'span 2' }}><label style={lbl}>Frase destacada</label><input value={home.storyQuote || ''} onChange={e => setHomeField('storyQuote', e.target.value)} style={inp} /></div>
+          <div style={{ gridColumn: 'span 2' }}><label style={lbl}>Texto / descripción</label><textarea value={home.storyBody || ''} onChange={e => setHomeField('storyBody', e.target.value)} rows={4} style={{ ...inp, resize: 'vertical' }} /></div>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', margin: '18px 0 8px' }}>Cifras destacadas</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          {(home.stats || []).map((s, i) => (
+            <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
+              <input value={s.num || ''} onChange={e => setStat(i, 'num', e.target.value)} placeholder="500" style={{ ...inp, fontWeight: 800, fontSize: 18, textAlign: 'center', marginBottom: 8 }} />
+              <input value={s.label || ''} onChange={e => setStat(i, 'label', e.target.value)} placeholder="Piezas creadas" style={{ ...inp, fontSize: 12, textAlign: 'center' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Pasos de personalización ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✨ Pasos de personalización</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Los 3 pasos que explican cómo se crea una pieza.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+          <div><label style={lbl}>Etiqueta</label><input value={home.person?.label || ''} onChange={e => setPersonField('label', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Título</label><input value={home.person?.title || ''} onChange={e => setPersonField('title', e.target.value)} style={inp} /></div>
+          <div style={{ gridColumn: 'span 2' }}><label style={lbl}>Subtítulo</label><input value={home.person?.subtitle || ''} onChange={e => setPersonField('subtitle', e.target.value)} style={inp} /></div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(home.person?.steps || []).map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
+              <input value={s.title || ''} onChange={e => setStep(i, 'title', e.target.value)} placeholder="Título" style={{ ...inp, flex: 1, fontWeight: 600 }} />
+              <input value={s.desc || ''} onChange={e => setStep(i, 'desc', e.target.value)} placeholder="Descripción" style={{ ...inp, flex: 2 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Testimonios ── */}
+      <div style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>💬 Testimonios</div>
+          <button onClick={addTesti} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
+        </div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Reseñas de clientas que aparecen en la portada.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(home.testimonials || []).map((t, i) => (
+            <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12, position: 'relative' }}>
+              <button onClick={() => delTesti(i)} style={{ position: 'absolute', top: 8, right: 8, padding: '4px 9px', background: '#FEE2E2', color: '#DC2626', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>🗑</button>
+              <textarea value={t.t || ''} onChange={e => setTesti(i, 't', e.target.value)} rows={2} placeholder="Texto del testimonio…" style={{ ...inp, resize: 'vertical', marginBottom: 8, paddingRight: 44 }} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <input value={t.n || ''} onChange={e => setTesti(i, 'n', e.target.value)} placeholder="Nombre" style={inp} />
+                <input value={t.l || ''} onChange={e => setTesti(i, 'l', e.target.value)} placeholder="Ciudad, País" style={inp} />
+              </div>
+            </div>
+          ))}
+          {(home.testimonials || []).length === 0 && <div style={{ fontSize: 13, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>Sin testimonios.</div>}
+        </div>
+      </div>
+
+      {/* ── Pie de página ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📍 Pie de página</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Textos del footer de la portada principal.</div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div><label style={lbl}>Frase</label><input value={home.footer?.tagline || ''} onChange={e => setFooterField('tagline', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Copyright</label><input value={home.footer?.copyright || ''} onChange={e => setFooterField('copyright', e.target.value)} style={inp} /></div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
+        💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para que los cambios se reflejen en la web.
+      </div>
+    </div>
+  );
+}
+
+// ── Settings Tab ────────────────────────────────────────────────────────────
+function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, products, setProducts, setDirty }) {
   const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
   const markDirty = fn => (...a) => { fn(...a); setDirty(true); };
   const renameCategory = (oldName, newName) => {
     setProducts(prev => prev.map(p => p.category === oldName ? { ...p, category: newName } : p));
   };
   const setText = (k, v) => { setTexts(t => ({ ...t, [k]: v })); setDirty(true); };
-  const setHomeField = (k, v) => { setHome(h => ({ ...h, [k]: v })); setDirty(true); };
-  const setStat = (i, k, v) => { setHome(h => ({ ...h, stats: h.stats.map((s, j) => j === i ? { ...s, [k]: v } : s) })); setDirty(true); };
-  const setPersonField = (k, v) => { setHome(h => ({ ...h, person: { ...h.person, [k]: v } })); setDirty(true); };
-  const setStep = (i, k, v) => { setHome(h => ({ ...h, person: { ...h.person, steps: h.person.steps.map((s, j) => j === i ? { ...s, [k]: v } : s) } })); setDirty(true); };
-  const setFooterField = (k, v) => { setHome(h => ({ ...h, footer: { ...h.footer, [k]: v } })); setDirty(true); };
-  const setTesti = (i, k, v) => { setHome(h => ({ ...h, testimonials: h.testimonials.map((t, j) => j === i ? { ...t, [k]: v } : t) })); setDirty(true); };
-  const addTesti = () => { setHome(h => ({ ...h, testimonials: [...(h.testimonials || []), { t: '', n: '', l: '' }] })); setDirty(true); };
-  const delTesti = i => { setHome(h => ({ ...h, testimonials: h.testimonials.filter((_, j) => j !== i) })); setDirty(true); };
   const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
   const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
 
@@ -776,89 +908,6 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
             onChange={markDirty(v => setTexts(t => ({ ...t, perks: v })))}
             emptyOk
           />
-        </div>
-      </div>
-
-      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginTop: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🏛️ Página de inicio · Quiénes somos</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>La sección "Nuestra historia" que aparece en la portada principal de la web.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-          <div>
-            <label style={lbl}>Etiqueta</label>
-            <input value={home.storyLabel || ''} onChange={e => setHomeField('storyLabel', e.target.value)} style={inp} />
-          </div>
-          <div>
-            <label style={lbl}>Título</label>
-            <input value={home.storyTitle || ''} onChange={e => setHomeField('storyTitle', e.target.value)} style={inp} />
-          </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={lbl}>Frase destacada</label>
-            <input value={home.storyQuote || ''} onChange={e => setHomeField('storyQuote', e.target.value)} style={inp} />
-          </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={lbl}>Texto / descripción</label>
-            <textarea value={home.storyBody || ''} onChange={e => setHomeField('storyBody', e.target.value)} rows={4} style={{ ...inp, resize: 'vertical' }} />
-          </div>
-        </div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', margin: '18px 0 8px' }}>Cifras destacadas</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          {(home.stats || []).map((s, i) => (
-            <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
-              <input value={s.num || ''} onChange={e => setStat(i, 'num', e.target.value)} placeholder="500"
-                style={{ ...inp, fontWeight: 800, fontSize: 18, textAlign: 'center', marginBottom: 8 }} />
-              <input value={s.label || ''} onChange={e => setStat(i, 'label', e.target.value)} placeholder="Piezas creadas"
-                style={{ ...inp, fontSize: 12, textAlign: 'center' }} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginTop: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✨ Página de inicio · Pasos de personalización</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Los 3 pasos que explican cómo se crea una pieza.</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
-          <div><label style={lbl}>Etiqueta</label><input value={home.person?.label || ''} onChange={e => setPersonField('label', e.target.value)} style={inp} /></div>
-          <div><label style={lbl}>Título</label><input value={home.person?.title || ''} onChange={e => setPersonField('title', e.target.value)} style={inp} /></div>
-          <div style={{ gridColumn: 'span 2' }}><label style={lbl}>Subtítulo</label><input value={home.person?.subtitle || ''} onChange={e => setPersonField('subtitle', e.target.value)} style={inp} /></div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {(home.person?.steps || []).map((s, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
-              <input value={s.title || ''} onChange={e => setStep(i, 'title', e.target.value)} placeholder="Título del paso" style={{ ...inp, flex: 1, fontWeight: 600 }} />
-              <input value={s.desc || ''} onChange={e => setStep(i, 'desc', e.target.value)} placeholder="Descripción" style={{ ...inp, flex: 2 }} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginTop: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>💬 Testimonios</div>
-          <button onClick={addTesti} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
-        </div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Reseñas de clientas que aparecen en la portada.</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {(home.testimonials || []).map((t, i) => (
-            <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12, position: 'relative' }}>
-              <button onClick={() => delTesti(i)} style={{ position: 'absolute', top: 8, right: 8, padding: '4px 9px', background: '#FEE2E2', color: '#DC2626', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }} title="Eliminar">🗑</button>
-              <textarea value={t.t || ''} onChange={e => setTesti(i, 't', e.target.value)} rows={2} placeholder="Texto del testimonio…" style={{ ...inp, resize: 'vertical', marginBottom: 8, paddingRight: 44 }} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <input value={t.n || ''} onChange={e => setTesti(i, 'n', e.target.value)} placeholder="Nombre (ej. Valentina M.)" style={inp} />
-                <input value={t.l || ''} onChange={e => setTesti(i, 'l', e.target.value)} placeholder="Ciudad, País" style={inp} />
-              </div>
-            </div>
-          ))}
-          {(home.testimonials || []).length === 0 && <div style={{ fontSize: 13, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>Sin testimonios. Agrega el primero ↑</div>}
-        </div>
-      </div>
-
-      <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginTop: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📍 Pie de página · Contacto</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>El enlace "Contacto" del pie abre WhatsApp con tu número configurado arriba.</div>
-        <div style={{ display: 'grid', gap: 14 }}>
-          <div><label style={lbl}>Frase del pie</label><input value={home.footer?.tagline || ''} onChange={e => setFooterField('tagline', e.target.value)} style={inp} /></div>
-          <div><label style={lbl}>Texto de copyright</label><input value={home.footer?.copyright || ''} onChange={e => setFooterField('copyright', e.target.value)} style={inp} /></div>
         </div>
       </div>
 
@@ -1086,9 +1135,10 @@ function App() {
         {/* ── Tab navigation ── */}
         <div style={{ display: 'flex', marginBottom: 20, background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #EDE8EA' }}>
           {[
-            ['products', '💎 Productos',       products.length],
-            ['orders',   '📦 Pedidos',          pendingOrders],
-            ['settings', '⚙️ Ajustes',          0]
+            ['products', '💎 Productos', products.length],
+            ['orders',   '📦 Pedidos',   pendingOrders],
+            ['landing',  '🏠 Landing',   0],
+            ['settings', '⚙️ Ajustes',   0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ flex: 1, padding: '13px 16px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', background: activeTab === tab ? 'white' : '#F9F5F7', color: activeTab === tab ? '#E8508A' : '#7A6880', borderBottom: activeTab === tab ? '2.5px solid #E8508A' : '2.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s', fontFamily: 'inherit' }}>
@@ -1206,6 +1256,11 @@ function App() {
           </div>
         )}
 
+        {/* ── Landing tab ── */}
+        {activeTab === 'landing' && (
+          <LandingTab home={home} setHome={setHome} products={products} setDirty={setDirty} />
+        )}
+
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (
           <SettingsTab
@@ -1213,7 +1268,6 @@ function App() {
             materials={materials} setMaterials={setMaterials}
             shipping={shipping} setShipping={setShipping}
             texts={texts} setTexts={setTexts}
-            home={home} setHome={setHome}
             products={products} setProducts={setProducts}
             setDirty={setDirty}
           />
