@@ -404,28 +404,28 @@ html,body{overflow-x:hidden}
     <div class="reveal" data-delay="1"><h2 class="section-h">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
       <div class="col-card reveal-left" onclick="window.location.href='./ui_kits/store/'">
-        <div class="col-bg gA" style="position:absolute;inset:0"></div>
+        <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content">
           <div class="col-tag">Colección principal</div>
-          <div class="col-title">Personalizado — Tu historia</div>
+          <div class="col-title">Cadenas</div>
           <div class="col-cta">Explorar →</div>
         </div>
       </div>
       <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/'">
-        <div class="col-bg gB" style="position:absolute;inset:0"></div>
+        <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Premium</div><div class="col-title">Gold Edition</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag">Destacado</div><div class="col-title">Anillos</div><div class="col-cta">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/'">
-        <div class="col-bg gE" style="position:absolute;inset:0"></div>
+        <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag">Para ellos</div><div class="col-title">Hombres</div><div class="col-cta">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/'">
-        <div class="col-bg gD" style="position:absolute;inset:0"></div>
+        <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Temporada</div><div class="col-title">Nueva colección</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag">Hecho a mano</div><div class="col-title">Pulseras</div><div class="col-cta">Ver →</div></div>
       </div>
     </div>
   </div>
@@ -819,6 +819,21 @@ requestAnimationFrame(drawCanvas);
 const revEls=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
 revEls.forEach(el=>obs.observe(el));
+
+// ── COLECCIONES — primera foto de cada categoría ────────────
+(function fillCollectionCards(){
+  const all = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  document.querySelectorAll('.col-bg[data-cat]').forEach(el => {
+    const cat = el.getAttribute('data-cat');
+    const p = all.find(x => x.category === cat);
+    if (!p) return; // sin producto con foto → mantiene el degradado
+    const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
+    el.style.backgroundImage = 'url("' + p.imageUrl + '")';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = fx + '% ' + fy + '%';
+    el.className = 'col-bg'; // quita el degradado (gA/gB/…)
+  });
+})();
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────
 (function renderFeaturedProducts(){
