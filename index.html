@@ -292,13 +292,17 @@ html,body{overflow-x:hidden}
   .t-item{font-size:10px;padding:0 22px}
 
   /* HERO */
-  #hero{min-height:88vh;min-height:88svh}
+  #hero{min-height:auto;height:auto;flex-direction:column;justify-content:center;padding:92px 0 48px}
   .hero-content{padding:0 22px;max-width:100%}
   .hero-h1{font-size:clamp(42px,12vw,64px)}
   .hero-script{font-size:clamp(26px,7vw,38px)}
   .hero-desc{font-size:16px;max-width:100%}
-  .hero-cards{display:none}
   .hero-btns{flex-wrap:wrap}
+  /* Slideshow de tarjetas debajo del texto (visible en móvil) */
+  .hero-cards{position:static;transform:none;top:auto;right:auto;left:auto;opacity:1;animation:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:30px 22px 0;width:auto}
+  .hcard{cursor:pointer}
+  .hcard:nth-child(even){transform:none}
+  .hc-img{height:118px}
 
   /* SECCIONES — títulos */
   .section-h{font-size:clamp(30px,8vw,40px)}
