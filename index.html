@@ -107,10 +107,11 @@ nav.scrolled .nav-cta{background:var(--pink);color:white;box-shadow:0 2px 16px r
 
 /* Hero floating cards */
 .hero-cards{position:absolute;right:72px;top:50%;transform:translateY(-50%);display:grid;grid-template-columns:1fr 1fr;gap:14px;z-index:2;opacity:0;animation:fLeft .9s 1.6s both}
-.hcard{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-radius:18px;padding:12px;box-shadow:0 8px 32px rgba(238,111,168,.2);transition:transform .3s}
+.hcard{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-radius:18px;padding:12px;box-shadow:0 8px 32px rgba(238,111,168,.2);transition:transform .3s,opacity .55s;cursor:none}
 .hcard:hover{transform:translateY(-6px) !important}
 .hcard:nth-child(even){transform:translateY(24px)}
-.hc-img{height:90px;border-radius:12px;margin-bottom:10px}
+.hero-cards.swapping .hcard{opacity:0}
+.hc-img{height:90px;border-radius:12px;margin-bottom:10px;background-size:cover;background-position:center;background-repeat:no-repeat}
 .hc-cat{font-family:var(--fu);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);margin-bottom:3px}
 .hc-name{font-family:var(--fe);font-size:14px;color:var(--ink)}
 .hc-price{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);margin-top:4px}
@@ -833,6 +834,34 @@ revEls.forEach(el=>obs.observe(el));
     el.style.backgroundPosition = fx + '% ' + fy + '%';
     el.className = 'col-bg'; // quita el degradado (gA/gB/…)
   });
+})();
+
+// ── HERO — slideshow de tarjetas con fotos reales ───────────
+(function heroSlideshow(){
+  const all = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  const wrap = document.querySelector('.hero-cards');
+  const cards = wrap ? [...wrap.querySelectorAll('.hcard')] : [];
+  if (!all.length || !cards.length) return;
+  const fill = (card, p) => {
+    const img = card.querySelector('.hc-img');
+    const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
+    img.style.backgroundImage = 'url("' + p.imageUrl + '")';
+    img.style.backgroundPosition = fx + '% ' + fy + '%';
+    img.className = 'hc-img'; // quita el degradado (gA/gB/…)
+    card.querySelector('.hc-cat').textContent = p.category || 'CACUSA';
+    card.querySelector('.hc-name').textContent = p.name || '';
+    const pr = card.querySelector('.hc-price');
+    pr.textContent = p.price ? ('$' + parseFloat(p.price).toFixed(0)) : '';
+    card.onclick = () => { window.location.href = './ui_kits/store/'; };
+  };
+  let start = 0;
+  const render = () => cards.forEach((c, i) => fill(c, all[(start + i) % all.length]));
+  render();
+  if (all.length <= cards.length) return; // sin rotación si no hay suficientes
+  setInterval(() => {
+    wrap.classList.add('swapping');
+    setTimeout(() => { start = (start + cards.length) % all.length; render(); wrap.classList.remove('swapping'); }, 550);
+  }, 3800);
 })();
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────
