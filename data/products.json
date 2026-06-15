@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-15T02:43:36.736Z",
+  "lastUpdated": "2026-06-15T02:46:57.786Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -15,7 +15,8 @@
     "materials": [
       "Plata 925",
       "Baño de oro 18k",
-      "Acero inoxidable"
+      "Acero inoxidable",
+      "Gold filled"
     ],
     "shipping": {
       "freeThreshold": 60,
@@ -29,8 +30,7 @@
       "perks": [
         "Hecho a mano",
         "Envío express",
-        "5–7 días hábiles",
-        "Gift wrap gratis"
+        "5–7 días hábiles"
       ]
     },
     "home": {
