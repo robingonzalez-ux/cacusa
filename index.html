@@ -632,7 +632,7 @@ html,body{overflow-x:hidden}
 //  Ej: const BEHOLD_FEED_ID = 'aBcD1234';
 //  Si se deja vacío, se muestra el grid de placeholders.
 // ════════════════════════════════════════════════════════════
-const BEHOLD_FEED_ID = '';
+const BEHOLD_FEED_ID = 'epdmnoueNX30Pw0QDynG';
 
 // ── CONTENIDO DINÁMICO (Quiénes somos) ──────────────────────
 // Corre antes del count-up para que las cifras animen con los valores guardados en products.json
@@ -911,23 +911,11 @@ const igGs=[
   'linear-gradient(135deg,#DCF0FC,#F5A0C8)',
 ];
 const igG=document.getElementById('igGrid');
-if(igG && BEHOLD_FEED_ID){
-  // Feed real de Instagram vía Behold.so
-  igG.style.display='block';            // el widget trae su propia grilla
-  igG.innerHTML='';
-  if(!document.getElementById('behold-widget-js')){
-    const s=document.createElement('script');
-    s.id='behold-widget-js';
-    s.type='module';
-    s.src='https://w.behold.so/widget.js';
-    document.head.appendChild(s);
-  }
-  const w=document.createElement('behold-widget');
-  w.setAttribute('feed-id', BEHOLD_FEED_ID);
-  igG.appendChild(w);
-} else if(igG){
-  // Placeholder hasta conectar el feed real
+
+// Placeholders de respaldo (si no hay feed o falla la carga)
+function renderIgPlaceholders(grid){
   const igLabels=['Collar personalizado','Anillo gold','Pulsera inicial','Aretes luna','Nueva colección','Behind the scenes','Collar corazón','Para ellos','Hecho a mano','Personaliza','Envío express','¡Nuevo!'];
+  grid.innerHTML='';
   for(let i=0;i<12;i++){
     const item=document.createElement('div');
     item.className='ig-item';
@@ -938,8 +926,39 @@ if(igG && BEHOLD_FEED_ID){
         </div>
         <div class="ig-hover"><div class="ig-icon">♡</div></div>
       </a>`;
-    igG.appendChild(item);
+    grid.appendChild(item);
   }
+}
+
+if(igG && BEHOLD_FEED_ID){
+  // Feed real de Instagram — usa el JSON abierto de Behold y arma la grilla con el diseño del sitio
+  (async()=>{
+    try{
+      const res=await fetch('https://feeds.behold.so/'+BEHOLD_FEED_ID);
+      if(!res.ok) throw new Error('behold '+res.status);
+      const data=await res.json();
+      const posts=Array.isArray(data.posts)?data.posts.slice(0,12):[];
+      if(!posts.length) throw new Error('sin posts');
+      igG.innerHTML='';
+      posts.forEach(p=>{
+        const sz=(p.sizes&&(p.sizes.medium||p.sizes.large||p.sizes.small))||{};
+        const src=sz.mediaUrl||p.thumbnailUrl||p.mediaUrl||'';
+        const isVid=p.mediaType==='VIDEO'||p.isReel;
+        const item=document.createElement('div');
+        item.className='ig-item';
+        item.innerHTML=`
+          <a href="${p.permalink||'https://www.instagram.com/cacusabytaitus/'}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;cursor:none">
+            <img class="ig-bg" src="${src}" alt="Publicación de CACUSA en Instagram" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+            <div class="ig-hover"><div class="ig-icon">${isVid?'▶':'♡'}</div></div>
+          </a>`;
+        igG.appendChild(item);
+      });
+    }catch(e){
+      renderIgPlaceholders(igG);
+    }
+  })();
+} else if(igG){
+  renderIgPlaceholders(igG);
 }
 
 // ── VIGNETTE ────────────────────────────────────────────────
