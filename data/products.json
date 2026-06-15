@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-14T21:47:19.137Z",
-  "updatedBy": "tita.jaramillo",
+  "lastUpdated": "2026-06-15T02:43:36.736Z",
+  "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -214,7 +214,7 @@
     },
     {
       "name": "Collar negro con ojo turco ",
-      "category": "Aretes",
+      "category": "Cadenas",
       "price": 35,
       "oldPrice": null,
       "img": "collar",
@@ -224,8 +224,8 @@
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781460410482_image_jpg.jpg",
-      "focalX": 47.30391203013046,
-      "focalY": 80.91711411467013,
+      "focalX": 42.98545062773608,
+      "focalY": 75.20044543429839,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781460544331
