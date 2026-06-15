@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-15T02:46:57.786Z",
+  "lastUpdated": "2026-06-15T17:08:46.695Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -106,7 +106,13 @@
       "footer": {
         "tagline": "creamos para que luzcas más bella de lo que ya eres",
         "copyright": "© 2025 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍"
-      }
+      },
+      "featuredProductIds": [
+        1,
+        1781399974669,
+        1781400451404,
+        1781473627668
+      ]
     }
   },
   "products": [
