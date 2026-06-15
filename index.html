@@ -265,6 +265,59 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 .vig-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.05em;border:none;border-radius:999px;padding:13px;cursor:none;box-shadow:0 4px 20px rgba(238,111,168,.4)}
 .vig-skip{font-family:var(--fu);font-size:11px;color:var(--ink-muted);text-align:center;margin-top:10px;cursor:none}
 
+/* ── MOBILE ──────────────────────────────────────────── */
+@media(max-width:767px){
+  body{cursor:auto}
+  #cursor,#cursor-ring{display:none}
+
+  nav{padding:0 18px;height:58px;top:30px}
+  .nav-links{display:none}
+  nav.scrolled{top:0}
+  .nav-cta{font-size:11px;padding:8px 16px}
+
+  .container{padding:0 18px}
+  section{padding:56px 0}
+
+  #hero{min-height:100svh}
+  .hero-content{padding:0 20px;max-width:100%}
+  .hero-h1{font-size:clamp(40px,11vw,60px)}
+  .hero-cards{display:none}
+
+  .col-grid{grid-template-columns:1fr;grid-template-rows:auto;gap:10px;margin-top:32px}
+  .col-card:first-child{grid-row:auto}
+  .col-card{height:160px}
+
+  .prod-grid{grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+  .prod-img{height:140px}
+  .prod-name{font-size:14px}
+  .prod-body{padding:12px}
+
+  .story-grid{grid-template-columns:1fr;gap:40px}
+  .story-visual{grid-template-columns:1fr 1fr}
+  .s-img:first-child{grid-column:1/3}
+
+  .person-grid{grid-template-columns:1fr;gap:36px}
+  .person-form{padding:24px 18px}
+
+  .ig-grid{grid-template-columns:repeat(3,1fr);gap:5px}
+
+  .footer-grid{grid-template-columns:1fr 1fr;gap:28px}
+
+  .vig-box{grid-template-columns:1fr;max-width:340px}
+  .vig-visual{display:none}
+
+  #ticker{height:32px}
+  .t-item{font-size:10px;padding:0 22px}
+
+  .tcard{min-width:240px}
+}
+
+@media(max-width:420px){
+  .prod-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr}
+  .ig-grid{grid-template-columns:repeat(2,1fr)}
+}
+
 </style>
 </head>
 <body>
@@ -361,7 +414,7 @@ footer{background:var(--grad-full);padding:64px 0 32px}
       </div>
       <div class="reveal" data-delay="2"><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--pink);text-decoration:none">Ver todo →</a></div>
     </div>
-    <div class="prod-grid">
+    <div class="prod-grid" id="prodGrid">
       <div class="prod-card reveal" data-delay="1" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
         <div class="prod-badge">Best seller</div>
         <div class="prod-img gA"><div class="prod-quick">Vista rápida →</div></div>
@@ -559,6 +612,7 @@ let CACUSA_HOME = {};
     const data = JSON.parse(req.responseText);
     const cfg = data.config || {};
     CACUSA_WHATSAPP = data.whatsapp || cfg.whatsapp || '';
+    window._cacusaProds = Array.isArray(data.products) ? data.products : [];
     const home = cfg.home;
     if (!home) return;
     CACUSA_HOME = home;
@@ -729,6 +783,35 @@ requestAnimationFrame(drawCanvas);
 const revEls=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
 revEls.forEach(el=>obs.observe(el));
+
+// ── PRODUCTOS REALES desde products.json ────────────────────
+(function renderFeaturedProducts(){
+  const gh=['gA','gB','gC','gD'];
+  const raw=(window._cacusaProds||[]).filter(p=>p.available!==false);
+  const prods=raw.slice(0,4);
+  if(!prods.length)return;
+  const grid=document.getElementById('prodGrid');
+  if(!grid)return;
+  const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  grid.innerHTML='';
+  prods.forEach((p,i)=>{
+    const price=p.price?'$'+parseFloat(p.price).toFixed(2):'';
+    const oldP=p.oldPrice?`<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>`:'';
+    const fx=p.focalX??50, fy=p.focalY??50, z=p.zoom??1;
+    const imgHtml=p.imageUrl
+      ?`<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
+      :`<div class="${gh[i%4]}" style="width:100%;height:100%"></div>`;
+    const badge=p.tag?`<div class="prod-badge">${esc(p.tag)}</div>`:'';
+    const card=document.createElement('div');
+    card.className='prod-card reveal';
+    card.dataset.delay=String(i+1);
+    card.setAttribute('onclick',"window.location.href='./ui_kits/store/'");
+    card.style.cursor='none';
+    card.innerHTML=`${badge}<div class="prod-img" style="overflow:hidden">${imgHtml}<div class="prod-quick">Vista rápida →</div></div><div class="prod-body"><div class="prod-cat">${esc(p.category||'')}</div><div class="prod-name">${esc(p.name||'')}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">+ Añadir</button></div></div>`;
+    grid.appendChild(card);
+    obs.observe(card);
+  });
+})();
 
 // ── COUNT-UP ────────────────────────────────────────────────
 const cntEls=document.querySelectorAll('[data-count]');
@@ -915,98 +998,6 @@ initCanvas();
 window.addEventListener('resize',initCanvas);
 requestAnimationFrame(drawCanvas);
 
-// ── SCROLL REVEAL ───────────────────────────────────────────
-const revEls=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
-const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
-revEls.forEach(el=>obs.observe(el));
-
-// ── COUNT-UP ────────────────────────────────────────────────
-const cntEls=document.querySelectorAll('[data-count]');
-const cntObs=new IntersectionObserver(es=>{
-  es.forEach(e=>{
-    if(!e.isIntersecting)return;
-    const el=e.target, target=+el.dataset.count; let start=0;
-    const step=ts=>{
-      if(!start)start=ts;
-      const p=Math.min((ts-start)/1800,1);
-      el.textContent=Math.floor(p*target)+(el.dataset.suffix||'');
-      if(p<1)requestAnimationFrame(step);
-      else el.textContent=target+(el.dataset.suffix||'');
-    };
-    requestAnimationFrame(step); cntObs.unobserve(el);
-  });
-},{threshold:.5});
-cntEls.forEach(el=>cntObs.observe(el));
-
-// ── TESTIMONIALS ────────────────────────────────────────────
-const testis=[
-  {t:'"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."',n:'Valentina M.',l:'Quito, Ecuador'},
-  {t:'"El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento."',n:'Carlos R.',l:'Miami, USA'},
-  {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
-  {t:'"Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA."',n:'Isabella T.',l:'Nueva York, USA'},
-  {t:'"Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!"',n:'Camila V.',l:'Cuenca, Ecuador'},
-  {t:'"Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí."',n:'Andrea P.',l:'Los Ángeles, USA'},
-  {t:'"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."',n:'Valentina M.',l:'Quito, Ecuador'},
-  {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
-];
-// Usa los testimonios guardados en products.json si existen; si no, los de arriba
-const cfgTestis = (CACUSA_HOME.testimonials && CACUSA_HOME.testimonials.length)
-  ? CACUSA_HOME.testimonials.map(x => ({
-      t: '"' + String(x.t || x.text || '').replace(/^"|"$/g, '') + '"',
-      n: x.n || x.name || '',
-      l: x.l || x.location || ''
-    }))
-  : testis;
-const tt2=document.getElementById('tTrack2');
-const escHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-cfgTestis.forEach(t=>{
-  tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${escHtml(t.t)}</div><div class="tcard-name">${escHtml(t.n)}</div><div class="tcard-loc">${escHtml(t.l)}</div></div>`;
-});
-
-// ── INSTAGRAM GRID (placeholder hasta conectar feed real) ───
-const igGs=[
-  'linear-gradient(135deg,#FCE8F3,#EE6FA8)',
-  'linear-gradient(135deg,#F5C8A8,#F5A0C8)',
-  'linear-gradient(135deg,#DCF0FC,#88C8F0)',
-  'linear-gradient(135deg,#EEE4FA,#C4A0EC)',
-  'linear-gradient(135deg,#FCE8F3,#F5A0C8)',
-  'linear-gradient(135deg,#DCF0FC,#C4A0EC)',
-  'linear-gradient(135deg,#F5C8A8,#EE6FA8)',
-  'linear-gradient(135deg,#EEE4FA,#88C8F0)',
-  'linear-gradient(135deg,#FCE8F3,#C4A0EC)',
-  'linear-gradient(135deg,#F5C8A8,#88C8F0)',
-  'linear-gradient(135deg,#FCE8F3,#EE6FA8)',
-  'linear-gradient(135deg,#DCF0FC,#F5A0C8)',
-];
-const igG=document.getElementById('igGrid');
-if(igG){
-  // Labels de contenido real que CACUSA publica en Instagram
-  const igLabels=['Collar personalizado','Anillo gold','Pulsera inicial','Aretes luna','Nueva colección','Behind the scenes','Collar corazón','Para ellos','Hecho a mano','Personaliza','Envío express','¡Nuevo!'];
-  for(let i=0;i<12;i++){
-    const item=document.createElement('div');
-    item.className='ig-item reveal-scale';
-    item.dataset.delay=String((i%4)+1);
-    item.innerHTML=`
-      <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;cursor:none">
-        <div class="ig-bg" style="background:${igGs[i]};width:100%;height:100%;display:flex;align-items:flex-end;padding:8px">
-          <span style="font-family:var(--fs);font-size:11px;color:rgba(255,255,255,.75);text-shadow:0 1px 4px rgba(0,0,0,.15)">${igLabels[i]}</span>
-        </div>
-        <div class="ig-hover"><div class="ig-icon">♡</div></div>
-      </a>`;
-    igG.appendChild(item);
-    obs.observe(item);
-  }
-}
-
-// ── VIGNETTE ────────────────────────────────────────────────
-const vig=document.getElementById('vignette');
-if(!localStorage.getItem('cacusa-vig2')) setTimeout(()=>vig.classList.add('show'),3500);
-[document.getElementById('vigClose'),document.getElementById('vigSkip')].forEach(el=>el.addEventListener('click',()=>{
-  vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
-}));
-document.getElementById('vigBtn').addEventListener('click',()=>{
-  vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
-});
 
 </script>
 </body>
