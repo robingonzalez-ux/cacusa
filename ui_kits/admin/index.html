@@ -94,6 +94,29 @@ const DEFAULT_HOME = {
     copyright: `© ${new Date().getFullYear()} CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍`
   }
 };
+const DEFAULT_PAGES = {
+  envios: {
+    intro: 'Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso.',
+    servientregaSameCityRate: 'desde $3.50',
+    servientregaOtherCityRate: '$5.25 – $6.30',
+    servientregaNote: 'Entrega el mismo día si se despacha temprano dentro de la misma ciudad; 1–2 días hábiles a otras ciudades. Los envíos del sábado se entregan el lunes.',
+    uspsTime: '2–5 días hábiles',
+    otrosPaisesBody: '¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación.'
+  },
+  devoluciones: {
+    intro: 'En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, no realizamos devoluciones ni cambios una vez confirmada la compra.',
+    secPorQueBody: 'Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti. Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.',
+    secAntesBody: 'Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.',
+    secDefectoBody: 'Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto.'
+  },
+  cuidados: {
+    intro: 'Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.',
+    sec1Body: 'No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo.',
+    sec2Body: 'Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Aplícate perfume y crema antes de ponerte la joya, nunca después.',
+    sec3Body: 'Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.',
+    sec5Body: 'Limpia tu joya de vez en cuando con un paño suave y seco. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado.'
+  }
+};
 const IMG_TYPES  = ['collar', 'ring', 'bracelet', 'earrings', 'heart', 'bracelet-m', 'necklace'];
 const COLORS     = { rose: '#F9A8C9', gold: '#F4C430', violet: '#9B5DE5', sky: '#87CEEB', plum: '#4A1942' };
 
@@ -848,6 +871,72 @@ function LandingTab({ home, setHome, products, setDirty }) {
   );
 }
 
+// ── Pages Tab ───────────────────────────────────────────────────────────────
+function PagesTab({ pages, setPages, setDirty }) {
+  const set = (page, key, val) => {
+    setPages(p => ({ ...p, [page]: { ...p[page], [key]: val } }));
+    setDirty(true);
+  };
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+  const ta  = { ...inp, resize: 'vertical' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
+  const card= { background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 };
+  const sec = { marginBottom: 14 };
+  const sub = { fontSize: 13, fontWeight: 700, color: '#9B5DE5', margin: '16px 0 10px', paddingBottom: 6, borderBottom: '1px solid #F0ECF4' };
+  const env = pages.envios || {};
+  const dev = pages.devoluciones || {};
+  const cui = pages.cuidados || {};
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+      {/* ── Envíos ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🚚 Página de Envíos</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/envios</strong></div>
+        <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={3} value={env.intro||''} onChange={e=>set('envios','intro',e.target.value)} style={ta} /></div>
+        <div style={sub}>🇪🇨 Ecuador — Servientrega</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div><label style={lbl}>Tarifa misma ciudad</label><input value={env.servientregaSameCityRate||''} onChange={e=>set('envios','servientregaSameCityRate',e.target.value)} style={inp} placeholder="desde $3.50" /></div>
+          <div><label style={lbl}>Tarifa otra ciudad</label><input value={env.servientregaOtherCityRate||''} onChange={e=>set('envios','servientregaOtherCityRate',e.target.value)} style={inp} placeholder="$5.25 – $6.30" /></div>
+        </div>
+        <div style={sec}><label style={lbl}>Nota de tiempos Ecuador</label><textarea rows={2} value={env.servientregaNote||''} onChange={e=>set('envios','servientregaNote',e.target.value)} style={ta} /></div>
+        <div style={sub}>🇺🇸 Estados Unidos — USPS</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 8 }}>La tarifa de envío USA se toma de Ajustes → Costo de envío. Solo edita el tiempo aquí.</div>
+        <div style={sec}><label style={lbl}>Tiempo de entrega USA</label><input value={env.uspsTime||''} onChange={e=>set('envios','uspsTime',e.target.value)} style={inp} placeholder="2–5 días hábiles" /></div>
+        <div style={sub}>🌎 Otros países</div>
+        <div style={sec}><label style={lbl}>Mensaje para otros países</label><textarea rows={2} value={env.otrosPaisesBody||''} onChange={e=>set('envios','otrosPaisesBody',e.target.value)} style={ta} /></div>
+      </div>
+
+      {/* ── Devoluciones ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>↩️ Página de Devoluciones</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/devoluciones</strong></div>
+        <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={3} value={dev.intro||''} onChange={e=>set('devoluciones','intro',e.target.value)} style={ta} /></div>
+        <div style={sub}>Secciones de la política</div>
+        <div style={sec}><label style={lbl}>¿Por qué no aceptamos devoluciones?</label><textarea rows={3} value={dev.secPorQueBody||''} onChange={e=>set('devoluciones','secPorQueBody',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>Antes de comprar, cerciórate de tu pedido</label><textarea rows={2} value={dev.secAntesBody||''} onChange={e=>set('devoluciones','secAntesBody',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>Pieza con defecto de fábrica</label><textarea rows={3} value={dev.secDefectoBody||''} onChange={e=>set('devoluciones','secDefectoBody',e.target.value)} style={ta} /></div>
+      </div>
+
+      {/* ── Cuidados ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>💎 Página de Cuidados</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/cuidados</strong></div>
+        <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={2} value={cui.intro||''} onChange={e=>set('cuidados','intro',e.target.value)} style={ta} /></div>
+        <div style={sub}>Tips de cuidado</div>
+        <div style={sec}><label style={lbl}>1 · Evita el contacto con agua</label><textarea rows={2} value={cui.sec1Body||''} onChange={e=>set('cuidados','sec1Body',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>2 · Aléjala de químicos y cosméticos</label><textarea rows={2} value={cui.sec2Body||''} onChange={e=>set('cuidados','sec2Body',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>3 · Guárdala correctamente</label><textarea rows={2} value={cui.sec3Body||''} onChange={e=>set('cuidados','sec3Body',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>5 · Limpieza recomendada</label><textarea rows={2} value={cui.sec5Body||''} onChange={e=>set('cuidados','sec5Body',e.target.value)} style={ta} /></div>
+      </div>
+
+      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 4 }}>
+        💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para actualizar estas páginas en la web.
+      </div>
+    </div>
+  );
+}
+
 // ── Settings Tab ────────────────────────────────────────────────────────────
 function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, products, setProducts, setDirty }) {
   const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
@@ -945,6 +1034,7 @@ function App() {
   const [shipping, setShipping]       = useState(DEFAULT_SHIPPING);
   const [texts, setTexts]             = useState(DEFAULT_TEXTS);
   const [home, setHome]               = useState(DEFAULT_HOME);
+  const [pages, setPages]             = useState(DEFAULT_PAGES);
   const [orders, setOrders]           = useState([]);
   const [ordersSha, setOrdersSha]     = useState(null);
   const [loading, setLoading]         = useState(false);
@@ -1001,6 +1091,13 @@ function App() {
             footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
           });
         }
+        if (cfg.pages && typeof cfg.pages === 'object') {
+          setPages({
+            envios:       { ...DEFAULT_PAGES.envios,       ...(cfg.pages.envios       || {}) },
+            devoluciones: { ...DEFAULT_PAGES.devoluciones, ...(cfg.pages.devoluciones || {}) },
+            cuidados:     { ...DEFAULT_PAGES.cuidados,     ...(cfg.pages.cuidados     || {}) }
+          });
+        }
       } else {
         setProducts([]);
         setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
@@ -1024,7 +1121,7 @@ function App() {
         lastUpdated: new Date().toISOString(),
         updatedBy: session.username,
         whatsapp: whatsappNum,
-        config: { whatsapp: whatsappNum, categories, materials, shipping, texts, home },
+        config: { whatsapp: whatsappNum, categories, materials, shipping, texts, home, pages },
         products
       }, null, 2);
       await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
@@ -1154,6 +1251,7 @@ function App() {
             ['products', '💎 Productos', products.length],
             ['orders',   '📦 Pedidos',   pendingOrders],
             ['landing',  '🏠 Landing',   0],
+            ['pages',    '📄 Páginas',   0],
             ['settings', '⚙️ Ajustes',   0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -1275,6 +1373,11 @@ function App() {
         {/* ── Landing tab ── */}
         {activeTab === 'landing' && (
           <LandingTab home={home} setHome={setHome} products={products} setDirty={setDirty} />
+        )}
+
+        {/* ── Pages tab ── */}
+        {activeTab === 'pages' && (
+          <PagesTab pages={pages} setPages={setPages} setDirty={setDirty} />
         )}
 
         {/* ── Settings tab ── */}

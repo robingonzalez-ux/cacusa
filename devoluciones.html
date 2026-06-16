@@ -89,16 +89,16 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro">En CACUSA by Taitus, cada joya se elabora de forma <strong>artesanal y personalizada</strong> para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, <strong>no realizamos devoluciones ni cambios</strong> una vez confirmada la compra.</p>
+    <p class="intro" id="devIntro">En CACUSA by Taitus, cada joya se elabora de forma <strong>artesanal y personalizada</strong> para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, <strong>no realizamos devoluciones ni cambios</strong> una vez confirmada la compra.</p>
 
     <div class="sec">
       <h2><span class="dot"></span>¿Por qué no aceptamos devoluciones?</h2>
-      <p>Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son <strong>finales</strong>.</p>
+      <p id="devPorQueBody">Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son <strong>finales</strong>.</p>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span>Antes de comprar, cerciórate de tu pedido</h2>
-      <p>Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos:</p>
+      <p id="devAntesBody">Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos:</p>
       <ul>
         <li>El modelo y la pieza que estás eligiendo</li>
         <li>El material (plata, baño de oro, acero, etc.)</li>
@@ -111,7 +111,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
     <div class="sec">
       <h2><span class="dot"></span>Pieza con defecto de fábrica</h2>
-      <p>Tu satisfacción nos importa. Si tu pieza llegara con un <strong>defecto de fabricación</strong> o hubiera un error atribuible a nosotros, contáctanos dentro de las <strong>48 horas</strong> posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la <strong>reparación o reposición</strong> de tu pieza sin costo adicional. Esta excepción no aplica a cambios por gusto, talla o datos de personalización ingresados por el cliente.</p>
+      <p id="devDefectoBody">Tu satisfacción nos importa. Si tu pieza llegara con un <strong>defecto de fabricación</strong> o hubiera un error atribuible a nosotros, contáctanos dentro de las <strong>48 horas</strong> posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la <strong>reparación o reposición</strong> de tu pieza sin costo adicional. Esta excepción no aplica a cambios por gusto, talla o datos de personalización ingresados por el cliente.</p>
     </div>
 
     <div class="contact">
@@ -151,6 +151,12 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const msg='Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✨';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
+      const pg=(cfg.pages&&cfg.pages.devoluciones)||{};
+      const st=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v;};
+      st('devIntro',pg.intro);
+      st('devPorQueBody',pg.secPorQueBody);
+      st('devAntesBody',pg.secAntesBody);
+      st('devDefectoBody',pg.secDefectoBody);
     }
   }catch(e){}
   const d=new Date();

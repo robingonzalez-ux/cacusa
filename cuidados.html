@@ -90,16 +90,16 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro">Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo. ¡Aquí te dejamos nuestras recomendaciones!</p>
+    <p class="intro" id="cuiIntro">Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo. ¡Aquí te dejamos nuestras recomendaciones!</p>
 
     <div class="sec">
       <h2><span class="dot"></span>Evita el contacto con agua</h2>
-      <p>No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.</p>
+      <p id="cuiSec1Body">No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.</p>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span>Aléjala de químicos y cosméticos</h2>
-      <p>Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.</p>
+      <p id="cuiSec2Body">Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.</p>
       <ul>
         <li>Aplícate perfume y crema antes de ponerte la joya, nunca después</li>
         <li>Evita el alcohol en gel y los limpiadores de manos con la joya puesta</li>
@@ -108,7 +108,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
     <div class="sec">
       <h2><span class="dot"></span>Guárdala correctamente</h2>
-      <p>Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.</p>
+      <p id="cuiSec3Body">Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.</p>
     </div>
 
     <div class="sec">
@@ -123,7 +123,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
     <div class="sec">
       <h2><span class="dot"></span>Limpieza recomendada</h2>
-      <p>Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado.</p>
+      <p id="cuiSec5Body">Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado.</p>
       <div class="callout">Siguiendo estos cuidados, tu joya CACUSA mantendrá su brillo y color por mucho más tiempo. ✨</div>
     </div>
 
@@ -164,6 +164,13 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const msg='Hola, tengo una consulta sobre el cuidado de mi joya CACUSA ✨';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
+      const pg=(cfg.pages&&cfg.pages.cuidados)||{};
+      const st=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v;};
+      st('cuiIntro',pg.intro);
+      st('cuiSec1Body',pg.sec1Body);
+      st('cuiSec2Body',pg.sec2Body);
+      st('cuiSec3Body',pg.sec3Body);
+      st('cuiSec5Body',pg.sec5Body);
     }
   }catch(e){}
   const d=new Date();

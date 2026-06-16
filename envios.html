@@ -93,7 +93,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro">Cada pieza CACUSA se elabora de forma artesanal y personalizada, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.</p>
+    <p class="intro" id="envIntro">Cada pieza CACUSA se elabora de forma artesanal y personalizada, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.</p>
 
     <div class="sec">
       <h2><span class="dot"></span>Costo de envío</h2>
@@ -110,21 +110,21 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <div class="sec">
       <h2><span class="dot"></span>🇪🇨 Ecuador — vía Servientrega</h2>
       <p>Hacemos tus envíos nacionales con Servientrega, a domicilio en todo el país.</p>
-      <div class="price-row"><span class="lbl">Dentro de la misma ciudad</span><span class="val">desde $3.50</span></div>
-      <div class="price-row"><span class="lbl">A otra ciudad</span><span class="val">$5.25 – $6.30</span></div>
-      <div class="callout">Entrega el mismo día si se despacha temprano dentro de la misma ciudad; <strong>1–2 días hábiles</strong> a otras ciudades. Los envíos del sábado se entregan el lunes.</div>
+      <div class="price-row"><span class="lbl">Dentro de la misma ciudad</span><span class="val" id="envEC1">desde $3.50</span></div>
+      <div class="price-row"><span class="lbl">A otra ciudad</span><span class="val" id="envEC2">$5.25 – $6.30</span></div>
+      <div class="callout" id="envECNote">Entrega el mismo día si se despacha temprano dentro de la misma ciudad; <strong>1–2 días hábiles</strong> a otras ciudades. Los envíos del sábado se entregan el lunes.</div>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span>🇺🇸 Estados Unidos — vía USPS</h2>
       <p>Para clientes en USA, enviamos con USPS Ground Advantage.</p>
       <div class="price-row"><span class="lbl">Tarifa</span><span class="val" id="shipCostUsa">$10.00</span></div>
-      <div class="callout">Tiempo de entrega estimado: <strong>2–5 días hábiles</strong>, según la zona de destino dentro de USA.</div>
+      <div class="callout">Tiempo de entrega estimado: <strong id="envUSATime">2–5 días hábiles</strong>, según la zona de destino dentro de USA.</div>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span>Otros países</h2>
-      <p>¿Nos escribes desde otro país? <strong>Contáctanos por WhatsApp</strong> y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación.</p>
+      <p id="envOtros">¿Nos escribes desde otro país? <strong>Contáctanos por WhatsApp</strong> y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación.</p>
     </div>
 
     <div class="sec">
@@ -180,6 +180,14 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         document.getElementById('shipCostUsa').textContent=c;
       }
       if(sh.freeThreshold!=null) document.getElementById('shipFree').textContent='$'+parseFloat(sh.freeThreshold).toFixed(2);
+      const pg=(cfg.pages&&cfg.pages.envios)||{};
+      const setTxt=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v;};
+      setTxt('envIntro',pg.intro);
+      setTxt('envEC1',pg.servientregaSameCityRate);
+      setTxt('envEC2',pg.servientregaOtherCityRate);
+      if(pg.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pg.servientregaNote;}
+      setTxt('envUSATime',pg.uspsTime);
+      setTxt('envOtros',pg.otrosPaisesBody);
     }
   }catch(e){}
   const d=new Date();

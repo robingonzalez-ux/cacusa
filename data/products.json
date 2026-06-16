@@ -113,6 +113,29 @@
         1781400451404,
         1781473627668
       ]
+    },
+    "pages": {
+      "envios": {
+        "intro": "Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.",
+        "servientregaSameCityRate": "desde $3.50",
+        "servientregaOtherCityRate": "$5.25 – $6.30",
+        "servientregaNote": "Entrega el mismo día si se despacha temprano dentro de la misma ciudad; 1–2 días hábiles a otras ciudades. Los envíos del sábado se entregan el lunes.",
+        "uspsTime": "2–5 días hábiles",
+        "otrosPaisesBody": "¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación."
+      },
+      "devoluciones": {
+        "intro": "En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, no realizamos devoluciones ni cambios una vez confirmada la compra.",
+        "secPorQueBody": "Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.",
+        "secAntesBody": "Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.",
+        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional."
+      },
+      "cuidados": {
+        "intro": "Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.",
+        "sec1Body": "No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.",
+        "sec2Body": "Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.",
+        "sec3Body": "Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.",
+        "sec5Body": "Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado."
+      }
     }
   },
   "products": [
