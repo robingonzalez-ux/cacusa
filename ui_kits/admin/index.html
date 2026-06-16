@@ -920,7 +920,10 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
 
 // ── App ────────────────────────────────────────────────────────────────────
 function App() {
-  const [session, setSession]         = useState(() => { const s = sessionStorage.getItem('cacusa_session'); return s ? JSON.parse(s) : null; });
+  const [session, setSession]         = useState(() => {
+    try { const s = sessionStorage.getItem('cacusa_session'); return s ? JSON.parse(s) : null; }
+    catch (_) { return null; }
+  });
   const [products, setProducts]       = useState([]);
   const [productsSha, setProductsSha] = useState(null);
   const [whatsappNum, setWhatsappNum] = useState('');
@@ -948,7 +951,7 @@ function App() {
 
   useEffect(() => {
     if (session) {
-      sessionStorage.setItem('cacusa_session', JSON.stringify(session));
+      try { sessionStorage.setItem('cacusa_session', JSON.stringify(session)); } catch (_) {}
       loadData();
       setupPush(session.token, setPushState);
     }
