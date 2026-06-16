@@ -241,6 +241,12 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   .checkout-btn,.cart-close,.pay-btn,.success-back,.ci-remove,
   .nav-back,.nav-logo,#checkoutBack,.pcard-quick{cursor:pointer}
 }
+.store-footer{background:var(--grad);padding:40px 24px;text-align:center;margin-top:40px}
+.store-footer .f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
+.store-footer .f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.store-footer .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.store-footer .f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8);text-decoration:none}
+.store-footer .f-links a:hover{color:white}
   </style>
 </head>
 <body>
@@ -294,6 +300,18 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
     <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">Cargando productos…</div>
   </div>
 </div>
+
+<footer class="store-footer">
+  <div class="f-w">CACUSA</div>
+  <div class="f-s">by Taitus</div>
+  <div class="f-links">
+    <a href="/">Inicio</a>
+    <a href="../../envios.html">Envíos</a>
+    <a href="../../devoluciones.html">Devoluciones</a>
+    <a href="../../cuidados.html">Cuidados</a>
+    <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener">Instagram</a>
+  </div>
+</footer>
 
 <!-- PRODUCT MODAL -->
 <div id="modal-overlay">
@@ -428,6 +446,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </span>
         </button>
         <div class="co-wa-note">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
+        <div class="co-wa-note">Piezas hechas a medida · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline">ver política de devoluciones</a></div>
         <div class="wa-fallback">
           <a href="#" id="waFallbackBtn">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
         </div>
@@ -472,9 +491,9 @@ let PRODUCTS = [];
 let WHATSAPP_NUMBER = '';
 
 // Config dinámica (se sobreescribe con products.json → config)
-let CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
-let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
-let SHIPPING   = { freeThreshold: 60, cost: 5 };
+let CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
+let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
+let SHIPPING   = { freeThreshold: 60, cost: 10 };
 const US_STATE_TAX = {
   AL:0.04,AZ:0.056,AR:0.065,CA:0.0725,CO:0.029,CT:0.0635,FL:0.07,GA:0.04,
   HI:0.04,ID:0.06,IL:0.0625,IN:0.07,IA:0.06,KS:0.065,KY:0.06,LA:0.0445,

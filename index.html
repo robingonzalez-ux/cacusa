@@ -8,6 +8,10 @@
 <meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
 <meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
 <meta property="og:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
+<meta property="og:image" content="https://cacusabytaitus.com/assets/icon-512.jpg">
+<link rel="icon" href="/apple-touch-icon.png" type="image/png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
 <title>CACUSA by Taitus — Joyería Personalizada</title>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -403,7 +407,7 @@ html,body{overflow-x:hidden}
     <div class="reveal"><div class="section-label">Nuestras colecciones</div></div>
     <div class="reveal" data-delay="1"><h2 class="section-h">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
-      <div class="col-card reveal-left" onclick="window.location.href='./ui_kits/store/'">
+      <div class="col-card reveal-left" onclick="window.location.href='./ui_kits/store/?cat=Cadenas'">
         <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content">
@@ -412,20 +416,25 @@ html,body{overflow-x:hidden}
           <div class="col-cta">Explorar →</div>
         </div>
       </div>
-      <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/'">
+      <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/?cat=Anillos'">
         <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag">Destacado</div><div class="col-title">Anillos</div><div class="col-cta">Ver →</div></div>
       </div>
-      <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/'">
+      <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/?cat=Hombres'">
         <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag">Para ellos</div><div class="col-title">Hombres</div><div class="col-cta">Ver →</div></div>
       </div>
-      <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/'">
+      <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/?cat=Pulseras'">
         <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag">Hecho a mano</div><div class="col-title">Pulseras</div><div class="col-cta">Ver →</div></div>
+      </div>
+      <div class="col-card reveal" data-delay="5" onclick="window.location.href='./ui_kits/store/?cat=Aretes'">
+        <div class="col-bg gC" data-cat="Aretes" style="position:absolute;inset:0"></div>
+        <div class="col-overlay"></div>
+        <div class="col-content"><div class="col-tag">Elegancia</div><div class="col-title">Aretes</div><div class="col-cta">Ver →</div></div>
       </div>
     </div>
   </div>
@@ -691,6 +700,8 @@ let CACUSA_HOME = {};
       if (footer.tagline) setTxt('hFooterTag', '"' + String(footer.tagline).replace(/^"|"$/g, '') + '"');
       setTxt('hFooterCopy', footer.copyright);
     }
+    const copyEl = document.getElementById('hFooterCopy');
+    if (copyEl) copyEl.textContent = copyEl.textContent.replace(/©\s*\d{4}/, '© ' + new Date().getFullYear());
     const contactEl = document.getElementById('hFooterContact');
     if (contactEl) {
       const num = (CACUSA_WHATSAPP || '').replace(/\D/g, '');
