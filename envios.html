@@ -118,7 +118,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <div class="sec">
       <h2><span class="dot"></span>🇺🇸 Estados Unidos — vía USPS</h2>
       <p>Para clientes en USA, enviamos con USPS Ground Advantage.</p>
-      <div class="price-row"><span class="lbl">Tarifa referencial</span><span class="val">$4.50 – $6.70</span></div>
+      <div class="price-row"><span class="lbl">Tarifa</span><span class="val" id="shipCostUsa">$10.00</span></div>
       <div class="callout">Tiempo de entrega estimado: <strong>2–5 días hábiles</strong>, según la zona de destino dentro de USA.</div>
     </div>
 
@@ -174,7 +174,11 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const sh=cfg.shipping||{};
-      if(sh.cost!=null) document.getElementById('shipCost').textContent='$'+parseFloat(sh.cost).toFixed(2);
+      if(sh.cost!=null){
+        const c='$'+parseFloat(sh.cost).toFixed(2);
+        document.getElementById('shipCost').textContent=c;
+        document.getElementById('shipCostUsa').textContent=c;
+      }
       if(sh.freeThreshold!=null) document.getElementById('shipFree').textContent='$'+parseFloat(sh.freeThreshold).toFixed(2);
     }
   }catch(e){}
