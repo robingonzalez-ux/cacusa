@@ -42,9 +42,9 @@ const USERS = {
   'robin.gonzalez':  { name: 'Robin González',  avatar: '🤴', color: '#9B5DE5' }
 };
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
-const DEFAULT_CATEGORIES = ['Personalizado', 'Colección', 'Gold Edition', 'Hombres'];
-const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable'];
-const DEFAULT_SHIPPING   = { freeThreshold: 60, cost: 5 };
+const DEFAULT_CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
+const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
+const DEFAULT_SHIPPING   = { freeThreshold: 60, cost: 10 };
 const DEFAULT_TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -58,8 +58,8 @@ const DEFAULT_HOME = {
   storyQuote: 'Cada pieza, una historia única',
   storyBody: 'Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.',
   stats: [
-    { num: '500', label: 'Piezas creadas' },
-    { num: '2', label: 'Países' },
+    { num: '650', label: 'Piezas creadas' },
+    { num: '5', label: 'Países' },
     { num: '100', label: '% Artesanal' }
   ],
   person: {
@@ -78,7 +78,7 @@ const DEFAULT_HOME = {
   ],
   footer: {
     tagline: 'creamos para que luzcas más bella de lo que ya eres',
-    copyright: '© 2025 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍'
+    copyright: `© ${new Date().getFullYear()} CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍`
   }
 };
 const IMG_TYPES  = ['collar', 'ring', 'bracelet', 'earrings', 'heart', 'bracelet-m', 'necklace'];
@@ -872,7 +872,7 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
           </div>
           <div>
             <label style={lbl}>Costo de envío ($)</label>
-            <input type="number" min="0" step="0.01" value={shipping.cost} onChange={e => setShip('cost', e.target.value)} placeholder="5" style={inp} />
+            <input type="number" min="0" step="0.01" value={shipping.cost} onChange={e => setShip('cost', e.target.value)} placeholder="10" style={inp} />
           </div>
         </div>
         <div style={{ fontSize: 12, color: '#7A6880', marginTop: 12, background: '#FAF7FB', borderRadius: 10, padding: '10px 12px' }}>
