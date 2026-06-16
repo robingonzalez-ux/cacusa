@@ -733,7 +733,7 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
 
 // ── Settings tab ─────────────────────────────────────────────────────────────
 // ── Landing Tab ────────────────────────────────────────────────────────────
-function LandingTab({ home, setHome, products, setDirty }) {
+function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
   const setHomeField  = (k, v) => { setHome(h => ({ ...h, [k]: v })); setDirty(true); };
   const setStat       = (i, k, v) => { setHome(h => ({ ...h, stats: h.stats.map((s, j) => j === i ? { ...s, [k]: v } : s) })); setDirty(true); };
   const setPersonField= (k, v) => { setHome(h => ({ ...h, person: { ...h.person, [k]: v } })); setDirty(true); };
@@ -756,6 +756,19 @@ function LandingTab({ home, setHome, products, setDirty }) {
 
   return (
     <div style={{ maxWidth: 620, margin: '0 auto' }}>
+
+      {/* ── Banner de beneficios ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✨ Banner de beneficios</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Frases que aparecen en la barra superior de la tienda: "Hecho a mano", "Envío express", etc.</div>
+        <ListEditor
+          title=""
+          hint="Frases cortas que se muestran como íconos en la tienda."
+          items={Array.isArray(texts?.perks) ? texts.perks : []}
+          onChange={v => { setTexts(t => ({ ...t, perks: v })); setDirty(true); }}
+          emptyOk
+        />
+      </div>
 
       {/* ── Productos destacados ── */}
       <div style={card}>
@@ -1246,7 +1259,7 @@ function App() {
         </div>
 
         {/* ── Tab navigation ── */}
-        <div style={{ display: 'flex', marginBottom: 20, background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #EDE8EA' }}>
+        <div style={{ display: 'flex', marginBottom: 20, background: 'white', borderRadius: 12, overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #EDE8EA' }}>
           {[
             ['products', '💎 Productos', products.length],
             ['orders',   '📦 Pedidos',   pendingOrders],
@@ -1255,7 +1268,7 @@ function App() {
             ['settings', '⚙️ Ajustes',   0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{ flex: 1, padding: '13px 16px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', background: activeTab === tab ? 'white' : '#F9F5F7', color: activeTab === tab ? '#E8508A' : '#7A6880', borderBottom: activeTab === tab ? '2.5px solid #E8508A' : '2.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s', fontFamily: 'inherit' }}>
+              style={{ flexShrink: 0, minWidth: 90, padding: '13px 16px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', background: activeTab === tab ? 'white' : '#F9F5F7', color: activeTab === tab ? '#E8508A' : '#7A6880', borderBottom: activeTab === tab ? '2.5px solid #E8508A' : '2.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
               {label}
               {badge > 0 && <span style={{ background: activeTab === tab ? '#E8508A' : '#C4B5C8', color: 'white', borderRadius: 99, fontSize: 11, padding: '1px 7px', fontWeight: 800 }}>{badge}</span>}
             </button>
@@ -1372,7 +1385,7 @@ function App() {
 
         {/* ── Landing tab ── */}
         {activeTab === 'landing' && (
-          <LandingTab home={home} setHome={setHome} products={products} setDirty={setDirty} />
+          <LandingTab home={home} setHome={setHome} products={products} setDirty={setDirty} texts={texts} setTexts={setTexts} />
         )}
 
         {/* ── Pages tab ── */}
