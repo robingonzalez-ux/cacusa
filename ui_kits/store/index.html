@@ -692,6 +692,16 @@ function renderFilters() {
       renderProducts();
     });
   });
+  // Permite enlazar a una categoría desde fuera (ej. footer del landing) con ?cat=NombreCategoria
+  const reqCat = new URLSearchParams(window.location.search).get('cat');
+  if (reqCat) {
+    const match = [...wrap.querySelectorAll('.filter-btn')].find(b => b.dataset.filter.toLowerCase() === reqCat.toLowerCase());
+    if (match) {
+      wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      match.classList.add('active');
+      activeFilter = match.dataset.filter;
+    }
+  }
 }
 function renderMaterials() {} // material fijo por producto, no seleccionable
 
