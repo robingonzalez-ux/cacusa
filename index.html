@@ -105,21 +105,18 @@ nav.scrolled .nav-cta{background:var(--pink);color:white;box-shadow:0 2px 16px r
 .scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);animation:sLine 2s ease infinite}
 @keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* Hero — gran panel de imagen tipo slideshow */
-.hero-stage{position:absolute;right:52px;top:50%;transform:translateY(-50%);width:44%;max-width:600px;height:74%;max-height:660px;border-radius:26px;overflow:hidden;z-index:2;box-shadow:0 24px 70px rgba(238,111,168,.32);opacity:0;animation:fLeft .9s 1.4s both;cursor:none}
-.hs-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .9s ease}
+/* Hero — panel de imagen a pantalla completa, tipo slideshow, fundido a la izquierda */
+.hero-stage{position:absolute;left:34%;right:0;top:0;bottom:0;z-index:1;overflow:hidden;opacity:0;animation:fIn 1.2s 1.1s both;cursor:none;
+  -webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.45) 14%,#000 32%);
+  mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.45) 14%,#000 32%)}
+.hs-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease}
 .hs-layer.on{opacity:1}
-.hs-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(74,25,66,.6) 0%,rgba(74,25,66,.12) 38%,transparent 62%);pointer-events:none;z-index:1}
-.hs-cap{position:absolute;left:0;right:0;bottom:0;padding:28px 30px;z-index:2}
-.hs-cat{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:6px}
-.hs-name{font-family:var(--fd);font-weight:700;font-size:27px;color:white;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.3)}
-.hs-price{font-family:var(--fu);font-size:16px;font-weight:600;color:white;margin-top:6px}
-.hs-dots{position:absolute;top:16px;right:16px;display:flex;gap:6px;z-index:2}
+.hs-dots{position:absolute;bottom:28px;right:32px;display:flex;gap:6px;z-index:2}
 .hs-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .3s}
 .hs-dot.active{background:white;width:18px;border-radius:4px}
 
 @keyframes fUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-@keyframes fLeft{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
 
 /* ── SECTIONS ──────────────────────────────────────── */
 section{padding:96px 0}
@@ -301,8 +298,7 @@ html,body{overflow-x:hidden}
   .hero-desc{font-size:16px;max-width:100%}
   .hero-btns{flex-wrap:wrap}
   /* Slideshow grande debajo del texto (visible en móvil) */
-  .hero-stage{position:relative;transform:none;top:auto;right:auto;left:auto;align-self:stretch;width:auto;max-width:none;height:340px;max-height:none;margin:30px 22px 0;opacity:1;animation:none;cursor:pointer}
-  .hs-name{font-size:23px}
+  .hero-stage{position:relative;left:auto;right:auto;top:auto;bottom:auto;align-self:stretch;height:340px;margin:30px 22px 0;border-radius:22px;opacity:1;animation:none;cursor:pointer;-webkit-mask-image:none;mask-image:none}
 
   /* SECCIONES — títulos */
   .section-h{font-size:clamp(30px,8vw,40px)}
@@ -396,13 +392,7 @@ html,body{overflow-x:hidden}
   <div class="hero-stage" id="heroStage">
     <div class="hs-layer" id="hsA"></div>
     <div class="hs-layer" id="hsB"></div>
-    <div class="hs-scrim"></div>
     <div class="hs-dots" id="hsDots"></div>
-    <div class="hs-cap">
-      <div class="hs-cat" id="hsCat"></div>
-      <div class="hs-name" id="hsName"></div>
-      <div class="hs-price" id="hsPrice"></div>
-    </div>
   </div>
   <div class="hero-scroll"><span>Explorar</span><div class="scroll-line"></div></div>
 </section>
@@ -851,7 +841,6 @@ revEls.forEach(el=>obs.observe(el));
   const stage = document.getElementById('heroStage');
   if (!all.length || !stage) return;
   const A = document.getElementById('hsA'), B = document.getElementById('hsB');
-  const catEl = document.getElementById('hsCat'), nameEl = document.getElementById('hsName'), priceEl = document.getElementById('hsPrice');
   const dotsWrap = document.getElementById('hsDots');
   const N = Math.min(all.length, 8); // hasta 8 piezas en el slideshow
   const dots = [];
@@ -866,9 +855,6 @@ revEls.forEach(el=>obs.observe(el));
     back.style.backgroundPosition = fx + '% ' + fy + '%';
     back.classList.add('on'); front.classList.remove('on');
     front = back;
-    catEl.textContent = p.category || 'CACUSA';
-    nameEl.textContent = p.name || '';
-    priceEl.textContent = p.price ? ('$' + parseFloat(p.price).toFixed(0)) : '';
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
   };
   show(0);
