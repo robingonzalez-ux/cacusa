@@ -105,16 +105,18 @@ nav.scrolled .nav-cta{background:var(--pink);color:white;box-shadow:0 2px 16px r
 .scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);animation:sLine 2s ease infinite}
 @keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* Hero floating cards */
-.hero-cards{position:absolute;right:72px;top:50%;transform:translateY(-50%);display:grid;grid-template-columns:1fr 1fr;gap:14px;z-index:2;opacity:0;animation:fLeft .9s 1.6s both}
-.hcard{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-radius:18px;padding:12px;box-shadow:0 8px 32px rgba(238,111,168,.2);transition:transform .3s,opacity .55s;cursor:none}
-.hcard:hover{transform:translateY(-6px) !important}
-.hcard:nth-child(even){transform:translateY(24px)}
-.hero-cards.swapping .hcard{opacity:0}
-.hc-img{height:90px;border-radius:12px;margin-bottom:10px;background-size:cover;background-position:center;background-repeat:no-repeat}
-.hc-cat{font-family:var(--fu);font-size:9px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--pink);margin-bottom:3px}
-.hc-name{font-family:var(--fe);font-size:14px;color:var(--ink)}
-.hc-price{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);margin-top:4px}
+/* Hero — gran panel de imagen tipo slideshow */
+.hero-stage{position:absolute;right:52px;top:50%;transform:translateY(-50%);width:44%;max-width:600px;height:74%;max-height:660px;border-radius:26px;overflow:hidden;z-index:2;box-shadow:0 24px 70px rgba(238,111,168,.32);opacity:0;animation:fLeft .9s 1.4s both;cursor:none}
+.hs-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .9s ease}
+.hs-layer.on{opacity:1}
+.hs-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(74,25,66,.6) 0%,rgba(74,25,66,.12) 38%,transparent 62%);pointer-events:none;z-index:1}
+.hs-cap{position:absolute;left:0;right:0;bottom:0;padding:28px 30px;z-index:2}
+.hs-cat{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-bottom:6px}
+.hs-name{font-family:var(--fd);font-weight:700;font-size:27px;color:white;line-height:1.15;text-shadow:0 2px 14px rgba(0,0,0,.3)}
+.hs-price{font-family:var(--fu);font-size:16px;font-weight:600;color:white;margin-top:6px}
+.hs-dots{position:absolute;top:16px;right:16px;display:flex;gap:6px;z-index:2}
+.hs-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .3s}
+.hs-dot.active{background:white;width:18px;border-radius:4px}
 
 @keyframes fUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 @keyframes fLeft{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
@@ -298,11 +300,9 @@ html,body{overflow-x:hidden}
   .hero-script{font-size:clamp(26px,7vw,38px)}
   .hero-desc{font-size:16px;max-width:100%}
   .hero-btns{flex-wrap:wrap}
-  /* Slideshow de tarjetas debajo del texto (visible en móvil) */
-  .hero-cards{position:static;transform:none;top:auto;right:auto;left:auto;opacity:1;animation:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:30px 22px 0;width:auto}
-  .hcard{cursor:pointer}
-  .hcard:nth-child(even){transform:none}
-  .hc-img{height:118px}
+  /* Slideshow grande debajo del texto (visible en móvil) */
+  .hero-stage{position:relative;transform:none;top:auto;right:auto;left:auto;align-self:stretch;width:auto;max-width:none;height:340px;max-height:none;margin:30px 22px 0;opacity:1;animation:none;cursor:pointer}
+  .hs-name{font-size:23px}
 
   /* SECCIONES — títulos */
   .section-h{font-size:clamp(30px,8vw,40px)}
@@ -393,11 +393,16 @@ html,body{overflow-x:hidden}
       <button class="btn-h2" onclick="window.location.href='./ui_kits/store/'">Personaliza →</button>
     </div>
   </div>
-  <div class="hero-cards">
-    <div class="hcard"><div class="hc-img gA"></div><div class="hc-cat">Personalizado</div><div class="hc-name">Collar con nombre</div><div class="hc-price">$45</div></div>
-    <div class="hcard"><div class="hc-img gB"></div><div class="hc-cat">Gold Edition</div><div class="hc-name">Anillo estrella</div><div class="hc-price">$38</div></div>
-    <div class="hcard"><div class="hc-img gC"></div><div class="hc-cat">Personalizado</div><div class="hc-name">Pulsera inicial</div><div class="hc-price">$32</div></div>
-    <div class="hcard"><div class="hc-img gD"></div><div class="hc-cat">Hombres</div><div class="hc-name">Pulsera cuero</div><div class="hc-price">$29</div></div>
+  <div class="hero-stage" id="heroStage">
+    <div class="hs-layer" id="hsA"></div>
+    <div class="hs-layer" id="hsB"></div>
+    <div class="hs-scrim"></div>
+    <div class="hs-dots" id="hsDots"></div>
+    <div class="hs-cap">
+      <div class="hs-cat" id="hsCat"></div>
+      <div class="hs-name" id="hsName"></div>
+      <div class="hs-price" id="hsPrice"></div>
+    </div>
   </div>
   <div class="hero-scroll"><span>Explorar</span><div class="scroll-line"></div></div>
 </section>
@@ -840,32 +845,37 @@ revEls.forEach(el=>obs.observe(el));
   });
 })();
 
-// ── HERO — slideshow de tarjetas con fotos reales ───────────
+// ── HERO — gran slideshow de imágenes con crossfade ─────────
 (function heroSlideshow(){
   const all = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
-  const wrap = document.querySelector('.hero-cards');
-  const cards = wrap ? [...wrap.querySelectorAll('.hcard')] : [];
-  if (!all.length || !cards.length) return;
-  const fill = (card, p) => {
-    const img = card.querySelector('.hc-img');
+  const stage = document.getElementById('heroStage');
+  if (!all.length || !stage) return;
+  const A = document.getElementById('hsA'), B = document.getElementById('hsB');
+  const catEl = document.getElementById('hsCat'), nameEl = document.getElementById('hsName'), priceEl = document.getElementById('hsPrice');
+  const dotsWrap = document.getElementById('hsDots');
+  const N = Math.min(all.length, 8); // hasta 8 piezas en el slideshow
+  const dots = [];
+  dotsWrap.innerHTML = '';
+  for (let i = 0; i < N; i++){ const d = document.createElement('div'); d.className = 'hs-dot'; dotsWrap.appendChild(d); dots.push(d); }
+  let front = A;
+  const show = idx => {
+    const p = all[idx];
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
-    img.style.backgroundImage = 'url("' + p.imageUrl + '")';
-    img.style.backgroundPosition = fx + '% ' + fy + '%';
-    img.className = 'hc-img'; // quita el degradado (gA/gB/…)
-    card.querySelector('.hc-cat').textContent = p.category || 'CACUSA';
-    card.querySelector('.hc-name').textContent = p.name || '';
-    const pr = card.querySelector('.hc-price');
-    pr.textContent = p.price ? ('$' + parseFloat(p.price).toFixed(0)) : '';
-    card.onclick = () => { window.location.href = './ui_kits/store/'; };
+    const back = front === A ? B : A;
+    back.style.backgroundImage = 'url("' + p.imageUrl + '")';
+    back.style.backgroundPosition = fx + '% ' + fy + '%';
+    back.classList.add('on'); front.classList.remove('on');
+    front = back;
+    catEl.textContent = p.category || 'CACUSA';
+    nameEl.textContent = p.name || '';
+    priceEl.textContent = p.price ? ('$' + parseFloat(p.price).toFixed(0)) : '';
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
   };
-  let start = 0;
-  const render = () => cards.forEach((c, i) => fill(c, all[(start + i) % all.length]));
-  render();
-  if (all.length <= cards.length) return; // sin rotación si no hay suficientes
-  setInterval(() => {
-    wrap.classList.add('swapping');
-    setTimeout(() => { start = (start + cards.length) % all.length; render(); wrap.classList.remove('swapping'); }, 550);
-  }, 3800);
+  show(0);
+  stage.onclick = () => { window.location.href = './ui_kits/store/'; };
+  if (N <= 1) return;
+  let cur = 0;
+  setInterval(() => { cur = (cur + 1) % N; show(cur); }, 4000);
 })();
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────
