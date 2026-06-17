@@ -619,14 +619,14 @@ html,body{overflow-x:hidden}
   <div class="vig-box">
     <div class="vig-visual">
       <button class="vig-close" id="vigClose">✕</button>
-      <div class="vig-pct">20%</div>
+      <div class="vig-pct">10%</div>
       <div class="vig-off">DE DESCUENTO</div>
       <div class="vig-script">en tu primera pieza</div>
     </div>
     <div class="vig-body">
       <div class="vig-label">Oferta exclusiva</div>
       <div class="vig-title">Tu primera joya te espera</div>
-      <div class="vig-desc">Suscríbete y recibe 20% de descuento en tu primera compra. Solo por tiempo limitado.</div>
+      <div class="vig-desc">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</div>
       <input class="vig-email" id="vigEmail" placeholder="tu@email.com">
       <button class="vig-btn" id="vigBtn">Quiero mi descuento →</button>
       <div class="vig-skip" id="vigSkip">No gracias, prefiero pagar precio completo</div>
@@ -764,10 +764,10 @@ window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loade
 
 // ── TICKER ──────────────────────────────────────────────────
 const tickerMsgs = [
-  'Envío gratis a Ecuador en pedidos +$60','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
-  'Plata 925 y baño de oro 18k','Descuento 20% primera compra','Joyería artesanal única','Nueva colección disponible',
-  'Envío gratis a Ecuador en pedidos +$60','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
-  'Plata 925 y baño de oro 18k','Descuento 20% primera compra','Joyería artesanal única','Nueva colección disponible',
+  'Envío gratis a Ecuador en pedidos +$150','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
+  'Plata 925 y baño de oro 18k','Descuento 10% primera compra','Joyería artesanal única','Nueva colección disponible',
+  'Envío gratis a Ecuador en pedidos +$150','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
+  'Plata 925 y baño de oro 18k','Descuento 10% primera compra','Joyería artesanal única','Nueva colección disponible',
 ];
 const tt = document.getElementById('tTrack');
 tickerMsgs.forEach(m=>{tt.innerHTML+=`<div class="t-item"><div class="t-dot"></div>${m}</div>`;});
@@ -1032,8 +1032,8 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
   const emailEl=document.getElementById('vigEmail');
   const email=(emailEl?emailEl.value:'').trim();
   if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder='Escribe tu correo primero'; emailEl.focus();} return; }
-  let msg='🌸 *Quiero mi 20% de descuento*\n*CACUSA by Taitus*\n\n';
-  msg+='📧 *Email:* '+email+'\n\nHola, vi la oferta del 20% en mi primera compra y quiero aprovecharla. ✨';
+  let msg='🌸 *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
+  msg+='📧 *Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
   const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
   window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');

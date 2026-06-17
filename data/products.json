@@ -19,7 +19,7 @@
       "Gold filled"
     ],
     "shipping": {
-      "freeThreshold": 60,
+      "freeThreshold": 150,
       "cost": 10
     },
     "texts": {
