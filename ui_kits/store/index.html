@@ -247,6 +247,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .store-footer .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
 .store-footer .f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8);text-decoration:none}
 .store-footer .f-links a:hover{color:white}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:none;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink);color:white}
   </style>
 </head>
 <body>
@@ -262,8 +265,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   </a>
   <a class="nav-back" href="/">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
-    Volver al inicio
+    <span data-i18n="store.back">Volver al inicio</span>
   </a>
+  <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
   <div class="nav-right">
     <button class="cart-btn" id="cartBtn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
@@ -351,21 +355,21 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <div id="cart-overlay"></div>
 <div id="cart-drawer">
   <div class="cart-head">
-    <div class="cart-title">Tu carrito</div>
+    <div class="cart-title" data-i18n="store.cartTitle">Tu carrito</div>
     <button class="cart-close" id="cartClose">&#x2715;</button>
   </div>
   <div class="cart-items" id="cartItems"></div>
   <div class="cart-foot" id="cartFoot" style="display:none">
     <div class="cart-subtotal">
-      <span>Subtotal</span>
+      <span data-i18n="store.subtotal">Subtotal</span>
       <strong id="cartTotal">$0</strong>
     </div>
     <div class="cart-shipping" id="cartShipping"></div>
     <button class="checkout-btn" id="checkoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-      Finalizar pedido
+      <span data-i18n="store.checkoutBtn">Finalizar pedido</span>
     </button>
-    <div class="wa-badge">Pago seguro con Square &#x1F512;</div>
+    <div class="wa-badge" data-i18n="store.waBadge">Pago seguro con Square &#x1F512;</div>
   </div>
 </div>
 
@@ -453,7 +457,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       </div>
 
       <div class="checkout-right">
-        <div class="co-summary-title">Resumen del pedido</div>
+        <div class="co-summary-title" data-i18n="store.orderSummary">Resumen del pedido</div>
         <div id="coSummaryItems"></div>
         <div class="co-totals">
           <div class="co-line"><span>Subtotal</span><strong id="coSubtotal">$0</strong></div>
@@ -611,6 +615,7 @@ let TEXTS = {
   instagram: '@cacusabytaitus',
   perks: ['Hecho a mano', 'Envío express', '5–7 días hábiles', 'Gift wrap gratis']
 };
+function t(key, fallback) { return (window.__T && window.__T[key]) || fallback; }
 
 const FALLBACK_PRODUCTS = [
   {id:1,name:'Collar con nombre',cat:'Personalizado',price:45,grad:'linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Collar delicado con tu nombre grabado a mano. Plata 925 o baño de oro 18k. Cadena ajustable 40–45cm.'},
@@ -672,6 +677,9 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
       SHIPPING = { freeThreshold: isNaN(ft) ? 60 : ft, cost: isNaN(c) ? 5 : c };
     }
     if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
+    const _L = localStorage.getItem('cacusa-lang') || 'es';
+    window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
+    if (_L === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
     if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   } catch(e) {
@@ -697,6 +705,18 @@ function applyTexts() {
     perksEl.innerHTML = TEXTS.perks.map(p =>
       '<div class="perk"><div class="perk-dot"></div>' + p + '</div>').join('');
   }
+  const _L = localStorage.getItem('cacusa-lang') || 'es';
+  const T = window.__T || {};
+  if (_L === 'en') {
+    document.title = 'Store — CACUSA by Taitus';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const v = T[el.getAttribute('data-i18n')];
+      if (v !== undefined) el.textContent = v;
+    });
+  }
+  const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
+  if (bEs) bEs.className = _L === 'es' ? 'on' : '';
+  if (bEn) bEn.className = _L === 'en' ? 'on' : '';
 }
 function renderFilters() {
   const wrap = document.getElementById('filterBtns');
@@ -771,7 +791,7 @@ function renderProducts() {
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
   if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
   if (filtered.length === 0) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">No hay productos en esta categoría aún.</div>';
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">' + t('store.emptyCategory', 'No hay productos en esta categoría aún.') + '</div>';
     return;
   }
   grid.innerHTML = filtered.map((p, i) => `
@@ -836,7 +856,7 @@ function openModal(id) {
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
   const addBtn = document.getElementById('modalAddBtn');
-  addBtn.textContent = 'Añadir al carrito';
+  addBtn.textContent = localStorage.getItem('cacusa-lang') === 'en' ? 'Add to cart' : 'Añadir al carrito';
   addBtn.className = 'modal-add';
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -861,7 +881,7 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   }
   saveCart(); updateCartUI();
   const btn = document.getElementById('modalAddBtn');
-  btn.textContent = '✓ Añadido';
+  btn.textContent = localStorage.getItem('cacusa-lang') === 'en' ? '✓ Added' : '✓ Añadido';
   btn.classList.add('added');
   setTimeout(() => { closeModal(); openCart(); }, 800);
 });
@@ -890,7 +910,7 @@ function updateCartUI() {
   const itemsEl = document.getElementById('cartItems');
   const footEl = document.getElementById('cartFoot');
   if (count === 0) {
-    itemsEl.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon">✨</span><div class="cart-empty-text">Tu carrito está vacío</div></div>';
+    itemsEl.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon">✨</span><div class="cart-empty-text">' + t('store.cartEmpty', 'Tu carrito está vacío') + '</div></div>';
     footEl.style.display = 'none';
   } else {
     itemsEl.innerHTML = cart.map((item, i) => `
@@ -908,9 +928,12 @@ function updateCartUI() {
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total;
     const free = total >= SHIPPING.freeThreshold;
+    const _cL = localStorage.getItem('cacusa-lang') || 'es';
     document.getElementById('cartShipping').textContent = free
-      ? '🎉 ¡Envío gratis desbloqueado!'
-      : 'Agrega $' + (SHIPPING.freeThreshold - total) + ' más para envío gratis';
+      ? t('store.shippingFree', '🎉 ¡Envío gratis desbloqueado!')
+      : (_cL === 'en'
+          ? 'Add $' + (SHIPPING.freeThreshold - total) + ' more for free shipping'
+          : 'Agrega $' + (SHIPPING.freeThreshold - total) + ' más para envío gratis');
     footEl.style.display = 'block';
   }
 }
@@ -1166,6 +1189,9 @@ function showSuccess() {
 document.getElementById('successBack').addEventListener('click', () => {
   document.getElementById('success-overlay').classList.remove('open');
 });
+
+// ─── LANG ───────────────────────────────────────────────────
+window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.reload(); };
 
 // ─── INIT ───────────────────────────────────────────────────
 updateCartUI();

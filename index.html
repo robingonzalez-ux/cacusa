@@ -268,6 +268,11 @@ footer{background:var(--grad-full);padding:64px 0 32px}
 .vig-email:focus{border-color:var(--pink)}
 .vig-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.05em;border:none;border-radius:999px;padding:13px;cursor:none;box-shadow:0 4px 20px rgba(238,111,168,.4)}
 .vig-skip{font-family:var(--fu);font-size:11px;color:var(--ink-muted);text-align:center;margin-top:10px;cursor:none}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:rgba(255,255,255,.7);padding:4px 8px;border-radius:6px;cursor:none;transition:all .2s;letter-spacing:.04em}
+nav.scrolled .lang-sw button{color:var(--ink-muted)}
+.lang-sw button.on{background:rgba(255,255,255,.25);color:white}
+nav.scrolled .lang-sw button.on{background:var(--pink);color:white}
 
 /* ════════════════════════════════════════════════════════════
    MOBILE — solo afecta pantallas ≤ 820px (escritorio sin cambios)
@@ -377,7 +382,10 @@ html,body{overflow-x:hidden}
     <a href="#story">Nosotros</a>
     <a href="#personalize">Personaliza</a>
   </div>
-  <button class="nav-cta" onclick="window.location.href='./ui_kits/store/'">Ver colección →</button>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <button class="nav-cta" id="navCta" onclick="window.location.href='./ui_kits/store/'">Ver colección →</button>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -620,16 +628,16 @@ html,body{overflow-x:hidden}
     <div class="vig-visual">
       <button class="vig-close" id="vigClose">✕</button>
       <div class="vig-pct">10%</div>
-      <div class="vig-off">DE DESCUENTO</div>
-      <div class="vig-script">en tu primera pieza</div>
+      <div class="vig-off" data-i18n="landing.vigOff">DE DESCUENTO</div>
+      <div class="vig-script" data-i18n="landing.vigScript">en tu primera pieza</div>
     </div>
     <div class="vig-body">
-      <div class="vig-label">Oferta exclusiva</div>
-      <div class="vig-title">Tu primera joya te espera</div>
-      <div class="vig-desc">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</div>
+      <div class="vig-label" data-i18n="landing.vigLabel">Oferta exclusiva</div>
+      <div class="vig-title" data-i18n="landing.vigTitle">Tu primera joya te espera</div>
+      <div class="vig-desc" data-i18n="landing.vigDesc">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</div>
       <input class="vig-email" id="vigEmail" placeholder="tu@email.com">
-      <button class="vig-btn" id="vigBtn">Quiero mi descuento →</button>
-      <div class="vig-skip" id="vigSkip">No gracias, prefiero pagar precio completo</div>
+      <button class="vig-btn" id="vigBtn" data-i18n="landing.vigBtn">Quiero mi descuento →</button>
+      <div class="vig-skip" id="vigSkip" data-i18n="landing.vigSkip">No gracias, prefiero pagar precio completo</div>
     </div>
   </div>
 </div>
@@ -661,12 +669,16 @@ let CACUSA_HOME = {};
     const home = cfg.home;
     if (!home) return;
     CACUSA_HOME = home;
+    const _L = localStorage.getItem('cacusa-lang') || 'es';
+    const homeEn = (_L === 'en' && cfg.home_en) ? cfg.home_en : null;
+    window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
+    const homeD = homeEn || home;
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
     // — Quiénes somos —
-    setTxt('hStoryLabel', home.storyLabel);
-    setTxt('hStoryTitle', home.storyTitle);
-    if (home.storyQuote) setTxt('hStoryQuote', '"' + String(home.storyQuote).replace(/^"|"$/g, '') + '"');
-    setTxt('hStoryBody', home.storyBody);
+    setTxt('hStoryLabel', homeD.storyLabel);
+    setTxt('hStoryTitle', homeD.storyTitle);
+    if (homeD.storyQuote) setTxt('hStoryQuote', '"' + String(homeD.storyQuote).replace(/^"|"$/g, '') + '"');
+    setTxt('hStoryBody', homeD.storyBody);
     if (Array.isArray(home.stats)) {
       const wraps = document.querySelectorAll('#hStoryStats > div');
       home.stats.forEach((s, i) => {
@@ -678,7 +690,7 @@ let CACUSA_HOME = {};
       });
     }
     // — Personalización (pasos) —
-    const person = home.person;
+    const person = homeD.person;
     if (person) {
       setTxt('hPersonLabel', person.label);
       setTxt('hPersonTitle', person.title);
@@ -695,7 +707,7 @@ let CACUSA_HOME = {};
       }
     }
     // — Footer / contacto —
-    const footer = home.footer;
+    const footer = homeD.footer || home.footer;
     if (footer) {
       if (footer.tagline) setTxt('hFooterTag', '"' + String(footer.tagline).replace(/^"|"$/g, '') + '"');
       setTxt('hFooterCopy', footer.copyright);
@@ -1038,6 +1050,35 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
   window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
 });
+
+// ── LANG SWITCHER ──────────────────────────────────────────────
+(function applyI18n(){
+  const _L = localStorage.getItem('cacusa-lang') || 'es';
+  const T = window.__T || {};
+  if (_L === 'en') {
+    document.title = 'CACUSA by Taitus — Personalized Jewelry';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const v = T[el.getAttribute('data-i18n')];
+      if (v !== undefined) el.textContent = v;
+    });
+    // Ticker EN
+    const tt = document.getElementById('tTrack');
+    if (tt) {
+      const enMsgs = [
+        'Free shipping on orders +$150','Personalize your piece','Handmade with love','Ecuador & USA',
+        '925 Silver & 18k gold plating','10% off your first purchase','Unique artisan jewelry','New collection available',
+        'Free shipping on orders +$150','Personalize your piece','Handmade with love','Ecuador & USA',
+        '925 Silver & 18k gold plating','10% off your first purchase','Unique artisan jewelry','New collection available',
+      ];
+      tt.innerHTML = '';
+      enMsgs.forEach(m => { tt.innerHTML += '<div class="t-item"><div class="t-dot"></div>' + m + '</div>'; });
+    }
+  }
+  const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
+  if (bEs) bEs.className = _L === 'es' ? 'on' : '';
+  if (bEn) bEn.className = _L === 'en' ? 'on' : '';
+})();
+window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.reload(); };
 </script>
 </body>
 </html>

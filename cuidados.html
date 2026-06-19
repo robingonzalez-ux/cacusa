@@ -29,6 +29,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5
 .nav-logo .s{font-family:var(--fs);font-size:15px;color:var(--ink-muted)}
 .nav-back{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink);border:1.5px solid var(--ink-light);border-radius:999px;padding:9px 20px;transition:all .2s}
 .nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink);color:white}
 
 /* HEADER */
 header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
@@ -79,12 +82,15 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <a href="./" class="nav-back">← Volver al inicio</a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+  </div>
 </nav>
 
 <header>
-  <div class="h-label">Atención al cliente</div>
-  <h1 class="h-title">Cuidado de tu Joya</h1>
+  <div class="h-label" data-i18n="envios.hLabel">Atención al cliente</div>
+  <h1 class="h-title" data-i18n="cui.hTitle">Cuidado de tu Joya</h1>
   <div class="h-script">by Taitus</div>
 </header>
 
@@ -93,45 +99,45 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <p class="intro" id="cuiIntro">Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo. ¡Aquí te dejamos nuestras recomendaciones!</p>
 
     <div class="sec">
-      <h2><span class="dot"></span>Evita el contacto con agua</h2>
+      <h2><span class="dot"></span><span data-i18n="cui.sec1H2">Evita el contacto con agua</span></h2>
       <p id="cuiSec1Body">No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.</p>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Aléjala de químicos y cosméticos</h2>
+      <h2><span class="dot"></span><span data-i18n="cui.sec2H2">Aléjala de químicos y cosméticos</span></h2>
       <p id="cuiSec2Body">Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.</p>
       <ul>
-        <li>Aplícate perfume y crema antes de ponerte la joya, nunca después</li>
-        <li>Evita el alcohol en gel y los limpiadores de manos con la joya puesta</li>
+        <li data-i18n="cui.sec2Li1">Aplícate perfume y crema antes de ponerte la joya, nunca después</li>
+        <li data-i18n="cui.sec2Li2">Evita el alcohol en gel y los limpiadores de manos con la joya puesta</li>
       </ul>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Guárdala correctamente</h2>
+      <h2><span class="dot"></span><span data-i18n="cui.sec3H2">Guárdala correctamente</span></h2>
       <p id="cuiSec3Body">Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.</p>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Quítatela para estas actividades</h2>
+      <h2><span class="dot"></span><span data-i18n="cui.sec4H2">Quítatela para estas actividades</span></h2>
       <ul>
-        <li class="x">Dormir</li>
-        <li class="x">Hacer ejercicio o deporte</li>
-        <li class="x">Cocinar o hacer limpieza del hogar</li>
-        <li class="x">Tomar el sol o exponerte a calor intenso</li>
+        <li class="x" data-i18n="cui.sec4Li1">Dormir</li>
+        <li class="x" data-i18n="cui.sec4Li2">Hacer ejercicio o deporte</li>
+        <li class="x" data-i18n="cui.sec4Li3">Cocinar o hacer limpieza del hogar</li>
+        <li class="x" data-i18n="cui.sec4Li4">Tomar el sol o exponerte a calor intenso</li>
       </ul>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Limpieza recomendada</h2>
+      <h2><span class="dot"></span><span data-i18n="cui.sec5H2">Limpieza recomendada</span></h2>
       <p id="cuiSec5Body">Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado.</p>
-      <div class="callout">Siguiendo estos cuidados, tu joya CACUSA mantendrá su brillo y color por mucho más tiempo. ✨</div>
+      <div class="callout" data-i18n="cui.callout">Siguiendo estos cuidados, tu joya CACUSA mantendrá su brillo y color por mucho más tiempo. ✨</div>
     </div>
 
     <div class="contact">
-      <p>En CACUSA creamos para que luzcas más bella de lo que ya eres.</p>
+      <p data-i18n="cui.contact">En CACUSA creamos para que luzcas más bella de lo que ya eres.</p>
       <a id="waBtn" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="wa-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
-        Escríbenos por WhatsApp
+        <span data-i18n="nav.waBtn">Escríbenos por WhatsApp</span>
       </a>
     </div>
 
@@ -150,8 +156,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 </footer>
 
 <script>
-// Número de WhatsApp dinámico (mismo origen que el landing: data/products.json)
 (function(){
+  var _L=localStorage.getItem('cacusa-lang')||'es';
   try{
     const req=new XMLHttpRequest();
     req.open('GET','./data/products.json?v='+Date.now(),false);
@@ -161,7 +167,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg='Hola, tengo una consulta sobre el cuidado de mi joya CACUSA ✨';
+        const msg=_L==='en'?'Hi, I have a question about my CACUSA jewelry care ✨':'Hola, tengo una consulta sobre el cuidado de mi joya CACUSA ✨';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const pg=(cfg.pages&&cfg.pages.cuidados)||{};
@@ -171,11 +177,26 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       st('cuiSec2Body',pg.sec2Body);
       st('cuiSec3Body',pg.sec3Body);
       st('cuiSec5Body',pg.sec5Body);
+      if(_L==='en'){
+        const T=(cfg.translations&&cfg.translations.en)||{};
+        const pgEn=(cfg.pages_en&&cfg.pages_en.cuidados)||{};
+        document.title='Jewelry Care Guide — CACUSA by Taitus';
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        st('cuiIntro',pgEn.intro||'Thank you for your purchase and for supporting this Ecuadorian venture. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer. Here are our recommendations!');
+        st('cuiSec1Body',pgEn.sec1Body||"Don't shower, swim, or wash dishes while wearing your piece. Constant moisture and chlorine or salt water dull the finish and weaken clasps and joints over time. Remove it before showering, swimming pools, or the ocean.");
+        st('cuiSec2Body',pgEn.sec2Body||'Avoid direct contact with perfumes, creams, alcohol, lotions, and sunscreen. These products contain chemicals that react with the metal and accelerate loss of shine or color change.');
+        st('cuiSec3Body',pgEn.sec3Body||'When not in use, store it in its original packaging or an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.');
+        st('cuiSec5Body',pgEn.sec5Body||'Clean your piece occasionally with a soft, dry cloth to remove dust and natural skin oils. Avoid toothpaste, baking soda, or other abrasive products — they can scratch the surface and damage the finish.');
+      }
     }
   }catch(e){}
   const d=new Date();
-  document.getElementById('updated').textContent='Última actualización: '+d.toLocaleDateString('es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
+  if(bEs)bEs.className=_L==='es'?'on':'';
+  if(bEn)bEn.className=_L==='en'?'on':'';
 })();
+window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>
 </body>
 </html>

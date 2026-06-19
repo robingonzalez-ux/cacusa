@@ -29,6 +29,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5
 .nav-logo .s{font-family:var(--fs);font-size:15px;color:var(--ink-muted)}
 .nav-back{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink);border:1.5px solid var(--ink-light);border-radius:999px;padding:9px 20px;transition:all .2s}
 .nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink);color:white}
 
 /* HEADER */
 header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
@@ -78,12 +81,15 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <a href="./" class="nav-back">← Volver al inicio</a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+  </div>
 </nav>
 
 <header>
-  <div class="h-label">Atención al cliente</div>
-  <h1 class="h-title">Política de Devoluciones</h1>
+  <div class="h-label" data-i18n="envios.hLabel">Atención al cliente</div>
+  <h1 class="h-title" data-i18n="dev.hTitle">Política de Devoluciones</h1>
   <div class="h-script">by Taitus</div>
 </header>
 
@@ -92,33 +98,33 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <p class="intro" id="devIntro">En CACUSA by Taitus, cada joya se elabora de forma <strong>artesanal y personalizada</strong> para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, <strong>no realizamos devoluciones ni cambios</strong> una vez confirmada la compra.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span>¿Por qué no aceptamos devoluciones?</h2>
+      <h2><span class="dot"></span><span data-i18n="dev.sec1H2">¿Por qué no aceptamos devoluciones?</span></h2>
       <p id="devPorQueBody">Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son <strong>finales</strong>.</p>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Antes de comprar, cerciórate de tu pedido</h2>
+      <h2><span class="dot"></span><span data-i18n="dev.sec2H2">Antes de comprar, cerciórate de tu pedido</span></h2>
       <p id="devAntesBody">Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos:</p>
       <ul>
-        <li>El modelo y la pieza que estás eligiendo</li>
-        <li>El material (plata, baño de oro, acero, etc.)</li>
-        <li>La medida o talla correcta</li>
-        <li>El color y los detalles del diseño</li>
-        <li>Los datos de personalización: nombre, fecha, mensaje u ortografía exacta</li>
+        <li data-i18n="dev.sec2Li1">El modelo y la pieza que estás eligiendo</li>
+        <li data-i18n="dev.sec2Li2">El material (plata, baño de oro, acero, etc.)</li>
+        <li data-i18n="dev.sec2Li3">La medida o talla correcta</li>
+        <li data-i18n="dev.sec2Li4">El color y los detalles del diseño</li>
+        <li data-i18n="dev.sec2Li5">Los datos de personalización: nombre, fecha, mensaje u ortografía exacta</li>
       </ul>
-      <div class="callout">Una vez confirmado el pedido, los datos de personalización <strong>no se pueden modificar</strong>. Revisa que todo esté correcto antes de finalizar tu compra.</div>
+      <div class="callout" data-i18n="dev.sec2Callout">Una vez confirmado el pedido, los datos de personalización <strong>no se pueden modificar</strong>. Revisa que todo esté correcto antes de finalizar tu compra.</div>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Pieza con defecto de fábrica</h2>
+      <h2><span class="dot"></span><span data-i18n="dev.sec3H2">Pieza con defecto de fábrica</span></h2>
       <p id="devDefectoBody">Tu satisfacción nos importa. Si tu pieza llegara con un <strong>defecto de fabricación</strong> o hubiera un error atribuible a nosotros, contáctanos dentro de las <strong>48 horas</strong> posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la <strong>reparación o reposición</strong> de tu pieza sin costo adicional. Esta excepción no aplica a cambios por gusto, talla o datos de personalización ingresados por el cliente.</p>
     </div>
 
     <div class="contact">
-      <p>¿Tienes dudas antes de comprar? Estamos para ayudarte.</p>
+      <p data-i18n="dev.contact">¿Tienes dudas antes de comprar? Estamos para ayudarte.</p>
       <a id="waBtn" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="wa-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
-        Escríbenos por WhatsApp
+        <span data-i18n="nav.waBtn">Escríbenos por WhatsApp</span>
       </a>
     </div>
 
@@ -137,8 +143,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 </footer>
 
 <script>
-// Número de WhatsApp dinámico (mismo origen que el landing: data/products.json)
 (function(){
+  var _L=localStorage.getItem('cacusa-lang')||'es';
   try{
     const req=new XMLHttpRequest();
     req.open('GET','./data/products.json?v='+Date.now(),false);
@@ -148,7 +154,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg='Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✨';
+        const msg=_L==='en'?'Hi, I have a question about a CACUSA product before buying ✨':'Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✨';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const pg=(cfg.pages&&cfg.pages.devoluciones)||{};
@@ -157,11 +163,28 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       st('devPorQueBody',pg.secPorQueBody);
       st('devAntesBody',pg.secAntesBody);
       st('devDefectoBody',pg.secDefectoBody);
+      if(_L==='en'){
+        const T=(cfg.translations&&cfg.translations.en)||{};
+        const pgEn=(cfg.pages_en&&cfg.pages_en.devoluciones)||{};
+        document.title='Return Policy — CACUSA by Taitus';
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        const devI=document.getElementById('devIntro');
+        if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus, every piece is <strong>handcrafted and personalized</strong> for each client. As these are made-to-order pieces, we <strong>do not accept returns or exchanges</strong> once the purchase is confirmed.';
+        const devP=document.getElementById('devPorQueBody');
+        if(devP)devP.innerHTML=pgEn.secPorQueBody||'Our pieces are not generic stock products — they are designed and crafted especially for you, with your personalization details. As each piece is unique to you, all sales are <strong>final</strong>.';
+        st('devAntesBody',pgEn.secAntesBody||'We ask you to carefully review all details before confirming your purchase. If you have any questions, message us on WhatsApp:');
+        const devD=document.getElementById('devDefectoBody');
+        if(devD)devD.innerHTML=pgEn.secDefectoBody||'Your satisfaction matters to us. If your piece arrives with a <strong>manufacturing defect</strong> or an error on our part, contact us within <strong>48 hours</strong> of receiving your order with clear photos. We\'ll evaluate the case and, where applicable, proceed with <strong>repair or replacement</strong> at no extra charge.';
+      }
     }
   }catch(e){}
   const d=new Date();
-  document.getElementById('updated').textContent='Última actualización: '+d.toLocaleDateString('es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
+  if(bEs)bEs.className=_L==='es'?'on':'';
+  if(bEn)bEn.className=_L==='en'?'on':'';
 })();
+window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>
 </body>
 </html>

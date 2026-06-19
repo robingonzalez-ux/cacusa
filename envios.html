@@ -29,6 +29,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5
 .nav-logo .s{font-family:var(--fs);font-size:15px;color:var(--ink-muted)}
 .nav-back{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink);border:1.5px solid var(--ink-light);border-radius:999px;padding:9px 20px;transition:all .2s}
 .nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink);color:white}
 
 /* HEADER */
 header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
@@ -82,12 +85,15 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <a href="./" class="nav-back">← Volver al inicio</a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+  </div>
 </nav>
 
 <header>
-  <div class="h-label">Atención al cliente</div>
-  <h1 class="h-title">Envíos</h1>
+  <div class="h-label" data-i18n="envios.hLabel">Atención al cliente</div>
+  <h1 class="h-title" data-i18n="envios.hTitle">Envíos</h1>
   <div class="h-script">by Taitus</div>
 </header>
 
@@ -96,51 +102,51 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <p class="intro" id="envIntro">Cada pieza CACUSA se elabora de forma artesanal y personalizada, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span>Costo de envío</h2>
-      <div class="price-row"><span class="lbl">Envío estándar</span><span class="val" id="shipCost">$10.00</span></div>
-      <div class="price-row"><span class="lbl">Envío gratis en compras desde</span><span class="val" id="shipFree">$60.00</span></div>
-      <div class="callout">El costo y el umbral de envío gratis se calculan automáticamente en el carrito de la <strong>tienda</strong> al momento de pagar.</div>
+      <h2><span class="dot"></span><span data-i18n="envios.sec1H2">Costo de envío</span></h2>
+      <div class="price-row"><span class="lbl" data-i18n="envios.lblStandard">Envío estándar</span><span class="val" id="shipCost">$10.00</span></div>
+      <div class="price-row"><span class="lbl" data-i18n="envios.lblFree">Envío gratis en compras desde</span><span class="val" id="shipFree">$150.00</span></div>
+      <div class="callout" data-i18n="envios.cartCallout">El costo y el umbral de envío gratis se calculan automáticamente en el carrito de la <strong>tienda</strong> al momento de pagar.</div>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Tiempo de preparación y entrega</h2>
-      <p>Como cada joya es personalizada, primero se confecciona especialmente para ti y luego se envía. El tiempo habitual de elaboración es de <strong>5 a 7 días</strong>, según la complejidad del diseño elegido. Una vez confirmado tu pedido por WhatsApp, te mantendremos al tanto del estado de tu pieza y de tu envío.</p>
+      <h2><span class="dot"></span><span data-i18n="envios.sec2H2">Tiempo de preparación y entrega</span></h2>
+      <p id="envPrepBody">Como cada joya es personalizada, primero se confecciona especialmente para ti y luego se envía. El tiempo habitual de elaboración es de <strong>5 a 7 días</strong>, según la complejidad del diseño elegido. Una vez confirmado tu pedido por WhatsApp, te mantendremos al tanto del estado de tu pieza y de tu envío.</p>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>🇪🇨 Ecuador — vía Servientrega</h2>
-      <p>Hacemos tus envíos nacionales con Servientrega, a domicilio en todo el país.</p>
-      <div class="price-row"><span class="lbl">Dentro de la misma ciudad</span><span class="val" id="envEC1">desde $3.50</span></div>
-      <div class="price-row"><span class="lbl">A otra ciudad</span><span class="val" id="envEC2">$5.25 – $6.30</span></div>
+      <h2><span class="dot"></span><span data-i18n="envios.ecH2">🇪🇨 Ecuador — vía Servientrega</span></h2>
+      <p data-i18n="envios.ecBody">Hacemos tus envíos nacionales con Servientrega, a domicilio en todo el país.</p>
+      <div class="price-row"><span class="lbl" data-i18n="envios.ecSame">Dentro de la misma ciudad</span><span class="val" id="envEC1">desde $3.50</span></div>
+      <div class="price-row"><span class="lbl" data-i18n="envios.ecOther">A otra ciudad</span><span class="val" id="envEC2">$5.25 – $6.30</span></div>
       <div class="callout" id="envECNote">Entrega el mismo día si se despacha temprano dentro de la misma ciudad; <strong>1–2 días hábiles</strong> a otras ciudades. Los envíos del sábado se entregan el lunes.</div>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>🇺🇸 Estados Unidos — vía USPS</h2>
-      <p>Para clientes en USA, enviamos con USPS Ground Advantage.</p>
-      <div class="price-row"><span class="lbl">Tarifa</span><span class="val" id="shipCostUsa">$10.00</span></div>
-      <div class="callout">Tiempo de entrega estimado: <strong id="envUSATime">2–5 días hábiles</strong>, según la zona de destino dentro de USA.</div>
+      <h2><span class="dot"></span><span data-i18n="envios.usaH2">🇺🇸 Estados Unidos — vía USPS</span></h2>
+      <p data-i18n="envios.usaBody">Para clientes en USA, enviamos con USPS Ground Advantage.</p>
+      <div class="price-row"><span class="lbl" data-i18n="envios.usaRate">Tarifa</span><span class="val" id="shipCostUsa">$10.00</span></div>
+      <div class="callout" id="envUsaCallout">Tiempo de entrega estimado: <strong id="envUSATime">2–5 días hábiles</strong>, según la zona de destino dentro de USA.</div>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Otros países</h2>
+      <h2><span class="dot"></span><span data-i18n="envios.otrosH2">Otros países</span></h2>
       <p id="envOtros">¿Nos escribes desde otro país? <strong>Contáctanos por WhatsApp</strong> y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación.</p>
     </div>
 
     <div class="sec">
-      <p style="font-size:13px;color:var(--ink-muted)">* Las tarifas de Servientrega y USPS son referenciales y pueden variar según el peso, las dimensiones del paquete y la cobertura vigente de cada transportadora. El costo final se confirma contigo antes de despachar tu pedido.</p>
+      <p style="font-size:13px;color:var(--ink-muted)" data-i18n="envios.disc">* Las tarifas de Servientrega y USPS son referenciales y pueden variar según el peso, las dimensiones del paquete y la cobertura vigente de cada transportadora. El costo final se confirma contigo antes de despachar tu pedido.</p>
     </div>
 
     <div class="sec">
-      <h2><span class="dot"></span>Seguimiento de tu pedido</h2>
-      <p>Te confirmamos por WhatsApp cuando tu pedido es despachado, junto con el número de guía o seguimiento (cuando aplique), para que sepas en todo momento dónde está tu joya.</p>
+      <h2><span class="dot"></span><span data-i18n="envios.trackH2">Seguimiento de tu pedido</span></h2>
+      <p data-i18n="envios.trackBody">Te confirmamos por WhatsApp cuando tu pedido es despachado, junto con el número de guía o seguimiento (cuando aplique), para que sepas en todo momento dónde está tu joya.</p>
     </div>
 
     <div class="contact">
-      <p>¿Tienes dudas sobre tu envío? Estamos para ayudarte.</p>
+      <p data-i18n="envios.contact">¿Tienes dudas sobre tu envío? Estamos para ayudarte.</p>
       <a id="waBtn" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="wa-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
-        Escríbenos por WhatsApp
+        <span data-i18n="nav.waBtn">Escríbenos por WhatsApp</span>
       </a>
     </div>
 
@@ -159,8 +165,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 </footer>
 
 <script>
-// Costo de envío y umbral gratis dinámicos, y número de WhatsApp (mismo origen que el landing)
 (function(){
+  var _L=localStorage.getItem('cacusa-lang')||'es';
   try{
     const req=new XMLHttpRequest();
     req.open('GET','./data/products.json?v='+Date.now(),false);
@@ -170,15 +176,11 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg='Hola, tengo una consulta sobre el envío de mi pedido CACUSA ✨';
+        const msg=_L==='en'?'Hi, I have a question about my CACUSA order shipment ✨':'Hola, tengo una consulta sobre el envío de mi pedido CACUSA ✨';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const sh=cfg.shipping||{};
-      if(sh.cost!=null){
-        const c='$'+parseFloat(sh.cost).toFixed(2);
-        document.getElementById('shipCost').textContent=c;
-        document.getElementById('shipCostUsa').textContent=c;
-      }
+      if(sh.cost!=null){const c='$'+parseFloat(sh.cost).toFixed(2);document.getElementById('shipCost').textContent=c;document.getElementById('shipCostUsa').textContent=c;}
       if(sh.freeThreshold!=null) document.getElementById('shipFree').textContent='$'+parseFloat(sh.freeThreshold).toFixed(2);
       const pg=(cfg.pages&&cfg.pages.envios)||{};
       const setTxt=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v;};
@@ -188,11 +190,30 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       if(pg.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pg.servientregaNote;}
       setTxt('envUSATime',pg.uspsTime);
       setTxt('envOtros',pg.otrosPaisesBody);
+      if(_L==='en'){
+        const T=(cfg.translations&&cfg.translations.en)||{};
+        const pgEn=(cfg.pages_en&&cfg.pages_en.envios)||{};
+        document.title='Shipping — CACUSA by Taitus';
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        setTxt('envIntro',pgEn.intro);
+        setTxt('envEC1',pgEn.servientregaSameCityRate);
+        setTxt('envEC2',pgEn.servientregaOtherCityRate);
+        if(pgEn.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pgEn.servientregaNote;}
+        setTxt('envOtros',pgEn.otrosPaisesBody);
+        const prepEl=document.getElementById('envPrepBody');
+        if(prepEl)prepEl.innerHTML='Since each piece is personalized, it is first crafted especially for you, then shipped. Standard production time is <strong>5 to 7 business days</strong>, depending on the design chosen. Once your order is confirmed via WhatsApp, we\'ll keep you updated.';
+        const usaC=document.getElementById('envUsaCallout');
+        if(usaC){const t=pgEn.uspsTime||'2–5 business days';usaC.innerHTML='Estimated delivery time: <strong id="envUSATime">'+t+'</strong>, depending on the destination zone within the US.';}
+      }
     }
   }catch(e){}
   const d=new Date();
-  document.getElementById('updated').textContent='Última actualización: '+d.toLocaleDateString('es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
+  if(bEs)bEs.className=_L==='es'?'on':'';
+  if(bEn)bEn.className=_L==='en'?'on':'';
 })();
+window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>
 </body>
 </html>
