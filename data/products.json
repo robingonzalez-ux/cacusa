@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T18:07:30.785Z",
+  "lastUpdated": "2026-06-19T18:15:21.855Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1095,6 +1095,24 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781892443591
+    },
+    {
+      "name": "Anillo ajustable de ojo turco ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892857275_image_jpg.jpg",
+      "focalX": 57.855626326963915,
+      "focalY": 47.87878787878785,
+      "zoom": 1.75,
+      "material": "Baño de oro 18k",
+      "id": 1781892913830
     }
   ]
 }
