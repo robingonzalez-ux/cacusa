@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:10:10.928Z",
+  "lastUpdated": "2026-06-19T14:11:41.704Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -533,6 +533,24 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781878207350
+    },
+    {
+      "name": "Anillo talla 7 con tres microcircones de colores ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878251959_image_jpg.jpg",
+      "focalX": 56.69373564933127,
+      "focalY": 51.19422329198296,
+      "zoom": 1.9,
+      "material": "Acero inoxidable",
+      "id": 1781878296526
     }
   ]
 }
