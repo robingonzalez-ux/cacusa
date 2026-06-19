@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T13:22:21.586Z",
+  "lastUpdated": "2026-06-19T13:53:53.304Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -389,6 +389,24 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781875334358
+    },
+    {
+      "name": "Cadena clip con dije de árbol de vida ",
+      "category": "Cadenas",
+      "price": 55,
+      "oldPrice": 65,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877139549_img_0914_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781877227517
     }
   ]
 }
