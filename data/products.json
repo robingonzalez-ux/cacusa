@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T15:55:48.885Z",
+  "lastUpdated": "2026-06-19T15:56:59.067Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -879,6 +879,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781881544132
+    },
+    {
+      "name": "Cadena con dije de Cruz grande con piedras color esmeralda ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884575200_img_0941_jpeg.jpg",
+      "focalX": 48.69844029040781,
+      "focalY": 61.80954144294265,
+      "zoom": 1.15,
+      "material": "Baño de oro 18k",
+      "id": 1781884615354
     }
   ]
 }
