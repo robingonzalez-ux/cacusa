@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T13:59:32.954Z",
+  "lastUpdated": "2026-06-19T14:03:59.976Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -443,6 +443,24 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374
+    },
+    {
+      "name": "Anillo ajustable color plateado ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877751373_image_jpg.jpg",
+      "focalX": 48.69844029040783,
+      "focalY": 60.48262667407272,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "id": 1781877838074
     }
   ]
 }
