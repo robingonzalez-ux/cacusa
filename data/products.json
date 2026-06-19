@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:25:37.525Z",
+  "lastUpdated": "2026-06-19T14:26:32.874Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -643,6 +643,24 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781879127320
+    },
+    {
+      "name": "Ajustable. Anillo chuncky con circones verdes ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879156208_image_jpg.jpg",
+      "focalX": 50,
+      "focalY": 41.90581990989322,
+      "zoom": 1.45,
+      "material": "Baño de oro 18k",
+      "id": 1781879189744
     }
   ]
 }
