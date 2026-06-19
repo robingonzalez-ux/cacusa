@@ -1102,7 +1102,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
-    errorEl.textContent = '⚠️ ' + err.message + '. Intenta de nuevo o usa WhatsApp.';
+    errorEl.textContent = '⚠️ ' + err.message + (localStorage.getItem('cacusa-lang') === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
     btn.disabled = false;
     btn.classList.remove('loading');
   }
@@ -1110,6 +1110,8 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
 function buildWhatsAppUrl() {
+  const _waEN = localStorage.getItem('cacusa-lang') === 'en';
+  const _waMat = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
   const nombre  = document.getElementById('coNombre').value.trim();
   const apellido= document.getElementById('coApellido').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
@@ -1122,22 +1124,24 @@ function buildWhatsAppUrl() {
   const envio   = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
   const totalFinal = free ? total : total + SHIPPING.cost;
 
-  let msg = '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
-  msg += '👤 *Cliente:* ' + nombre + (apellido ? ' ' + apellido : '') + '\n';
+  let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
+  msg += (_waEN ? '👤 *Customer:* ' : '👤 *Cliente:* ') + nombre + (apellido ? ' ' + apellido : '') + '\n';
   msg += '📱 *WhatsApp:* ' + tel + '\n';
-  if (ciudad) msg += '📍 *Ciudad:* ' + ciudad + ' (' + pais + ')\n';
-  if (direccion) msg += '🏠 *Dirección:* ' + direccion + '\n';
-  if (notas) msg += '📝 *Notas:* ' + notas + '\n';
-  msg += '\n🛍️ *Productos:*\n';
+  if (ciudad) msg += (_waEN ? '📍 *City:* ' : '📍 *Ciudad:* ') + ciudad + ' (' + pais + ')\n';
+  if (direccion) msg += (_waEN ? '🏠 *Address:* ' : '🏠 *Dirección:* ') + direccion + '\n';
+  if (notas) msg += (_waEN ? '📝 *Notes:* ' : '📝 *Notas:* ') + notas + '\n';
+  msg += _waEN ? '\n🛍️ *Products:*\n' : '\n🛍️ *Productos:*\n';
   cart.forEach(item => {
-    msg += '• ' + item.name + ' — $' + item.price;
-    if (item.material) msg += ' (' + item.material + ')';
+    const _iName = _waEN && item.name_en ? item.name_en : item.name;
+    const _iMat  = item.material ? (_waEN ? (_waMat[item.material] || item.material) : item.material) : null;
+    msg += '• ' + _iName + ' — $' + item.price;
+    if (_iMat) msg += ' (' + _iMat + ')';
     if (item.personalization) msg += ' — "' + item.personalization + '"';
     msg += '\n';
   });
-  msg += '\n💰 *Subtotal:* $' + total;
-  msg += '\n🚚 *Envío:* ' + envio;
-  msg += '\n✨ *Total:* $' + totalFinal;
+  msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total;
+  msg += (_waEN ? '\n🚚 *Shipping:* ' : '\n🚚 *Envío:* ') + envio;
+  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + totalFinal;
 
   const waNumber = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
   return waNumber
