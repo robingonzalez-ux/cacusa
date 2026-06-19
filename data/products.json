@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:47:50.100Z",
+  "lastUpdated": "2026-06-19T15:04:43.163Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -843,6 +843,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781880466753
+    },
+    {
+      "name": "Anillo ajustable con circones blancos ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781881454611_image_jpg.jpg",
+      "focalX": 41.93205944798302,
+      "focalY": 50.90909090909091,
+      "zoom": 1.75,
+      "material": "Baño de oro 18k",
+      "id": 1781881478183
     }
   ]
 }
