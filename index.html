@@ -992,7 +992,10 @@ const igG=document.getElementById('igGrid');
 
 // Placeholders de respaldo (si no hay feed o falla la carga)
 function renderIgPlaceholders(grid){
-  const igLabels=['Collar personalizado','Anillo gold','Pulsera inicial','Aretes luna','Nueva colección','Behind the scenes','Collar corazón','Para ellos','Hecho a mano','Personaliza','Envío express','¡Nuevo!'];
+  const _igEN = localStorage.getItem('cacusa-lang') === 'en';
+  const igLabels = _igEN
+    ? ['Personalized necklace','Gold ring','Initial bracelet','Moon earrings','New collection','Behind the scenes','Heart necklace','For him','Handcrafted','Personalize','Express shipping','New!']
+    : ['Collar personalizado','Anillo gold','Pulsera inicial','Aretes luna','Nueva colección','Behind the scenes','Collar corazón','Para ellos','Hecho a mano','Personaliza','Envío express','¡Nuevo!'];
   grid.innerHTML='';
   for(let i=0;i<12;i++){
     const item=document.createElement('div');
@@ -1054,9 +1057,10 @@ if(!localStorage.getItem('cacusa-vig2')) setTimeout(()=>vig.classList.add('show'
 document.getElementById('vigBtn').addEventListener('click',()=>{
   const emailEl=document.getElementById('vigEmail');
   const email=(emailEl?emailEl.value:'').trim();
-  if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder='Escribe tu correo primero'; emailEl.focus();} return; }
-  let msg='🌸 *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
-  msg+='📧 *Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
+  const _vigL = localStorage.getItem('cacusa-lang') === 'en';
+  if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder=_vigL?'Enter your email first':'Escribe tu correo primero'; emailEl.focus();} return; }
+  let msg=_vigL?'🌸 *I want my 10% discount*\n*CACUSA by Taitus*\n\n':'🌸 *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
+  msg+=_vigL?'📧 *Email:* '+email+'\n\nHi, I saw the 10% offer on my first purchase and would love to use it. ✨':'📧 *Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
   const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
   window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
