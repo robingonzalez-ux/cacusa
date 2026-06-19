@@ -188,6 +188,16 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .wa-fallback a:hover{color:var(--pink)}
 .co-wa-note{text-align:center;margin-top:12px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
 .co-error{color:#c0336e;font-family:var(--fu);font-size:12px;margin-top:8px;min-height:18px}
+.pay-method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 20px}
+.pay-method-opt{padding:13px 10px;border-radius:14px;border:1.5px solid var(--ink-light);text-align:center;cursor:pointer;font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-muted);transition:all .2s;line-height:1.4;-webkit-tap-highlight-color:transparent}
+.pay-method-opt.selected{border-color:var(--pink);color:var(--pink);background:rgba(238,111,168,.08)}
+.pay-method-opt small{display:block;font-size:10px;font-weight:500;margin-top:3px;opacity:.75}
+.pay-method-opt.selected small{opacity:1}
+.zelle-btn{width:100%;background:linear-gradient(135deg,#7D3C98,#5B2C6F);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:pointer;box-shadow:0 4px 24px rgba(125,60,152,.35);transition:all .3s;margin-top:20px;display:none;align-items:center;justify-content:center;gap:8px}
+.zelle-btn.show{display:flex}
+.zelle-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(125,60,152,.45)}
+.co-discount-line{display:flex;justify-content:space-between;font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:10px}
+.co-discount-line strong{font-weight:600;color:#27ae60}
 .co-summary-title{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:20px}
 .co-sum-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--ink-light)}
 .co-si-img{width:52px;height:52px;border-radius:10px;flex-shrink:0;position:relative;overflow:hidden}
@@ -454,6 +464,18 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-field"><label class="co-label" data-i18n="store.coAddress">Direcci&#xF3;n completa</label><input class="co-input" placeholder="Calle, n&#xFA;mero, sector&hellip;" id="coDireccion"></div>
         <div class="co-field"><label class="co-label" data-i18n="store.coNotes">Notas adicionales (opcional)</label><input class="co-input" placeholder="Color, talla, detalle especial&hellip;" id="coNotas"></div>
 
+        <div class="co-section" style="margin-top:20px" data-i18n="store.coPayMethod">M&#xE9;todo de pago</div>
+        <div class="pay-method-grid">
+          <div class="pay-method-opt selected" data-method="square" onclick="selectPayMethod(this)">
+            💳 <span data-i18n="store.paySquare">Square / Tarjeta</span>
+            <small>Apple Pay · Google Pay</small>
+          </div>
+          <div class="pay-method-opt" data-method="zelle" onclick="selectPayMethod(this)">
+            💸 Zelle / Transferencia
+            <small data-i18n="store.payZelleSub">-4% descuento</small>
+          </div>
+        </div>
+
         <div class="co-error" id="coError"></div>
 
         <button class="pay-btn" id="payBtn">
@@ -463,7 +485,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
             <span data-i18n="store.coPay">Pagar con Square</span>
           </span>
         </button>
-        <div class="co-wa-note" data-i18n="store.coSecure">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
+        <button class="zelle-btn" id="zelleBtn">
+          💸 <span data-i18n="store.payWithZelle">Pagar por Zelle / Transferencia</span>
+        </button>
+        <div class="co-wa-note" id="squareNote" data-i18n="store.coSecure">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
         <div class="co-wa-note"><span data-i18n="store.coCustomNote">Piezas hechas a medida</span> · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline" data-i18n="store.devNote">ver política de devoluciones</a></div>
         <div class="wa-fallback">
           <a href="#" id="waFallbackBtn" data-i18n="store.coWaFallback">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
@@ -477,6 +502,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-line"><span data-i18n="store.subtotal">Subtotal</span><strong id="coSubtotal">$0</strong></div>
           <div class="co-line"><span data-i18n="store.shipping">Env&#xED;o</span><strong id="coEnvio">Por calcular</strong></div>
           <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel" data-i18n="store.tax">Impuesto</span><strong id="coImpuesto">$0</strong></div>
+          <div class="co-discount-line" id="coZelleRow" style="display:none"><span>💸 <span data-i18n="store.zelleDiscount">Descuento Zelle (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
           <div class="co-total"><span data-i18n="store.total">Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
@@ -663,6 +689,8 @@ function normalizeProd(p) {
   }
   return {
     ...p,
+    basePrice: p.price,
+    hasSurcharge: false,
     cat:   p.category || p.cat || '',
     desc:  p.description || p.desc || '',
     grad:  p.grad || COLOR_GRADS[p.color] || 'linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC)',
@@ -699,6 +727,21 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
   } catch(e) {
     PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   }
+  // Apply per-product surcharges from Firebase (best-effort, non-blocking)
+  try {
+    const _srRes = await fetch('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json');
+    if (_srRes.ok) {
+      const _sr = await _srRes.json();
+      if (_sr && typeof _sr === 'object') {
+        PRODUCTS.forEach(p => {
+          if (_sr[p.id] === true) {
+            p.price = Math.round(p.basePrice * 1.04 * 100) / 100;
+            p.hasSurcharge = true;
+          }
+        });
+      }
+    }
+  } catch(_) {}
   applyTexts();
   renderFilters();
   renderMaterials();
@@ -997,8 +1040,22 @@ document.addEventListener('keydown', e => {
 });
 
 function renderCheckoutSummary() {
-  const subtotal   = cart.reduce((s, i) => s + i.price, 0);
-  const free       = subtotal >= SHIPPING.freeThreshold;
+  const payMethod   = (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
+  const isZelle     = payMethod === 'zelle';
+  const subtotal    = cart.reduce((s, i) => s + i.price, 0);
+
+  // Zelle discount: remove the 4% surcharge from eligible items
+  let zelleDiscount = 0;
+  if (isZelle) {
+    cart.forEach(item => {
+      if (item.hasSurcharge && item.basePrice != null) {
+        zelleDiscount += Math.round((item.price - item.basePrice) * 100) / 100;
+      }
+    });
+  }
+  const adjustedSubtotal = subtotal - zelleDiscount;
+
+  const free       = adjustedSubtotal >= SHIPPING.freeThreshold;
   const shippingCost = free ? 0 : SHIPPING.cost;
   const pais       = (document.getElementById('coPais').value || '').toUpperCase();
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
@@ -1006,19 +1063,19 @@ function renderCheckoutSummary() {
   // Calcular impuesto
   let taxAmt = 0, taxLabel = 'Impuesto';
   if (pais === 'EC') {
-    taxAmt   = (subtotal + shippingCost) * 0.15;
+    taxAmt   = (adjustedSubtotal + shippingCost) * 0.15;
     taxLabel = 'IVA Ecuador (15%)';
   } else if (pais === 'US' && estado) {
     const zip  = (document.getElementById('coZip').value || '').trim();
     const rate = getTaxRate(estado, zip);
     if (rate) {
-      taxAmt   = (subtotal + shippingCost) * rate;
+      taxAmt   = (adjustedSubtotal + shippingCost) * rate;
       const pct = (rate * 100).toFixed(2).replace(/\.?0+$/, '');
       taxLabel  = `Sales Tax ${estado} (${pct}%)`;
     }
   }
 
-  const totalFinal = subtotal + shippingCost + taxAmt;
+  const totalFinal = adjustedSubtotal + shippingCost + taxAmt;
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
@@ -1029,6 +1086,13 @@ function renderCheckoutSummary() {
     document.getElementById('coImpuesto').textContent   = '$' + taxAmt.toFixed(2);
   } else {
     taxLine.style.display = 'none';
+  }
+  const zelleRow = document.getElementById('coZelleRow');
+  if (zelleDiscount > 0) {
+    zelleRow.style.display = '';
+    document.getElementById('coZelleAmt').textContent = '-$' + zelleDiscount.toFixed(2);
+  } else {
+    zelleRow.style.display = 'none';
   }
   document.getElementById('coTotal').textContent = '$' + totalFinal.toFixed(2);
   document.getElementById('coSummaryItems').innerHTML = cart.map(item => `
@@ -1044,6 +1108,53 @@ function renderCheckoutSummary() {
       <div class="co-si-price">$${item.price}</div>
     </div>`).join('');
 }
+
+// ─── PAYMENT METHOD SELECTOR ─────────────────────────────────
+function selectPayMethod(el) {
+  document.querySelectorAll('.pay-method-opt').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const isZelle = el.dataset.method === 'zelle';
+  document.getElementById('payBtn').style.display        = isZelle ? 'none' : '';
+  document.getElementById('zelleBtn').classList.toggle('show', isZelle);
+  const sqNote = document.getElementById('squareNote');
+  if (sqNote) sqNote.style.display = isZelle ? 'none' : '';
+  renderCheckoutSummary();
+}
+
+// ─── ZELLE / TRANSFERENCIA BUTTON ────────────────────────────
+document.getElementById('zelleBtn').addEventListener('click', () => {
+  const errorEl = document.getElementById('coError');
+  const nombre  = document.getElementById('coNombre').value.trim();
+  const tel     = document.getElementById('coTel').value.trim();
+  if (!nombre || !tel) {
+    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
+    return;
+  }
+  errorEl.textContent = '';
+
+  const apellido  = document.getElementById('coApellido').value.trim();
+  const ciudad    = document.getElementById('coCiudad').value.trim();
+  const pais      = document.getElementById('coPais').value;
+  const direccion = document.getElementById('coDireccion').value.trim();
+  const notas     = document.getElementById('coNotas').value.trim();
+  const zelleTotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price), 0);
+  const free       = zelleTotal >= SHIPPING.freeThreshold;
+  const totalFinal = free ? zelleTotal : zelleTotal + SHIPPING.cost;
+
+  submitOrder({
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
+    productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
+    total:     parseFloat(totalFinal.toFixed(2)),
+    pago:      'Zelle/Transferencia',
+    estado:    'Nuevo',
+    notas:     notas || undefined
+  });
+
+  window.open(buildWhatsAppUrl(), '_blank');
+  closeCheckout();
+  cart = []; saveCart(); updateCartUI();
+  showSuccess();
+});
 
 // ─── SQUARE PAYMENT ──────────────────────────────────────────
 document.getElementById('payBtn').addEventListener('click', async () => {
@@ -1124,18 +1235,22 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
 function buildWhatsAppUrl() {
-  const _waEN = localStorage.getItem('cacusa-lang') === 'en';
-  const _waMat = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
-  const nombre  = document.getElementById('coNombre').value.trim();
-  const apellido= document.getElementById('coApellido').value.trim();
-  const tel     = document.getElementById('coTel').value.trim();
-  const ciudad  = document.getElementById('coCiudad').value.trim();
-  const pais    = document.getElementById('coPais').value;
+  const _waEN    = localStorage.getItem('cacusa-lang') === 'en';
+  const _waMat   = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
+  const payMethod = (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
+  const isZelle  = payMethod === 'zelle';
+  const nombre   = document.getElementById('coNombre').value.trim();
+  const apellido = document.getElementById('coApellido').value.trim();
+  const tel      = document.getElementById('coTel').value.trim();
+  const ciudad   = document.getElementById('coCiudad').value.trim();
+  const pais     = document.getElementById('coPais').value;
   const direccion = document.getElementById('coDireccion').value.trim();
-  const notas   = document.getElementById('coNotas').value.trim();
-  const total   = cart.reduce((s, i) => s + i.price, 0);
-  const free    = total >= SHIPPING.freeThreshold;
-  const envio   = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
+  const notas    = document.getElementById('coNotas').value.trim();
+
+  // Use base price for Zelle (no surcharge), full price for Square
+  const total    = cart.reduce((s, i) => s + (isZelle && i.hasSurcharge ? i.basePrice : i.price), 0);
+  const free     = total >= SHIPPING.freeThreshold;
+  const envio    = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
   const totalFinal = free ? total : total + SHIPPING.cost;
 
   let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
@@ -1146,16 +1261,22 @@ function buildWhatsAppUrl() {
   if (notas) msg += (_waEN ? '📝 *Notes:* ' : '📝 *Notas:* ') + notas + '\n';
   msg += _waEN ? '\n🛍️ *Products:*\n' : '\n🛍️ *Productos:*\n';
   cart.forEach(item => {
-    const _iName = _waEN && item.name_en ? item.name_en : item.name;
-    const _iMat  = item.material ? (_waEN ? (_waMat[item.material] || item.material) : item.material) : null;
-    msg += '• ' + _iName + ' — $' + item.price;
+    const _iName  = _waEN && item.name_en ? item.name_en : item.name;
+    const _iMat   = item.material ? (_waEN ? (_waMat[item.material] || item.material) : item.material) : null;
+    const _iPrice = isZelle && item.hasSurcharge ? item.basePrice : item.price;
+    msg += '• ' + _iName + ' — $' + _iPrice;
     if (_iMat) msg += ' (' + _iMat + ')';
     if (item.personalization) msg += ' — "' + item.personalization + '"';
     msg += '\n';
   });
-  msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total;
+  msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total.toFixed(2);
   msg += (_waEN ? '\n🚚 *Shipping:* ' : '\n🚚 *Envío:* ') + envio;
-  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + totalFinal;
+  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + totalFinal.toFixed(2);
+  if (isZelle) {
+    msg += _waEN
+      ? '\n\n💸 *Payment:* Zelle / Bank Transfer\n📧 Zelle: facturacioncacusa@gmail.com'
+      : '\n\n💸 *Pago:* Zelle / Transferencia bancaria\n📧 Zelle: facturacioncacusa@gmail.com';
+  }
 
   const waNumber = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
   return waNumber

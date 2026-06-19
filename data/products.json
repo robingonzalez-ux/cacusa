@@ -387,7 +387,12 @@
         "tag.nuevo": "New",
         "nav.home": "Home",
         "nav.store": "Store",
-        "nav.followUs": "Follow us on social media"
+        "nav.followUs": "Follow us on social media",
+        "store.coPayMethod": "Payment method",
+        "store.paySquare": "Square / Card",
+        "store.payZelleSub": "-4% discount",
+        "store.payWithZelle": "Pay via Zelle / Transfer",
+        "store.zelleDiscount": "Zelle discount (4%)"
       }
     }
   },
