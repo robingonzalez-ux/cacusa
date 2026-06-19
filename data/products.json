@@ -384,7 +384,10 @@
         "cat.anillos": "Rings",
         "cat.hombres": "Men",
         "cat.pulseras": "Bracelets",
-        "tag.nuevo": "New"
+        "tag.nuevo": "New",
+        "nav.home": "Home",
+        "nav.store": "Store",
+        "nav.followUs": "Follow us on social media"
       }
     }
   },
