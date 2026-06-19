@@ -271,7 +271,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <div class="nav-right">
     <button class="cart-btn" id="cartBtn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-      Carrito
+      <span data-i18n="store.cartBtn">Carrito</span>
       <span class="cart-count" id="cartCount">0</span>
     </button>
   </div>
@@ -286,22 +286,22 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 
 <!-- FILTERS -->
 <div class="filters">
-  <span class="filter-label">Filtrar:</span>
+  <span class="filter-label" data-i18n="store.filterLabel">Filtrar:</span>
   <span id="filterBtns" style="display:contents">
-    <button class="filter-btn active" data-filter="all">Todo</button>
+    <button class="filter-btn active" data-filter="all" data-i18n="store.all">Todo</button>
   </span>
   <select class="sort-select" id="sortSelect">
-    <option value="default">Ordenar: Destacados</option>
-    <option value="price-asc">Precio: menor a mayor</option>
-    <option value="price-desc">Precio: mayor a menor</option>
-    <option value="new">Más nuevos</option>
+    <option value="default" data-i18n="store.sortDefault">Ordenar: Destacados</option>
+    <option value="price-asc" data-i18n="store.sortPriceAsc">Precio: menor a mayor</option>
+    <option value="price-desc" data-i18n="store.sortPriceDesc">Precio: mayor a menor</option>
+    <option value="new" data-i18n="store.sortNew">Más nuevos</option>
   </select>
 </div>
 
 <!-- PRODUCT GRID -->
 <div class="store-body">
   <div class="prod-grid" id="prodGrid">
-    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">Cargando productos…</div>
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)" data-i18n="store.loading">Cargando productos…</div>
   </div>
 </div>
 
@@ -309,10 +309,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <div class="f-w">CACUSA</div>
   <div class="f-s">by Taitus</div>
   <div class="f-links">
-    <a href="/">Inicio</a>
-    <a href="../../envios.html">Envíos</a>
-    <a href="../../devoluciones.html">Devoluciones</a>
-    <a href="../../cuidados.html">Cuidados</a>
+    <a href="/" data-i18n="store.footerHome">Inicio</a>
+    <a href="../../envios.html" data-i18n="store.footerShippingLink">Envíos</a>
+    <a href="../../devoluciones.html" data-i18n="store.footerReturnsLink">Devoluciones</a>
+    <a href="../../cuidados.html" data-i18n="store.footerCareLink">Cuidados</a>
     <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener">Instagram</a>
   </div>
 </footer>
@@ -331,9 +331,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
-        <label class="modal-label">Personalizaci&#xF3;n</label>
-        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial&hellip;">
-        <div class="modal-hint">M&#xE1;x. 20 caracteres &middot; letras, n&#xFA;meros y espacios</div>
+        <label class="modal-label" data-i18n="store.personLabel">Personalizaci&#xF3;n</label>
+        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial&hellip;" data-i18n-ph="store.personPh">
+        <div class="modal-hint" data-i18n="store.personHint">M&#xE1;x. 20 caracteres &middot; letras, n&#xFA;meros y espacios</div>
       </div>
       <div class="modal-qty">
         <button class="qty-btn" id="qtyMinus">&#x2212;</button>
@@ -378,19 +378,19 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <div class="checkout-box">
     <div class="checkout-inner">
       <div class="checkout-left">
-        <div class="co-title">Finalizar pedido</div>
-        <div class="co-subtitle">CACUSA by Taitus &middot; Joyer&#xED;a personalizada</div>
+        <div class="co-title" data-i18n="store.coTitle">Finalizar pedido</div>
+        <div class="co-subtitle" data-i18n="store.coSubtitle">CACUSA by Taitus &middot; Joyer&#xED;a personalizada</div>
 
-        <div class="co-section">Informaci&#xF3;n de contacto</div>
+        <div class="co-section" data-i18n="store.coContactSection">Informaci&#xF3;n de contacto</div>
         <div class="co-row">
-          <div class="co-field"><label class="co-label">Nombre</label><input class="co-input" placeholder="Mar&#xED;a" id="coNombre"></div>
-          <div class="co-field"><label class="co-label">Apellido</label><input class="co-input" placeholder="Garc&#xED;a" id="coApellido"></div>
+          <div class="co-field"><label class="co-label" data-i18n="store.coNombre">Nombre</label><input class="co-input" placeholder="Mar&#xED;a" id="coNombre"></div>
+          <div class="co-field"><label class="co-label" data-i18n="store.coApellido">Apellido</label><input class="co-input" placeholder="Garc&#xED;a" id="coApellido"></div>
         </div>
-        <div class="co-field"><label class="co-label">Tel&#xE9;fono WhatsApp</label><input class="co-input" placeholder="+593 99 999 9999" id="coTel"></div>
+        <div class="co-field"><label class="co-label" data-i18n="store.coTel">Tel&#xE9;fono WhatsApp</label><input class="co-input" placeholder="+593 99 999 9999" id="coTel"></div>
 
-        <div class="co-section">Direcci&#xF3;n de env&#xED;o</div>
+        <div class="co-section" data-i18n="store.coShippingSection">Direcci&#xF3;n de env&#xED;o</div>
         <div class="co-field">
-          <label class="co-label">Pa&#xED;s</label>
+          <label class="co-label" data-i18n="store.coPais">Pa&#xED;s</label>
           <select class="co-input" id="coPais">
             <option value="EC">&#x1F1EA;&#x1F1E8; Ecuador</option>
             <option value="US">&#x1F1FA;&#x1F1F8; Estados Unidos</option>
@@ -401,7 +401,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </select>
         </div>
         <div class="co-field" id="coEstadoWrap" style="display:none">
-          <label class="co-label">Estado</label>
+          <label class="co-label" data-i18n="store.coEstado">Estado</label>
           <select class="co-input" id="coEstado">
             <option value="">-- Selecciona tu estado --</option>
             <option value="AL">Alabama</option><option value="AK">Alaska (sin impuesto)</option>
@@ -433,12 +433,12 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </select>
         </div>
         <div class="co-field" id="coZipWrap" style="display:none">
-          <label class="co-label">C&#xF3;digo ZIP</label>
+          <label class="co-label" data-i18n="store.coZip">C&#xF3;digo ZIP</label>
           <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
         </div>
-        <div class="co-field"><label class="co-label">Ciudad</label><input class="co-input" placeholder="Quito" id="coCiudad"></div>
-        <div class="co-field"><label class="co-label">Direcci&#xF3;n completa</label><input class="co-input" placeholder="Calle, n&#xFA;mero, sector&hellip;" id="coDireccion"></div>
-        <div class="co-field"><label class="co-label">Notas adicionales (opcional)</label><input class="co-input" placeholder="Color, talla, detalle especial&hellip;" id="coNotas"></div>
+        <div class="co-field"><label class="co-label" data-i18n="store.coCiudad">Ciudad</label><input class="co-input" placeholder="Quito" id="coCiudad"></div>
+        <div class="co-field"><label class="co-label" data-i18n="store.coAddress">Direcci&#xF3;n completa</label><input class="co-input" placeholder="Calle, n&#xFA;mero, sector&hellip;" id="coDireccion"></div>
+        <div class="co-field"><label class="co-label" data-i18n="store.coNotes">Notas adicionales (opcional)</label><input class="co-input" placeholder="Color, talla, detalle especial&hellip;" id="coNotas"></div>
 
         <div class="co-error" id="coError"></div>
 
@@ -446,13 +446,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="spinner"></div>
           <span class="btn-label" style="display:flex;align-items:center;gap:8px">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Pagar con Square
+            <span data-i18n="store.coPay">Pagar con Square</span>
           </span>
         </button>
-        <div class="co-wa-note">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
-        <div class="co-wa-note">Piezas hechas a medida · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline">ver política de devoluciones</a></div>
+        <div class="co-wa-note" data-i18n="store.coSecure">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
+        <div class="co-wa-note"><span data-i18n="store.coCustomNote">Piezas hechas a medida</span> · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline" data-i18n="store.devNote">ver política de devoluciones</a></div>
         <div class="wa-fallback">
-          <a href="#" id="waFallbackBtn">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
+          <a href="#" id="waFallbackBtn" data-i18n="store.coWaFallback">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
         </div>
       </div>
 
@@ -460,16 +460,16 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-summary-title" data-i18n="store.orderSummary">Resumen del pedido</div>
         <div id="coSummaryItems"></div>
         <div class="co-totals">
-          <div class="co-line"><span>Subtotal</span><strong id="coSubtotal">$0</strong></div>
-          <div class="co-line"><span>Env&#xED;o</span><strong id="coEnvio">Por calcular</strong></div>
-          <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel">Impuesto</span><strong id="coImpuesto">$0</strong></div>
-          <div class="co-total"><span>Total</span><strong id="coTotal">$0</strong></div>
+          <div class="co-line"><span data-i18n="store.subtotal">Subtotal</span><strong id="coSubtotal">$0</strong></div>
+          <div class="co-line"><span data-i18n="store.shipping">Env&#xED;o</span><strong id="coEnvio">Por calcular</strong></div>
+          <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel" data-i18n="store.tax">Impuesto</span><strong id="coImpuesto">$0</strong></div>
+          <div class="co-total"><span data-i18n="store.total">Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
-          <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--pink);margin-bottom:6px;letter-spacing:.1em">&#xBF;NECESITAS AYUDA?</div>
+          <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--pink);margin-bottom:6px;letter-spacing:.1em" data-i18n="store.coHelp">&#xBF;NECESITAS AYUDA?</div>
           <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)" id="igHandle">@cacusabytaitus</strong></div>
         </div>
-        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack">&#x2190; Volver al carrito</button>
+        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack" data-i18n="store.coBack">&#x2190; Volver al carrito</button>
       </div>
     </div>
   </div>
@@ -478,10 +478,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- SUCCESS -->
 <div id="success-overlay">
   <div class="success-icon">&#x1F338;</div>
-  <div class="success-h">&#xA1;Pedido enviado!</div>
+  <div class="success-h" data-i18n="store.successH">&#xA1;Pedido enviado!</div>
   <div class="success-s">by Taitus</div>
-  <p class="success-p">"Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. &#xA1;Gracias por elegirnos!"</p>
-  <button class="success-back" id="successBack">Seguir comprando</button>
+  <p class="success-p" data-i18n="store.successP">"Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. &#xA1;Gracias por elegirnos!"</p>
+  <button class="success-back" id="successBack" data-i18n="store.successBtn">Seguir comprando</button>
 </div>
 
 <script>
@@ -713,6 +713,10 @@ function applyTexts() {
       const v = T[el.getAttribute('data-i18n')];
       if (v !== undefined) el.textContent = v;
     });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const v = T[el.getAttribute('data-i18n-ph')];
+      if (v !== undefined) el.placeholder = v;
+    });
   }
   const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
   if (bEs) bEs.className = _L === 'es' ? 'on' : '';
@@ -721,7 +725,7 @@ function applyTexts() {
 function renderFilters() {
   const wrap = document.getElementById('filterBtns');
   if (!wrap) return;
-  wrap.innerHTML = '<button class="filter-btn active" data-filter="all">Todo</button>' +
+  wrap.innerHTML = '<button class="filter-btn active" data-filter="all">' + t('store.all', 'Todo') + '</button>' +
     CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + c + '</button>').join('');
   wrap.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -802,7 +806,7 @@ function renderProducts() {
       </button>
       <div class="pcard-img" onclick="openModal(${p.id})">
         <div class="pcard-img-bg" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div>
-        <div class="pcard-quick">Vista rápida →</div>
+        <div class="pcard-quick">${t('store.quickView', 'Vista rápida →')}</div>
       </div>
       <div class="pcard-body">
         <div class="pcard-cat">${p.cat || ''}</div>
@@ -813,7 +817,7 @@ function renderProducts() {
             <span class="price-now">$${p.price}</span>
             ${p.oldPrice ? `<span class="price-old">$${p.oldPrice}</span>` : ''}
           </div>
-          <button class="pcard-add" onclick="openModal(${p.id})">+ Ver</button>
+          <button class="pcard-add" onclick="openModal(${p.id})">${t('store.viewBtn', '+ Ver')}</button>
         </div>
       </div>
     </div>
@@ -1001,7 +1005,7 @@ function renderCheckoutSummary() {
   const totalFinal = subtotal + shippingCost + taxAmt;
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
-  document.getElementById('coEnvio').textContent    = free ? 'Gratis' : '$' + shippingCost.toFixed(2);
+  document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
   const taxLine = document.getElementById('coTaxLine');
   if (taxAmt > 0) {
     taxLine.style.display = '';
@@ -1032,7 +1036,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const tel     = document.getElementById('coTel').value.trim();
 
   if (!nombre || !tel) {
-    errorEl.textContent = 'Por favor ingresa tu nombre y teléfono WhatsApp.';
+    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
     return;
   }
   errorEl.textContent = '';
@@ -1056,7 +1060,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const paisVal = document.getElementById('coPais').value;
   const estadoVal = document.getElementById('coEstado').value;
   if (paisVal === 'US' && !estadoVal) {
-    errorEl.textContent = 'Por favor selecciona tu estado.';
+    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
     btn.disabled = false; btn.classList.remove('loading');
     return;
   }
@@ -1154,7 +1158,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const nombre  = document.getElementById('coNombre').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
   if (!nombre || !tel) {
-    errorEl.textContent = 'Por favor ingresa tu nombre y teléfono WhatsApp.';
+    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
     return;
   }
   errorEl.textContent = '';

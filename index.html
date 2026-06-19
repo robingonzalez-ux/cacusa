@@ -377,14 +377,14 @@ html,body{overflow-x:hidden}
 <nav id="nav">
   <div class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></div>
   <div class="nav-links">
-    <a href="#collections">Colecciones</a>
-    <a href="./ui_kits/store/">Tienda</a>
-    <a href="#story">Nosotros</a>
-    <a href="#personalize">Personaliza</a>
+    <a href="#collections" data-i18n="landing.navCollections">Colecciones</a>
+    <a href="./ui_kits/store/" data-i18n="landing.navStore">Tienda</a>
+    <a href="#story" data-i18n="landing.navUs">Nosotros</a>
+    <a href="#personalize" data-i18n="landing.navPersonalize">Personaliza</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
-    <button class="nav-cta" id="navCta" onclick="window.location.href='./ui_kits/store/'">Ver colección →</button>
+    <button class="nav-cta" id="navCta" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.navCta">Ver colección →</button>
   </div>
 </nav>
 
@@ -392,13 +392,13 @@ html,body{overflow-x:hidden}
 <section id="hero">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-content">
-    <div class="hero-label">Joyería artesanal personalizada</div>
-    <h1 class="hero-h1">Hecha<br>para <em>ti.</em></h1>
+    <div class="hero-label" data-i18n="landing.heroLabel">Joyería artesanal personalizada</div>
+    <h1 class="hero-h1" id="heroH1">Hecha<br>para <em>ti.</em></h1>
     <div class="hero-script">by Taitus</div>
-    <p class="hero-desc">"creamos para que luzcas más bella de lo que ya eres"</p>
+    <p class="hero-desc" data-i18n="landing.heroDesc">"creamos para que luzcas más bella de lo que ya eres"</p>
     <div class="hero-btns">
-      <button class="btn-h1" onclick="window.location.href='./ui_kits/store/'">Ver colección</button>
-      <button class="btn-h2" onclick="window.location.href='./ui_kits/store/'">Personaliza →</button>
+      <button class="btn-h1" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.heroBtnShop">Ver colección</button>
+      <button class="btn-h2" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.heroBtnCustom">Personaliza →</button>
     </div>
   </div>
   <div class="hero-stage" id="heroStage">
@@ -406,43 +406,43 @@ html,body{overflow-x:hidden}
     <div class="hs-layer" id="hsB"></div>
     <div class="hs-dots" id="hsDots"></div>
   </div>
-  <div class="hero-scroll"><span>Explorar</span><div class="scroll-line"></div></div>
+  <div class="hero-scroll"><span data-i18n="landing.scroll">Explorar</span><div class="scroll-line"></div></div>
 </section>
 
 <!-- COLLECTIONS -->
 <section id="collections">
   <div class="container">
-    <div class="reveal"><div class="section-label">Nuestras colecciones</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
+    <div class="reveal"><div class="section-label" data-i18n="landing.collectionsLabel">Nuestras colecciones</div></div>
+    <div class="reveal" data-delay="1"><h2 class="section-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
       <div class="col-card reveal-left" onclick="window.location.href='./ui_kits/store/?cat=Cadenas'">
         <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content">
-          <div class="col-tag">Colección principal</div>
+          <div class="col-tag" data-i18n="landing.colTagMain">Colección principal</div>
           <div class="col-title">Cadenas</div>
-          <div class="col-cta">Explorar →</div>
+          <div class="col-cta" data-i18n="landing.colExplore">Explorar →</div>
         </div>
       </div>
       <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/?cat=Anillos'">
         <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Destacado</div><div class="col-title">Anillos</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagFeatured">Destacado</div><div class="col-title">Anillos</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/?cat=Hombres'">
         <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Para ellos</div><div class="col-title">Hombres</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagMen">Para ellos</div><div class="col-title">Hombres</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/?cat=Pulseras'">
         <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Hecho a mano</div><div class="col-title">Pulseras</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagHandmade">Hecho a mano</div><div class="col-title">Pulseras</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="5" onclick="window.location.href='./ui_kits/store/?cat=Aretes'">
         <div class="col-bg gC" data-cat="Aretes" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag">Elegancia</div><div class="col-title">Aretes</div><div class="col-cta">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagElegance">Elegancia</div><div class="col-title">Aretes</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
     </div>
   </div>
@@ -453,10 +453,10 @@ html,body{overflow-x:hidden}
   <div class="container">
     <div style="display:flex;align-items:flex-end;justify-content:space-between">
       <div>
-        <div class="reveal"><div class="section-label">Más vendidos</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h">Favoritas<br>de la <em>semana</em></h2></div>
+        <div class="reveal"><div class="section-label" data-i18n="landing.bestsellersLabel">Más vendidos</div></div>
+        <div class="reveal" data-delay="1"><h2 class="section-h" id="bestsellersH2">Favoritas<br>de la <em>semana</em></h2></div>
       </div>
-      <div class="reveal" data-delay="2"><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--pink);text-decoration:none">Ver todo →</a></div>
+      <div class="reveal" data-delay="2"><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--pink);text-decoration:none" data-i18n="landing.seeAll">Ver todo →</a></div>
     </div>
     <div class="prod-grid" id="prodGrid">
       <div class="prod-card reveal" data-delay="1" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
@@ -536,18 +536,18 @@ html,body{overflow-x:hidden}
       </div>
       <div class="reveal-right" data-delay="2">
         <div class="person-form">
-          <div class="pf-title">Comienza tu pieza</div>
+          <div class="pf-title" data-i18n="landing.formTitle">Comienza tu pieza</div>
           <div class="pf-row">
-            <div class="pf-field"><label class="pf-label">Tu nombre</label><input class="pf-input" id="pfName" placeholder="Tu nombre"></div>
-            <div class="pf-field"><label class="pf-label">Tu WhatsApp</label><input class="pf-input" id="pfWhats" placeholder="+593 99 999 9999"></div>
+            <div class="pf-field"><label class="pf-label" data-i18n="landing.formNameLabel">Tu nombre</label><input class="pf-input" id="pfName" placeholder="Tu nombre" data-i18n-ph="landing.formNamePh"></div>
+            <div class="pf-field"><label class="pf-label" data-i18n="landing.formWhatsLabel">Tu WhatsApp</label><input class="pf-input" id="pfWhats" placeholder="+593 99 999 9999"></div>
           </div>
           <div class="pf-row">
-            <div class="pf-field"><label class="pf-label">Tipo de joya</label><input class="pf-input" id="pfType" placeholder="Collar, anillo…"></div>
-            <div class="pf-field"><label class="pf-label">Material</label><input class="pf-input" id="pfMaterial" placeholder="Plata, oro…"></div>
+            <div class="pf-field"><label class="pf-label" data-i18n="landing.formTypeLabel">Tipo de joya</label><input class="pf-input" id="pfType" placeholder="Collar, anillo…" data-i18n-ph="landing.formTypePh"></div>
+            <div class="pf-field"><label class="pf-label" data-i18n="landing.formMaterialLabel">Material</label><input class="pf-input" id="pfMaterial" placeholder="Plata, oro…" data-i18n-ph="landing.formMaterialPh"></div>
           </div>
-          <div class="pf-field"><label class="pf-label">Personalización</label><input class="pf-input" id="pfDetail" placeholder="Nombre, fecha, mensaje…"></div>
+          <div class="pf-field"><label class="pf-label" data-i18n="landing.formDetailLabel">Personalización</label><input class="pf-input" id="pfDetail" placeholder="Nombre, fecha, mensaje…" data-i18n-ph="landing.formDetailPh"></div>
           <div class="pf-error" id="pfError" style="color:#C0336E;font-family:var(--fu);font-size:12px;min-height:16px;margin-bottom:6px"></div>
-          <button class="pf-btn" id="pfSendBtn">Enviar por WhatsApp →</button>
+          <button class="pf-btn" id="pfSendBtn" data-i18n="landing.formBtn">Enviar por WhatsApp →</button>
         </div>
       </div>
     </div>
@@ -557,8 +557,8 @@ html,body{overflow-x:hidden}
 <!-- TESTIMONIALS -->
 <section id="testimonials">
   <div class="container" style="text-align:center">
-    <div class="reveal"><div class="section-label" style="text-align:center">Lo que dicen</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Ellas <em>confían</em> en CACUSA</h2></div>
+    <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
+    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
   </div>
   <div class="testi-wrap"><div class="testi-track" id="tTrack2"></div></div>
 </section>
@@ -567,13 +567,13 @@ html,body{overflow-x:hidden}
 <section id="instagram" style="padding:80px 0 0;overflow:hidden">
   <div class="container">
     <div style="text-align:center;margin-bottom:14px">
-      <div class="reveal"><div class="section-label" style="text-align:center">Síguenos en Instagram</div></div>
+      <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.igLabel">Síguenos en Instagram</div></div>
       <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">@cacusabytaitus</h2></div>
       <div class="reveal" data-delay="2">
-        <p style="font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-top:10px;margin-bottom:28px;line-height:1.7">Mira las últimas creaciones, historias y piezas personalizadas</p>
+        <p style="font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-top:10px;margin-bottom:28px;line-height:1.7" data-i18n="landing.igBody">Mira las últimas creaciones, historias y piezas personalizadas</p>
         <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.06em;border-radius:999px;padding:13px 28px;text-decoration:none;box-shadow:0 4px 20px rgba(238,111,168,.35);margin-bottom:40px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"></circle></svg>
-          Seguir @cacusabytaitus
+          <span data-i18n="landing.igBtn">Seguir @cacusabytaitus</span>
         </a>
       </div>
     </div>
@@ -586,12 +586,12 @@ html,body{overflow-x:hidden}
   <div style="background:var(--grad-warm);margin-top:64px;padding:60px 0;text-align:center;position:relative;overflow:hidden">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 25% 50%,rgba(255,255,255,.18),transparent 55%)"></div>
     <div style="position:relative;z-index:1">
-      <div style="font-family:var(--fs);font-size:34px;color:rgba(255,255,255,.7);margin-bottom:8px">¿Lista para tu pieza?</div>
-      <div style="font-family:var(--fd);font-weight:900;font-size:clamp(30px,4vw,48px);color:white;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.1);letter-spacing:.02em">Tu joya te está esperando</div>
-      <p style="font-family:var(--fe);font-size:18px;font-style:italic;color:rgba(255,255,255,.8);max-width:440px;margin:0 auto 32px;line-height:1.7">"creamos para que luzcas más bella<br>de lo que ya eres"</p>
+      <div id="ctaScript" style="font-family:var(--fs);font-size:34px;color:rgba(255,255,255,.7);margin-bottom:8px" data-i18n="landing.ctaScript">¿Lista para tu pieza?</div>
+      <div id="ctaH" style="font-family:var(--fd);font-weight:900;font-size:clamp(30px,4vw,48px);color:white;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.1);letter-spacing:.02em" data-i18n="landing.ctaH">Tu joya te está esperando</div>
+      <p id="ctaP" style="font-family:var(--fe);font-size:18px;font-style:italic;color:rgba(255,255,255,.8);max-width:440px;margin:0 auto 32px;line-height:1.7">"creamos para que luzcas más bella<br>de lo que ya eres"</p>
       <a href="./ui_kits/store/" style="display:inline-flex;align-items:center;gap:10px;background:white;color:var(--pink);font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border-radius:999px;padding:16px 40px;text-decoration:none;box-shadow:0 4px 24px rgba(255,255,255,.35);transition:all .3s">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-        Ir a la tienda →
+        <span data-i18n="landing.ctaBtn">Ir a la tienda →</span>
       </a>
     </div>
   </div>
@@ -603,16 +603,16 @@ html,body{overflow-x:hidden}
     <div class="footer-grid">
       <div><div class="fb-w">CACUSA</div><div class="fb-s">by Taitus</div><div class="fb-tag" id="hFooterTag">"creamos para que luzcas más bella de lo que ya eres"</div></div>
       <div>
-        <div class="ft">Tienda</div>
+        <div class="ft" data-i18n="landing.footerStoreH">Tienda</div>
         <a class="fl" href="./ui_kits/store/?cat=Cadenas">Cadenas</a><a class="fl" href="./ui_kits/store/?cat=Anillos">Anillos</a><a class="fl" href="./ui_kits/store/?cat=Pulseras">Pulseras</a><a class="fl" href="./ui_kits/store/?cat=Aretes">Aretes</a><a class="fl" href="./ui_kits/store/?cat=Hombres">Hombres</a>
       </div>
       <div>
-        <div class="ft">Ayuda</div>
-        <a class="fl" href="./envios.html">Envíos</a><a class="fl" href="./devoluciones.html">Devoluciones</a><a class="fl" href="./cuidados.html">Cuidados</a><a class="fl" id="hFooterContact" target="_blank" rel="noopener">Contacto</a>
+        <div class="ft" data-i18n="landing.footerHelpH">Ayuda</div>
+        <a class="fl" href="./envios.html" data-i18n="landing.footerShipping">Envíos</a><a class="fl" href="./devoluciones.html" data-i18n="landing.footerReturns">Devoluciones</a><a class="fl" href="./cuidados.html" data-i18n="landing.footerCare">Cuidados</a><a class="fl" id="hFooterContact" data-i18n="landing.footerContact" target="_blank" rel="noopener">Contacto</a>
       </div>
       <div>
-        <div class="ft">Nosotros</div>
-        <a class="fl" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener">Instagram @cacusabytaitus</a><a class="fl" href="./#story">Nuestra historia</a><a class="fl" href="./#personalize">Proceso artesanal</a>
+        <div class="ft" data-i18n="landing.footerUsH">Nosotros</div>
+        <a class="fl" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener">Instagram @cacusabytaitus</a><a class="fl" href="./#story" data-i18n="landing.footerOurStory">Nuestra historia</a><a class="fl" href="./#personalize" data-i18n="landing.footerCraft">Proceso artesanal</a>
       </div>
     </div>
     <div class="footer-bottom">
@@ -732,7 +732,9 @@ let CACUSA_HOME = {};
     const nombre = val('pfName');
     const whats  = val('pfWhats');
     if (!nombre || !whats) {
-      if (errEl) errEl.textContent = 'Por favor escribe tu nombre y tu WhatsApp.';
+      if (errEl) errEl.textContent = localStorage.getItem('cacusa-lang') === 'en'
+        ? 'Please enter your name and WhatsApp number.'
+        : 'Por favor escribe tu nombre y tu WhatsApp.';
       return;
     }
     if (errEl) errEl.textContent = '';
@@ -913,7 +915,9 @@ revEls.forEach(el=>obs.observe(el));
     card.dataset.delay = String(i + 1);
     card.setAttribute('onclick', "window.location.href='./ui_kits/store/'");
     card.style.cursor = 'none';
-    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">Vista rápida →</div></div><div class="prod-body"><div class="prod-cat">${esc(p.category||'')}</div><div class="prod-name">${esc(p.name||'')}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">+ Añadir</button></div></div>`;
+    const _qv = (window.__T && window.__T['landing.quickView']) || 'Vista rápida →';
+    const _ab = (window.__T && window.__T['landing.addBtn']) || '+ Añadir';
+    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(p.category||'')}</div><div class="prod-name">${esc(p.name||'')}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">${_ab}</button></div></div>`;
     grid.appendChild(card);
     obs.observe(card);
   });
@@ -1061,6 +1065,22 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
       const v = T[el.getAttribute('data-i18n')];
       if (v !== undefined) el.textContent = v;
     });
+    // Placeholders
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const v = T[el.getAttribute('data-i18n-ph')];
+      if (v !== undefined) el.placeholder = v;
+    });
+    // Elements with inner HTML (em tags, br)
+    const heroH1 = document.getElementById('heroH1');
+    if (heroH1) heroH1.innerHTML = 'Made<br>for <em>you.</em>';
+    const cH2 = document.getElementById('collectionsH2');
+    if (cH2) cH2.innerHTML = 'Find<br>your <em>perfect piece</em>';
+    const bH2 = document.getElementById('bestsellersH2');
+    if (bH2) bH2.innerHTML = "This week's<br><em>favorites</em>";
+    const tH2 = document.getElementById('testiH2');
+    if (tH2) tH2.innerHTML = 'They <em>trust</em> CACUSA';
+    const ctaP = document.getElementById('ctaP');
+    if (ctaP) ctaP.innerHTML = '"we create to make you look<br>more beautiful than you already are"';
     // Ticker EN
     const tt = document.getElementById('tTrack');
     if (tt) {
