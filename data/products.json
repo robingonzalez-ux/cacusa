@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T16:00:08.252Z",
+  "lastUpdated": "2026-06-19T16:01:26.851Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -915,6 +915,24 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781884804624
+    },
+    {
+      "name": "Cadena veneciana con un dije de Cruz de circones ",
+      "category": "Cadenas",
+      "price": 125,
+      "oldPrice": 165,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Plata ley 925 con un baño de oro de 18 kilates ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884824191_img_0937_jpeg.jpg",
+      "focalX": 43.842887473460706,
+      "focalY": 43.3333333333333,
+      "zoom": 1.6,
+      "material": "Plata 925 con un baño de oro de 18k",
+      "id": 1781884881874
     }
   ]
 }
