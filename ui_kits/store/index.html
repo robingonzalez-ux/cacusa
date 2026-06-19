@@ -852,10 +852,12 @@ function openModal(id) {
   }
   document.getElementById('modalCat').textContent = (window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || p.cat || '';
   document.getElementById('modalName').textContent = localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name;
-  document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? ' — antes $' + p.oldPrice : '');
-  document.getElementById('modalDesc').textContent = (localStorage.getItem('cacusa-lang') === 'en' && p.description_en) ? p.description_en : (p.desc || '');
+  const _mLang = localStorage.getItem('cacusa-lang') === 'en';
+  const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
+  document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? (_mLang ? ' — was $' : ' — antes $') + p.oldPrice : '');
+  document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
-  if (matEl) matEl.textContent = p.material || '';
+  if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
@@ -923,7 +925,7 @@ function updateCartUI() {
         <div class="ci-body">
           <div class="ci-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
           ${item.personalization ? `<div class="ci-custom">"${item.personalization}"</div>` : ''}
-          <div class="ci-mat">${item.material || 'Plata 925'}</div>
+          <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
             <span class="ci-price">$${item.price}</span>
             <button class="ci-remove" onclick="removeItem(${item.cartId})">✕</button>
