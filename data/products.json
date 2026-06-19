@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:16:03.953Z",
+  "lastUpdated": "2026-06-19T14:17:33.544Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -589,6 +589,24 @@
       "zoom": 1.6,
       "material": "Plata 925",
       "id": 1781878560407
+    },
+    {
+      "name": "Entorchado dorado con piedra azul zafiro",
+      "category": "Cadenas",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "También lo puedes pedir con su pulsera en juego ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878605734_image_jpg.jpg",
+      "focalX": 50.743748405481256,
+      "focalY": 59.28840338208974,
+      "zoom": 1.6,
+      "material": "Baño de oro 18k",
+      "id": 1781878646387
     }
   ]
 }
