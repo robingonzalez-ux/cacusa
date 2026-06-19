@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:34:26.037Z",
+  "lastUpdated": "2026-06-19T14:35:35.182Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -697,6 +697,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781879659210
+    },
+    {
+      "name": "Corazón dorado. Anillo entorchado ajustable ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879698277_image_jpg.jpg",
+      "focalX": 52.01698513800424,
+      "focalY": 48.48484848484847,
+      "zoom": 1.75,
+      "material": "Baño de oro 18k",
+      "id": 1781879732319
     }
   ]
 }
