@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T17:59:55.970Z",
+  "lastUpdated": "2026-06-19T18:07:30.785Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1077,6 +1077,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781891993137
+    },
+    {
+      "name": "Anillo de aquamarina ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892367817_image_jpg.jpg",
+      "focalX": 40.44585987261145,
+      "focalY": 54.24242424242421,
+      "zoom": 1.75,
+      "material": "Baño de oro 18k",
+      "id": 1781892443591
     }
   ]
 }
