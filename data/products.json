@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:18:32.526Z",
+  "lastUpdated": "2026-06-19T14:25:37.525Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -625,6 +625,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781878707797
+    },
+    {
+      "name": "Círculo de microcircones con un fondo de nácar y un microcircones central ",
+      "category": "Cadenas",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Ajustable ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879077458_image_jpg.jpg",
+      "focalX": 49.256251594518744,
+      "focalY": 57.69610565944576,
+      "zoom": 1.45,
+      "material": "Baño de oro 18k",
+      "id": 1781879127320
     }
   ]
 }
