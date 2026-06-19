@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T16:03:48.193Z",
+  "lastUpdated": "2026-06-19T16:05:13.185Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -987,6 +987,24 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781885024731
+    },
+    {
+      "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885074186_img_0929_jpeg.jpg",
+      "focalX": 45.53750956711248,
+      "focalY": 46.55002160093814,
+      "zoom": 1.3,
+      "material": "Baño de oro 18k",
+      "id": 1781885110437
     }
   ]
 }
