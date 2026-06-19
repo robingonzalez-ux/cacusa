@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:06:54.629Z",
+  "lastUpdated": "2026-06-19T14:08:45.236Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -497,6 +497,24 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781878011948
+    },
+    {
+      "name": "Anillo ajustable con microcircones en degrade ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878052802_image_jpg.jpg",
+      "focalX": 48.698440290407795,
+      "focalY": 43.76350058631118,
+      "zoom": 1.3,
+      "material": "Baño de oro 18k",
+      "id": 1781878104655
     }
   ]
 }
