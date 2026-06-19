@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T16:03:06.612Z",
+  "lastUpdated": "2026-06-19T16:03:48.193Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -969,6 +969,24 @@
       "zoom": 0.85,
       "material": "Baño de oro 18k",
       "id": 1781884983133
+    },
+    {
+      "name": "Corazón de perla con una silueta de corazón de circon ",
+      "category": "Cadenas",
+      "price": 38,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885001334_img_0932_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1.15,
+      "material": "Baño de oro 18k",
+      "id": 1781885024731
     }
   ]
 }
