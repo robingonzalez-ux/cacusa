@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T15:56:59.067Z",
+  "lastUpdated": "2026-06-19T16:00:08.252Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -897,6 +897,24 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781884615354
+    },
+    {
+      "name": "Cadena delicada con dije de corazón nacarado ",
+      "category": "Cadenas",
+      "price": 38,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884634034_img_0940_jpeg.jpg",
+      "focalX": 33.82347218078276,
+      "focalY": 41.24236252545829,
+      "zoom": 1.3,
+      "material": "Baño de oro 18k",
+      "id": 1781884804624
     }
   ]
 }
