@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:35:35.182Z",
+  "lastUpdated": "2026-06-19T14:36:58.564Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -715,6 +715,24 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781879732319
+    },
+    {
+      "name": "Anillo doble línea llana con corazón plateado ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879783335_image_jpg.jpg",
+      "focalX": 43.736730360934175,
+      "focalY": 45.90909090909091,
+      "zoom": 1.45,
+      "material": "Baño de Rodio",
+      "id": 1781879811459
     }
   ]
 }
