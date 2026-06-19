@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:42:12.545Z",
+  "lastUpdated": "2026-06-19T14:42:48.751Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -156,10 +156,11 @@
       "personalized": false,
       "available": true,
       "oldPrice": 28,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1780369452657_e1d3a277_c1d9_476e_9517_15e3939543d7_jpe.jpg",
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880156076_image_jpg.jpg",
       "material": "Baño de oro 18k",
-      "focalX": 42.28361029313203,
-      "focalY": 55.54835524285628
+      "focalX": 45.78679500650782,
+      "focalY": 51.002900697401735,
+      "zoom": 1.75
     },
     {
       "id": 3,
