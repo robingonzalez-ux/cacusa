@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:03:59.976Z",
+  "lastUpdated": "2026-06-19T14:05:48.211Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -461,6 +461,24 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781877838074
+    },
+    {
+      "name": "Anillo ajustable de circones e inicial ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "También disponible en dorado. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877903161_image_jpg.jpg",
+      "focalX": 59.2038865178305,
+      "focalY": 35.53662901931737,
+      "zoom": 1.15,
+      "material": "Acero inoxidable",
+      "id": 1781877944864
     }
   ]
 }
