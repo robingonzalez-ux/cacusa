@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:36:58.564Z",
+  "lastUpdated": "2026-06-19T14:38:42.062Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -733,6 +733,24 @@
       "zoom": 1.45,
       "material": "Baño de Rodio",
       "id": 1781879811459
+    },
+    {
+      "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
+      "category": "Cadenas",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879864973_image_jpg.jpg",
+      "focalX": 50,
+      "focalY": 40.97697957168417,
+      "zoom": 1.45,
+      "material": "Plata 925",
+      "id": 1781879917484
     }
   ]
 }
