@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:17:33.544Z",
+  "lastUpdated": "2026-06-19T14:18:32.526Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -607,6 +607,24 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781878646387
+    },
+    {
+      "name": "Triple línea de circones con 3 piedras ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878676074_image_jpg.jpg",
+      "focalX": 61.52810028495943,
+      "focalY": 60.6153181509597,
+      "zoom": 1.6,
+      "material": "Baño de oro 18k",
+      "id": 1781878707797
     }
   ]
 }
