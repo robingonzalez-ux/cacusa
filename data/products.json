@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:44:36.015Z",
+  "lastUpdated": "2026-06-19T14:45:44.080Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -807,6 +807,24 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781880268274
+    },
+    {
+      "name": "Anillos ajustable con trébol negro ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "El acero inoxidable tiene a su vez un baño de oro. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880290838_image_jpg.jpg",
+      "focalX": 42.56251594518749,
+      "focalY": 44.95772387829416,
+      "zoom": 1.3,
+      "material": "Acero inoxidable",
+      "id": 1781880340918
     }
   ]
 }
