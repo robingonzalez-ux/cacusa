@@ -96,6 +96,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .price-old{font-family:var(--fu);font-size:12px;color:var(--ink-muted);text-decoration:line-through}
 .pcard-add{background:var(--pink-pale);color:var(--pink);font-family:var(--fu);font-size:11px;font-weight:600;border:none;border-radius:999px;padding:8px 16px;cursor:none;transition:all .2s}
 .pcard-add:hover{background:var(--pink);color:white}
+.pcard-market{display:inline-flex;align-items:center;gap:4px;font-family:var(--fu);font-size:9px;font-weight:700;letter-spacing:.05em;border-radius:999px;padding:3px 9px;margin-top:7px;line-height:1}
+.mkt-local{background:rgba(39,174,96,.13);color:#1a7a44;border:1px solid rgba(39,174,96,.28)}
+.mkt-import{background:rgba(41,128,185,.13);color:#1a5c8a;border:1px solid rgba(41,128,185,.28)}
+.mkt-us-avail{background:rgba(41,128,185,.1);color:#1a5c8a;border:1px solid rgba(41,128,185,.22)}
+.mkt-ec-only{background:rgba(230,126,34,.1);color:#a04a10;border:1px solid rgba(230,126,34,.25)}
 
 /* PRODUCT MODAL */
 #modal-overlay{position:fixed;inset:0;background:rgba(139,42,90,.2);backdrop-filter:blur(8px);z-index:700;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -691,10 +696,11 @@ function normalizeProd(p) {
     ...p,
     basePrice: p.price,
     hasSurcharge: false,
-    cat:   p.category || p.cat || '',
-    desc:  p.description || p.desc || '',
-    grad:  p.grad || COLOR_GRADS[p.color] || 'linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC)',
-    badge: badge,
+    cat:    p.category || p.cat || '',
+    desc:   p.description || p.desc || '',
+    grad:   p.grad || COLOR_GRADS[p.color] || 'linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC)',
+    badge:  badge,
+    market: p.market || 'both',
     available: p.available !== false
   };
 }
@@ -740,6 +746,24 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
           }
         });
       }
+    }
+  } catch(_) {}
+  // Apply per-product markets + detect visitor country via IP (best-effort, non-blocking)
+  try {
+    const [_mktRes, _ipRes] = await Promise.all([
+      fetch('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json'),
+      fetch('https://api.country.is/')
+    ]);
+    if (_mktRes.ok) {
+      const _mkt = await _mktRes.json();
+      if (_mkt && typeof _mkt === 'object') {
+        window.__markets = _mkt;
+        PRODUCTS.forEach(p => { p.market = _mkt[p.id] || 'both'; });
+      }
+    }
+    if (_ipRes.ok) {
+      const _ip = await _ipRes.json();
+      if (_ip && _ip.country) window.__visitorCountry = _ip.country;
     }
   } catch(_) {}
   applyTexts();
@@ -842,6 +866,22 @@ function imgInner(p, alt) {
   return '';
 }
 
+// ─── MARKET BADGE ───────────────────────────────────────────
+function getMarketBadge(p) {
+  const market  = p.market || 'both';
+  const country = window.__visitorCountry;
+  if (!country || market === 'both') return '';
+  const isEC = country === 'EC';
+  if (isEC) {
+    if (market === 'ec') return `<div class="pcard-market mkt-local">🇪🇨 ${t('store.mktLocal','Producto local')}</div>`;
+    if (market === 'us') return `<div class="pcard-market mkt-import">✈️ ${t('store.mktImport','Importado desde EE.UU.')}</div>`;
+  } else {
+    if (market === 'us') return `<div class="pcard-market mkt-local">🇺🇸 ${t('store.mktLocal','Producto local')}</div>`;
+    if (market === 'ec') return `<div class="pcard-market mkt-ec-only">🇪🇨 ${t('store.mktEcOnly','Enviado desde Ecuador')}</div>`;
+  }
+  return '';
+}
+
 // ─── RENDER PRODUCTS ────────────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
@@ -869,6 +909,7 @@ function renderProducts() {
         <div class="pcard-cat">${(window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || (p.cat || '')}</div>
         <div class="pcard-name">${localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name}</div>
         <div class="pcard-desc">${(localStorage.getItem('cacusa-lang') === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60)}…</div>
+        ${getMarketBadge(p)}
         <div class="pcard-foot">
           <div class="pcard-price">
             <span class="price-now">$${p.price}</span>
