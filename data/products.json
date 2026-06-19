@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:39:29.336Z",
+  "lastUpdated": "2026-06-19T14:42:12.545Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -752,6 +752,42 @@
       "zoom": 1.45,
       "material": "Plata 925",
       "id": 1781879917484
+    },
+    {
+      "name": "Anillo ajustable con 3 circones ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880012052_image_jpg.jpg",
+      "focalX": 41.93205944798302,
+      "focalY": 46.36363636363637,
+      "zoom": 2.05,
+      "material": "Baño de oro 18k",
+      "id": 1781880053907
+    },
+    {
+      "name": "Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880075134_image_jpg.jpg",
+      "focalX": 45.48832271762209,
+      "focalY": 40.71969696969693,
+      "zoom": 1.6,
+      "material": "Baño de oro 18k",
+      "id": 1781880127649
     }
   ]
 }
