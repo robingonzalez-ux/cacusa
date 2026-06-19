@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T13:56:06.129Z",
+  "lastUpdated": "2026-06-19T13:59:32.954Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -425,6 +425,24 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877358815
+    },
+    {
+      "name": "Cadena de balines con dije de corazón con circones ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877512539_img_0944_jpeg.jpg",
+      "focalX": 42.74845304655778,
+      "focalY": 27.309757452323684,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781877568374
     }
   ]
 }
