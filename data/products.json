@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:11:41.704Z",
+  "lastUpdated": "2026-06-19T14:13:51.779Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -551,6 +551,24 @@
       "zoom": 1.9,
       "material": "Acero inoxidable",
       "id": 1781878296526
+    },
+    {
+      "name": "Anillo TIFFY ajustable con microcircones ",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878391322_image_jpg.jpg",
+      "focalX": 50.955414012738856,
+      "focalY": 57.57575757575761,
+      "zoom": 1.75,
+      "material": "Baño de oro 18k",
+      "id": 1781878427634
     }
   ]
 }
