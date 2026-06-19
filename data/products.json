@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:05:48.211Z",
+  "lastUpdated": "2026-06-19T14:06:54.629Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -479,6 +479,24 @@
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781877944864
+    },
+    {
+      "name": "Anillo dorado ajustable de hoja ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877979684_image_jpg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "id": 1781878011948
     }
   ]
 }
