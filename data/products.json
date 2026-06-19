@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T15:04:43.163Z",
+  "lastUpdated": "2026-06-19T15:05:46.746Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -861,6 +861,24 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781881478183
+    },
+    {
+      "name": "Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón ",
+      "category": "Anillos",
+      "price": 22,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781881501235_image_jpg.jpg",
+      "focalX": 37.61942675159236,
+      "focalY": 42.80303030303028,
+      "zoom": 1.6,
+      "material": "Baño de oro 18k",
+      "id": 1781881544132
     }
   ]
 }
