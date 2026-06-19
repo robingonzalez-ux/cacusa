@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T15:05:46.746Z",
+  "lastUpdated": "2026-06-19T15:54:38.009Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -442,8 +442,8 @@
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877512539_img_0944_jpeg.jpg",
-      "focalX": 42.74845304655778,
-      "focalY": 27.309757452323684,
+      "focalX": 39.12267956983668,
+      "focalY": 41.90581990989327,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374
