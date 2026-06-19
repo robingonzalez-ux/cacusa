@@ -810,8 +810,8 @@ function renderProducts() {
       </div>
       <div class="pcard-body">
         <div class="pcard-cat">${(window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || (p.cat || '')}</div>
-        <div class="pcard-name">${p.name}</div>
-        <div class="pcard-desc">${(p.desc || '').substring(0, 60)}…</div>
+        <div class="pcard-name">${localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name}</div>
+        <div class="pcard-desc">${(localStorage.getItem('cacusa-lang') === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60)}…</div>
         <div class="pcard-foot">
           <div class="pcard-price">
             <span class="price-now">$${p.price}</span>
@@ -850,10 +850,10 @@ function openModal(id) {
     imgBg.innerHTML = '';
     imgBg.style.cssText = 'background:' + (p.grad || 'var(--grad)') + ';width:100%;height:100%;min-height:400px';
   }
-  document.getElementById('modalCat').textContent = p.cat || '';
-  document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalCat').textContent = (window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || p.cat || '';
+  document.getElementById('modalName').textContent = localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name;
   document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? ' — antes $' + p.oldPrice : '');
-  document.getElementById('modalDesc').textContent = p.desc || '';
+  document.getElementById('modalDesc').textContent = (localStorage.getItem('cacusa-lang') === 'en' && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = p.material || '';
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
@@ -921,7 +921,7 @@ function updateCartUI() {
       <div class="cart-item">
         <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name)}</div>
         <div class="ci-body">
-          <div class="ci-name">${item.name}</div>
+          <div class="ci-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
           ${item.personalization ? `<div class="ci-custom">"${item.personalization}"</div>` : ''}
           <div class="ci-mat">${item.material || 'Plata 925'}</div>
           <div class="ci-foot">
@@ -1022,7 +1022,7 @@ function renderCheckoutSummary() {
         <div class="co-si-qty">1</div>
       </div>
       <div>
-        <div class="co-si-name">${item.name}</div>
+        <div class="co-si-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
         ${item.personalization ? `<div class="co-si-custom">"${item.personalization}"</div>` : ''}
       </div>
       <div class="co-si-price">$${item.price}</div>
