@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T16:02:17.004Z",
+  "lastUpdated": "2026-06-19T16:03:06.612Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -951,6 +951,24 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781884932644
+    },
+    {
+      "name": "San Benito con cruz ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884950194_img_0933_jpeg.jpg",
+      "focalX": 43.30626435066875,
+      "focalY": 50.92884033820899,
+      "zoom": 0.85,
+      "material": "Baño de oro 18k",
+      "id": 1781884983133
     }
   ]
 }
