@@ -726,7 +726,7 @@ function renderFilters() {
   const wrap = document.getElementById('filterBtns');
   if (!wrap) return;
   wrap.innerHTML = '<button class="filter-btn active" data-filter="all">' + t('store.all', 'Todo') + '</button>' +
-    CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + c + '</button>').join('');
+    CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + ((window.__T && window.__T['cat.' + c.toLowerCase()]) || c) + '</button>').join('');
   wrap.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -800,7 +800,7 @@ function renderProducts() {
   }
   grid.innerHTML = filtered.map((p, i) => `
     <div class="pcard" style="animation-delay:${i * 0.06}s" data-id="${p.id}">
-      ${p.badge ? `<div class="pcard-badge ${p.badge}">${p.tag}</div>` : ''}
+      ${p.badge ? `<div class="pcard-badge ${p.badge}">${p.tag && p.tag.toLowerCase() === 'nuevo' ? t('tag.nuevo', p.tag) : (p.tag || '')}</div>` : ''}
       <button class="pcard-wish" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -809,7 +809,7 @@ function renderProducts() {
         <div class="pcard-quick">${t('store.quickView', 'Vista rápida →')}</div>
       </div>
       <div class="pcard-body">
-        <div class="pcard-cat">${p.cat || ''}</div>
+        <div class="pcard-cat">${(window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || (p.cat || '')}</div>
         <div class="pcard-name">${p.name}</div>
         <div class="pcard-desc">${(p.desc || '').substring(0, 60)}…</div>
         <div class="pcard-foot">

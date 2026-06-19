@@ -178,7 +178,17 @@
       "footer": {
         "tagline": "we create to make you look more beautiful than you already are",
         "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
-      }
+      },
+      "testimonials": [
+        {"t": "My necklace arrived perfectly, exactly as I dreamed it. CACUSA made it real.", "n": "Valentina M.", "l": "Quito, Ecuador"},
+        {"t": "My wife's ring is a work of art. She fell in love with it from the very first moment.", "n": "Carlos R.", "l": "Miami, USA"},
+        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"},
+        {"t": "I ordered a necklace for my mom. She cried with joy when she saw it. Thank you CACUSA.", "n": "Isabella T.", "l": "New York, USA"},
+        {"t": "Unique design, incredible service. I would definitely buy again. The best!", "n": "Camila V.", "l": "Cuenca, Ecuador"},
+        {"t": "I received my ring in record time. Beautiful, delicate, and exactly what I ordered.", "n": "Andrea P.", "l": "Los Angeles, USA"},
+        {"t": "My necklace arrived perfectly, exactly as I dreamed it. CACUSA made it real.", "n": "Valentina M.", "l": "Quito, Ecuador"},
+        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"}
+      ]
     },
     "texts_en": {
       "heroLabel": "Personalized artisan jewelry",
@@ -363,7 +373,18 @@
         "store.footerReturnsLink": "Returns",
         "store.footerCareLink": "Care Guide",
         "store.coError1": "Please enter your name and WhatsApp number.",
-        "store.coError2": "Please select your state."
+        "store.coError2": "Please select your state.",
+        "landing.colCadenas": "Necklaces",
+        "landing.colAnillos": "Rings",
+        "landing.colHombres": "Men",
+        "landing.colPulseras": "Bracelets",
+        "landing.colAretes": "Earrings",
+        "cat.cadenas": "Necklaces",
+        "cat.aretes": "Earrings",
+        "cat.anillos": "Rings",
+        "cat.hombres": "Men",
+        "cat.pulseras": "Bracelets",
+        "tag.nuevo": "New"
       }
     }
   },

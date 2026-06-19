@@ -420,29 +420,29 @@ html,body{overflow-x:hidden}
         <div class="col-overlay"></div>
         <div class="col-content">
           <div class="col-tag" data-i18n="landing.colTagMain">Colección principal</div>
-          <div class="col-title">Cadenas</div>
+          <div class="col-title" data-i18n="landing.colCadenas">Cadenas</div>
           <div class="col-cta" data-i18n="landing.colExplore">Explorar →</div>
         </div>
       </div>
       <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/?cat=Anillos'">
         <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagFeatured">Destacado</div><div class="col-title">Anillos</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagFeatured">Destacado</div><div class="col-title" data-i18n="landing.colAnillos">Anillos</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/?cat=Hombres'">
         <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagMen">Para ellos</div><div class="col-title">Hombres</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagMen">Para ellos</div><div class="col-title" data-i18n="landing.colHombres">Hombres</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/?cat=Pulseras'">
         <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagHandmade">Hecho a mano</div><div class="col-title">Pulseras</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagHandmade">Hecho a mano</div><div class="col-title" data-i18n="landing.colPulseras">Pulseras</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
       <div class="col-card reveal" data-delay="5" onclick="window.location.href='./ui_kits/store/?cat=Aretes'">
         <div class="col-bg gC" data-cat="Aretes" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
-        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagElegance">Elegancia</div><div class="col-title">Aretes</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
+        <div class="col-content"><div class="col-tag" data-i18n="landing.colTagElegance">Elegancia</div><div class="col-title" data-i18n="landing.colAretes">Aretes</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </div>
     </div>
   </div>
@@ -672,6 +672,7 @@ let CACUSA_HOME = {};
     const _L = localStorage.getItem('cacusa-lang') || 'es';
     const homeEn = (_L === 'en' && cfg.home_en) ? cfg.home_en : null;
     window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
+    if (_L === 'en' && homeEn && Array.isArray(homeEn.testimonials)) window.__testimonials_en = homeEn.testimonials;
     const homeD = homeEn || home;
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
     // — Quiénes somos —
@@ -917,7 +918,8 @@ revEls.forEach(el=>obs.observe(el));
     card.style.cursor = 'none';
     const _qv = (window.__T && window.__T['landing.quickView']) || 'Vista rápida →';
     const _ab = (window.__T && window.__T['landing.addBtn']) || '+ Añadir';
-    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(p.category||'')}</div><div class="prod-name">${esc(p.name||'')}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">${_ab}</button></div></div>`;
+    const _catLbl = (window.__T && p.category && window.__T['cat.' + p.category.toLowerCase()]) || (p.category || '');
+    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(_catLbl)}</div><div class="prod-name">${esc(p.name||'')}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">${_ab}</button></div></div>`;
     grid.appendChild(card);
     obs.observe(card);
   });
@@ -953,8 +955,12 @@ const testis=[
   {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
 ];
 // Usa los testimonios guardados en products.json si existen; si no, los de arriba
-const cfgTestis = (CACUSA_HOME.testimonials && CACUSA_HOME.testimonials.length)
-  ? CACUSA_HOME.testimonials.map(x => ({
+const _TL = localStorage.getItem('cacusa-lang') || 'es';
+const _testiSrc = (_TL === 'en' && window.__testimonials_en && window.__testimonials_en.length)
+  ? window.__testimonials_en
+  : (CACUSA_HOME.testimonials && CACUSA_HOME.testimonials.length ? CACUSA_HOME.testimonials : null);
+const cfgTestis = _testiSrc
+  ? _testiSrc.map(x => ({
       t: '"' + String(x.t || x.text || '').replace(/^"|"$/g, '') + '"',
       n: x.n || x.name || '',
       l: x.l || x.location || ''
