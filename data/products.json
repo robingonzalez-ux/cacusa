@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-19T14:13:51.779Z",
+  "lastUpdated": "2026-06-19T14:16:03.953Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -10,13 +10,15 @@
       "Aretes",
       "Anillos",
       "Hombres",
-      "Pulseras"
+      "Pulseras",
+      "Ear cuff"
     ],
     "materials": [
       "Plata 925",
       "Baño de oro 18k",
       "Acero inoxidable",
-      "Gold filled"
+      "Gold filled",
+      "Baño de Rodio"
     ],
     "shipping": {
       "freeThreshold": 150,
@@ -569,6 +571,24 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781878427634
+    },
+    {
+      "name": "Ear cuff ancho plateado ",
+      "category": "Ear cuff",
+      "price": 22,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878519989_image_jpg.jpg",
+      "focalX": 49.4692144373673,
+      "focalY": 43.33333333333335,
+      "zoom": 1.6,
+      "material": "Plata 925",
+      "id": 1781878560407
     }
   ]
 }
