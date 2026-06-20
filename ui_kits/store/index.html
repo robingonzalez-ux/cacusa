@@ -1146,7 +1146,7 @@ function renderCheckoutSummary() {
         <div class="co-si-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
         ${item.personalization ? `<div class="co-si-custom">"${item.personalization}"</div>` : ''}
       </div>
-      <div class="co-si-price">$${item.price}</div>
+      <div class="co-si-price">$${(+item.price).toFixed(2)}</div>
     </div>`).join('');
 }
 
