@@ -83,6 +83,24 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .badge-new{background:var(--pink);color:white}
 .badge-best{background:var(--ink);color:white}
 .badge-sale{background:var(--lilac);color:white}
+.badge-promo{background:linear-gradient(135deg,#FF6B00,#FF3E6C);color:white}
+.combo-section{padding:4px 0 28px}
+.combo-section-title{font-family:var(--fe);font-size:19px;font-weight:800;color:var(--ink);margin:0 4px 12px}
+.combo-scroll{display:flex;gap:13px;overflow-x:auto;padding:4px 4px 10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.combo-scroll::-webkit-scrollbar{display:none}
+.combo-card{flex-shrink:0;width:180px;background:white;border-radius:18px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,.08);cursor:pointer;border:2.5px solid transparent;transition:border-color .2s,transform .2s}
+.combo-card:active{transform:scale(.97)}
+.combo-img{width:100%;height:120px;object-fit:cover;display:block}
+.combo-img-ph{width:100%;height:120px;background:linear-gradient(135deg,#FCE8F3,#EE6FA8);display:flex;align-items:center;justify-content:center;font-size:34px}
+.combo-body{padding:10px 12px 12px}
+.combo-name{font-family:var(--fe);font-weight:700;font-size:13px;color:var(--ink);margin-bottom:2px;line-height:1.3}
+.combo-desc{font-size:10px;color:var(--ink-muted);margin-bottom:7px;line-height:1.4}
+.combo-prices{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.combo-price-now{font-family:var(--fe);font-weight:800;font-size:15px;color:var(--pink)}
+.combo-price-old{font-size:11px;color:#bbb;text-decoration:line-through}
+.combo-saving{font-size:10px;font-weight:700;color:#10B981}
+.combo-add{width:100%;background:var(--pink-pale);color:var(--pink);font-family:var(--fu);font-size:11px;font-weight:700;border:none;border-radius:999px;padding:7px 12px;cursor:pointer;transition:background .2s,color .2s}
+.combo-add:hover,.combo-add:active{background:var(--pink);color:white}
 .pcard-wish{position:absolute;top:12px;right:12px;background:white;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:none;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .2s;z-index:2}
 .pcard-wish:hover{background:var(--pink-pale);transform:scale(1.1)}
 .pcard-wish.liked svg path{fill:var(--pink)}
@@ -317,6 +335,12 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   </select>
 </div>
 
+<!-- COMBO SECTION -->
+<div id="comboSection" style="display:none" class="store-body combo-section">
+  <div class="combo-section-title">🎁 Combos y Paquetes</div>
+  <div class="combo-scroll" id="comboScroll"></div>
+</div>
+
 <!-- PRODUCT GRID -->
 <div class="store-body">
   <div class="prod-grid" id="prodGrid">
@@ -537,6 +561,7 @@ const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 
 let PRODUCTS = [];
+let COMBOS = [];
 let WHATSAPP_NUMBER = '';
 
 // Config dinámica (se sobreescribe con products.json → config)
@@ -701,7 +726,8 @@ function normalizeProd(p) {
     grad:   p.grad || COLOR_GRADS[p.color] || 'linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC)',
     badge:  badge,
     market: p.market || 'both',
-    available: p.available !== false
+    available: p.available !== false,
+    promo: p.promo || null
   };
 }
 
@@ -729,6 +755,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
     if (_L === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
+    COMBOS = (!Array.isArray(data) && Array.isArray(data.combos)) ? data.combos.filter(c => c.available !== false) : [];
     if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   } catch(e) {
     PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
@@ -748,6 +775,21 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
       }
     }
   } catch(_) {}
+  // Apply active promos (overrides surcharge: promo price IS the final price)
+  const _now = new Date();
+  PRODUCTS.forEach(p => {
+    if (p.promo && p.promo.price) {
+      const _ended = p.promo.endsAt && new Date(p.promo.endsAt) < _now;
+      if (!_ended) {
+        p.originalPrice = p.basePrice;
+        p.price = +p.promo.price;
+        p.isPromo = true;
+        p.tag = p.promo.label || 'Oferta';
+        p.badge = 'badge-promo';
+        p.hasSurcharge = false;
+      }
+    }
+  });
   // Apply per-product markets + detect visitor country via IP (best-effort, non-blocking)
   try {
     const [_mktRes, _ipRes] = await Promise.all([
@@ -770,6 +812,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
   renderFilters();
   renderMaterials();
   renderProducts();
+  renderCombos();
   updateCartUI();
 })();
 
@@ -912,8 +955,8 @@ function renderProducts() {
         ${getMarketBadge(p)}
         <div class="pcard-foot">
           <div class="pcard-price">
-            <span class="price-now">$${p.price}</span>
-            ${p.oldPrice ? `<span class="price-old">$${p.oldPrice}</span>` : ''}
+            <span class="price-now">$${(+p.price).toFixed(2)}</span>
+            ${p.isPromo && p.originalPrice ? `<span class="price-old">$${(+p.originalPrice).toFixed(2)}</span>` : (p.oldPrice ? `<span class="price-old">$${p.oldPrice}</span>` : '')}
           </div>
           <button class="pcard-add" onclick="openModal(${p.id})">${t('store.viewBtn', '+ Ver')}</button>
         </div>
@@ -921,6 +964,53 @@ function renderProducts() {
     </div>
   `).join('');
   refreshCursorTargets();
+}
+
+// ─── COMBOS ─────────────────────────────────────────────────
+function renderCombos() {
+  const section = document.getElementById('comboSection');
+  const scroll  = document.getElementById('comboScroll');
+  if (!section || !scroll) return;
+  if (COMBOS.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  scroll.innerHTML = COMBOS.map(c => {
+    const items = (c.items || []).map(id => PRODUCTS.find(p => p.id === id)).filter(Boolean);
+    const origTotal = items.reduce((s, p) => s + p.basePrice, 0);
+    const saving = origTotal > c.price ? (origTotal - c.price).toFixed(2) : null;
+    const imgEl = c.imageUrl
+      ? `<img class="combo-img" src="${c.imageUrl}" alt="${c.name}">`
+      : `<div class="combo-img-ph">🎁</div>`;
+    return `
+      <div class="combo-card" onclick="addComboToCart(${c.id})">
+        ${imgEl}
+        <div class="combo-body">
+          <div class="combo-name">${c.name}</div>
+          <div class="combo-desc">${items.map(p => p.name).slice(0,3).join(' + ')}${items.length > 3 ? ' +más' : ''}</div>
+          <div class="combo-prices">
+            <span class="combo-price-now">$${(+c.price).toFixed(2)}</span>
+            ${saving ? `<span class="combo-price-old">$${origTotal.toFixed(2)}</span><span class="combo-saving">Ahorras $${saving}</span>` : ''}
+          </div>
+          <button class="combo-add">🛒 Agregar combo</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function addComboToCart(id) {
+  const combo = COMBOS.find(c => c.id === id);
+  if (!combo) return;
+  cart.push({
+    id: combo.id,
+    name: combo.name,
+    price: +combo.price,
+    basePrice: +combo.price,
+    hasSurcharge: false,
+    isCombo: true,
+    grad: 'linear-gradient(135deg,#FCE8F3,#EE6FA8,#C4A0EC)',
+    img: 'collar',
+    cartId: Date.now()
+  });
+  saveCart(); updateCartUI();
 }
 
 // ─── FILTERS (los botones se generan en renderFilters) ──────

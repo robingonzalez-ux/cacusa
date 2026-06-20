@@ -380,9 +380,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const mats = (materials && materials.length) ? materials : DEFAULT_MATERIALS;
   const isNew = !product?.id;
   const initMkt = product ? (fbMarkets[product.id] || 'both') : 'both';
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true };
+  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true, promoEnabled: false, promoPrice: '', promoLabel: 'Oferta', promoEndsAt: '' };
   const [form, setForm] = useState(product
-    ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec' }
+    ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec', promoEnabled: !!(product.promo && product.promo.price), promoPrice: (product.promo && product.promo.price) || '', promoLabel: (product.promo && product.promo.label) || 'Oferta', promoEndsAt: (product.promo && product.promo.endsAt) || '' }
     : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
@@ -426,6 +426,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const save = () => {
     if (!form.name.trim() || !form.price) return;
     const market = (form.marketEC && form.marketUS) || (!form.marketEC && !form.marketUS) ? 'both' : form.marketEC ? 'ec' : 'us';
+    const promo = form.promoEnabled && form.promoPrice
+      ? { price: Number(form.promoPrice), label: form.promoLabel || 'Oferta', endsAt: form.promoEndsAt || null }
+      : null;
     onSave({
       ...form,
       id: form.id || Date.now(),
@@ -434,7 +437,8 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
       tag: form.tag || null,
       available: form.available !== false,
       surcharge: !!form.surcharge,
-      market
+      market,
+      promo
     });
   };
 
@@ -580,6 +584,38 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
               🇺🇸 Estados Unidos
             </label>
           </div>
+        </div>
+
+        {/* En oferta / Promoción */}
+        <div style={{ background: '#FFF8F0', borderRadius: 12, padding: '14px 16px', marginBottom: 24, border: '1px solid #FFE0B2' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 600, marginBottom: form.promoEnabled ? 14 : 0 }}>
+            <input type="checkbox" checked={!!form.promoEnabled} onChange={e => set('promoEnabled', e.target.checked)}
+              style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#FF6B00' }} />
+            🏷️ Poner en oferta / promoción
+          </label>
+          {form.promoEnabled && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div>
+                <label style={lbl}>Precio de oferta USD *</label>
+                <input type="number" min="0" step="0.01" value={form.promoPrice || ''} onChange={e => set('promoPrice', e.target.value)}
+                  placeholder="35.00" style={inp} />
+              </div>
+              <div>
+                <label style={lbl}>Etiqueta de oferta</label>
+                <input value={form.promoLabel || ''} onChange={e => set('promoLabel', e.target.value)}
+                  placeholder="Flash · Promo · 2x1" style={inp} />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={lbl}>Válido hasta (opcional)</label>
+                <input type="date" value={form.promoEndsAt || ''} onChange={e => set('promoEndsAt', e.target.value)} style={inp} />
+              </div>
+              {form.price && form.promoPrice && Number(form.promoPrice) < Number(form.price) && (
+                <div style={{ gridColumn: 'span 2', fontSize: 12, color: '#FF6B00', fontWeight: 600 }}>
+                  💰 Descuento: ${(Number(form.price) - Number(form.promoPrice)).toFixed(2)} ({Math.round((1 - Number(form.promoPrice) / Number(form.price)) * 100)}% off)
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1064,6 +1100,194 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
   );
 }
 
+// ── Descuentos Tab ──────────────────────────────────────────────────────────
+function ComboForm({ combo, products, onSave, onClose }) {
+  const [form, setForm] = useState(combo
+    ? { ...combo }
+    : { id: null, name: '', items: [], price: '', imageUrl: '', available: true });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const toggleItem = id => setForm(f => {
+    const items = f.items.includes(id) ? f.items.filter(x => x !== id) : [...f.items, id];
+    return { ...f, items };
+  });
+  const save = () => {
+    if (!form.name.trim() || !form.price || form.items.length < 2) return;
+    onSave({ ...form, id: form.id || Date.now(), price: Number(form.price), available: form.available !== false });
+  };
+  const origTotal = form.items.reduce((s, id) => {
+    const p = products.find(x => x.id === id);
+    return s + (p ? Number(p.price) : 0);
+  }, 0);
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box', background: 'white' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
+  return (
+    <div style={{ background: '#FAF7FB', borderRadius: 14, padding: '18px 16px', marginBottom: 20, border: '1px solid #EDE8EA' }}>
+      <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 14 }}>{form.id ? '✏️ Editar Combo' : '➕ Nuevo Combo'}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        <div style={{ gridColumn: 'span 2' }}>
+          <label style={lbl}>Nombre del combo *</label>
+          <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Set de aretes dorados" style={inp} />
+        </div>
+        <div>
+          <label style={lbl}>Precio del combo *</label>
+          <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45.00" style={inp} />
+        </div>
+        <div>
+          <label style={lbl}>URL de imagen (opcional)</label>
+          <input value={form.imageUrl || ''} onChange={e => set('imageUrl', e.target.value)} placeholder="https://..." style={inp} />
+        </div>
+      </div>
+      {form.price && origTotal > 0 && Number(form.price) < origTotal && (
+        <div style={{ fontSize: 12, color: '#10B981', fontWeight: 600, marginBottom: 10 }}>
+          💰 Ahorro vs. precio individual: ${(origTotal - Number(form.price)).toFixed(2)} (de ${origTotal.toFixed(2)})
+        </div>
+      )}
+      <div style={{ marginBottom: 14 }}>
+        <label style={lbl}>Productos del combo (mínimo 2) *</label>
+        <div style={{ maxHeight: 200, overflowY: 'auto', border: '1.5px solid #e4e4e4', borderRadius: 10, background: 'white' }}>
+          {products.filter(p => p.available !== false).map(p => (
+            <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 13px', cursor: 'pointer', borderBottom: '1px solid #f5f5f5', fontSize: 13 }}>
+              <input type="checkbox" checked={form.items.includes(p.id)} onChange={() => toggleItem(p.id)}
+                style={{ width: 15, height: 15, accentColor: '#E85D8A' }} />
+              <span style={{ flex: 1 }}>{p.name}</span>
+              <span style={{ color: '#A89AAF', fontSize: 12 }}>${p.price}</span>
+            </label>
+          ))}
+        </div>
+        {form.items.length > 0 && <div style={{ fontSize: 11, color: '#7A6880', marginTop: 4 }}>{form.items.length} producto(s) seleccionado(s)</div>}
+      </div>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={onClose} style={{ flex: 1, padding: 12, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Cancelar</button>
+        <button onClick={save} disabled={!form.name || !form.price || form.items.length < 2}
+          style={{ flex: 2, padding: 12, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, opacity: (!form.name || !form.price || form.items.length < 2) ? .5 : 1, cursor: 'pointer', border: 'none' }}>
+          {form.id ? '💾 Guardar Combo' : '+ Crear Combo'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
+  const [section, setSection]         = useState(null);
+  const [showComboForm, setShowComboForm] = useState(false);
+  const [editCombo, setEditCombo]     = useState(null);
+  const now = new Date();
+  const activePromos = products.filter(p => p.promo && p.promo.price && (!p.promo.endsAt || new Date(p.promo.endsAt) >= now));
+  const backBtn = { padding: '8px 16px', border: '1.5px solid #ddd', borderRadius: 99, background: 'white', fontSize: 13, fontWeight: 600, color: '#555', cursor: 'pointer', marginBottom: 20 };
+  const card = { background: 'white', borderRadius: 18, padding: '24px 20px', textAlign: 'center', cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,.06)', transition: 'transform .15s' };
+
+  if (section === null) {
+    return (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div onClick={() => setSection('promos')} style={card}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>🏷️</div>
+          <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1118', marginBottom: 4 }}>Promociones</div>
+          <div style={{ fontSize: 12, color: '#A89AAF' }}>{activePromos.length} {activePromos.length === 1 ? 'activa' : 'activas'}</div>
+        </div>
+        <div onClick={() => setSection('combos')} style={card}>
+          <div style={{ fontSize: 40, marginBottom: 10 }}>🎁</div>
+          <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1118', marginBottom: 4 }}>Combos</div>
+          <div style={{ fontSize: 12, color: '#A89AAF' }}>{combos.filter(c => c.available !== false).length} activos · {combos.length} total</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === 'promos') {
+    return (
+      <div>
+        <button onClick={() => setSection(null)} style={backBtn}>← Volver</button>
+        <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 16 }}>🏷️ Productos en promoción</div>
+        <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Para agregar o quitar una promo, edita el producto y activa "Poner en oferta".</div>
+        {activePromos.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#A89AAF' }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🏷️</div>
+            <div style={{ fontWeight: 600 }}>No hay productos en promoción.</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {activePromos.map(p => (
+              <div key={p.id} style={{ background: 'white', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 1px 8px rgba(0,0,0,.06)' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118' }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: '#A89AAF' }}>{p.category}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <span style={{ textDecoration: 'line-through', color: '#bbb', fontSize: 13 }}>${p.price}</span>
+                    <span style={{ fontWeight: 800, color: '#FF6B00', fontSize: 15 }}>${p.promo.price}</span>
+                    {p.promo.label && <span style={{ fontSize: 11, background: '#FFF0E0', color: '#FF6B00', padding: '2px 8px', borderRadius: 99 }}>{p.promo.label}</span>}
+                  </div>
+                  {p.promo.endsAt && <div style={{ fontSize: 11, color: '#A89AAF', marginTop: 2 }}>Hasta: {new Date(p.promo.endsAt + 'T12:00:00').toLocaleDateString('es-EC')}</div>}
+                </div>
+                <button onClick={() => onEditProduct(p)}
+                  style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  ✏️ Editar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (section === 'combos') {
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <button onClick={() => { setSection(null); setShowComboForm(false); setEditCombo(null); }} style={backBtn}>← Volver</button>
+          <div style={{ flex: 1, fontWeight: 800, fontSize: 18, color: '#1A1118' }}>🎁 Combos y Paquetes</div>
+          <button onClick={() => { setEditCombo(null); setShowComboForm(true); }}
+            style={{ padding: '9px 18px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>
+            + Nuevo Combo
+          </button>
+        </div>
+        {showComboForm && (
+          <ComboForm combo={editCombo} products={products}
+            onSave={c => {
+              setCombos(prev => {
+                const i = prev.findIndex(x => x.id === c.id);
+                return i > -1 ? prev.map((x, j) => j === i ? c : x) : [...prev, c];
+              });
+              setShowComboForm(false); setEditCombo(null);
+            }}
+            onClose={() => { setShowComboForm(false); setEditCombo(null); }}
+          />
+        )}
+        {combos.length === 0 && !showComboForm ? (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#A89AAF' }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>🎁</div>
+            <div style={{ fontWeight: 600 }}>No hay combos todavía.</div>
+            <div style={{ fontSize: 13, marginTop: 8 }}>Crea tu primer combo con el botón "Nuevo Combo".</div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {combos.map(c => (
+              <div key={c.id} style={{ background: 'white', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 8px rgba(0,0,0,.06)', opacity: c.available === false ? .5 : 1 }}>
+                {c.imageUrl && <img src={c.imageUrl} style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} alt={c.name} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118' }}>{c.name}</div>
+                  <div style={{ fontSize: 11, color: '#A89AAF' }}>{(c.items || []).length} productos · <strong style={{ color: '#E85D8A' }}>${Number(c.price).toFixed(2)}</strong></div>
+                  {c.available === false && <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600, marginTop: 2 }}>⏸ Desactivado</div>}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button onClick={() => setCombos(prev => prev.map(x => x.id === c.id ? { ...x, available: x.available === false ? true : false } : x))}
+                    style={{ padding: '7px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, border: '1.5px solid #ddd', cursor: 'pointer', background: 'white', color: '#666' }}>
+                    {c.available === false ? '▶' : '⏸'}
+                  </button>
+                  <button onClick={() => { setEditCombo(c); setShowComboForm(true); }}
+                    style={{ padding: '7px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, border: 'none', background: '#EDE8EA', cursor: 'pointer', color: '#333' }}>✏️</button>
+                  <button onClick={() => setCombos(prev => prev.filter(x => x.id !== c.id))}
+                    style={{ padding: '7px 12px', borderRadius: 99, fontSize: 12, fontWeight: 600, border: 'none', background: '#FEE2E2', cursor: 'pointer', color: '#DC2626' }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+}
+
 // ── Mercado Tab ─────────────────────────────────────────────────────────────
 function MercadoTab({ products }) {
   const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
@@ -1293,6 +1517,7 @@ function App() {
   const [pushState, setPushState]           = useState('');  // ''|'subscribed'|'denied'|'unsupported'|'error'
   const [fbSurcharges, setFbSurcharges]     = useState({});
   const [fbMarkets, setFbMarkets]           = useState({});
+  const [combos, setCombos]                 = useState([]);
 
   const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
   const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
@@ -1328,6 +1553,7 @@ function App() {
         const data = JSON.parse(res.products);
         const prods = Array.isArray(data) ? data : (data.products || []);
         setProducts(prods.map(p => ({ ...p, available: p.available !== false })));
+        if (Array.isArray(data.combos)) setCombos(data.combos);
         const cfg = (data.config || {});
         setWhatsappNum(data.whatsapp || cfg.whatsapp || '');
         if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
@@ -1377,7 +1603,8 @@ function App() {
         updatedBy: session.username,
         whatsapp: whatsappNum,
         config: { whatsapp: whatsappNum, categories, materials, shipping, texts, home, pages },
-        products
+        products,
+        combos
       }, null, 2);
       await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
       // Pedidos (no bloquea si falla)
@@ -1395,7 +1622,7 @@ function App() {
   };
 
   const saveProduct = async p => {
-    const { surcharge, market, marketEC, marketUS, ...prodData } = p;
+    const { surcharge, market, marketEC, marketUS, promoEnabled, promoPrice, promoLabel, promoEndsAt, ...prodData } = p;
     setProducts(prev => {
       const i = prev.findIndex(x => x.id === prodData.id);
       return i > -1 ? prev.map((x, j) => j === i ? prodData : x) : [...prev, prodData];
@@ -1518,12 +1745,13 @@ function App() {
         {/* ── Tab navigation ── */}
         <div style={{ display: 'flex', marginBottom: 20, background: 'white', borderRadius: 12, overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #EDE8EA' }}>
           {[
-            ['products', '💎 Productos', products.length],
-            ['orders',   '📦 Pedidos',   pendingOrders],
-            ['mercado',  '🌍 Mercado',   0],
-            ['landing',  '🏠 Landing',   0],
-            ['pages',    '📄 Páginas',   0],
-            ['settings', '⚙️ Ajustes',   0]
+            ['products',   '💎 Productos',  products.length],
+            ['orders',     '📦 Pedidos',    pendingOrders],
+            ['descuentos', '🏷️ Descuentos', products.filter(p => p.promo && p.promo.price).length + combos.length],
+            ['mercado',    '🌍 Mercado',    0],
+            ['landing',    '🏠 Landing',    0],
+            ['pages',      '📄 Páginas',    0],
+            ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ flexShrink: 0, minWidth: 90, padding: '13px 16px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', background: activeTab === tab ? 'white' : '#F9F5F7', color: activeTab === tab ? '#E8508A' : '#7A6880', borderBottom: activeTab === tab ? '2.5px solid #E8508A' : '2.5px solid transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all .15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
@@ -1591,6 +1819,16 @@ function App() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── Descuentos tab ── */}
+        {activeTab === 'descuentos' && (
+          <DescuentosTab
+            products={products}
+            combos={combos}
+            setCombos={c => { setCombos(c); setDirty(true); }}
+            onEditProduct={p => { setEditProd(p); setShowModal(true); setActiveTab('products'); }}
+          />
         )}
 
         {/* ── Orders tab ── */}
