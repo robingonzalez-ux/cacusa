@@ -375,12 +375,15 @@ function ImageEditor({ imgSrc, focalX, focalY, zoom, onChange }) {
 }
 
 // ── Product Modal ──────────────────────────────────────────────────────────
-function ProductModal({ product, onSave, onClose, token, categories, materials }) {
+function ProductModal({ product, onSave, onClose, token, categories, materials, fbSurcharges = {}, fbMarkets = {} }) {
   const cats = (categories && categories.length) ? categories : DEFAULT_CATEGORIES;
   const mats = (materials && materials.length) ? materials : DEFAULT_MATERIALS;
   const isNew = !product?.id;
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0] };
-  const [form, setForm] = useState(product ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '' } : blank);
+  const initMkt = product ? (fbMarkets[product.id] || 'both') : 'both';
+  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true };
+  const [form, setForm] = useState(product
+    ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec' }
+    : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
@@ -422,13 +425,16 @@ function ProductModal({ product, onSave, onClose, token, categories, materials }
 
   const save = () => {
     if (!form.name.trim() || !form.price) return;
+    const market = (form.marketEC && form.marketUS) || (!form.marketEC && !form.marketUS) ? 'both' : form.marketEC ? 'ec' : 'us';
     onSave({
       ...form,
       id: form.id || Date.now(),
       price: Number(form.price),
       oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
       tag: form.tag || null,
-      available: form.available !== false
+      available: form.available !== false,
+      surcharge: !!form.surcharge,
+      market
     });
   };
 
@@ -541,7 +547,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials }
           </div>
         </details>
 
-        <div style={{ display: 'flex', gap: 24, margin: '18px 0 24px' }}>
+        <div style={{ display: 'flex', gap: 24, margin: '18px 0 16px' }}>
           {[['personalized', '✦ Personalizable'], ['available', '✅ Disponible en tienda']].map(([k, label]) => (
             <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 500 }}>
               <input type="checkbox" checked={!!form[k] && form[k] !== false} onChange={e => set(k, e.target.checked)}
@@ -549,6 +555,31 @@ function ProductModal({ product, onSave, onClose, token, categories, materials }
               {label}
             </label>
           ))}
+        </div>
+
+        <div style={{ background: '#FAF7FB', borderRadius: 12, padding: '14px 16px', marginBottom: 24 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#7A6880', letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 12 }}>Mercado y recargo</div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 500, marginBottom: 12 }}>
+            <input type="checkbox" checked={!!form.surcharge} onChange={e => set('surcharge', e.target.checked)}
+              style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#E85D8A' }} />
+            💳 Recargo del 4% al pagar con tarjeta (Square)
+            {form.surcharge && form.price
+              ? <span style={{ marginLeft: 'auto', fontSize: 11, color: '#E85D8A', fontWeight: 700, whiteSpace: 'nowrap' }}>→ ${(Number(form.price) * 1.04).toFixed(2)} con recargo</span>
+              : null}
+          </label>
+          <div style={{ fontSize: 12, color: '#7A6880', fontWeight: 600, marginBottom: 8 }}>Disponible en:</div>
+          <div style={{ display: 'flex', gap: 24 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 500 }}>
+              <input type="checkbox" checked={!!form.marketEC} onChange={e => set('marketEC', e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#27AE60' }} />
+              🇪🇨 Ecuador
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#555', fontWeight: 500 }}>
+              <input type="checkbox" checked={!!form.marketUS} onChange={e => set('marketUS', e.target.checked)}
+                style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#2980B9' }} />
+              🇺🇸 Estados Unidos
+            </label>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: 10 }}>
@@ -1212,6 +1243,21 @@ function App() {
   const [activeTab, setActiveTab]     = useState('products');
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [pushState, setPushState]           = useState('');  // ''|'subscribed'|'denied'|'unsupported'|'error'
+  const [fbSurcharges, setFbSurcharges]     = useState({});
+  const [fbMarkets, setFbMarkets]           = useState({});
+
+  const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
+  const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [r1, r2] = await Promise.all([fetch(FB_SR), fetch(FB_MKT)]);
+        if (r1.ok) { const d = await r1.json(); if (d && typeof d === 'object') setFbSurcharges(d); }
+        if (r2.ok) { const d = await r2.json(); if (d && typeof d === 'object') setFbMarkets(d); }
+      } catch (_) {}
+    })();
+  }, []);
 
   useEffect(() => {
     if (session) {
@@ -1300,11 +1346,26 @@ function App() {
     setSyncing(false);
   };
 
-  const saveProduct = p => {
+  const saveProduct = async p => {
+    const { surcharge, market, marketEC, marketUS, ...prodData } = p;
     setProducts(prev => {
-      const i = prev.findIndex(x => x.id === p.id);
-      return i > -1 ? prev.map((x, j) => j === i ? p : x) : [...prev, p];
+      const i = prev.findIndex(x => x.id === prodData.id);
+      return i > -1 ? prev.map((x, j) => j === i ? prodData : x) : [...prev, prodData];
     });
+    const newSurcharges = { ...fbSurcharges };
+    if (surcharge) newSurcharges[prodData.id] = true;
+    else delete newSurcharges[prodData.id];
+    setFbSurcharges(newSurcharges);
+    const newMarkets = { ...fbMarkets };
+    if (market && market !== 'both') newMarkets[prodData.id] = market;
+    else delete newMarkets[prodData.id];
+    setFbMarkets(newMarkets);
+    try {
+      await Promise.all([
+        fetch(FB_SR,  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newSurcharges) }),
+        fetch(FB_MKT, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMarkets) })
+      ]);
+    } catch (_) {}
     setDirty(true); setShowModal(false); setEditProd(null);
   };
   const toggleProd = p => { setProducts(prev => prev.map(x => x.id === p.id ? { ...x, available: !x.available } : x)); setDirty(true); };
@@ -1561,7 +1622,7 @@ function App() {
 
         {/* ── Modals ── */}
         {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
-        {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} materials={materials} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
+        {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} materials={materials} fbSurcharges={fbSurcharges} fbMarkets={fbMarkets} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
 
         {delConfirm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
