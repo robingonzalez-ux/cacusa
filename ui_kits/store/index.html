@@ -1025,19 +1025,19 @@ function updateCartUI() {
           ${item.personalization ? `<div class="ci-custom">"${item.personalization}"</div>` : ''}
           <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
-            <span class="ci-price">$${item.price}</span>
+            <span class="ci-price">$${(+item.price).toFixed(2)}</span>
             <button class="ci-remove" onclick="removeItem(${item.cartId})">✕</button>
           </div>
         </div>
       </div>`).join('');
-    document.getElementById('cartTotal').textContent = '$' + total;
+    document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
     const free = total >= SHIPPING.freeThreshold;
     const _cL = localStorage.getItem('cacusa-lang') || 'es';
     document.getElementById('cartShipping').textContent = free
       ? t('store.shippingFree', '🎉 ¡Envío gratis desbloqueado!')
       : (_cL === 'en'
-          ? 'Add $' + (SHIPPING.freeThreshold - total) + ' more for free shipping'
-          : 'Agrega $' + (SHIPPING.freeThreshold - total) + ' más para envío gratis');
+          ? 'Add $' + (SHIPPING.freeThreshold - total).toFixed(2) + ' more for free shipping'
+          : 'Agrega $' + (SHIPPING.freeThreshold - total).toFixed(2) + ' más para envío gratis');
     footEl.style.display = 'block';
   }
 }
