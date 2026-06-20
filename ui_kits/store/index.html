@@ -421,15 +421,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-field">
           <label class="co-label" data-i18n="store.coPais">Pa&#xED;s</label>
           <select class="co-input" id="coPais">
+            <option value="US" selected>&#x1F1FA;&#x1F1F8; Estados Unidos</option>
             <option value="EC">&#x1F1EA;&#x1F1E8; Ecuador</option>
-            <option value="US">&#x1F1FA;&#x1F1F8; Estados Unidos</option>
             <option value="CO">&#x1F1E8;&#x1F1F4; Colombia</option>
             <option value="PE">&#x1F1F5;&#x1F1EA; Per&#xFA;</option>
             <option value="MX">&#x1F1F2;&#x1F1FD; M&#xE9;xico</option>
             <option value="OTHER">Otro</option>
           </select>
         </div>
-        <div class="co-field" id="coEstadoWrap" style="display:none">
+        <div class="co-field" id="coEstadoWrap">
           <label class="co-label" data-i18n="store.coEstado">Estado</label>
           <select class="co-input" id="coEstado">
             <option value="">-- Selecciona tu estado --</option>
@@ -461,7 +461,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
             <option value="DC">Washington D.C.</option>
           </select>
         </div>
-        <div class="co-field" id="coZipWrap" style="display:none">
+        <div class="co-field" id="coZipWrap">
           <label class="co-label" data-i18n="store.coZip">C&#xF3;digo ZIP</label>
           <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
         </div>
