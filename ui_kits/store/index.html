@@ -560,6 +560,55 @@ const PRODUCTS_JSON_URL = '../../data/products.json';
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 
+// ─── IDIOMA ─────────────────────────────────────────────────
+// Traducciones embebidas directamente — no dependen de fetch
+const __LANG = localStorage.getItem('cacusa-lang') || 'es';
+const __EN_T = {
+  "store.back":"Back to home","store.cartBtn":"Cart","store.filterLabel":"Filter:",
+  "store.all":"All","store.sortDefault":"Sort: Featured","store.sortPriceAsc":"Price: low to high",
+  "store.sortPriceDesc":"Price: high to low","store.sortNew":"Newest","store.loading":"Loading products…",
+  "nav.followUs":"Follow us on social media","store.footerHome":"Home","store.footerShippingLink":"Shipping",
+  "store.footerReturnsLink":"Returns","store.footerCareLink":"Care","store.personLabel":"Personalization",
+  "store.personPh":"Name, date or special message…","store.personHint":"Max. 20 characters · letters, numbers and spaces",
+  "store.cartTitle":"Your cart","store.subtotal":"Subtotal","store.checkoutBtn":"Checkout",
+  "store.waBadge":"Secure payment with Square 🔒","store.coTitle":"Checkout",
+  "store.coSubtitle":"CACUSA by Taitus · Personalized Jewelry","store.coContactSection":"Contact Information",
+  "store.coNombre":"First Name","store.phNombre":"First Name","store.coApellido":"Last Name","store.phApellido":"Last Name",
+  "store.coTel":"WhatsApp Phone","store.coShippingSection":"Shipping Address","store.coPais":"Country",
+  "store.coEstado":"State","store.coZip":"ZIP Code","store.coCiudad":"City","store.coAddress":"Full Address",
+  "store.coNotes":"Additional notes (optional)","store.phNotas":"Color, size, special detail…",
+  "store.coPayMethod":"Payment Method","store.paySquare":"Square / Credit Card","store.payZelleSub":"-4% discount",
+  "store.coPay":"Pay with Square","store.payWithZelle":"Pay with Zelle / Transfer",
+  "store.coSecure":"Secure payment · Apple Pay · Google Pay 🔒","store.coCustomNote":"Custom made pieces",
+  "store.devNote":"see return policy","store.coWaFallback":"💬 I prefer to coordinate via WhatsApp",
+  "store.orderSummary":"Order Summary","store.shipping":"Shipping","store.tax":"Tax",
+  "store.zelleDiscount":"Zelle Discount (4%)","store.total":"Total","store.coHelp":"NEED HELP?",
+  "store.coBack":"← Back to cart","store.successH":"Order sent!",
+  "store.successP":"We will contact you via WhatsApp to confirm your order. Thank you for choosing us!",
+  "store.successBtn":"Continue shopping","store.quickView":"Quick view →","store.viewBtn":"+ View",
+  "store.emptyCategory":"No products in this category yet.","store.cartEmpty":"Your cart is empty",
+  "store.shippingFree":"🎉 Free shipping unlocked!","store.coFree":"Free",
+  "store.coError1":"Please enter your name and WhatsApp number.","store.coError2":"Please select your state.",
+  "store.mktLocal":"Local product","store.mktImport":"Imported from the US","store.mktEcOnly":"Shipped from Ecuador",
+  "tag.nuevo":"New","tag.bestseller":"Bestseller",
+  "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
+  "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
+  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection"
+};
+// Establecer window.__T de inmediato (antes de cualquier fetch)
+window.__T = __LANG === 'en' ? __EN_T : {};
+// Aplicar data-i18n en el DOM al instante
+if (__LANG === 'en') {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const v = __EN_T[el.getAttribute('data-i18n')];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const v = __EN_T[el.getAttribute('data-i18n-ph')];
+    if (v !== undefined) el.placeholder = v;
+  });
+}
+
 let PRODUCTS = [];
 let COMBOS = [];
 let WHATSAPP_NUMBER = '';
@@ -685,7 +734,14 @@ let TEXTS = {
   instagram: '@cacusabytaitus',
   perks: ['Hecho a mano', 'Envío express', '5–7 días hábiles', 'Gift wrap gratis']
 };
-function t(key, fallback) { return (window.__T && window.__T[key]) || fallback; }
+function t(key, fallback) { return (window.__T && window.__T[key] !== undefined ? window.__T[key] : fallback); }
+function tagLabel(tag) {
+  if (!tag) return '';
+  const lc = tag.toLowerCase();
+  if (lc === 'nuevo' || lc === 'new')                          return t('tag.nuevo',      'Nuevo');
+  if (lc === 'bestseller' || lc === 'best seller')             return t('tag.bestseller', 'Lo más vendido');
+  return tag;
+}
 
 const FALLBACK_PRODUCTS = [
   {id:1,name:'Collar con nombre',cat:'Personalizado',price:45,grad:'linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Collar delicado con tu nombre grabado a mano. Plata 925 o baño de oro 18k. Cadena ajustable 40–45cm.'},
@@ -752,7 +808,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     }
     if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     const _L = localStorage.getItem('cacusa-lang') || 'es';
-    window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
+    if (_L === 'en' && cfg.translations && cfg.translations.en) window.__T = { ...__EN_T, ...cfg.translations.en };
     if (_L === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
     COMBOS = (!Array.isArray(data) && Array.isArray(data.combos)) ? data.combos.filter(c => c.available !== false) : [];
@@ -940,7 +996,7 @@ function renderProducts() {
   }
   grid.innerHTML = filtered.map((p, i) => `
     <div class="pcard" style="animation-delay:${i * 0.06}s" data-id="${p.id}">
-      ${p.badge ? `<div class="pcard-badge ${p.badge}">${p.tag && p.tag.toLowerCase() === 'nuevo' ? t('tag.nuevo', p.tag) : (p.tag || '')}</div>` : ''}
+      ${p.badge ? `<div class="pcard-badge ${p.badge}">${tagLabel(p.tag)}</div>` : ''}
       <button class="pcard-wish" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
