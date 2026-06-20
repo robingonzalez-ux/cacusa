@@ -14,7 +14,10 @@
 <link rel="manifest" href="/manifest.json">
 <title>CACUSA by Taitus — Joyería Personalizada</title>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';</script>
 <style>
+.lang-en .t-es{display:none!important}
+.lang-es .t-en{display:none!important}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -686,8 +689,7 @@ let CACUSA_HOME = {};
     CACUSA_HOME = home;
     const _L = localStorage.getItem('cacusa-lang') || 'es';
     const homeEn = (_L === 'en' && cfg.home_en) ? cfg.home_en : null;
-    window.__T = (_L === 'en' && cfg.translations && cfg.translations.en) ? cfg.translations.en : {};
-    if (_L === 'en' && homeEn && Array.isArray(homeEn.testimonials)) window.__testimonials_en = homeEn.testimonials;
+if (_L === 'en' && homeEn && Array.isArray(homeEn.testimonials)) window.__testimonials_en = homeEn.testimonials;
     const homeD = homeEn || home;
     const setTxt = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
     // — Quiénes somos —
@@ -931,10 +933,11 @@ revEls.forEach(el=>obs.observe(el));
     card.dataset.delay = String(i + 1);
     card.setAttribute('onclick', "window.location.href='./ui_kits/store/'");
     card.style.cursor = 'none';
-    const _qv = (window.__T && window.__T['landing.quickView']) || 'Vista rápida →';
-    const _ab = (window.__T && window.__T['landing.addBtn']) || '+ Añadir';
-    const _catLbl = (window.__T && p.category && window.__T['cat.' + p.category.toLowerCase()]) || (p.category || '');
-    const _nameLbl = (window.__T && p.name_en) ? p.name_en : (p.name || '');
+    const _L2 = localStorage.getItem('cacusa-lang') || 'es';
+    const _qv = _L2 === 'en' ? 'Quick view →' : 'Vista rápida →';
+    const _ab = _L2 === 'en' ? '+ Add' : '+ Añadir';
+    const _catLbl = (_L2 === 'en' && __LANDING_EN['cat.' + (p.category||'').toLowerCase()]) || (p.category || '');
+    const _nameLbl = (_L2 === 'en' && p.name_en) ? p.name_en : (p.name || '');
     card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(_catLbl)}</div><div class="prod-name">${esc(_nameLbl)}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">${_ab}</button></div></div>`;
     grid.appendChild(card);
     obs.observe(card);
@@ -1082,21 +1085,55 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
 });
 
 // ── LANG SWITCHER ──────────────────────────────────────────────
+const __LANDING_EN = {
+  "landing.navCollections":"Collections","landing.navStore":"Store","landing.navUs":"About Us",
+  "landing.navPersonalize":"Customize","landing.navCta":"See collection →",
+  "landing.heroLabel":"Personalized artisan jewelry",
+  "landing.heroDesc":"\"we create to make you look more beautiful than you already are\"",
+  "landing.heroBtnShop":"See collection","landing.heroBtnCustom":"Customize →","landing.scroll":"Explore",
+  "landing.collectionsLabel":"Our collections","landing.colTagMain":"Main collection",
+  "landing.colCadenas":"Chains","landing.colExplore":"Explore →","landing.colTagFeatured":"Featured",
+  "landing.colAnillos":"Rings","landing.colSee":"See →","landing.colTagMen":"For them",
+  "landing.colHombres":"Men","landing.colTagHandmade":"Handmade","landing.colPulseras":"Bracelets",
+  "landing.colTagElegance":"Elegance","landing.colAretes":"Earrings",
+  "landing.bestsellersLabel":"Best sellers","landing.seeAll":"See all →",
+  "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
+  "landing.formNamePh":"Your name","landing.formWhatsLabel":"Your WhatsApp",
+  "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
+  "landing.formMaterialLabel":"Material","landing.formMaterialPh":"Silver, gold…",
+  "landing.formDetailLabel":"Personalization","landing.formDetailPh":"Name, date, message…",
+  "landing.formBtn":"Send via WhatsApp →","landing.testiLabel":"What they say",
+  "landing.igLabel":"Follow us on Instagram",
+  "landing.igBody":"Check out the latest creations, stories and personalized pieces",
+  "landing.igBtn":"Follow @cacusabytaitus","landing.ctaScript":"Ready for your piece?",
+  "landing.ctaH":"Your jewelry is waiting for you","landing.ctaBtn":"Go to store →",
+  "landing.footerStoreH":"Store","landing.footerHelpH":"Help","landing.footerShipping":"Shipping",
+  "landing.footerReturns":"Returns","landing.footerCare":"Care","landing.footerContact":"Contact",
+  "landing.footerUsH":"About Us","landing.footerOurStory":"Our story","landing.footerCraft":"Artisan process",
+  "nav.followUs":"Follow us on social media",
+  "landing.vigOff":"OFF","landing.vigScript":"on your first piece","landing.vigLabel":"Exclusive offer",
+  "landing.vigTitle":"Your first jewel is waiting",
+  "landing.vigDesc":"Subscribe and get 10% off your first purchase. Limited time only.",
+  "landing.vigBtn":"I want my discount →","landing.vigSkip":"No thanks, I prefer to pay full price",
+  "landing.quickView":"Quick view →","landing.addBtn":"+ Add",
+  "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
+  "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
+  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection"
+};
 (function applyI18n(){
   const _L = localStorage.getItem('cacusa-lang') || 'es';
-  const T = window.__T || {};
+  const T = _L === 'en' ? __LANDING_EN : {};
   if (_L === 'en') {
     document.title = 'CACUSA by Taitus — Personalized Jewelry';
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const v = T[el.getAttribute('data-i18n')];
       if (v !== undefined) el.textContent = v;
     });
-    // Placeholders
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
       const v = T[el.getAttribute('data-i18n-ph')];
       if (v !== undefined) el.placeholder = v;
     });
-    // Elements with inner HTML (em tags, br)
+    // Elementos con HTML interno (em, br)
     const heroH1 = document.getElementById('heroH1');
     if (heroH1) heroH1.innerHTML = 'Made<br>for <em>you.</em>';
     const cH2 = document.getElementById('collectionsH2');
