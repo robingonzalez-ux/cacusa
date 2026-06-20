@@ -15,7 +15,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';</script>
   <style>
+.lang-en .t-es{display:none!important}
+.lang-es .t-en{display:none!important}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --pink:#EE6FA8; --pink-mid:#F5A0C8; --pink-pale:#FCE8F3; --pink-deep:#C0336E;
@@ -302,13 +305,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   </a>
   <a class="nav-back" href="/">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
-    <span data-i18n="store.back">Volver al inicio</span>
+    <span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span>
   </a>
   <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
   <div class="nav-right">
     <button class="cart-btn" id="cartBtn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
-      <span data-i18n="store.cartBtn">Carrito</span>
+      <span class="t-es">Carrito</span><span class="t-en">Cart</span>
       <span class="cart-count" id="cartCount">0</span>
     </button>
   </div>
@@ -323,15 +326,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 
 <!-- FILTERS -->
 <div class="filters">
-  <span class="filter-label" data-i18n="store.filterLabel">Filtrar:</span>
+  <span class="filter-label"><span class="t-es">Filtrar:</span><span class="t-en">Filter:</span></span>
   <span id="filterBtns" style="display:contents">
-    <button class="filter-btn active" data-filter="all" data-i18n="store.all">Todo</button>
+    <button class="filter-btn active" data-filter="all">Todo</button>
   </span>
   <select class="sort-select" id="sortSelect">
-    <option value="default" data-i18n="store.sortDefault">Ordenar: Destacados</option>
-    <option value="price-asc" data-i18n="store.sortPriceAsc">Precio: menor a mayor</option>
-    <option value="price-desc" data-i18n="store.sortPriceDesc">Precio: mayor a menor</option>
-    <option value="new" data-i18n="store.sortNew">Más nuevos</option>
+    <option value="default">Ordenar: Destacados</option>
+    <option value="price-asc">Precio: menor a mayor</option>
+    <option value="price-desc">Precio: mayor a menor</option>
+    <option value="new">Más nuevos</option>
   </select>
 </div>
 
@@ -344,14 +347,14 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- PRODUCT GRID -->
 <div class="store-body">
   <div class="prod-grid" id="prodGrid">
-    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)" data-i18n="store.loading">Cargando productos…</div>
+    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)"><span class="t-es">Cargando productos…</span><span class="t-en">Loading products…</span></div>
   </div>
 </div>
 
 <footer class="store-footer">
   <div class="f-w">CACUSA</div>
   <div class="f-s">by Taitus</div>
-  <div class="f-social-label" data-i18n="nav.followUs">Síguenos en nuestras redes sociales</div>
+  <div class="f-social-label"><span class="t-es">Síguenos en nuestras redes sociales</span><span class="t-en">Follow us on social media</span></div>
   <div class="f-social">
     <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="f-social-btn">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
@@ -363,10 +366,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
     </a>
   </div>
   <div class="f-links">
-    <a href="/" data-i18n="store.footerHome">Inicio</a>
-    <a href="../../envios.html" data-i18n="store.footerShippingLink">Envíos</a>
-    <a href="../../devoluciones.html" data-i18n="store.footerReturnsLink">Devoluciones</a>
-    <a href="../../cuidados.html" data-i18n="store.footerCareLink">Cuidados</a>
+    <a href="/"><span class="t-es">Inicio</span><span class="t-en">Home</span></a>
+    <a href="../../envios.html"><span class="t-es">Envíos</span><span class="t-en">Shipping</span></a>
+    <a href="../../devoluciones.html"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
+    <a href="../../cuidados.html"><span class="t-es">Cuidados</span><span class="t-en">Care</span></a>
   </div>
 </footer>
 
@@ -384,9 +387,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
-        <label class="modal-label" data-i18n="store.personLabel">Personalizaci&#xF3;n</label>
-        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial&hellip;" data-i18n-ph="store.personPh">
-        <div class="modal-hint" data-i18n="store.personHint">M&#xE1;x. 20 caracteres &middot; letras, n&#xFA;meros y espacios</div>
+        <label class="modal-label"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
+        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…">
+        <div class="modal-hint"><span class="t-es">Máx. 20 caracteres · letras, números y espacios</span><span class="t-en">Max. 20 characters · letters, numbers and spaces</span></div>
       </div>
       <div class="modal-qty">
         <button class="qty-btn" id="qtyMinus">&#x2212;</button>
@@ -408,21 +411,21 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <div id="cart-overlay"></div>
 <div id="cart-drawer">
   <div class="cart-head">
-    <div class="cart-title" data-i18n="store.cartTitle">Tu carrito</div>
+    <div class="cart-title"><span class="t-es">Tu carrito</span><span class="t-en">Your cart</span></div>
     <button class="cart-close" id="cartClose">&#x2715;</button>
   </div>
   <div class="cart-items" id="cartItems"></div>
   <div class="cart-foot" id="cartFoot" style="display:none">
     <div class="cart-subtotal">
-      <span data-i18n="store.subtotal">Subtotal</span>
+      <span>Subtotal</span>
       <strong id="cartTotal">$0</strong>
     </div>
     <div class="cart-shipping" id="cartShipping"></div>
     <button class="checkout-btn" id="checkoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
-      <span data-i18n="store.checkoutBtn">Finalizar pedido</span>
+      <span class="t-es">Finalizar pedido</span><span class="t-en">Checkout</span>
     </button>
-    <div class="wa-badge" data-i18n="store.waBadge">Pago seguro con Square &#x1F512;</div>
+    <div class="wa-badge"><span class="t-es">Pago seguro con Square 🔒</span><span class="t-en">Secure payment with Square 🔒</span></div>
   </div>
 </div>
 
@@ -431,19 +434,19 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <div class="checkout-box">
     <div class="checkout-inner">
       <div class="checkout-left">
-        <div class="co-title" data-i18n="store.coTitle">Finalizar pedido</div>
-        <div class="co-subtitle" data-i18n="store.coSubtitle">CACUSA by Taitus &middot; Joyer&#xED;a personalizada</div>
+        <div class="co-title"><span class="t-es">Finalizar pedido</span><span class="t-en">Checkout</span></div>
+        <div class="co-subtitle"><span class="t-es">CACUSA by Taitus · Joyería personalizada</span><span class="t-en">CACUSA by Taitus · Personalized Jewelry</span></div>
 
-        <div class="co-section" data-i18n="store.coContactSection">Informaci&#xF3;n de contacto</div>
+        <div class="co-section"><span class="t-es">Información de contacto</span><span class="t-en">Contact Information</span></div>
         <div class="co-row">
-          <div class="co-field"><label class="co-label" data-i18n="store.coNombre">Nombre</label><input class="co-input" placeholder="Nombre" id="coNombre" data-i18n-ph="store.phNombre"></div>
-          <div class="co-field"><label class="co-label" data-i18n="store.coApellido">Apellido</label><input class="co-input" placeholder="Apellido" id="coApellido" data-i18n-ph="store.phApellido"></div>
+          <div class="co-field"><label class="co-label"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre"></div>
+          <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido"></div>
         </div>
-        <div class="co-field"><label class="co-label" data-i18n="store.coTel">Tel&#xE9;fono WhatsApp</label><input class="co-input" placeholder="+1 (305) 555-1234" id="coTel"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Teléfono WhatsApp</span><span class="t-en">WhatsApp Phone</span></label><input class="co-input" placeholder="+1 (305) 555-1234" id="coTel"></div>
 
-        <div class="co-section" data-i18n="store.coShippingSection">Direcci&#xF3;n de env&#xED;o</div>
+        <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
-          <label class="co-label" data-i18n="store.coPais">Pa&#xED;s</label>
+          <label class="co-label"><span class="t-es">País</span><span class="t-en">Country</span></label>
           <select class="co-input" id="coPais">
             <option value="US" selected>&#x1F1FA;&#x1F1F8; Estados Unidos</option>
             <option value="EC">&#x1F1EA;&#x1F1E8; Ecuador</option>
@@ -454,7 +457,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </select>
         </div>
         <div class="co-field" id="coEstadoWrap">
-          <label class="co-label" data-i18n="store.coEstado">Estado</label>
+          <label class="co-label"><span class="t-es">Estado</span><span class="t-en">State</span></label>
           <select class="co-input" id="coEstado">
             <option value="">-- Selecciona tu estado --</option>
             <option value="AL">Alabama</option><option value="AK">Alaska (sin impuesto)</option>
@@ -486,22 +489,22 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </select>
         </div>
         <div class="co-field" id="coZipWrap">
-          <label class="co-label" data-i18n="store.coZip">C&#xF3;digo ZIP</label>
+          <label class="co-label"><span class="t-es">Código ZIP</span><span class="t-en">ZIP Code</span></label>
           <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
         </div>
-        <div class="co-field"><label class="co-label" data-i18n="store.coCiudad">Ciudad</label><input class="co-input" placeholder="Miami" id="coCiudad"></div>
-        <div class="co-field"><label class="co-label" data-i18n="store.coAddress">Direcci&#xF3;n completa</label><input class="co-input" placeholder="123 Main St, Apt 4B&hellip;" id="coDireccion"></div>
-        <div class="co-field"><label class="co-label" data-i18n="store.coNotes">Notas adicionales (opcional)</label><input class="co-input" placeholder="Color, talla, detalle especial&hellip;" id="coNotas" data-i18n-ph="store.phNotas"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label><input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas"></div>
 
-        <div class="co-section" style="margin-top:20px" data-i18n="store.coPayMethod">M&#xE9;todo de pago</div>
+        <div class="co-section" style="margin-top:20px"><span class="t-es">Método de pago</span><span class="t-en">Payment Method</span></div>
         <div class="pay-method-grid">
           <div class="pay-method-opt selected" data-method="square" onclick="selectPayMethod(this)">
-            💳 <span data-i18n="store.paySquare">Square / Tarjeta</span>
+            💳 <span class="t-es">Square / Tarjeta</span><span class="t-en">Square / Credit Card</span>
             <small>Apple Pay · Google Pay</small>
           </div>
           <div class="pay-method-opt" data-method="zelle" onclick="selectPayMethod(this)">
-            💸 Zelle / Transferencia
-            <small data-i18n="store.payZelleSub">-4% descuento</small>
+            💸 Zelle / Transfer
+            <small><span class="t-es">-4% descuento</span><span class="t-en">-4% discount</span></small>
           </div>
         </div>
 
@@ -511,34 +514,34 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="spinner"></div>
           <span class="btn-label" style="display:flex;align-items:center;gap:8px">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            <span data-i18n="store.coPay">Pagar con Square</span>
+            <span class="t-es">Pagar con Square</span><span class="t-en">Pay with Square</span>
           </span>
         </button>
         <button class="zelle-btn" id="zelleBtn">
-          💸 <span data-i18n="store.payWithZelle">Pagar por Zelle / Transferencia</span>
+          💸 <span class="t-es">Pagar por Zelle / Transferencia</span><span class="t-en">Pay with Zelle / Transfer</span>
         </button>
-        <div class="co-wa-note" id="squareNote" data-i18n="store.coSecure">Pago seguro · Apple Pay · Google Pay &#x1F512;</div>
-        <div class="co-wa-note"><span data-i18n="store.coCustomNote">Piezas hechas a medida</span> · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline" data-i18n="store.devNote">ver política de devoluciones</a></div>
+        <div class="co-wa-note" id="squareNote"><span class="t-es">Pago seguro · Apple Pay · Google Pay 🔒</span><span class="t-en">Secure payment · Apple Pay · Google Pay 🔒</span></div>
+        <div class="co-wa-note"><span class="t-es">Piezas hechas a medida</span><span class="t-en">Custom made pieces</span> · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--pink);text-decoration:underline"><span class="t-es">ver política de devoluciones</span><span class="t-en">see return policy</span></a></div>
         <div class="wa-fallback">
-          <a href="#" id="waFallbackBtn" data-i18n="store.coWaFallback">&#x1F4AC; Prefiero coordinar por WhatsApp</a>
+          <a href="#" id="waFallbackBtn"><span class="t-es">💬 Prefiero coordinar por WhatsApp</span><span class="t-en">💬 I prefer to coordinate via WhatsApp</span></a>
         </div>
       </div>
 
       <div class="checkout-right">
-        <div class="co-summary-title" data-i18n="store.orderSummary">Resumen del pedido</div>
+        <div class="co-summary-title"><span class="t-es">Resumen del pedido</span><span class="t-en">Order Summary</span></div>
         <div id="coSummaryItems"></div>
         <div class="co-totals">
-          <div class="co-line"><span data-i18n="store.subtotal">Subtotal</span><strong id="coSubtotal">$0</strong></div>
-          <div class="co-line"><span data-i18n="store.shipping">Env&#xED;o</span><strong id="coEnvio">Por calcular</strong></div>
-          <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel" data-i18n="store.tax">Impuesto</span><strong id="coImpuesto">$0</strong></div>
-          <div class="co-discount-line" id="coZelleRow" style="display:none"><span>💸 <span data-i18n="store.zelleDiscount">Descuento Zelle (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
-          <div class="co-total"><span data-i18n="store.total">Total</span><strong id="coTotal">$0</strong></div>
+          <div class="co-line"><span>Subtotal</span><strong id="coSubtotal">$0</strong></div>
+          <div class="co-line"><span><span class="t-es">Envío</span><span class="t-en">Shipping</span></span><strong id="coEnvio"><span class="t-es">Por calcular</span><span class="t-en">To be calculated</span></strong></div>
+          <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel"><span class="t-es">Impuesto</span><span class="t-en">Tax</span></span><strong id="coImpuesto">$0</strong></div>
+          <div class="co-discount-line" id="coZelleRow" style="display:none"><span>💸 <span class="t-es">Descuento Zelle (4%)</span><span class="t-en">Zelle Discount (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
+          <div class="co-total"><span>Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
-          <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--pink);margin-bottom:6px;letter-spacing:.1em" data-i18n="store.coHelp">&#xBF;NECESITAS AYUDA?</div>
+          <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--pink);margin-bottom:6px;letter-spacing:.1em"><span class="t-es">¿NECESITAS AYUDA?</span><span class="t-en">NEED HELP?</span></div>
           <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)" id="igHandle">@cacusabytaitus</strong></div>
         </div>
-        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack" data-i18n="store.coBack">&#x2190; Volver al carrito</button>
+        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack"><span class="t-es">← Volver al carrito</span><span class="t-en">← Back to cart</span></button>
       </div>
     </div>
   </div>
@@ -547,10 +550,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- SUCCESS -->
 <div id="success-overlay">
   <div class="success-icon">&#x1F338;</div>
-  <div class="success-h" data-i18n="store.successH">&#xA1;Pedido enviado!</div>
+  <div class="success-h"><span class="t-es">¡Pedido enviado!</span><span class="t-en">Order sent!</span></div>
   <div class="success-s">by Taitus</div>
-  <p class="success-p" data-i18n="store.successP">"Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. &#xA1;Gracias por elegirnos!"</p>
-  <button class="success-back" id="successBack" data-i18n="store.successBtn">Seguir comprando</button>
+  <p class="success-p"><span class="t-es">Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. ¡Gracias por elegirnos!</span><span class="t-en">We will contact you via WhatsApp to confirm your order. Thank you for choosing us!</span></p>
+  <button class="success-back" id="successBack"><span class="t-es">Seguir comprando</span><span class="t-en">Continue shopping</span></button>
 </div>
 
 <script>
@@ -593,20 +596,16 @@ const __EN_T = {
   "tag.nuevo":"New","tag.bestseller":"Bestseller",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
   "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
-  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection"
+  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection",
+  "combo.add":"🛒 Add combo"
 };
-// Establecer window.__T de inmediato (antes de cualquier fetch)
-window.__T = __LANG === 'en' ? __EN_T : {};
-// Aplicar data-i18n en el DOM al instante
+// Aplicar textos EN que CSS no puede manejar (select options, placeholders de inputs)
 if (__LANG === 'en') {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const v = __EN_T[el.getAttribute('data-i18n')];
-    if (v !== undefined) el.textContent = v;
-  });
-  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-    const v = __EN_T[el.getAttribute('data-i18n-ph')];
-    if (v !== undefined) el.placeholder = v;
-  });
+  const _sortOpts = {default:'Sort: Featured','price-asc':'Price: low to high','price-desc':'Price: high to low',new:'Newest'};
+  document.querySelectorAll('#sortSelect option').forEach(o => { if (_sortOpts[o.value]) o.textContent = _sortOpts[o.value]; });
+  const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coNotas:'Color, size, special detail…'};
+  Object.entries(_phs).forEach(([id,ph]) => { const el = document.getElementById(id); if (el) el.placeholder = ph; });
+  document.title = 'Store — CACUSA by Taitus';
 }
 
 let PRODUCTS = [];
@@ -734,7 +733,7 @@ let TEXTS = {
   instagram: '@cacusabytaitus',
   perks: ['Hecho a mano', 'Envío express', '5–7 días hábiles', 'Gift wrap gratis']
 };
-function t(key, fallback) { return (window.__T && window.__T[key] !== undefined ? window.__T[key] : fallback); }
+function t(key, fallback) { return __LANG === 'en' && __EN_T[key] !== undefined ? __EN_T[key] : fallback; }
 function tagLabel(tag) {
   if (!tag) return '';
   const lc = tag.toLowerCase();
@@ -744,14 +743,14 @@ function tagLabel(tag) {
 }
 
 const FALLBACK_PRODUCTS = [
-  {id:1,name:'Collar con nombre',cat:'Personalizado',price:45,grad:'linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Collar delicado con tu nombre grabado a mano. Plata 925 o baño de oro 18k. Cadena ajustable 40–45cm.'},
-  {id:2,name:'Anillo estrella gold',cat:'Gold Edition',price:38,oldPrice:50,grad:'linear-gradient(135deg,#F5C8A8,#F5A0C8)',tag:'Nuevo',badge:'badge-new',personalized:false,desc:'Anillo minimalista con estrella en relieve. Chapado en oro 18k. Tu luz interior hecha joya.'},
-  {id:3,name:'Pulsera con inicial',cat:'Personalizado',price:32,grad:'linear-gradient(135deg,#C4A0EC,#88C8F0)',tag:null,badge:null,personalized:true,desc:'Pulsera fina con tu inicial grabada. Plata 925. Diseño delicado, perfecta sola o en stack.'},
-  {id:4,name:'Aretes luna',cat:'Colección',price:28,grad:'linear-gradient(135deg,#DCF0FC,#88C8F0)',tag:null,badge:null,personalized:false,desc:'Aretes luna menguante. Plata 925 con baño de rodio. Ligeros y elegantes para el día a día.'},
-  {id:5,name:'Pulsera hombre cuero',cat:'Hombres',price:29,grad:'linear-gradient(135deg,#F5A0C8,#C4A0EC)',tag:'Nuevo',badge:'badge-new',personalized:false,desc:'Pulsera cuero genuino con cierre magnético acero inoxidable. Urbana y minimalista.'},
-  {id:6,name:'Collar corazón grabado',cat:'Personalizado',price:42,grad:'linear-gradient(135deg,#FCE8F3,#EE6FA8)',tag:null,badge:null,personalized:true,desc:'Colgante corazón con mensaje o fecha especial grabada. El regalo más significativo.'},
-  {id:7,name:'Anillo signo zodiacal',cat:'Colección',price:35,grad:'linear-gradient(135deg,#EEE4FA,#C4A0EC)',tag:null,badge:null,personalized:false,desc:'Anillo fino con tu signo del zodiaco. Plata 925. Disponible los 12 signos.'},
-  {id:8,name:'Collar infinito',cat:'Gold Edition',price:48,grad:'linear-gradient(135deg,#F5C8A8,#EE6FA8)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Símbolo infinito con grabado interior personalizable. Plata 925 o baño de oro 18k.'},
+  {id:1,name:'Collar con nombre',name_en:'Name Necklace',cat:'Personalizado',price:45,grad:'linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Collar delicado con tu nombre grabado a mano. Plata 925 o baño de oro 18k. Cadena ajustable 40–45cm.',description_en:'Delicate necklace with your name hand-engraved. Sterling silver or 18k gold-filled. Adjustable chain 40–45cm.'},
+  {id:2,name:'Anillo estrella gold',name_en:'Gold Star Ring',cat:'Gold Edition',price:38,oldPrice:50,grad:'linear-gradient(135deg,#F5C8A8,#F5A0C8)',tag:'Nuevo',badge:'badge-new',personalized:false,desc:'Anillo minimalista con estrella en relieve. Chapado en oro 18k. Tu luz interior hecha joya.',description_en:'Minimalist ring with embossed star. 18k gold-plated. Your inner light turned into jewelry.'},
+  {id:3,name:'Pulsera con inicial',name_en:'Initial Bracelet',cat:'Personalizado',price:32,grad:'linear-gradient(135deg,#C4A0EC,#88C8F0)',tag:null,badge:null,personalized:true,desc:'Pulsera fina con tu inicial grabada. Plata 925. Diseño delicado, perfecta sola o en stack.',description_en:'Fine bracelet with your initial engraved. Sterling silver 925. Delicate design, perfect alone or stacked.'},
+  {id:4,name:'Aretes luna',name_en:'Moon Earrings',cat:'Colección',price:28,grad:'linear-gradient(135deg,#DCF0FC,#88C8F0)',tag:null,badge:null,personalized:false,desc:'Aretes luna menguante. Plata 925 con baño de rodio. Ligeros y elegantes para el día a día.',description_en:'Crescent moon earrings. Sterling silver 925 with rhodium plating. Light and elegant for everyday wear.'},
+  {id:5,name:'Pulsera hombre cuero',name_en:'Men Leather Bracelet',cat:'Hombres',price:29,grad:'linear-gradient(135deg,#F5A0C8,#C4A0EC)',tag:'Nuevo',badge:'badge-new',personalized:false,desc:'Pulsera cuero genuino con cierre magnético acero inoxidable. Urbana y minimalista.',description_en:'Genuine leather bracelet with stainless steel magnetic clasp. Urban and minimalist.'},
+  {id:6,name:'Collar corazón grabado',name_en:'Engraved Heart Necklace',cat:'Personalizado',price:42,grad:'linear-gradient(135deg,#FCE8F3,#EE6FA8)',tag:null,badge:null,personalized:true,desc:'Colgante corazón con mensaje o fecha especial grabada. El regalo más significativo.',description_en:'Heart pendant with a special message or date engraved. The most meaningful gift.'},
+  {id:7,name:'Anillo signo zodiacal',name_en:'Zodiac Sign Ring',cat:'Colección',price:35,grad:'linear-gradient(135deg,#EEE4FA,#C4A0EC)',tag:null,badge:null,personalized:false,desc:'Anillo fino con tu signo del zodiaco. Plata 925. Disponible los 12 signos.',description_en:'Fine ring with your zodiac sign. Sterling silver 925. Available in all 12 signs.'},
+  {id:8,name:'Collar infinito',name_en:'Infinity Necklace',cat:'Gold Edition',price:48,grad:'linear-gradient(135deg,#F5C8A8,#EE6FA8)',tag:'Best seller',badge:'badge-best',personalized:true,desc:'Símbolo infinito con grabado interior personalizable. Plata 925 o baño de oro 18k.',description_en:'Infinity symbol with customizable inner engraving. Sterling silver or 18k gold-filled.'},
 ];
 
 // ─── PRODUCT NORMALIZER ─────────────────────────────────────
@@ -807,9 +806,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
       SHIPPING = { freeThreshold: isNaN(ft) ? 60 : ft, cost: isNaN(c) ? 5 : c };
     }
     if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
-    const _L = localStorage.getItem('cacusa-lang') || 'es';
-    if (_L === 'en' && cfg.translations && cfg.translations.en) window.__T = { ...__EN_T, ...cfg.translations.en };
-    if (_L === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
+    if (__LANG === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     PRODUCTS = raw.filter(p => p.available !== false).map(normalizeProd);
     COMBOS = (!Array.isArray(data) && Array.isArray(data.combos)) ? data.combos.filter(c => c.available !== false) : [];
     if (PRODUCTS.length === 0) PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
@@ -885,28 +882,15 @@ function applyTexts() {
     perksEl.innerHTML = TEXTS.perks.map(p =>
       '<div class="perk"><div class="perk-dot"></div>' + p + '</div>').join('');
   }
-  const _L = localStorage.getItem('cacusa-lang') || 'es';
-  const T = window.__T || {};
-  if (_L === 'en') {
-    document.title = 'Store — CACUSA by Taitus';
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const v = T[el.getAttribute('data-i18n')];
-      if (v !== undefined) el.textContent = v;
-    });
-    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
-      const v = T[el.getAttribute('data-i18n-ph')];
-      if (v !== undefined) el.placeholder = v;
-    });
-  }
   const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
-  if (bEs) bEs.className = _L === 'es' ? 'on' : '';
-  if (bEn) bEn.className = _L === 'en' ? 'on' : '';
+  if (bEs) bEs.className = __LANG === 'es' ? 'on' : '';
+  if (bEn) bEn.className = __LANG === 'en' ? 'on' : '';
 }
 function renderFilters() {
   const wrap = document.getElementById('filterBtns');
   if (!wrap) return;
   wrap.innerHTML = '<button class="filter-btn active" data-filter="all">' + t('store.all', 'Todo') + '</button>' +
-    CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + ((window.__T && window.__T['cat.' + c.toLowerCase()]) || c) + '</button>').join('');
+    CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + t('cat.' + c.toLowerCase(), c) + '</button>').join('');
   wrap.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1005,9 +989,9 @@ function renderProducts() {
         <div class="pcard-quick">${t('store.quickView', 'Vista rápida →')}</div>
       </div>
       <div class="pcard-body">
-        <div class="pcard-cat">${(window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || (p.cat || '')}</div>
-        <div class="pcard-name">${localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name}</div>
-        <div class="pcard-desc">${(localStorage.getItem('cacusa-lang') === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60)}…</div>
+        <div class="pcard-cat">${t('cat.' + (p.cat||'').toLowerCase(), p.cat || '')}</div>
+        <div class="pcard-name">${__LANG === 'en' && p.name_en ? p.name_en : p.name}</div>
+        <div class="pcard-desc">${(__LANG === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60)}…</div>
         ${getMarketBadge(p)}
         <div class="pcard-foot">
           <div class="pcard-price">
@@ -1046,7 +1030,7 @@ function renderCombos() {
             <span class="combo-price-now">$${(+c.price).toFixed(2)}</span>
             ${saving ? `<span class="combo-price-old">$${origTotal.toFixed(2)}</span><span class="combo-saving">Ahorras $${saving}</span>` : ''}
           </div>
-          <button class="combo-add">🛒 Agregar combo</button>
+          <button class="combo-add">${t('combo.add', '🛒 Agregar combo')}</button>
         </div>
       </div>`;
   }).join('');
@@ -1094,9 +1078,9 @@ function openModal(id) {
     imgBg.innerHTML = '';
     imgBg.style.cssText = 'background:' + (p.grad || 'var(--grad)') + ';width:100%;height:100%;min-height:400px';
   }
-  document.getElementById('modalCat').textContent = (window.__T && p.cat && window.__T['cat.' + p.cat.toLowerCase()]) || p.cat || '';
-  document.getElementById('modalName').textContent = localStorage.getItem('cacusa-lang') === 'en' && p.name_en ? p.name_en : p.name;
-  const _mLang = localStorage.getItem('cacusa-lang') === 'en';
+  document.getElementById('modalCat').textContent = t('cat.' + (p.cat||'').toLowerCase(), p.cat || '');
+  document.getElementById('modalName').textContent = __LANG === 'en' && p.name_en ? p.name_en : p.name;
+  const _mLang = __LANG === 'en';
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
   document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? (_mLang ? ' — was $' : ' — antes $') + p.oldPrice : '');
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
@@ -1106,7 +1090,7 @@ function openModal(id) {
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
   const addBtn = document.getElementById('modalAddBtn');
-  addBtn.textContent = localStorage.getItem('cacusa-lang') === 'en' ? 'Add to cart' : 'Añadir al carrito';
+  addBtn.textContent = __LANG === 'en' ? 'Add to cart' : 'Añadir al carrito';
   addBtn.className = 'modal-add';
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1131,7 +1115,7 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   }
   saveCart(); updateCartUI();
   const btn = document.getElementById('modalAddBtn');
-  btn.textContent = localStorage.getItem('cacusa-lang') === 'en' ? '✓ Added' : '✓ Añadido';
+  btn.textContent = __LANG === 'en' ? '✓ Added' : '✓ Añadido';
   btn.classList.add('added');
   setTimeout(() => { closeModal(); openCart(); }, 800);
 });
@@ -1167,7 +1151,7 @@ function updateCartUI() {
       <div class="cart-item">
         <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name)}</div>
         <div class="ci-body">
-          <div class="ci-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
+          <div class="ci-name">${__LANG === 'en' && item.name_en ? item.name_en : item.name}</div>
           ${item.personalization ? `<div class="ci-custom">"${item.personalization}"</div>` : ''}
           <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
@@ -1289,7 +1273,7 @@ function renderCheckoutSummary() {
         <div class="co-si-qty">1</div>
       </div>
       <div>
-        <div class="co-si-name">${localStorage.getItem('cacusa-lang') === 'en' && item.name_en ? item.name_en : item.name}</div>
+        <div class="co-si-name">${__LANG === 'en' && item.name_en ? item.name_en : item.name}</div>
         ${item.personalization ? `<div class="co-si-custom">"${item.personalization}"</div>` : ''}
       </div>
       <div class="co-si-price">$${(+item.price).toFixed(2)}</div>
@@ -1414,7 +1398,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
-    errorEl.textContent = '⚠️ ' + err.message + (localStorage.getItem('cacusa-lang') === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
+    errorEl.textContent = '⚠️ ' + err.message + (__LANG === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
     btn.disabled = false;
     btn.classList.remove('loading');
   }
@@ -1422,7 +1406,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
 function buildWhatsAppUrl() {
-  const _waEN    = localStorage.getItem('cacusa-lang') === 'en';
+  const _waEN    = __LANG === 'en';
   const _waMat   = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
   const payMethod = (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
   const isZelle  = payMethod === 'zelle';
