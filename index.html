@@ -669,6 +669,43 @@ html,body{overflow-x:hidden}
 // ════════════════════════════════════════════════════════════
 const BEHOLD_FEED_ID = 'epdmnoueNX30Pw0QDynG';
 
+// ── TRADUCCIONES EN (debe ir antes de applyHomeContent) ──────
+const __LANDING_EN = {
+  "landing.navCollections":"Collections","landing.navStore":"Store","landing.navUs":"About Us",
+  "landing.navPersonalize":"Customize","landing.navCta":"See collection →",
+  "landing.heroLabel":"Personalized artisan jewelry",
+  "landing.heroDesc":"\"we create to make you look more beautiful than you already are\"",
+  "landing.heroBtnShop":"See collection","landing.heroBtnCustom":"Customize →","landing.scroll":"Explore",
+  "landing.collectionsLabel":"Our collections","landing.colTagMain":"Main collection",
+  "landing.colCadenas":"Chains","landing.colExplore":"Explore →","landing.colTagFeatured":"Featured",
+  "landing.colAnillos":"Rings","landing.colSee":"See →","landing.colTagMen":"For them",
+  "landing.colHombres":"Men","landing.colTagHandmade":"Handmade","landing.colPulseras":"Bracelets",
+  "landing.colTagElegance":"Elegance","landing.colAretes":"Earrings",
+  "landing.bestsellersLabel":"Best sellers","landing.seeAll":"See all →",
+  "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
+  "landing.formNamePh":"Your name","landing.formWhatsLabel":"Your WhatsApp",
+  "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
+  "landing.formMaterialLabel":"Material","landing.formMaterialPh":"Silver, gold…",
+  "landing.formDetailLabel":"Personalization","landing.formDetailPh":"Name, date, message…",
+  "landing.formBtn":"Send via WhatsApp →","landing.testiLabel":"What they say",
+  "landing.igLabel":"Follow us on Instagram",
+  "landing.igBody":"Check out the latest creations, stories and personalized pieces",
+  "landing.igBtn":"Follow @cacusabytaitus","landing.ctaScript":"Ready for your piece?",
+  "landing.ctaH":"Your jewelry is waiting for you","landing.ctaBtn":"Go to store →",
+  "landing.footerStoreH":"Store","landing.footerHelpH":"Help","landing.footerShipping":"Shipping",
+  "landing.footerReturns":"Returns","landing.footerCare":"Care","landing.footerContact":"Contact",
+  "landing.footerUsH":"About Us","landing.footerOurStory":"Our story","landing.footerCraft":"Artisan process",
+  "nav.followUs":"Follow us on social media",
+  "landing.vigOff":"OFF","landing.vigScript":"on your first piece","landing.vigLabel":"Exclusive offer",
+  "landing.vigTitle":"Your first jewel is waiting",
+  "landing.vigDesc":"Subscribe and get 10% off your first purchase. Limited time only.",
+  "landing.vigBtn":"I want my discount →","landing.vigSkip":"No thanks, I prefer to pay full price",
+  "landing.quickView":"Quick view →","landing.addBtn":"+ Add",
+  "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
+  "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
+  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection"
+};
+
 // ── CONTENIDO DINÁMICO (Quiénes somos) ──────────────────────
 // Corre antes del count-up para que las cifras animen con los valores guardados en products.json
 let CACUSA_WHATSAPP = '';
@@ -1085,41 +1122,6 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
 });
 
 // ── LANG SWITCHER ──────────────────────────────────────────────
-const __LANDING_EN = {
-  "landing.navCollections":"Collections","landing.navStore":"Store","landing.navUs":"About Us",
-  "landing.navPersonalize":"Customize","landing.navCta":"See collection →",
-  "landing.heroLabel":"Personalized artisan jewelry",
-  "landing.heroDesc":"\"we create to make you look more beautiful than you already are\"",
-  "landing.heroBtnShop":"See collection","landing.heroBtnCustom":"Customize →","landing.scroll":"Explore",
-  "landing.collectionsLabel":"Our collections","landing.colTagMain":"Main collection",
-  "landing.colCadenas":"Chains","landing.colExplore":"Explore →","landing.colTagFeatured":"Featured",
-  "landing.colAnillos":"Rings","landing.colSee":"See →","landing.colTagMen":"For them",
-  "landing.colHombres":"Men","landing.colTagHandmade":"Handmade","landing.colPulseras":"Bracelets",
-  "landing.colTagElegance":"Elegance","landing.colAretes":"Earrings",
-  "landing.bestsellersLabel":"Best sellers","landing.seeAll":"See all →",
-  "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
-  "landing.formNamePh":"Your name","landing.formWhatsLabel":"Your WhatsApp",
-  "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
-  "landing.formMaterialLabel":"Material","landing.formMaterialPh":"Silver, gold…",
-  "landing.formDetailLabel":"Personalization","landing.formDetailPh":"Name, date, message…",
-  "landing.formBtn":"Send via WhatsApp →","landing.testiLabel":"What they say",
-  "landing.igLabel":"Follow us on Instagram",
-  "landing.igBody":"Check out the latest creations, stories and personalized pieces",
-  "landing.igBtn":"Follow @cacusabytaitus","landing.ctaScript":"Ready for your piece?",
-  "landing.ctaH":"Your jewelry is waiting for you","landing.ctaBtn":"Go to store →",
-  "landing.footerStoreH":"Store","landing.footerHelpH":"Help","landing.footerShipping":"Shipping",
-  "landing.footerReturns":"Returns","landing.footerCare":"Care","landing.footerContact":"Contact",
-  "landing.footerUsH":"About Us","landing.footerOurStory":"Our story","landing.footerCraft":"Artisan process",
-  "nav.followUs":"Follow us on social media",
-  "landing.vigOff":"OFF","landing.vigScript":"on your first piece","landing.vigLabel":"Exclusive offer",
-  "landing.vigTitle":"Your first jewel is waiting",
-  "landing.vigDesc":"Subscribe and get 10% off your first purchase. Limited time only.",
-  "landing.vigBtn":"I want my discount →","landing.vigSkip":"No thanks, I prefer to pay full price",
-  "landing.quickView":"Quick view →","landing.addBtn":"+ Add",
-  "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
-  "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
-  "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection"
-};
 (function applyI18n(){
   const _L = localStorage.getItem('cacusa-lang') || 'es';
   const T = _L === 'en' ? __LANDING_EN : {};
