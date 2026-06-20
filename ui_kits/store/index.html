@@ -1397,35 +1397,44 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
 
 <script>
 window.initGoogleAutocomplete = function() {
-  const input = document.getElementById('coDireccion');
-  if (!input || !window.google || !window.google.maps) return;
-  const ac = new google.maps.places.Autocomplete(input, {
-    componentRestrictions: { country: 'us' },
-    fields: ['address_components'],
-    types: ['address']
-  });
-  ac.addListener('place_changed', () => {
-    const place = ac.getPlace();
-    if (!place.address_components) return;
-    let streetNum = '', route = '', city = '', state = '', zip = '';
-    place.address_components.forEach(c => {
-      const tt = c.types;
-      if (tt.includes('street_number'))                        streetNum = c.long_name;
-      else if (tt.includes('route'))                           route     = c.long_name;
-      else if (tt.includes('locality'))                        city      = c.long_name;
-      else if (tt.includes('sublocality_level_1') && !city)   city      = c.long_name;
-      else if (tt.includes('administrative_area_level_1'))     state     = c.short_name;
-      else if (tt.includes('postal_code'))                     zip       = c.long_name;
+  try {
+    const input = document.getElementById('coDireccion');
+    if (!input || !window.google || !window.google.maps || !window.google.maps.places) return;
+    const ac = new google.maps.places.Autocomplete(input, {
+      componentRestrictions: { country: 'us' },
+      fields: ['address_components'],
+      types: ['address']
     });
-    input.value = [streetNum, route].filter(Boolean).join(' ');
-    const fCity  = document.getElementById('coCiudad');
-    const fState = document.getElementById('coEstado');
-    const fZip   = document.getElementById('coZip');
-    if (city  && fCity)  fCity.value  = city;
-    if (state && fState) fState.value = state;
-    if (zip   && fZip)   fZip.value   = zip;
-    if (typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
-  });
+    ac.addListener('place_changed', () => {
+      try {
+        const place = ac.getPlace();
+        if (!place.address_components) return;
+        let streetNum = '', route = '', city = '', state = '', zip = '';
+        place.address_components.forEach(c => {
+          const tt = c.types;
+          if (tt.includes('street_number'))                        streetNum = c.long_name;
+          else if (tt.includes('route'))                           route     = c.long_name;
+          else if (tt.includes('locality'))                        city      = c.long_name;
+          else if (tt.includes('sublocality_level_1') && !city)   city      = c.long_name;
+          else if (tt.includes('administrative_area_level_1'))     state     = c.short_name;
+          else if (tt.includes('postal_code'))                     zip       = c.long_name;
+        });
+        input.value = [streetNum, route].filter(Boolean).join(' ');
+        const fCity  = document.getElementById('coCiudad');
+        const fState = document.getElementById('coEstado');
+        const fZip   = document.getElementById('coZip');
+        if (city  && fCity)  fCity.value  = city;
+        if (state && fState) fState.value = state;
+        if (zip   && fZip)   fZip.value   = zip;
+        if (typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
+      } catch(_) {}
+    });
+  } catch(_) {}
+};
+window.gm_authFailure = function() {
+  // API key error — disable autocomplete silently, field stays as plain text
+  const s = document.querySelector('script[src*="maps.googleapis.com"]');
+  if (s) s.remove();
 };
 </script>
 <script async defer
