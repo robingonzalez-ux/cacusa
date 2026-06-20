@@ -1033,6 +1033,154 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
   );
 }
 
+// ── Mercado Tab ─────────────────────────────────────────────────────────────
+function MercadoTab({ products }) {
+  const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
+  const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
+
+  const [surcharges, setSurcharges] = useState({});
+  const [markets, setMarkets]       = useState({});
+  const [fbLoading, setFbLoading]   = useState(true);
+  const [saving, setSaving]         = useState(false);
+  const [msg, setMsg]               = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [sr, mk] = await Promise.all([fetch(FB_SR), fetch(FB_MKT)]);
+        if (sr.ok) { const d = await sr.json(); setSurcharges(d && typeof d === 'object' ? d : {}); }
+        if (mk.ok) { const d = await mk.json(); setMarkets(d && typeof d === 'object' ? d : {}); }
+      } catch(_) {}
+      setFbLoading(false);
+    })();
+  }, []);
+
+  const save = async () => {
+    setSaving(true); setMsg('');
+    try {
+      const [r1, r2] = await Promise.all([
+        fetch(FB_SR,  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(surcharges) }),
+        fetch(FB_MKT, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(markets) })
+      ]);
+      if (!r1.ok || !r2.ok) throw new Error('Firebase error');
+      setMsg('✅ ¡Guardado! Los cambios se reflejan en la tienda en segundos.');
+      setTimeout(() => setMsg(''), 6000);
+    } catch(e) {
+      setMsg('❌ Error al guardar. Verifica tu conexión e intenta de nuevo.');
+    }
+    setSaving(false);
+  };
+
+  const prods = products.filter(p => p.available !== false);
+  const card  = { background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 };
+
+  if (fbLoading) return (
+    <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+      <div style={{ fontSize: 44, marginBottom: 12 }}>⏳</div>
+      <div style={{ fontSize: 16 }}>Cargando configuración de mercado…</div>
+    </div>
+  );
+
+  return (
+    <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+      {/* Info */}
+      <div style={{ ...card, background: '#F0F4FF', border: '1px solid #C7D4F8' }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 6 }}>🌍 Mercado &amp; Recargo por producto</div>
+        <div style={{ fontSize: 13, color: '#4A5568', lineHeight: 1.6 }}>
+          <strong>Recargo +4%:</strong> Suma el 4% al precio visible en la tienda. El pago con Zelle/Transferencia devuelve ese 4% como descuento.<br/>
+          <strong>Mercado:</strong> La tienda detecta el país del visitante por IP y muestra una leyenda en la tarjeta del producto.
+        </div>
+      </div>
+
+      {/* ── Recargo ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>💰 Recargo del 4% por producto</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Activa el toggle para que ese producto muestre el precio +4% en la tienda.</div>
+        {prods.length === 0
+          ? <div style={{ fontSize: 13, color: '#ccc', textAlign: 'center', padding: '20px 0' }}>No hay productos activos.</div>
+          : prods.map(p => {
+            const has = !!surcharges[p.id];
+            const adj = (Math.round(p.price * 1.04 * 100) / 100).toFixed(2);
+            return (
+              <div key={p.id}
+                onClick={() => setSurcharges(s => ({ ...s, [p.id]: !s[p.id] }))}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, border: `1.5px solid ${has ? '#E85D8A' : '#EDE8EA'}`, background: has ? '#FFF0F6' : 'white', marginBottom: 8, cursor: 'pointer', transition: 'all .15s' }}>
+                {p.imageUrl
+                  ? <img src={p.imageUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" />
+                  : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: '#A89AAF' }}>
+                    {p.category} ·{' '}
+                    <strong style={{ color: has ? '#E85D8A' : '#A89AAF' }}>${has ? adj : Number(p.price).toFixed(2)}</strong>
+                    {has && <span style={{ color: '#ccc', marginLeft: 5, textDecoration: 'line-through' }}>${Number(p.price).toFixed(2)}</span>}
+                  </div>
+                </div>
+                <div style={{ width: 44, height: 26, borderRadius: 13, background: has ? '#E85D8A' : '#ddd', position: 'relative', flexShrink: 0, transition: 'background .2s' }}>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'white', position: 'absolute', top: 3, left: has ? 21 : 3, transition: 'left .2s', boxShadow: '0 1px 4px rgba(0,0,0,.2)' }} />
+                </div>
+              </div>
+            );
+          })}
+      </div>
+
+      {/* ── Mercado ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🗺️ Disponibilidad por mercado</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 10 }}>La tienda detecta el país del visitante por IP y muestra la leyenda correcta.</div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {[
+            ['rgba(39,174,96,.12)', '#1a7a44', 'rgba(39,174,96,.28)', '🇪🇨 → "Producto local" (Ecuador)'],
+            ['rgba(41,128,185,.12)', '#1a5c8a', 'rgba(41,128,185,.28)', '🇺🇸 → "Producto local" (USA)'],
+            ['rgba(230,126,34,.1)', '#a04a10', 'rgba(230,126,34,.25)', '🌎 → badge informativo (cruzado)']
+          ].map(([bg, color, border, text]) => (
+            <span key={text} style={{ background: bg, color, border: `1px solid ${border}`, borderRadius: 99, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>{text}</span>
+          ))}
+        </div>
+        {prods.length === 0
+          ? <div style={{ fontSize: 13, color: '#ccc', textAlign: 'center', padding: '20px 0' }}>No hay productos activos.</div>
+          : prods.map(p => {
+            const m = markets[p.id] || 'both';
+            const borderColor = m === 'ec' ? '#27AE60' : m === 'us' ? '#2980B9' : '#ddd';
+            const textColor   = m === 'ec' ? '#1a7a44' : m === 'us' ? '#1a5c8a' : '#888';
+            const bgColor     = m === 'ec' ? 'rgba(39,174,96,.08)' : m === 'us' ? 'rgba(41,128,185,.08)' : 'white';
+            return (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 12, border: '1px solid #EDE8EA', background: 'white', marginBottom: 8 }}>
+                {p.imageUrl
+                  ? <img src={p.imageUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" />
+                  : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                  <div style={{ fontSize: 12, color: '#A89AAF' }}>{p.category} · ${Number(p.price).toFixed(2)}</div>
+                </div>
+                <select value={m}
+                  onChange={e => setMarkets(mk => ({ ...mk, [p.id]: e.target.value }))}
+                  onClick={e => e.stopPropagation()}
+                  style={{ padding: '7px 10px', border: `1.5px solid ${borderColor}`, borderRadius: 10, fontSize: 12, fontWeight: 600, outline: 'none', cursor: 'pointer', flexShrink: 0, color: textColor, background: bgColor, fontFamily: 'inherit' }}>
+                  <option value="both">🌍 Ambos</option>
+                  <option value="ec">🇪🇨 Ecuador</option>
+                  <option value="us">🇺🇸 USA/Inter.</option>
+                </select>
+              </div>
+            );
+          })}
+      </div>
+
+      {/* Save */}
+      {msg && (
+        <div style={{ borderRadius: 12, padding: '11px 16px', marginBottom: 14, fontSize: 13, fontWeight: 600, background: msg.startsWith('✅') ? '#D1FAE5' : '#FEE2E2', color: msg.startsWith('✅') ? '#065F46' : '#DC2626' }}>
+          {msg}
+        </div>
+      )}
+      <button onClick={save} disabled={saving}
+        style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 14, fontWeight: 700, fontSize: 15, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? .7 : 1, boxShadow: '0 4px 20px rgba(155,93,229,.3)', marginBottom: 24, fontFamily: 'inherit' }}>
+        {saving ? '⏳ Guardando…' : '💾 Guardar mercado y recargos'}
+      </button>
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────
 function App() {
   const [session, setSession]         = useState(() => {
@@ -1263,6 +1411,7 @@ function App() {
           {[
             ['products', '💎 Productos', products.length],
             ['orders',   '📦 Pedidos',   pendingOrders],
+            ['mercado',  '🌍 Mercado',   0],
             ['landing',  '🏠 Landing',   0],
             ['pages',    '📄 Páginas',   0],
             ['settings', '⚙️ Ajustes',   0]
@@ -1391,6 +1540,11 @@ function App() {
         {/* ── Pages tab ── */}
         {activeTab === 'pages' && (
           <PagesTab pages={pages} setPages={setPages} setDirty={setDirty} />
+        )}
+
+        {/* ── Mercado tab ── */}
+        {activeTab === 'mercado' && (
+          <MercadoTab products={products} />
         )}
 
         {/* ── Settings tab ── */}
