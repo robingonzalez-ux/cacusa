@@ -1557,7 +1557,9 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   }
   const totalFinal = zelleSubtotal + shippingCost + zelleTax;
 
+  _currentOrderNum = generateOrderNum();
   submitOrder({
+    numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     parseFloat(totalFinal.toFixed(2)),
@@ -1628,6 +1630,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
     // Guardar datos del pedido antes de salir a Square
     const _pending = {
+      numero:  generateOrderNum(),
       cliente: {
         nombre:   (customer.name + ' ' + (customer.lastname || '')).trim(),
         telefono: customer.phone,
@@ -1652,6 +1655,16 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   }
 });
 
+// ─── NÚMERO DE ORDEN ─────────────────────────────────────────
+function generateOrderNum() {
+  const n = new Date();
+  const yy = String(n.getFullYear()).slice(2);
+  const mm = String(n.getMonth() + 1).padStart(2, '0');
+  const dd = String(n.getDate()).padStart(2, '0');
+  return 'CA-' + yy + mm + dd + '-' + String(1000 + Math.floor(Math.random() * 9000));
+}
+let _currentOrderNum = '';
+
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
 function buildWhatsAppUrl() {
   const _waEN    = __LANG === 'en';
@@ -1672,7 +1685,9 @@ function buildWhatsAppUrl() {
   const envio    = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
   const totalFinal = free ? total : total + SHIPPING.cost;
 
-  let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n\n';
+  let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n';
+  if (_currentOrderNum) msg += (_waEN ? '🔖 *Order #:* ' : '🔖 *Pedido #:* ') + _currentOrderNum + '\n';
+  msg += '\n';
   msg += (_waEN ? '👤 *Customer:* ' : '👤 *Cliente:* ') + nombre + (apellido ? ' ' + apellido : '') + '\n';
   msg += '📱 *WhatsApp:* ' + tel + '\n';
   if (ciudad) msg += (_waEN ? '📍 *City:* ' : '📍 *Ciudad:* ') + ciudad + ' (' + pais + ')\n';
@@ -1732,7 +1747,9 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const total      = cart.reduce((s, i) => s + i.price, 0);
   const free       = total >= SHIPPING.freeThreshold;
   const totalFinal = free ? total : total + SHIPPING.cost;
+  _currentOrderNum = generateOrderNum();
   submitOrder({
+    numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  parseFloat(totalFinal.toFixed(2)),

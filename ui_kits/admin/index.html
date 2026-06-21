@@ -823,6 +823,21 @@ function OrderCard({ order, onStatusChange, onDelete }) {
   const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
   const nextState = ORDER_STATES[nextIdx];
   const waNum = ((order.cliente && order.cliente.telefono) || '').replace(/[^0-9]/g, '');
+  const buildStatusWaUrl = () => {
+    const nombre = (order.cliente && order.cliente.nombre) || 'Cliente';
+    const num = order.numero ? ' *#' + order.numero + '*' : '';
+    const STATE_MSG = {
+      'Confirmado':  '✅ Tu pedido ha sido *confirmado*. Estamos preparando todo con mucho cariño.',
+      'En proceso':  '🔨 Tu pedido está *en proceso de elaboración*. Cada pieza se hace a mano especialmente para ti.',
+      'Enviado':     '🚚 ¡Tu pedido ya fue *enviado*! Pronto llegará a tus manos.',
+      'Entregado':   '🎉 Tu pedido fue *entregado*. ¡Esperamos que lo ames!',
+      'Cancelado':   'Tu pedido ha sido *cancelado*. Si tienes preguntas, escríbenos.',
+    };
+    const stateMsg = STATE_MSG[estado] || 'Tu pedido está en estado: *' + estado + '*.';
+    const msg = 'Hola ' + nombre + '! 🌸\n' + stateMsg + '\n' + (order.numero ? 'Pedido' + num + '\n' : '') + '\nGracias por confiar en *CACUSA by Taitus* 💕';
+    return waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg) : null;
+  };
+  const waStatusUrl = buildStatusWaUrl();
   return (
     <div style={{ background: 'white', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #f0ecf0', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -832,7 +847,10 @@ function OrderCard({ order, onStatusChange, onDelete }) {
         </div>
         <span style={{ background: STATE_COLORS[estado] || '#E8508A', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 }}>{estado}</span>
       </div>
-      <div style={{ fontSize: 12, color: '#A89AAF' }}>{dateStr} · {order.pago || 'Sin método'}</div>
+      <div style={{ fontSize: 12, color: '#A89AAF', display: 'flex', gap: 8, alignItems: 'center' }}>
+        {order.numero && <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#7A5F8A', background: '#F3EFF5', padding: '2px 8px', borderRadius: 6 }}>#{order.numero}</span>}
+        <span>{dateStr} · {order.pago || 'Sin método'}</span>
+      </div>
       <div style={{ background: '#FAF7FB', borderRadius: 10, padding: '10px 12px' }}>
         {(order.productos || []).map((p, i) => (
           <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#1A1118', padding: '2px 0' }}>
@@ -854,8 +872,8 @@ function OrderCard({ order, onStatusChange, onDelete }) {
         )}
         <button onClick={() => onStatusChange(order, 'Cancelado')}
           style={{ padding: '8px 12px', background: '#FEE2E2', color: '#DC2626', borderRadius: 99, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer' }} title="Cancelar">✕</button>
-        {waNum && <a href={'https://wa.me/' + waNum} target="_blank" rel="noopener noreferrer"
-          style={{ padding: '8px 12px', background: '#DCF8C6', color: '#128C7E', borderRadius: 99, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>💬</a>}
+        {waStatusUrl && <a href={waStatusUrl} target="_blank" rel="noopener noreferrer" title="Notificar estado por WhatsApp"
+          style={{ padding: '8px 12px', background: '#DCF8C6', color: '#128C7E', borderRadius: 99, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>💬 Notificar</a>}
         <button onClick={() => onDelete(order)}
           style={{ padding: '8px 12px', background: '#F9F5F7', color: '#A89AAF', borderRadius: 99, fontSize: 12, border: 'none', cursor: 'pointer' }} title="Eliminar">🗑</button>
       </div>
