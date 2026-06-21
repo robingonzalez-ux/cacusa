@@ -1114,6 +1114,11 @@ function openModal(id) {
   addBtn.className = 'modal-add';
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+  if (p.hasSurcharge) {
+    showToast(__LANG === 'en'
+      ? '💸 You get <strong>4% off</strong> paying by Zelle or bank transfer'
+      : '💸 Tienes <strong>4% de descuento</strong> pagando por Zelle o transferencia');
+  }
 }
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
@@ -1137,11 +1142,6 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   const btn = document.getElementById('modalAddBtn');
   btn.textContent = __LANG === 'en' ? '✓ Added' : '✓ Añadido';
   btn.classList.add('added');
-  if (currentProduct.hasSurcharge) {
-    showToast(__LANG === 'en'
-      ? '💸 You get <strong>4% off</strong> paying by Zelle or bank transfer'
-      : '💸 Tienes <strong>4% de descuento</strong> pagando por Zelle o transferencia');
-  }
   setTimeout(() => { closeModal(); openCart(); }, 800);
 });
 
