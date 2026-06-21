@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-20T17:51:39.576Z",
+  "lastUpdated": "2026-06-21T15:29:26.116Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -49,6 +49,218 @@
         "5–7 business days",
         "Free gift wrap"
       ]
+    },
+    "home": {
+      "storyLabel": "Nuestra historia",
+      "storyTitle": "Artesanos del corazón",
+      "storyQuote": "Cada pieza, una historia única",
+      "storyBody": "Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.",
+      "stats": [
+        {
+          "num": "650",
+          "label": "Piezas creadas"
+        },
+        {
+          "num": "5",
+          "label": "Países"
+        },
+        {
+          "num": "100",
+          "label": "% Artesanal"
+        }
+      ],
+      "person": {
+        "label": "Personalización",
+        "title": "Tu pieza, tu historia",
+        "subtitle": "Cuéntanos qué la hace especial y la creamos para ti.",
+        "steps": [
+          {
+            "title": "Elige tu pieza",
+            "desc": "Collar, pulsera, anillo o aretes"
+          },
+          {
+            "title": "Personaliza",
+            "desc": "Nombre, fecha o mensaje especial"
+          },
+          {
+            "title": "Nosotros creamos",
+            "desc": "Hecho a mano, listo en 5–7 días"
+          }
+        ]
+      },
+      "testimonials": [
+        {
+          "t": "Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad.",
+          "n": "Valentina M.",
+          "l": "Quito, Ecuador"
+        },
+        {
+          "t": "El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento.",
+          "n": "Carlos R.",
+          "l": "Miami, USA"
+        },
+        {
+          "t": "La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos.",
+          "n": "Sofía L.",
+          "l": "Guayaquil, Ecuador"
+        },
+        {
+          "t": "Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA.",
+          "n": "Isabella T.",
+          "l": "Nueva York, USA"
+        },
+        {
+          "t": "Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!",
+          "n": "Camila V.",
+          "l": "Cuenca, Ecuador"
+        },
+        {
+          "t": "Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí.",
+          "n": "Andrea P.",
+          "l": "Los Ángeles, USA"
+        }
+      ],
+      "footer": {
+        "tagline": "creamos para que luzcas más bella de lo que ya eres",
+        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍"
+      },
+      "featuredProductIds": [
+        1,
+        1781399974669,
+        1781400451404,
+        1781473627668
+      ]
+    },
+    "home_en": {
+      "storyLabel": "Our story",
+      "storyTitle": "Artisans of the heart",
+      "storyQuote": "Each piece, a unique story",
+      "storyBody": "We are CACUSA by Taitus, artisan jewelry makers with presence in Ecuador and the United States. We create pieces for brave, independent women with values — and for the men who accompany them.",
+      "stats": [
+        {
+          "num": "650",
+          "label": "Pieces created"
+        },
+        {
+          "num": "5",
+          "label": "Countries"
+        },
+        {
+          "num": "100",
+          "label": "% Handmade"
+        }
+      ],
+      "person": {
+        "label": "Customization",
+        "title": "Your piece, your story",
+        "subtitle": "Tell us what makes it special and we'll create it for you.",
+        "steps": [
+          {
+            "title": "Choose your piece",
+            "desc": "Necklace, bracelet, ring or earrings"
+          },
+          {
+            "title": "Customize",
+            "desc": "Name, date or special message"
+          },
+          {
+            "title": "We create it",
+            "desc": "Handmade, ready in 5–7 days"
+          }
+        ]
+      },
+      "testimonials": [
+        {
+          "t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.",
+          "n": "Valentina M.",
+          "l": "Quito, Ecuador"
+        },
+        {
+          "t": "My wife's ring is a work of art. She fell in love with it from the first moment.",
+          "n": "Carlos R.",
+          "l": "Miami, USA"
+        },
+        {
+          "t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.",
+          "n": "Sofía L.",
+          "l": "Guayaquil, Ecuador"
+        },
+        {
+          "t": "I ordered a necklace for my mom. She cried with emotion when she saw it. Thank you CACUSA.",
+          "n": "Isabella T.",
+          "l": "New York, USA"
+        },
+        {
+          "t": "Unique design, incredible service. I would definitely buy again. The best!",
+          "n": "Camila V.",
+          "l": "Cuenca, Ecuador"
+        },
+        {
+          "t": "I received my ring in record time. Beautiful, delicate and exactly what I ordered.",
+          "n": "Andrea P.",
+          "l": "Los Angeles, USA"
+        },
+        {
+          "t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.",
+          "n": "Valentina M.",
+          "l": "Quito, Ecuador"
+        },
+        {
+          "t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.",
+          "n": "Sofía L.",
+          "l": "Guayaquil, Ecuador"
+        }
+      ],
+      "footer": {
+        "tagline": "we create to make you look more beautiful than you already are",
+        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
+      }
+    },
+    "pages": {
+      "envios": {
+        "intro": "Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.",
+        "servientregaSameCityRate": "desde $3.50",
+        "servientregaOtherCityRate": "$5.25 – $6.30",
+        "servientregaNote": "Entrega el mismo día si se despacha temprano dentro de la misma ciudad; 1–2 días hábiles a otras ciudades. Los envíos del sábado se entregan el lunes.",
+        "uspsTime": "2–5 días hábiles",
+        "otrosPaisesBody": "¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación."
+      },
+      "devoluciones": {
+        "intro": "En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, no realizamos devoluciones ni cambios una vez confirmada la compra.",
+        "secPorQueBody": "Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.",
+        "secAntesBody": "Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.",
+        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional."
+      },
+      "cuidados": {
+        "intro": "Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.",
+        "sec1Body": "No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.",
+        "sec2Body": "Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.",
+        "sec3Body": "Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.",
+        "sec5Body": "Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado."
+      }
+    },
+    "pages_en": {
+      "envios": {
+        "intro": "Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here we explain how, when and how much it costs to receive your jewelry.",
+        "servientregaSameCityRate": "from $3.50",
+        "servientregaOtherCityRate": "$5.25 – $6.30",
+        "servientregaNote": "Same-day delivery if dispatched early within the same city; 1–2 business days to other cities. Saturday shipments are delivered on Monday.",
+        "uspsTime": "2–5 business days",
+        "otrosPaisesBody": "Writing to us from another country? Contact us on WhatsApp and we'll confirm availability, time and the exact shipping cost to your location."
+      },
+      "devoluciones": {
+        "intro": "At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized for every client. Because they are made to order and to measure, we do not offer returns or exchanges once the purchase is confirmed.",
+        "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Being unique to each person, they cannot be resold or returned to inventory, so all sales are final.",
+        "secAntesBody": "We ask you to carefully review all the details before confirming your purchase. If you have any questions, message us on WhatsApp and we'll be glad to advise you.",
+        "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost."
+      },
+      "cuidados": {
+        "intro": "Thank you for your purchase and for supporting Ecuadorian entrepreneurship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
+        "sec1Body": "Don't shower, swim or wash dishes while wearing your jewelry. Constant moisture and the chlorine or salt in water dull the plating and weaken the clasps and joints over time. Take it off before showering or going to the pool or sea.",
+        "sec2Body": "Avoid direct contact with perfumes, creams, alcohol, lotions and sunscreen. These products contain chemicals that react with the material and speed up tarnishing or color change.",
+        "sec3Body": "When not wearing it, store it in its original packaging or in an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.",
+        "sec5Body": "Clean your jewelry occasionally with a soft, dry cloth to remove dust and the skin's natural oils. Avoid toothpaste, baking soda or other abrasive products: they can scratch the surface and damage the finish."
+      }
     },
     "translations": {
       "en": {
@@ -178,168 +390,6 @@
         "cat.personalizado": "Custom",
         "cat.gold edition": "Gold Edition",
         "cat.colección": "Collection"
-      }
-    },
-    "home": {
-      "storyLabel": "Nuestra historia",
-      "storyTitle": "Artesanos del corazón",
-      "storyQuote": "Cada pieza, una historia única",
-      "storyBody": "Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.",
-      "stats": [
-        {
-          "num": "650",
-          "label": "Piezas creadas"
-        },
-        {
-          "num": "5",
-          "label": "Países"
-        },
-        {
-          "num": "100",
-          "label": "% Artesanal"
-        }
-      ],
-      "person": {
-        "label": "Personalización",
-        "title": "Tu pieza, tu historia",
-        "subtitle": "Cuéntanos qué la hace especial y la creamos para ti.",
-        "steps": [
-          {
-            "title": "Elige tu pieza",
-            "desc": "Collar, pulsera, anillo o aretes"
-          },
-          {
-            "title": "Personaliza",
-            "desc": "Nombre, fecha o mensaje especial"
-          },
-          {
-            "title": "Nosotros creamos",
-            "desc": "Hecho a mano, listo en 5–7 días"
-          }
-        ]
-      },
-      "testimonials": [
-        {
-          "t": "Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad.",
-          "n": "Valentina M.",
-          "l": "Quito, Ecuador"
-        },
-        {
-          "t": "El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento.",
-          "n": "Carlos R.",
-          "l": "Miami, USA"
-        },
-        {
-          "t": "La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos.",
-          "n": "Sofía L.",
-          "l": "Guayaquil, Ecuador"
-        },
-        {
-          "t": "Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA.",
-          "n": "Isabella T.",
-          "l": "Nueva York, USA"
-        },
-        {
-          "t": "Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!",
-          "n": "Camila V.",
-          "l": "Cuenca, Ecuador"
-        },
-        {
-          "t": "Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí.",
-          "n": "Andrea P.",
-          "l": "Los Ángeles, USA"
-        }
-      ],
-      "footer": {
-        "tagline": "creamos para que luzcas más bella de lo que ya eres",
-        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍"
-      },
-      "featuredProductIds": [
-        1,
-        1781399974669,
-        1781400451404,
-        1781473627668
-      ]
-    },
-    "home_en": {
-      "storyLabel": "Our story",
-      "storyTitle": "Artisans of the heart",
-      "storyQuote": "Each piece, a unique story",
-      "storyBody": "We are CACUSA by Taitus, artisan jewelry makers with presence in Ecuador and the United States. We create pieces for brave, independent women with values — and for the men who accompany them.",
-      "stats": [
-        {"num": "650", "label": "Pieces created"},
-        {"num": "5", "label": "Countries"},
-        {"num": "100", "label": "% Handmade"}
-      ],
-      "person": {
-        "label": "Customization",
-        "title": "Your piece, your story",
-        "subtitle": "Tell us what makes it special and we'll create it for you.",
-        "steps": [
-          {"title": "Choose your piece", "desc": "Necklace, bracelet, ring or earrings"},
-          {"title": "Customize", "desc": "Name, date or special message"},
-          {"title": "We create it", "desc": "Handmade, ready in 5–7 days"}
-        ]
-      },
-      "testimonials": [
-        {"t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.", "n": "Valentina M.", "l": "Quito, Ecuador"},
-        {"t": "My wife's ring is a work of art. She fell in love with it from the first moment.", "n": "Carlos R.", "l": "Miami, USA"},
-        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"},
-        {"t": "I ordered a necklace for my mom. She cried with emotion when she saw it. Thank you CACUSA.", "n": "Isabella T.", "l": "New York, USA"},
-        {"t": "Unique design, incredible service. I would definitely buy again. The best!", "n": "Camila V.", "l": "Cuenca, Ecuador"},
-        {"t": "I received my ring in record time. Beautiful, delicate and exactly what I ordered.", "n": "Andrea P.", "l": "Los Angeles, USA"},
-        {"t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.", "n": "Valentina M.", "l": "Quito, Ecuador"},
-        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"}
-      ],
-      "footer": {
-        "tagline": "we create to make you look more beautiful than you already are",
-        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
-      }
-    },
-    "pages": {
-      "envios": {
-        "intro": "Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.",
-        "servientregaSameCityRate": "desde $3.50",
-        "servientregaOtherCityRate": "$5.25 – $6.30",
-        "servientregaNote": "Entrega el mismo día si se despacha temprano dentro de la misma ciudad; 1–2 días hábiles a otras ciudades. Los envíos del sábado se entregan el lunes.",
-        "uspsTime": "2–5 días hábiles",
-        "otrosPaisesBody": "¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación."
-      },
-      "devoluciones": {
-        "intro": "En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para cada cliente. Por tratarse de piezas hechas a medida y bajo pedido, no realizamos devoluciones ni cambios una vez confirmada la compra.",
-        "secPorQueBody": "Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.",
-        "secAntesBody": "Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.",
-        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional."
-      },
-      "cuidados": {
-        "intro": "Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.",
-        "sec1Body": "No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.",
-        "sec2Body": "Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.",
-        "sec3Body": "Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.",
-        "sec5Body": "Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado."
-      }
-    },
-    "pages_en": {
-      "envios": {
-        "intro": "Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here we explain how, when and how much it costs to receive your jewelry.",
-        "servientregaSameCityRate": "from $3.50",
-        "servientregaOtherCityRate": "$5.25 – $6.30",
-        "servientregaNote": "Same-day delivery if dispatched early within the same city; 1–2 business days to other cities. Saturday shipments are delivered on Monday.",
-        "uspsTime": "2–5 business days",
-        "otrosPaisesBody": "Writing to us from another country? Contact us on WhatsApp and we'll confirm availability, time and the exact shipping cost to your location."
-      },
-      "devoluciones": {
-        "intro": "At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized for every client. Because they are made to order and to measure, we do not offer returns or exchanges once the purchase is confirmed.",
-        "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Being unique to each person, they cannot be resold or returned to inventory, so all sales are final.",
-        "secAntesBody": "We ask you to carefully review all the details before confirming your purchase. If you have any questions, message us on WhatsApp and we'll be glad to advise you.",
-        "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost."
-      },
-      "cuidados": {
-        "intro": "Thank you for your purchase and for supporting Ecuadorian entrepreneurship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
-        "sec1Body": "Don't shower, swim or wash dishes while wearing your jewelry. Constant moisture and the chlorine or salt in water dull the plating and weaken the clasps and joints over time. Take it off before showering or going to the pool or sea.",
-        "sec2Body": "Avoid direct contact with perfumes, creams, alcohol, lotions and sunscreen. These products contain chemicals that react with the material and speed up tarnishing or color change.",
-        "sec3Body": "When not wearing it, store it in its original packaging or in an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.",
-        "sec5Body": "Clean your jewelry occasionally with a soft, dry cloth to remove dust and the skin's natural oils. Avoid toothpaste, baking soda or other abrasive products: they can scratch the surface and damage the finish."
       }
     }
   },
@@ -556,7 +606,8 @@
       "focalY": 73.48639140899833,
       "zoom": 1.15,
       "material": "Acero inoxidable",
-      "id": 1781473526943
+      "id": 1781473526943,
+      "description_en": ""
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa ",
@@ -594,7 +645,9 @@
       "focalY": 36.81818181818182,
       "zoom": 1,
       "material": "Acero inoxidable",
-      "id": 1781875334358
+      "id": 1781875334358,
+      "name_en": "Pearl Necklace",
+      "description_en": "Baroque pearl charm ruffled necklace"
     },
     {
       "name": "Cadena clip con dije de árbol de vida ",
@@ -612,7 +665,9 @@
       "focalY": 50,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781877227517
+      "id": 1781877227517,
+      "name_en": "Chain clip with tree of life charm",
+      "description_en": "It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life"
     },
     {
       "name": "Cadena con dije de gato y panza de corazón con circones ",
@@ -630,7 +685,9 @@
       "focalY": 40.1808307103623,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781877358815
+      "id": 1781877358815,
+      "name_en": "Cat charm chain and heart belly with zircons",
+      "description_en": "Classic style chain with a special zircon heart belly kitten charm"
     },
     {
       "name": "Cadena de balines con dije de corazón con circones ",
@@ -648,7 +705,9 @@
       "focalY": 41.90581990989327,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781877568374
+      "id": 1781877568374,
+      "name_en": "Heart charm pellet chain with zircons",
+      "description_en": "Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons"
     },
     {
       "name": "Anillo ajustable color plateado ",
@@ -666,7 +725,9 @@
       "focalY": 60.48262667407272,
       "zoom": 1,
       "material": "Baño de Rodio",
-      "id": 1781877838074
+      "id": 1781877838074,
+      "name_en": "Silver Adjustable Ring",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable de circones e inicial ",
@@ -684,7 +745,9 @@
       "focalY": 35.53662901931737,
       "zoom": 1.15,
       "material": "Acero inoxidable",
-      "id": 1781877944864
+      "id": 1781877944864,
+      "name_en": "Adjustable ring of zircons and initial",
+      "description_en": "Also available in gold."
     },
     {
       "name": "Anillo dorado ajustable de hoja ",
@@ -702,7 +765,9 @@
       "focalY": 50,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781878011948
+      "id": 1781878011948,
+      "name_en": "Gold Leaf Adjustable Ring",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable con microcircones en degrade ",
@@ -720,7 +785,9 @@
       "focalY": 43.76350058631118,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781878104655
+      "id": 1781878104655,
+      "name_en": "Adjustable ring with micro-zircons in degradation",
+      "description_en": ""
     },
     {
       "name": "Anillo dorado ajustable de circones fucsia ",
@@ -738,7 +805,9 @@
       "focalY": 50,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781878207350
+      "id": 1781878207350,
+      "name_en": "Fuchsia Zirconia Adjustable Gold Ring",
+      "description_en": ""
     },
     {
       "name": "Anillo talla 7 con tres microcircones de colores ",
@@ -756,7 +825,9 @@
       "focalY": 51.19422329198296,
       "zoom": 1.9,
       "material": "Acero inoxidable",
-      "id": 1781878296526
+      "id": 1781878296526,
+      "name_en": "Ring size 7 with three coloured microcircles",
+      "description_en": ""
     },
     {
       "name": "Anillo TIFFY ajustable con microcircones ",
@@ -774,7 +845,9 @@
       "focalY": 57.57575757575761,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
-      "id": 1781878427634
+      "id": 1781878427634,
+      "name_en": "Adjustable TIFFY ring with microcircles",
+      "description_en": ""
     },
     {
       "name": "Ear cuff ancho plateado ",
@@ -792,7 +865,9 @@
       "focalY": 43.33333333333335,
       "zoom": 1.6,
       "material": "Plata 925",
-      "id": 1781878560407
+      "id": 1781878560407,
+      "name_en": "Silver Wide Ear Cuff",
+      "description_en": ""
     },
     {
       "name": "Entorchado dorado con piedra azul zafiro",
@@ -810,7 +885,9 @@
       "focalY": 59.28840338208974,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781878646387
+      "id": 1781878646387,
+      "name_en": "Gold enchanted with sapphire blue stone",
+      "description_en": "You can also order it with his bracelet in play"
     },
     {
       "name": "Triple línea de circones con 3 piedras ",
@@ -828,7 +905,9 @@
       "focalY": 60.6153181509597,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781878707797
+      "id": 1781878707797,
+      "name_en": "Triple line of zircons with 3 stones",
+      "description_en": ""
     },
     {
       "name": "Círculo de microcircones con un fondo de nácar y un microcircones central ",
@@ -846,7 +925,9 @@
       "focalY": 57.69610565944576,
       "zoom": 1.45,
       "material": "Baño de oro 18k",
-      "id": 1781879127320
+      "id": 1781879127320,
+      "name_en": "Micro-circle with a mother-of-pearl background and a central micro-circle",
+      "description_en": "Maximum adjustability"
     },
     {
       "name": "Ajustable. Anillo chuncky con circones verdes ",
@@ -864,7 +945,9 @@
       "focalY": 41.90581990989322,
       "zoom": 1.45,
       "material": "Baño de oro 18k",
-      "id": 1781879189744
+      "id": 1781879189744,
+      "name_en": "Adjustable Chuncky ring with green zircons",
+      "description_en": ""
     },
     {
       "name": "Entorchado ajustable ",
@@ -882,7 +965,9 @@
       "focalY": 65.92297722643954,
       "zoom": 1.45,
       "material": "Baño de Rodio",
-      "id": 1781879577380
+      "id": 1781879577380,
+      "name_en": "Adjustable twisting",
+      "description_en": ""
     },
     {
       "name": "Doble estrella de microcircon. Ajustable ",
@@ -900,7 +985,9 @@
       "focalY": 41.90581990989327,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781879659210
+      "id": 1781879659210,
+      "name_en": "Double Star Microzircon - Adjustable",
+      "description_en": ""
     },
     {
       "name": "Corazón dorado. Anillo entorchado ajustable ",
@@ -918,7 +1005,9 @@
       "focalY": 48.48484848484847,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
-      "id": 1781879732319
+      "id": 1781879732319,
+      "name_en": "Golden heart. Adjustable looped ring",
+      "description_en": ""
     },
     {
       "name": "Anillo doble línea llana con corazón plateado ",
@@ -936,7 +1025,9 @@
       "focalY": 45.90909090909091,
       "zoom": 1.45,
       "material": "Baño de Rodio",
-      "id": 1781879811459
+      "id": 1781879811459,
+      "name_en": "Flat-line double ring with silver heart",
+      "description_en": ""
     },
     {
       "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
@@ -954,7 +1045,9 @@
       "focalY": 40.97697957168417,
       "zoom": 1.45,
       "material": "Plata 925",
-      "id": 1781879917484
+      "id": 1781879917484,
+      "name_en": "Ring size 7 with emerald stone and two microcircums on each side",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable con 3 circones ",
@@ -972,7 +1065,9 @@
       "focalY": 46.36363636363637,
       "zoom": 2.05,
       "material": "Baño de oro 18k",
-      "id": 1781880053907
+      "id": 1781880053907,
+      "name_en": "Adjustable ring with 3 zircons",
+      "description_en": ""
     },
     {
       "name": "Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable ",
@@ -990,7 +1085,9 @@
       "focalY": 40.71969696969693,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781880127649
+      "id": 1781880127649,
+      "name_en": "Two fish, one flat, the other with microcircums. Both with Turkish eye. Adjustable ring",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable de circones ",
@@ -1008,7 +1105,9 @@
       "focalY": 50,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781880268274
+      "id": 1781880268274,
+      "name_en": "Adjustable Zircon Ring",
+      "description_en": ""
     },
     {
       "name": "Anillos ajustable con trébol negro ",
@@ -1026,7 +1125,9 @@
       "focalY": 44.95772387829416,
       "zoom": 1.3,
       "material": "Acero inoxidable",
-      "id": 1781880340918
+      "id": 1781880340918,
+      "name_en": "Black Clover Adjustable Rings",
+      "description_en": "Stainless steel has a gold plating."
     },
     {
       "name": "Anillo dorado ajustable ",
@@ -1044,7 +1145,9 @@
       "focalY": 36.21212121212125,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781880466753
+      "id": 1781880466753,
+      "name_en": "Adjustable gold ring",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable con circones blancos ",
@@ -1062,7 +1165,9 @@
       "focalY": 50.90909090909091,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
-      "id": 1781881478183
+      "id": 1781881478183,
+      "name_en": "Adjustable ring with white zircons",
+      "description_en": ""
     },
     {
       "name": "Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón ",
@@ -1080,7 +1185,9 @@
       "focalY": 42.80303030303028,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781881544132
+      "id": 1781881544132,
+      "name_en": "Chuncky with a circle of zircons, where mother of pearl and a silhouette of heart zircons",
+      "description_en": ""
     },
     {
       "name": "Cadena con dije de Cruz grande con piedras color esmeralda ",
@@ -1098,7 +1205,9 @@
       "focalY": 61.80954144294265,
       "zoom": 1.15,
       "material": "Baño de oro 18k",
-      "id": 1781884615354
+      "id": 1781884615354,
+      "name_en": "Large cross charm chain with emerald stones",
+      "description_en": ""
     },
     {
       "name": "Cadena delicada con dije de corazón nacarado ",
@@ -1116,7 +1225,9 @@
       "focalY": 41.24236252545829,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781884804624
+      "id": 1781884804624,
+      "name_en": "Delicate chain with pearly heart charm",
+      "description_en": ""
     },
     {
       "name": "Cadena veneciana con un dije de Cruz de circones ",
@@ -1134,7 +1245,9 @@
       "focalY": 43.3333333333333,
       "zoom": 1.6,
       "material": "Plata 925 con un baño de oro de 18k",
-      "id": 1781884881874
+      "id": 1781884881874,
+      "name_en": "Venetian chain with a Zircon Cross charm",
+      "description_en": "925 sterling silver with an 18-carat gold plating"
     },
     {
       "name": "3 corazónes de nácar y dos llanos ",
@@ -1152,7 +1265,9 @@
       "focalY": 43.6308091094242,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781884932644
+      "id": 1781884932644,
+      "name_en": "3 mother-of-pearl hearts and two plains",
+      "description_en": ""
     },
     {
       "name": "San Benito con cruz ",
@@ -1170,7 +1285,9 @@
       "focalY": 50.92884033820899,
       "zoom": 0.85,
       "material": "Baño de oro 18k",
-      "id": 1781884983133
+      "id": 1781884983133,
+      "name_en": "Saint Benedict with a cross",
+      "description_en": ""
     },
     {
       "name": "Corazón de perla con una silueta de corazón de circon ",
@@ -1188,7 +1305,9 @@
       "focalY": 50,
       "zoom": 1.15,
       "material": "Baño de oro 18k",
-      "id": 1781885024731
+      "id": 1781885024731,
+      "name_en": "Heart of pearl with a zircon heart silhouette",
+      "description_en": ""
     },
     {
       "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
@@ -1206,7 +1325,9 @@
       "focalY": 46.55002160093814,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781885110437
+      "id": 1781885110437,
+      "name_en": "Turquoise opal charm chain. On the front it looks like a double chain",
+      "description_en": ""
     },
     {
       "name": "Cadena de circon rosado bajo",
@@ -1224,7 +1345,9 @@
       "focalY": 39.38468184904025,
       "zoom": 1.45,
       "material": "Baño de oro 18k",
-      "id": 1781885197196
+      "id": 1781885197196,
+      "name_en": "Low pink zircon chain",
+      "description_en": ""
     },
     {
       "name": "Dije de balletista con inicial ",
@@ -1242,7 +1365,9 @@
       "focalY": 42.17120286366728,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781885271521
+      "id": 1781885271521,
+      "name_en": "Ballet player with initial",
+      "description_en": ""
     },
     {
       "name": "Cadena con placa grabada a láser ",
@@ -1260,7 +1385,9 @@
       "focalY": 43.76350058631121,
       "zoom": 1,
       "material": "Acero inoxidable",
-      "id": 1781885393238
+      "id": 1781885393238,
+      "name_en": "Chain with laser engraved plate",
+      "description_en": "A laser engraving. You can customize the working of the chain. You can choose from different plate shapes. Rectangular, circular, heart-shaped, gold, silver. \nIf you want to customise with two laser engravings the value is $65"
     },
     {
       "name": "Anillo de doble infinito uno con microcircones y otro llano ",
@@ -1278,7 +1405,9 @@
       "focalY": 44.692340924520124,
       "zoom": 1.6,
       "material": "Baño de oro 18k",
-      "id": 1781891993137
+      "id": 1781891993137,
+      "name_en": "Double infinite ring, one with microcircles and the other flat",
+      "description_en": ""
     },
     {
       "name": "Anillo de aquamarina ",
@@ -1296,7 +1425,9 @@
       "focalY": 54.24242424242421,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
-      "id": 1781892443591
+      "id": 1781892443591,
+      "name_en": "Aquamarine Ring",
+      "description_en": ""
     },
     {
       "name": "Anillo ajustable de ojo turco ",
@@ -1314,7 +1445,9 @@
       "focalY": 47.87878787878785,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
-      "id": 1781892913830
+      "id": 1781892913830,
+      "name_en": "Turkish Eye Adjustable Ring",
+      "description_en": ""
     },
     {
       "name": "Anillo",
@@ -1332,7 +1465,9 @@
       "focalY": 55.45454545454545,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781893045956
+      "id": 1781893045956,
+      "name_en": "ing",
+      "description_en": ""
     },
     {
       "name": "Pulseras de pareja Ying y el yang",
@@ -1350,7 +1485,30 @@
       "focalY": 73.78787878787881,
       "zoom": 0.55,
       "material": "Acero inoxidable",
-      "id": 1781977774245
+      "id": 1781977774245,
+      "name_en": "Couple bracelets Ying and yang",
+      "description_en": ""
+    },
+    {
+      "name": "Aretes con circones ",
+      "category": "Aretes",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Elegante diseño de aretes con forma. Rodeado de microcircones. Ideales para elevar tu look. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1782055672909_55514bd1_9351_4144_9ba4_bc10dc733d79_jpe.jpg",
+      "focalX": 48.60547173972265,
+      "focalY": 56.36919089057585,
+      "zoom": 1.15,
+      "material": "Baño de oro 18k",
+      "name_en": "Zircon Earrings",
+      "description_en": "Elegant shaped earring design. Surrounded by micro-zircons. Ideal to elevate your look.",
+      "id": 1782055740145,
+      "promo": null
     }
   ],
   "combos": []
