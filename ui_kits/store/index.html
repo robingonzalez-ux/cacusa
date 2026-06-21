@@ -151,6 +151,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .modal-add{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:15px;cursor:none;box-shadow:0 4px 20px rgba(238,111,168,.4);transition:all .3s;position:relative;overflow:hidden}
 .modal-add:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(238,111,168,.5)}
 .modal-add.added{background:linear-gradient(135deg,#C4A0EC,#88C8F0)}
+.surcharge-note{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(125,60,152,.10),rgba(91,44,111,.10));border:1.5px solid rgba(125,60,152,.30);color:#5B2C6F;font-family:var(--fu);font-weight:600;font-size:12.5px;line-height:1.4;border-radius:12px;padding:11px 14px;margin-bottom:16px}
+.surcharge-note .sn-ico{font-size:16px;flex-shrink:0}
 .modal-perks{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
 .perk{display:flex;align-items:center;gap:5px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
 .perk-dot{width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0}
@@ -386,6 +388,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <div class="modal-price" id="modalPrice"></div>
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
+      <div id="modalSurchargeNote" class="surcharge-note" style="display:none">
+        <span class="sn-ico">💸</span>
+        <span><span class="t-es">Este producto tiene <strong>4% de descuento</strong> pagando por Zelle o transferencia bancaria.</span><span class="t-en">This product has <strong>4% off</strong> when you pay by Zelle or bank transfer.</span></span>
+      </div>
       <div id="modalPersonField" style="display:none">
         <label class="modal-label"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
         <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…">
@@ -937,6 +943,10 @@ function refreshCursorTargets() {
 }
 
 // ─── IMAGE HELPERS ───────────────────────────────────────────
+// Escapa texto/atributos antes de interpolar en innerHTML (evita romper el HTML y self-XSS)
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
 function imgBgStyle(p) {
   return p && p.imageUrl ? '' : 'background:' + ((p && p.grad) || 'var(--grad)');
 }
@@ -944,7 +954,7 @@ function imgInner(p, alt) {
   if (p && p.imageUrl) {
     const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
     const zoom = p.zoom != null ? p.zoom : 1;
-    return '<img src="' + p.imageUrl + '" alt="' + (alt||'') + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
+    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(alt) + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
   }
   return '';
 }
@@ -980,7 +990,7 @@ function renderProducts() {
   }
   grid.innerHTML = filtered.map((p, i) => `
     <div class="pcard" style="animation-delay:${i * 0.06}s" data-id="${p.id}">
-      ${p.badge ? `<div class="pcard-badge ${p.badge}">${tagLabel(p.tag)}</div>` : ''}
+      ${p.badge ? `<div class="pcard-badge ${p.badge}">${esc(tagLabel(p.tag))}</div>` : ''}
       <button class="pcard-wish" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
       </button>
@@ -990,8 +1000,8 @@ function renderProducts() {
       </div>
       <div class="pcard-body">
         <div class="pcard-cat">${t('cat.' + (p.cat||'').toLowerCase(), p.cat || '')}</div>
-        <div class="pcard-name">${__LANG === 'en' && p.name_en ? p.name_en : p.name}</div>
-        <div class="pcard-desc">${(__LANG === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60)}…</div>
+        <div class="pcard-name">${esc(__LANG === 'en' && p.name_en ? p.name_en : p.name)}</div>
+        <div class="pcard-desc">${esc((__LANG === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60))}…</div>
         ${getMarketBadge(p)}
         <div class="pcard-foot">
           <div class="pcard-price">
@@ -1072,7 +1082,7 @@ function openModal(id) {
   if (p.imageUrl) {
     const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
     const zoom = p.zoom != null ? p.zoom : 1;
-    imgBg.innerHTML = '<img src="' + p.imageUrl + '" alt="' + p.name + '" style="width:100%;height:100%;object-fit:cover;object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + ';display:block">';
+    imgBg.innerHTML = '<img src="' + esc(p.imageUrl) + '" alt="' + esc(p.name) + '" style="width:100%;height:100%;object-fit:cover;object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + ';display:block">';
     imgBg.style.cssText = 'width:100%;height:100%;min-height:400px';
   } else {
     imgBg.innerHTML = '';
@@ -1086,6 +1096,8 @@ function openModal(id) {
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
+  const surNote = document.getElementById('modalSurchargeNote');
+  if (surNote) surNote.style.display = p.hasSurcharge ? 'flex' : 'none';
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
@@ -1151,8 +1163,8 @@ function updateCartUI() {
       <div class="cart-item">
         <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name)}</div>
         <div class="ci-body">
-          <div class="ci-name">${__LANG === 'en' && item.name_en ? item.name_en : item.name}</div>
-          ${item.personalization ? `<div class="ci-custom">"${item.personalization}"</div>` : ''}
+          <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
+          ${item.personalization ? `<div class="ci-custom">"${esc(item.personalization)}"</div>` : ''}
           <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
             <span class="ci-price">$${(+item.price).toFixed(2)}</span>
@@ -1273,8 +1285,8 @@ function renderCheckoutSummary() {
         <div class="co-si-qty">1</div>
       </div>
       <div>
-        <div class="co-si-name">${__LANG === 'en' && item.name_en ? item.name_en : item.name}</div>
-        ${item.personalization ? `<div class="co-si-custom">"${item.personalization}"</div>` : ''}
+        <div class="co-si-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
+        ${item.personalization ? `<div class="co-si-custom">"${esc(item.personalization)}"</div>` : ''}
       </div>
       <div class="co-si-price">$${(+item.price).toFixed(2)}</div>
     </div>`).join('');
