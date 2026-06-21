@@ -349,9 +349,9 @@ function NtfyModal({ token, onClose }) {
                 style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 🌐 Abrir en navegador
               </a>
-              <a href={isIOS ? 'https://apps.apple.com/us/app/ntfy/id1625396347' : 'ntfy://subscribe/' + info.topic} target={isIOS ? '_blank' : undefined} rel="noopener noreferrer"
+              <a href={'ntfy://ntfy.sh/' + info.topic} rel="noopener noreferrer"
                 style={{ flex: 1, padding: '11px', background: '#F3EFF5', color: '#7A5F8A', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                📱 {isIOS ? 'App Store' : 'Abrir en app'}
+                📱 Abrir en app
               </a>
             </div>
           </div>
