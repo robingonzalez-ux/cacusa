@@ -1702,6 +1702,10 @@ function App() {
   const [showMenu, setShowMenu]       = useState(false);
   const [activeTab, setActiveTab]     = useState('products');
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [ordersView, setOrdersView]         = useState('active');
+  const [histSearch, setHistSearch]         = useState('');
+  const [histFrom, setHistFrom]             = useState('');
+  const [histTo, setHistTo]                 = useState('');
   const [pushState, setPushState]           = useState('');  // ''|'subscribed'|'denied'|'unsupported'|'error'
   const [fbSurcharges, setFbSurcharges]     = useState({});
   const [fbMarkets, setFbMarkets]           = useState({});
@@ -2075,52 +2079,159 @@ function App() {
         )}
 
         {/* ── Orders tab ── */}
-        {activeTab === 'orders' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>
-                Pedidos <span style={{ color: '#A89AAF', fontWeight: 400, fontSize: 14 }}>{orders.length} total</span>
-              </div>
-              <button onClick={() => setShowOrderModal(true)}
-                style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(232,80,138,.3)' }}>
-                + Nuevo pedido
-              </button>
-            </div>
+        {activeTab === 'orders' && (() => {
+          const ACTIVE_STATES  = ['Nuevo', 'Confirmado', 'En proceso', 'Enviado'];
+          const DONE_STATES    = ['Entregado', 'Cancelado'];
+          const activeOrders   = orders.filter(o => ACTIVE_STATES.includes(o.estado || 'Nuevo'));
+          const histOrders     = orders.filter(o => DONE_STATES.includes(o.estado || 'Nuevo'));
+          const histFiltered   = histOrders.filter(o => {
+            const q = histSearch.toLowerCase();
+            const matchQ = !q ||
+              ((o.cliente?.nombre || '').toLowerCase().includes(q)) ||
+              ((o.cliente?.telefono || '').toLowerCase().includes(q)) ||
+              ((o.cliente?.ciudad || '').toLowerCase().includes(q));
+            const oDate = o.fecha ? o.fecha.substring(0, 10) : '';
+            const matchFrom = !histFrom || oDate >= histFrom;
+            const matchTo   = !histTo   || oDate <= histTo;
+            return matchQ && matchFrom && matchTo;
+          });
+          const histTotal = histFiltered.reduce((s, o) => s + (parseFloat(o.total) || 0), 0);
 
-            {orders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
-                <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
-                <div style={{ fontSize: 16, marginBottom: 8 }}>No hay pedidos aún</div>
-                <div style={{ fontSize: 13, color: '#ccc', maxWidth: 300, margin: '0 auto' }}>
-                  Los pedidos de Square y WhatsApp aparecen aquí automáticamente. También puedes agregar uno manual.
-                </div>
+          return (
+            <div>
+              {/* Cabecera */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>Pedidos</div>
+                <button onClick={() => setShowOrderModal(true)}
+                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(232,80,138,.3)' }}>
+                  + Nuevo pedido
+                </button>
               </div>
-            ) : (
-              <div>
-                {ORDER_STATES.map(estado => {
-                  const grupo = orders.filter(o => (o.estado || 'Nuevo') === estado);
-                  if (grupo.length === 0) return null;
-                  return (
-                    <div key={estado} style={{ marginBottom: 24 }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, color: '#7A6880', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ background: STATE_COLORS[estado], color: 'white', padding: '3px 10px', borderRadius: 99, fontSize: 11 }}>{estado}</span>
-                        <span>{grupo.length} pedido{grupo.length !== 1 ? 's' : ''}</span>
+
+              {/* Sub-nav Activos / Historial */}
+              <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: '#F3EFF5', borderRadius: 12, padding: 4, width: 'fit-content' }}>
+                {[['active', '📦 Activos', activeOrders.length], ['history', '📋 Historial', histOrders.length]].map(([v, label, count]) => (
+                  <button key={v} onClick={() => setOrdersView(v)}
+                    style={{ padding: '8px 18px', borderRadius: 9, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'inherit',
+                      background: ordersView === v ? 'white' : 'transparent',
+                      color: ordersView === v ? '#E8508A' : '#7A6880',
+                      boxShadow: ordersView === v ? '0 1px 6px rgba(0,0,0,.1)' : 'none',
+                      display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {label}
+                    {count > 0 && <span style={{ background: ordersView === v ? '#E8508A' : '#C4B5C8', color: 'white', borderRadius: 99, fontSize: 11, padding: '1px 7px' }}>{count}</span>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Vista: Activos */}
+              {ordersView === 'active' && (
+                activeOrders.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                    <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
+                    <div style={{ fontSize: 16, marginBottom: 8 }}>No hay pedidos activos</div>
+                    <div style={{ fontSize: 13, color: '#ccc', maxWidth: 300, margin: '0 auto' }}>
+                      Los pedidos de Square y WhatsApp aparecen aquí automáticamente.
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {ACTIVE_STATES.map(estado => {
+                      const grupo = activeOrders.filter(o => (o.estado || 'Nuevo') === estado);
+                      if (grupo.length === 0) return null;
+                      return (
+                        <div key={estado} style={{ marginBottom: 24 }}>
+                          <div style={{ fontWeight: 700, fontSize: 12, color: '#7A6880', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ background: STATE_COLORS[estado], color: 'white', padding: '3px 10px', borderRadius: 99, fontSize: 11 }}>{estado}</span>
+                            <span>{grupo.length} pedido{grupo.length !== 1 ? 's' : ''}</span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+                            {grupo.map(o => (
+                              <OrderCard key={o.id} order={o}
+                                onStatusChange={(ord, newState) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); setDirty(true); }}
+                                onDelete={ord => { setOrders(prev => prev.filter(x => x.id !== ord.id)); setDirty(true); }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
+              )}
+
+              {/* Vista: Historial */}
+              {ordersView === 'history' && (
+                <div>
+                  {/* Barra de búsqueda + fechas */}
+                  <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, pointerEvents: 'none' }}>🔍</span>
+                      <input value={histSearch} onChange={e => setHistSearch(e.target.value)} placeholder="Buscar cliente, teléfono o ciudad…"
+                        style={{ width: '100%', padding: '9px 14px 9px 34px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+                    </div>
+                    <input type="date" value={histFrom} onChange={e => setHistFrom(e.target.value)}
+                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histFrom ? '#1A1118' : '#A89AAF' }} />
+                    <span style={{ color: '#A89AAF', fontSize: 13 }}>→</span>
+                    <input type="date" value={histTo} onChange={e => setHistTo(e.target.value)}
+                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histTo ? '#1A1118' : '#A89AAF' }} />
+                    {(histSearch || histFrom || histTo) && (
+                      <button onClick={() => { setHistSearch(''); setHistFrom(''); setHistTo(''); }}
+                        style={{ padding: '9px 14px', background: '#F3EFF5', color: '#7A6880', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Resumen */}
+                  {histFiltered.length > 0 && (
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+                      <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, padding: '8px 16px', fontSize: 13 }}>
+                        <span style={{ color: '#6B7280' }}>Pedidos: </span><strong style={{ color: '#065F46' }}>{histFiltered.length}</strong>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
-                        {grupo.map(o => (
-                          <OrderCard key={o.id} order={o}
-                            onStatusChange={(ord, newState) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); setDirty(true); }}
-                            onDelete={ord => { setOrders(prev => prev.filter(x => x.id !== ord.id)); setDirty(true); }}
-                          />
-                        ))}
+                      <div style={{ background: '#FDF2F8', border: '1px solid #FBCFE8', borderRadius: 10, padding: '8px 16px', fontSize: 13 }}>
+                        <span style={{ color: '#6B7280' }}>Total cobrado: </span><strong style={{ color: '#9D174D' }}>${histTotal.toFixed(2)}</strong>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+
+                  {histOrders.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                      <div style={{ fontSize: 52, marginBottom: 12 }}>📋</div>
+                      <div style={{ fontSize: 16 }}>No hay pedidos completados aún</div>
+                    </div>
+                  ) : histFiltered.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa', fontSize: 14 }}>
+                      No hay resultados para esa búsqueda.
+                    </div>
+                  ) : (
+                    <div>
+                      {DONE_STATES.map(estado => {
+                        const grupo = histFiltered.filter(o => (o.estado || 'Nuevo') === estado);
+                        if (grupo.length === 0) return null;
+                        return (
+                          <div key={estado} style={{ marginBottom: 24 }}>
+                            <div style={{ fontWeight: 700, fontSize: 12, color: '#7A6880', letterSpacing: 1, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ background: STATE_COLORS[estado], color: 'white', padding: '3px 10px', borderRadius: 99, fontSize: 11 }}>{estado}</span>
+                              <span>{grupo.length} pedido{grupo.length !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
+                              {grupo.map(o => (
+                                <OrderCard key={o.id} order={o}
+                                  onStatusChange={(ord, newState) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); setDirty(true); }}
+                                  onDelete={ord => { setOrders(prev => prev.filter(x => x.id !== ord.id)); setDirty(true); }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* ── Landing tab ── */}
         {activeTab === 'landing' && (
