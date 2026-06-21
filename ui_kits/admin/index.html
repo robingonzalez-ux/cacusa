@@ -286,36 +286,79 @@ async function translatePagesBlock(pages) {
 // Guarda suscripción push en el backend
 const apiSubscribe = (token, subscription) => apiCall('subscribe', { token, subscription });
 
-// ── Push Notifications ─────────────────────────────────────────────────────
-function vapidKeyToUint8Array(b64url) {
-  const padding = '='.repeat((4 - b64url.length % 4) % 4);
-  const base64  = (b64url + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  return Uint8Array.from(raw, c => c.charCodeAt(0));
+// ── Notificaciones ntfy ────────────────────────────────────────────────────
+async function fetchNtfyInfo(token) {
+  try { return await apiCall('ntfy-info', { token }); }
+  catch { return { configured: false }; }
 }
 
-async function setupPush(token, onStateChange) {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    onStateChange('unsupported'); return;
-  }
-  try {
-    const reg  = await navigator.serviceWorker.register('/ui_kits/admin/sw.js', { scope: '/ui_kits/admin/' });
-    await navigator.serviceWorker.ready;
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { onStateChange('denied'); return; }
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly:      true,
-        applicationServerKey: vapidKeyToUint8Array(VAPID_PUB_KEY)
-      });
-    }
-    await apiSubscribe(token, sub.toJSON());
-    onStateChange('subscribed');
-  } catch (e) {
-    console.error('Push setup error:', e);
-    onStateChange('error');
-  }
+function NtfyModal({ token, onClose }) {
+  const [info, setInfo] = React.useState(null);
+  React.useEffect(() => {
+    fetchNtfyInfo(token).then(setInfo);
+  }, []);
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      onClick={onClose}>
+      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 400, boxShadow: '0 24px 60px rgba(0,0,0,.3)', animation: 'fadeIn .2s ease' }}
+        onClick={e => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>🔔 Notificaciones de pedidos</div>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
+        </div>
+
+        {!info && <div style={{ textAlign: 'center', padding: '20px 0', color: '#aaa' }}>Cargando…</div>}
+
+        {info && !info.configured && (
+          <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '14px 16px', fontSize: 13, color: '#92400E' }}>
+            ⚠️ El canal ntfy no está configurado. Agrega la variable <strong>NTFY_TOPIC</strong> en Cloudflare Workers → Settings → Variables.
+          </div>
+        )}
+
+        {info && info.configured && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ background: '#F0FDF4', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#065F46', display: 'flex', gap: 8 }}>
+              <span>✅</span>
+              <span>Las notificaciones de nuevos pedidos están activas en el servidor. Cada vez que llega un pedido se envía una alerta a tu canal ntfy.</span>
+            </div>
+
+            <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700 }}>Para recibirlas en tu celular:</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13, color: '#4B5563' }}>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ background: '#E8508A', color: 'white', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>1</span>
+                <span>Instala la app <strong>ntfy</strong> {isIOS ? 'desde el App Store' : 'desde Google Play o F-Droid'}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ background: '#E8508A', color: 'white', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>2</span>
+                <div>
+                  <div>Suscríbete a este canal:</div>
+                  <code style={{ background: '#F3EFF5', padding: '3px 8px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#7A5F8A', display: 'inline-block', marginTop: 4 }}>{info.topic}</code>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <span style={{ background: '#E8508A', color: 'white', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>3</span>
+                <span>Listo — recibirás alertas instantáneas con cada pedido nuevo.</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <a href={info.url} target="_blank" rel="noopener noreferrer"
+                style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                🌐 Abrir en navegador
+              </a>
+              <a href={'ntfy://' + info.topic} rel="noopener noreferrer"
+                style={{ flex: 1, padding: '11px', background: '#F3EFF5', color: '#7A5F8A', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                📱 Abrir en app
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function compressImage(file, maxPx = 900) {
@@ -1803,7 +1846,7 @@ function App() {
   const [histSearch, setHistSearch]         = useState('');
   const [histFrom, setHistFrom]             = useState('');
   const [histTo, setHistTo]                 = useState('');
-  const [pushState, setPushState]           = useState('');  // ''|'subscribed'|'denied'|'unsupported'|'error'
+  const [showNtfyModal, setShowNtfyModal]   = useState(false);
   const [fbSurcharges, setFbSurcharges]     = useState({});
   const [fbMarkets, setFbMarkets]           = useState({});
   const [combos, setCombos]                 = useState([]);
@@ -1830,7 +1873,6 @@ function App() {
     if (session) {
       try { sessionStorage.setItem('cacusa_session', JSON.stringify(session)); } catch (_) {}
       loadData();
-      setupPush(session.token, setPushState);
     }
   }, [session]);
 
@@ -2023,10 +2065,10 @@ function App() {
         {dirty && <span style={{ fontSize: 11, color: '#FBBF24', fontWeight: 700 }}>● Cambios sin publicar</span>}
         <a href={STORE_URL} target="_blank" rel="noopener" style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>🌐 Tienda</a>
         <button
-          onClick={() => pushState !== 'subscribed' && setupPush(session.token, setPushState)}
-          title={pushState === 'subscribed' ? 'Notificaciones activas' : pushState === 'denied' ? 'Notificaciones bloqueadas en el navegador' : 'Activar notificaciones'}
-          style={{ width: 34, height: 34, borderRadius: '50%', background: pushState === 'subscribed' ? 'rgba(34,197,94,.25)' : 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: pushState === 'subscribed' ? 'default' : 'pointer' }}>
-          {pushState === 'subscribed' ? '🔔' : pushState === 'denied' ? '🔕' : '🔔'}
+          onClick={() => setShowNtfyModal(true)}
+          title="Configurar notificaciones de pedidos"
+          style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>
+          🔔
         </button>
         <button onClick={e => { e.stopPropagation(); setShowMenu(s => !s); }}
           style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none' }}>
@@ -2359,6 +2401,7 @@ function App() {
         )}
 
         {/* ── Modals ── */}
+        {showNtfyModal && <NtfyModal token={session.token} onClose={() => setShowNtfyModal(false)} />}
         {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
         {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} materials={materials} fbSurcharges={fbSurcharges} fbMarkets={fbMarkets} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
 
