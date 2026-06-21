@@ -164,6 +164,15 @@ const apiLoad   = (token)                 => apiCall('load', { token });
 const apiSave   = (token, path, content, message) => apiCall('save', { token, path, content, message });
 // Sube una imagen (base64) vía backend
 const apiUpload = (token, path, contentBase64, message) => apiCall('upload', { token, path, contentBase64, message });
+// Traduce texto de español a inglés vía MyMemory (gratis, sin API key)
+async function translateToEn(text) {
+  if (!text || !text.trim()) return '';
+  try {
+    const res = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text.trim()) + '&langpair=es|en');
+    const data = await res.json();
+    return data?.responseData?.translatedText || text;
+  } catch (_) { return text; }
+}
 // Guarda suscripción push en el backend
 const apiSubscribe = (token, subscription) => apiCall('subscribe', { token, subscription });
 
@@ -388,6 +397,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
   const [dragOver, setDragOver] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -423,14 +433,26 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     uploadFile(e.dataTransfer.files[0]);
   };
 
-  const save = () => {
+  const save = async () => {
     if (!form.name.trim() || !form.price) return;
+    setTranslating(true);
+    let name_en = form.name_en || '';
+    let description_en = form.description_en || '';
+    try {
+      [name_en, description_en] = await Promise.all([
+        translateToEn(form.name),
+        translateToEn(form.description || '')
+      ]);
+    } catch (_) {}
+    setTranslating(false);
     const market = (form.marketEC && form.marketUS) || (!form.marketEC && !form.marketUS) ? 'both' : form.marketEC ? 'ec' : 'us';
     const promo = form.promoEnabled && form.promoPrice
       ? { price: Number(form.promoPrice), label: form.promoLabel || 'Oferta', endsAt: form.promoEndsAt || null }
       : null;
     onSave({
       ...form,
+      name_en,
+      description_en,
       id: form.id || Date.now(),
       price: Number(form.price),
       oldPrice: form.oldPrice ? Number(form.oldPrice) : null,
@@ -620,9 +642,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={save} disabled={!form.name || !form.price}
-            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price) ? .5 : 1, cursor: 'pointer', border: 'none' }}>
-            {isNew ? '+ Agregar Producto' : '💾 Guardar Cambios'}
+          <button onClick={save} disabled={!form.name || !form.price || translating}
+            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating) ? .5 : 1, cursor: translating ? 'wait' : 'pointer', border: 'none' }}>
+            {translating ? '🌐 Traduciendo al inglés…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
           </button>
         </div>
       </div>
