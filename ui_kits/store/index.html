@@ -151,8 +151,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .modal-add{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:15px;cursor:none;box-shadow:0 4px 20px rgba(238,111,168,.4);transition:all .3s;position:relative;overflow:hidden}
 .modal-add:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(238,111,168,.5)}
 .modal-add.added{background:linear-gradient(135deg,#C4A0EC,#88C8F0)}
-.surcharge-note{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(125,60,152,.10),rgba(91,44,111,.10));border:1.5px solid rgba(125,60,152,.30);color:#5B2C6F;font-family:var(--fu);font-weight:600;font-size:12.5px;line-height:1.4;border-radius:12px;padding:11px 14px;margin-bottom:16px}
-.surcharge-note .sn-ico{font-size:16px;flex-shrink:0}
+.cacusa-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:linear-gradient(135deg,#7D3C98,#5B2C6F);color:white;font-family:var(--fu);font-weight:600;font-size:13.5px;line-height:1.5;padding:14px 22px;border-radius:14px;box-shadow:0 12px 40px rgba(91,44,111,.45);z-index:2000;opacity:0;visibility:hidden;transition:opacity .35s,transform .35s,visibility .35s;width:max-content;max-width:min(360px,90vw);text-align:center}
+.cacusa-toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.cacusa-toast strong{font-weight:800;white-space:nowrap}
 .modal-perks{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
 .perk{display:flex;align-items:center;gap:5px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
 .perk-dot{width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0}
@@ -388,10 +389,6 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <div class="modal-price" id="modalPrice"></div>
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
-      <div id="modalSurchargeNote" class="surcharge-note" style="display:none">
-        <span class="sn-ico">💸</span>
-        <span><span class="t-es">Este producto tiene <strong>4% de descuento</strong> pagando por Zelle o transferencia bancaria.</span><span class="t-en">This product has <strong>4% off</strong> when you pay by Zelle or bank transfer.</span></span>
-      </div>
       <div id="modalPersonField" style="display:none">
         <label class="modal-label"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
         <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…">
@@ -561,6 +558,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <p class="success-p"><span class="t-es">Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. ¡Gracias por elegirnos!</span><span class="t-en">We will contact you via WhatsApp to confirm your order. Thank you for choosing us!</span></p>
   <button class="success-back" id="successBack"><span class="t-es">Seguir comprando</span><span class="t-en">Continue shopping</span></button>
 </div>
+
+<!-- Toast / aviso emergente -->
+<div id="cacusaToast" class="cacusa-toast"></div>
 
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────
@@ -947,6 +947,16 @@ function refreshCursorTargets() {
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
+// Aviso emergente (toast) temporal, abajo-centro
+let _toastTimer = null;
+function showToast(html, ms) {
+  const el = document.getElementById('cacusaToast');
+  if (!el) return;
+  el.innerHTML = html;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), ms || 4500);
+}
 function imgBgStyle(p) {
   return p && p.imageUrl ? '' : 'background:' + ((p && p.grad) || 'var(--grad)');
 }
@@ -1096,8 +1106,6 @@ function openModal(id) {
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
-  const surNote = document.getElementById('modalSurchargeNote');
-  if (surNote) surNote.style.display = p.hasSurcharge ? 'flex' : 'none';
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
   document.getElementById('qtyNum').textContent = qty;
@@ -1129,6 +1137,11 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   const btn = document.getElementById('modalAddBtn');
   btn.textContent = __LANG === 'en' ? '✓ Added' : '✓ Añadido';
   btn.classList.add('added');
+  if (currentProduct.hasSurcharge) {
+    showToast(__LANG === 'en'
+      ? '💸 You get <strong>4% off</strong> paying by Zelle or bank transfer'
+      : '💸 Tienes <strong>4% de descuento</strong> pagando por Zelle o transferencia');
+  }
   setTimeout(() => { closeModal(); openCart(); }, 800);
 });
 
