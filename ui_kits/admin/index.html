@@ -856,19 +856,19 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   );
 }
 
-// ── ZXing loader (para escaneo en iOS) ─────────────────────────────────────
-let _zxingPromise = null;
-function loadZXing() {
-  if (_zxingPromise) return _zxingPromise;
-  _zxingPromise = new Promise((resolve, reject) => {
-    if (window.ZXing) { resolve(window.ZXing); return; }
+// ── Quagga2 loader (para escaneo de códigos de barra lineales en iOS) ─────────
+let _quaggaPromise = null;
+function loadQuagga() {
+  if (_quaggaPromise) return _quaggaPromise;
+  _quaggaPromise = new Promise((resolve, reject) => {
+    if (window.Quagga) { resolve(window.Quagga); return; }
     const s = document.createElement('script');
-    s.src = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
-    s.onload = () => resolve(window.ZXing);
-    s.onerror = reject;
+    s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js';
+    s.onload = () => window.Quagga ? resolve(window.Quagga) : reject(new Error('Quagga not found'));
+    s.onerror = () => reject(new Error('Quagga failed to load'));
     document.head.appendChild(s);
   });
-  return _zxingPromise;
+  return _quaggaPromise;
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
@@ -899,41 +899,28 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
         if (results.length > 0) { handleTrackChange(results[0].rawValue); return; }
       } catch {}
     }
-    // Fallback ZXing (iOS Safari + cualquier navegador)
+    // Fallback Quagga2 (iOS Safari + cualquier navegador — diseñado para Code 128)
     try {
       setScanErr('Leyendo código…');
-      const ZXing = await loadZXing();
-      const img = new Image();
-      const url = URL.createObjectURL(file);
-      img.src = url;
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-      URL.revokeObjectURL(url);
-      const W = img.naturalWidth || img.width || 800;
-      const H = img.naturalHeight || img.height || 600;
-      const MAX = 1600;
-      // Probar 4 rotaciones para manejar EXIF de iOS (fotos tomadas en vertical)
-      let decoded = null;
-      for (const deg of [0, 90, 270, 180]) {
-        const sw = (deg === 0 || deg === 180) ? W : H;
-        const sh = (deg === 0 || deg === 180) ? H : W;
-        const scale = Math.min(1, MAX / Math.max(sw, sh));
-        const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
-        const canvas = document.createElement('canvas');
-        canvas.width = cw; canvas.height = ch;
-        const ctx = canvas.getContext('2d');
-        ctx.translate(cw / 2, ch / 2);
-        ctx.rotate(deg * Math.PI / 180);
-        ctx.drawImage(img, -Math.round(W * scale) / 2, -Math.round(H * scale) / 2, Math.round(W * scale), Math.round(H * scale));
-        try {
-          const imgData = ctx.getImageData(0, 0, cw, ch);
-          const lum    = new ZXing.RGBLuminanceSource(imgData.data, cw, ch);
-          const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
-          decoded = new ZXing.MultiFormatReader().decode(bitmap).getText();
-          break;
-        } catch {}
-      }
-      if (decoded) { handleTrackChange(decoded); setScanErr(''); }
-      else setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
+      const Quagga = await loadQuagga();
+      const dataUrl = await new Promise((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(fr.result);
+        fr.onerror = rej;
+        fr.readAsDataURL(file);
+      });
+      const code = await new Promise((res, rej) => {
+        const t = setTimeout(() => rej(new Error('timeout')), 12000);
+        Quagga.decodeSingle({
+          src: dataUrl,
+          numOfWorkers: 0,
+          inputStream: { size: 800 },
+          decoder: { readers: ['code_128_reader', 'ean_reader', 'ean_8_reader', 'code_39_reader', 'upc_reader', 'upc_e_reader'] },
+          locate: true
+        }, result => { clearTimeout(t); result?.codeResult ? res(result.codeResult.code) : rej(new Error('nf')); });
+      });
+      handleTrackChange(code);
+      setScanErr('');
     } catch {
       setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
     }
