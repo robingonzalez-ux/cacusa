@@ -174,6 +174,54 @@ async function apiCall(endpoint, payload) {
 }
 // Inicia sesión → devuelve un token de sesión temporal (no credenciales)
 const apiLogin  = (user, pass)            => apiCall('login', { user, pass });
+
+// ── WebAuthn (Face ID / biometría) ────────────────────────────────────────────
+function _waSupported() { return !!(window.PublicKeyCredential && navigator.credentials); }
+function _waHasCred(u)  { return !!localStorage.getItem(`cacusa_wa:${u}`); }
+function _waB64d(s) {
+  s = s.replace(/-/g,'+').replace(/_/g,'/'); while (s.length%4) s+='=';
+  const b=atob(s), a=new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) a[i]=b.charCodeAt(i); return a;
+}
+function _waB64e(buf) {
+  const a=buf instanceof Uint8Array?buf:new Uint8Array(buf); let s='';
+  for(let i=0;i<a.length;i++) s+=String.fromCharCode(a[i]);
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function _waRegister(token, username) {
+  const ch = await apiCall('webauthn/reg-challenge', { token });
+  const cred = await navigator.credentials.create({ publicKey: {
+    challenge: _waB64d(ch.challenge),
+    rp: { id: ch.rpId, name: ch.rpName },
+    user: { id: new TextEncoder().encode(username), name: username, displayName: USERS[username].name },
+    pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+    authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'preferred', residentKey:'discouraged' },
+    timeout: 60000, attestation: 'none',
+    excludeCredentials: (ch.excludeIds||[]).map(id => ({ id:_waB64d(id), type:'public-key' })),
+  }});
+  await apiCall('webauthn/register', {
+    token, challenge: ch.challenge,
+    credentialId: _waB64e(new Uint8Array(cred.rawId)),
+    attestationObject: _waB64e(new Uint8Array(cred.response.attestationObject)),
+    clientDataJSON: _waB64e(new Uint8Array(cred.response.clientDataJSON)),
+  });
+  localStorage.setItem(`cacusa_wa:${username}`, _waB64e(new Uint8Array(cred.rawId)));
+}
+async function _waLogin(username) {
+  const ch = await apiCall('webauthn/login-challenge', { user: username });
+  const a = await navigator.credentials.get({ publicKey: {
+    challenge: _waB64d(ch.challenge),
+    allowCredentials: [{ id:_waB64d(ch.credentialId), type:'public-key' }],
+    rpId: ch.rpId, userVerification: 'preferred', timeout: 60000,
+  }});
+  return apiCall('webauthn/login', {
+    challenge: ch.challenge,
+    credentialId: _waB64e(new Uint8Array(a.rawId)),
+    authenticatorData: _waB64e(new Uint8Array(a.response.authenticatorData)),
+    clientDataJSON: _waB64e(new Uint8Array(a.response.clientDataJSON)),
+    signature: _waB64e(new Uint8Array(a.response.signature)),
+  });
+}
 // Lee productos y pedidos frescos desde el backend
 const apiLoad   = (token)                 => apiCall('load', { token });
 // Guarda un archivo JSON (productos o pedidos) en el repo, vía backend
@@ -312,25 +360,73 @@ function Illustration({ type, color }) {
 function LoginScreen({ onLogin }) {
   const [username, setUsername] = useState('tita.jaramillo');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [waAvail, setWaAvail]   = useState(false);
+  const [pendingSess, setPending] = useState(null); // sesión esperando activar Face ID
+
+  React.useEffect(() => {
+    setWaAvail(_waSupported() && _waHasCred(username));
+  }, [username]);
 
   const submit = async e => {
     e.preventDefault(); setLoading(true); setError('');
     try {
       const data = await apiLogin(username, password);
-      onLogin({ username, name: USERS[username].name, token: data.token });
+      const sess = { username, name: USERS[username].name, token: data.token };
+      if (_waSupported() && !_waHasCred(username)) {
+        setPending(sess); // ofrecer activar Face ID
+      } else {
+        onLogin(sess);
+      }
     } catch (e) {
       setError(e.status === 401 ? 'Usuario o contraseña incorrectos.' : (e.message || 'No se pudo conectar con el servidor.'));
     } finally { setLoading(false); }
   };
 
+  const loginFaceId = async () => {
+    setLoading(true); setError('');
+    try {
+      const data = await _waLogin(username);
+      onLogin({ username, name: USERS[username].name, token: data.token });
+    } catch (e) {
+      if (e.name === 'NotAllowedError') setError('Autenticación cancelada.');
+      else setError(e.message || 'Error de autenticación biométrica.');
+    } finally { setLoading(false); }
+  };
+
+  const activarFaceId = async () => {
+    setLoading(true);
+    try { await _waRegister(pendingSess.token, pendingSess.username); } catch (_) {}
+    onLogin(pendingSess);
+  };
+
   const inp = { padding: '11px 14px', border: '1.5px solid #e0e0e0', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
   const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 6 };
+  const card = { width: 400, background: 'white', borderRadius: 28, padding: '44px 40px', boxShadow: '0 32px 80px rgba(0,0,0,.45)', animation: 'fadeIn .4s ease' };
+  const wrap = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#1A1124 0%,#2D1B2E 55%,#1A1124 100%)' };
+
+  if (pendingSess) return (
+    <div style={wrap}>
+      <div style={{ ...card, textAlign: 'center' }}>
+        <div style={{ fontSize: 52, marginBottom: 12 }}>🔐</div>
+        <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Activar acceso biométrico</div>
+        <div style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>¿Usar Face ID o huella la próxima vez?</div>
+        <button onClick={activarFaceId} disabled={loading}
+          style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', borderRadius:99, fontWeight:700, fontSize:15, marginBottom:10, opacity:loading?.7:1, border:'none', cursor:'pointer' }}>
+          {loading ? 'Configurando…' : 'Activar Face ID'}
+        </button>
+        <button onClick={() => onLogin(pendingSess)}
+          style={{ width:'100%', padding:12, background:'none', border:'1.5px solid #e0e0e0', borderRadius:99, fontWeight:500, fontSize:14, color:'#888', cursor:'pointer' }}>
+          Ahora no
+        </button>
+      </div>
+    </div>
+  );
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg,#1A1124 0%,#2D1B2E 55%,#1A1124 100%)' }}>
-      <div style={{ width: 400, background: 'white', borderRadius: 28, padding: '44px 40px', boxShadow: '0 32px 80px rgba(0,0,0,.45)', animation: 'fadeIn .4s ease' }}>
+    <div style={wrap}>
+      <div style={card}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 34, fontWeight: 900, letterSpacing: '.15em', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CACUSA</div>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, color: '#aaa', fontStyle: 'italic', marginTop: 3 }}>Panel de Administración</div>
@@ -349,10 +445,16 @@ function LoginScreen({ onLogin }) {
           <div style={{ marginBottom: 8 }} />
           {error && <div style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>{error}</div>}
           <button type="submit" disabled={loading}
-            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s' }}>
+            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s', border: 'none', cursor: 'pointer' }}>
             {loading ? 'Verificando…' : 'Ingresar →'}
           </button>
         </form>
+        {waAvail && (
+          <button onClick={loginFaceId} disabled={loading}
+            style={{ width:'100%', padding:13, marginTop:12, background:'#F8F8FF', border:'1.5px solid #e8e0ff', borderRadius:99, fontWeight:600, fontSize:14, color:'#5a3fa0', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+            <span style={{ fontSize:20 }}>🔐</span> Ingresar con Face ID
+          </button>
+        )}
       </div>
     </div>
   );
