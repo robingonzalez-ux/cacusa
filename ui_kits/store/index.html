@@ -206,6 +206,14 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .co-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;transition:border-color .2s,box-shadow .2s}
 .co-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.12)}
 .co-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.addr-wrap{position:relative}
+.addr-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--ink-light);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
+.addr-suggestions.open{display:block}
+.addr-sugg-item{padding:10px 14px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
+.addr-sugg-item:last-child{border-bottom:none}
+.addr-sugg-item:hover,.addr-sugg-item.focused{background:#fdf0f7}
+.addr-sugg-main{font-weight:500}
+.addr-sugg-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
 .pay-btn{width:100%;background:linear-gradient(135deg,#1A1A2E,#2D2D4E);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:none;box-shadow:0 4px 24px rgba(26,26,46,.4);transition:all .3s;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px}
 .pay-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 32px rgba(26,26,46,.5)}
 .pay-btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
@@ -449,6 +457,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
+          <label class="co-label"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label>
+          <div class="addr-wrap">
+            <input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion" autocomplete="off">
+            <div id="addrSuggestions" class="addr-suggestions"></div>
+          </div>
+        </div>
+        <div class="co-field">
           <label class="co-label"><span class="t-es">País</span><span class="t-en">Country</span></label>
           <select class="co-input" id="coPais">
             <option value="US" selected>&#x1F1FA;&#x1F1F8; Estados Unidos</option>
@@ -496,7 +511,6 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
         </div>
         <div class="co-field"><label class="co-label"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad"></div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label><input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion"></div>
         <div class="co-field"><label class="co-label"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas"></div>
 
         <div class="co-section" style="margin-top:20px"><span class="t-es">Método de pago</span><span class="t-en">Payment Method</span></div>
@@ -1206,6 +1220,109 @@ document.getElementById('coPais').addEventListener('change', function() {
   document.getElementById('coZip').value    = '';
   renderCheckoutSummary();
 });
+
+// ─── AUTOCOMPLETE DIRECCIÓN (Photon / OpenStreetMap) ─────────────────────────
+(function initAddrAutocomplete() {
+  const inp  = document.getElementById('coDireccion');
+  const list = document.getElementById('addrSuggestions');
+  if (!inp || !list) return;
+  let _timer = null;
+  let _items = [];
+
+  function matchState(stateName) {
+    if (!stateName) return '';
+    const s = stateName.toLowerCase();
+    for (const opt of document.getElementById('coEstado').options) {
+      if (opt.value && opt.text.toLowerCase().startsWith(s)) return opt.value;
+    }
+    return '';
+  }
+
+  function closeList() { list.classList.remove('open'); list.innerHTML = ''; _items = []; }
+
+  function fillFromFeature(f) {
+    const p = f.properties;
+    const num    = p.housenumber || '';
+    const street = p.street || p.name || '';
+    inp.value = (num ? num + ' ' : '') + street;
+    if (p.city)     document.getElementById('coCiudad').value = p.city;
+    const cc = (p.country_code || '').toUpperCase();
+    const paisSel = document.getElementById('coPais');
+    if (cc === 'US' || cc === 'EC' || cc === 'CO' || cc === 'PE' || cc === 'MX') {
+      paisSel.value = cc;
+    }
+    const isUS = paisSel.value === 'US';
+    document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
+    document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
+    if (isUS && p.state) {
+      const abbr = matchState(p.state);
+      if (abbr) document.getElementById('coEstado').value = abbr;
+    }
+    if (isUS && p.postcode) document.getElementById('coZip').value = p.postcode.substring(0, 5);
+    closeList();
+    renderCheckoutSummary();
+  }
+
+  inp.addEventListener('input', function() {
+    clearTimeout(_timer);
+    const q = this.value.trim();
+    if (q.length < 4) { closeList(); return; }
+    _timer = setTimeout(async () => {
+      try {
+        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
+        const data = await res.json();
+        const features = (data.features || []).filter(f => f.properties && (f.properties.street || f.properties.housenumber));
+        if (!features.length) { closeList(); return; }
+        _items = features;
+        list.innerHTML = features.map((f, i) => {
+          const p = f.properties;
+          const num    = p.housenumber || '';
+          const street = p.street || p.name || '';
+          const main   = (num ? num + ' ' : '') + street;
+          const sub    = [p.city, p.state, p.country].filter(Boolean).join(', ');
+          return '<div class="addr-sugg-item" data-idx="' + i + '">'
+               + '<div class="addr-sugg-main">' + esc(main) + '</div>'
+               + (sub ? '<div class="addr-sugg-sub">' + esc(sub) + '</div>' : '')
+               + '</div>';
+        }).join('');
+        list.classList.add('open');
+      } catch(e) { closeList(); }
+    }, 380);
+  });
+
+  list.addEventListener('click', function(e) {
+    const item = e.target.closest('.addr-sugg-item');
+    if (!item) return;
+    fillFromFeature(_items[+item.dataset.idx]);
+  });
+
+  // Keyboard nav
+  inp.addEventListener('keydown', function(e) {
+    const items = list.querySelectorAll('.addr-sugg-item');
+    if (!items.length) return;
+    const focused = list.querySelector('.focused');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? (focused.nextElementSibling || items[0]) : items[0];
+      if (focused) focused.classList.remove('focused');
+      next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? (focused.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+      if (focused) focused.classList.remove('focused');
+      prev.classList.add('focused');
+    } else if (e.key === 'Enter' && focused) {
+      e.preventDefault();
+      fillFromFeature(_items[+focused.dataset.idx]);
+    } else if (e.key === 'Escape') {
+      closeList();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!inp.contains(e.target) && !list.contains(e.target)) closeList();
+  });
+})();
 document.getElementById('coEstado').addEventListener('change', renderCheckoutSummary);
 document.getElementById('coZip').addEventListener('input', renderCheckoutSummary);
 
