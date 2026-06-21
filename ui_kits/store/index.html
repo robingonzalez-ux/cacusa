@@ -1400,12 +1400,12 @@ function renderCheckoutSummary() {
   const pais       = (document.getElementById('coPais').value || '').toUpperCase();
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
 
-  // Calcular impuesto (Zelle no aplica — el total que se guarda tampoco incluye impuesto)
+  // Calcular impuesto
   let taxAmt = 0, taxLabel = 'Impuesto';
-  if (!isZelle && pais === 'EC') {
+  if (pais === 'EC') {
     taxAmt   = (adjustedSubtotal + shippingCost) * 0.15;
     taxLabel = 'IVA Ecuador (15%)';
-  } else if (!isZelle && pais === 'US' && estado) {
+  } else if (pais === 'US' && estado) {
     const zip  = (document.getElementById('coZip').value || '').trim();
     const rate = getTaxRate(estado, zip);
     if (rate) {
@@ -1483,15 +1483,25 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
 
   const apellido  = document.getElementById('coApellido').value.trim();
   const ciudad    = document.getElementById('coCiudad').value.trim();
-  const pais      = document.getElementById('coPais').value;
+  const paisVal   = document.getElementById('coPais').value;
+  const estadoVal = (document.getElementById('coEstado').value || '').toUpperCase();
+  const zipVal    = (document.getElementById('coZip').value || '').trim();
   const direccion = document.getElementById('coDireccion').value.trim();
   const notas     = document.getElementById('coNotas').value.trim();
-  const zelleTotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price), 0);
-  const free       = zelleTotal >= SHIPPING.freeThreshold;
-  const totalFinal = free ? zelleTotal : zelleTotal + SHIPPING.cost;
+  const zelleSubtotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price), 0);
+  const free          = zelleSubtotal >= SHIPPING.freeThreshold;
+  const shippingCost  = free ? 0 : SHIPPING.cost;
+  let zelleTax = 0;
+  if (paisVal === 'EC') {
+    zelleTax = (zelleSubtotal + shippingCost) * 0.15;
+  } else if (paisVal === 'US' && estadoVal) {
+    const rate = getTaxRate(estadoVal, zipVal);
+    if (rate) zelleTax = (zelleSubtotal + shippingCost) * rate;
+  }
+  const totalFinal = zelleSubtotal + shippingCost + zelleTax;
 
   submitOrder({
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     parseFloat(totalFinal.toFixed(2)),
     pago:      'Zelle/Transferencia',
