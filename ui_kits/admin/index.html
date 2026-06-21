@@ -817,19 +817,42 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
-function OrderCard({ order, onStatusChange, onDelete }) {
+function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
   const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
   const estado = order.estado || 'Nuevo';
   const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
   const nextState = ORDER_STATES[nextIdx];
   const waNum = ((order.cliente && order.cliente.telefono) || '').replace(/[^0-9]/g, '');
+  const [trackVal, setTrackVal] = React.useState(order.tracking || '');
+  const [scanErr, setScanErr]   = React.useState('');
+  const scanInputRef = React.useRef(null);
+  React.useEffect(() => { setTrackVal(order.tracking || ''); }, [order.tracking]);
+
+  const handleTrackChange = v => { setTrackVal(v); onTrackingChange && onTrackingChange(order, v); };
+
+  const handleScanFile = async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    setScanErr('');
+    if (!('BarcodeDetector' in window)) { setScanErr('Escaneo no disponible en este navegador.'); return; }
+    try {
+      const bitmap = await createImageBitmap(file);
+      const detector = new BarcodeDetector({ formats: ['code_128','code_39','qr_code','ean_13','ean_8','upc_a','upc_e','codabar','itf','data_matrix','pdf417'] });
+      const results = await detector.detect(bitmap);
+      if (results.length > 0) { handleTrackChange(results[0].rawValue); }
+      else { setScanErr('No se detectó código. Intenta más cerca o escríbelo.'); }
+    } catch { setScanErr('Error al leer la imagen.'); }
+  };
+
   const buildStatusWaUrl = () => {
     const nombre = (order.cliente && order.cliente.nombre) || 'Cliente';
     const num = order.numero ? ' *#' + order.numero + '*' : '';
+    const trackLine = trackVal ? '\n📦 *Tracking:* ' + trackVal : '';
     const STATE_MSG = {
       'Confirmado':  '✅ Tu pedido ha sido *confirmado*. Estamos preparando todo con mucho cariño.',
       'En proceso':  '🔨 Tu pedido está *en proceso de elaboración*. Cada pieza se hace a mano especialmente para ti.',
-      'Enviado':     '🚚 ¡Tu pedido ya fue *enviado*! Pronto llegará a tus manos.',
+      'Enviado':     '🚚 ¡Tu pedido ya fue *enviado*! Pronto llegará a tus manos.' + trackLine,
       'Entregado':   '🎉 Tu pedido fue *entregado*. ¡Esperamos que lo ames!',
       'Cancelado':   'Tu pedido ha sido *cancelado*. Si tienes preguntas, escríbenos.',
     };
@@ -838,6 +861,7 @@ function OrderCard({ order, onStatusChange, onDelete }) {
     return waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg) : null;
   };
   const waStatusUrl = buildStatusWaUrl();
+
   return (
     <div style={{ background: 'white', borderRadius: 16, padding: 18, boxShadow: '0 2px 12px rgba(0,0,0,0.07)', border: '1px solid #f0ecf0', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -863,6 +887,29 @@ function OrderCard({ order, onStatusChange, onDelete }) {
         </div>
       </div>
       {order.notas && <div style={{ fontSize: 12, color: '#7A6880', fontStyle: 'italic' }}>📝 {order.notas}</div>}
+
+      {/* ── Tracking ── */}
+      <div style={{ background: '#F0F7FF', borderRadius: 10, padding: '10px 12px' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#3B82F6', letterSpacing: '.08em', marginBottom: 6 }}>📦 TRACKING DE ENVÍO</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            value={trackVal}
+            onChange={e => handleTrackChange(e.target.value)}
+            placeholder="Número o código de seguimiento…"
+            style={{ flex: 1, padding: '7px 10px', border: '1.5px solid #BFDBFE', borderRadius: 8, fontSize: 12, outline: 'none', fontFamily: 'inherit', background: 'white' }}
+          />
+          <button onClick={() => scanInputRef.current && scanInputRef.current.click()}
+            title="Escanear código de barras / QR"
+            style={{ padding: '7px 10px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
+            📷
+          </button>
+          <input ref={scanInputRef} type="file" accept="image/*" capture="environment"
+            style={{ display: 'none' }} onChange={handleScanFile} />
+        </div>
+        {scanErr && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>{scanErr}</div>}
+        {trackVal && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>Este código se incluye en el mensaje WA al notificar estado "Enviado".</div>}
+      </div>
+
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         {estado !== 'Entregado' && estado !== 'Cancelado' && (
           <button onClick={() => onStatusChange(order, nextState)}
@@ -2167,6 +2214,7 @@ function App() {
                               <OrderCard key={o.id} order={o}
                                 onStatusChange={(ord, newState) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); setDirty(true); }}
                                 onDelete={ord => { setOrders(prev => prev.filter(x => x.id !== ord.id)); setDirty(true); }}
+                                onTrackingChange={(ord, tracking) => { setOrders(prev => prev.map(x => x.id === ord.id ? { ...x, tracking } : x)); setDirty(true); }}
                               />
                             ))}
                           </div>
