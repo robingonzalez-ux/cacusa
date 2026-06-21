@@ -908,17 +908,27 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
       const url = URL.createObjectURL(file);
       img.src = url;
       await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-      // Reducir fotos grandes de cámara iOS para que ZXing las procese bien
-      const MAX = 1200;
-      const scale = Math.min(1, MAX / Math.max(img.width || 1, img.height || 1));
-      const canvas = document.createElement('canvas');
-      canvas.width  = Math.round((img.width  || 800) * scale);
-      canvas.height = Math.round((img.height || 600) * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      const result = await reader.decodeFromCanvas(canvas);
-      handleTrackChange(result.getText());
-      setScanErr('');
+      const W = img.naturalWidth || img.width || 800;
+      const H = img.naturalHeight || img.height || 600;
+      const MAX = 1600;
+      // Probar 4 rotaciones para manejar EXIF de iOS (fotos tomadas en vertical)
+      let decoded = null;
+      for (const deg of [0, 90, 270, 180]) {
+        const sw = (deg === 0 || deg === 180) ? W : H;
+        const sh = (deg === 0 || deg === 180) ? H : W;
+        const scale = Math.min(1, MAX / Math.max(sw, sh));
+        const cw = Math.round(sw * scale), ch = Math.round(sh * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.translate(cw / 2, ch / 2);
+        ctx.rotate(deg * Math.PI / 180);
+        ctx.drawImage(img, -Math.round(W * scale) / 2, -Math.round(H * scale) / 2, Math.round(W * scale), Math.round(H * scale));
+        try { decoded = (await reader.decodeFromCanvas(canvas)).getText(); break; } catch {}
+      }
+      if (decoded) { handleTrackChange(decoded); setScanErr(''); }
+      else setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
     } catch {
       setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
     }
