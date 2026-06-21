@@ -1243,14 +1243,14 @@ document.getElementById('coPais').addEventListener('change', function() {
   function fillFromFeature(f) {
     const p = f.properties;
     const num    = p.housenumber || '';
-    const street = p.street || p.name || '';
-    inp.value = (num ? num + ' ' : '') + street;
+    const street = p.street || '';
+    // If Photon gives us housenumber+street use those; otherwise use name as full street line
+    inp.value = street ? (num ? num + ' ' : '') + street : (p.name || '');
     if (p.city)     document.getElementById('coCiudad').value = p.city;
-    const cc = (p.country_code || '').toUpperCase();
+    // Photon uses "countrycode" (no underscore), two-letter lowercase
+    const cc = (p.countrycode || '').toUpperCase();
     const paisSel = document.getElementById('coPais');
-    if (cc === 'US' || cc === 'EC' || cc === 'CO' || cc === 'PE' || cc === 'MX') {
-      paisSel.value = cc;
-    }
+    if (['US','EC','CO','PE','MX'].includes(cc)) paisSel.value = cc;
     const isUS = paisSel.value === 'US';
     document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
     document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
@@ -1266,19 +1266,23 @@ document.getElementById('coPais').addEventListener('change', function() {
   inp.addEventListener('input', function() {
     clearTimeout(_timer);
     const q = this.value.trim();
-    if (q.length < 4) { closeList(); return; }
+    if (q.length < 3) { closeList(); return; }
     _timer = setTimeout(async () => {
       try {
         const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
         const data = await res.json();
-        const features = (data.features || []).filter(f => f.properties && (f.properties.street || f.properties.housenumber));
+        // Accept any result that has at least a street OR a city — broad enough for all address formats
+        const features = (data.features || []).filter(f => {
+          const p = f.properties;
+          return p && (p.street || p.housenumber || (p.city && p.name));
+        });
         if (!features.length) { closeList(); return; }
         _items = features;
         list.innerHTML = features.map((f, i) => {
           const p = f.properties;
           const num    = p.housenumber || '';
-          const street = p.street || p.name || '';
-          const main   = (num ? num + ' ' : '') + street;
+          const street = p.street || '';
+          const main   = street ? (num ? num + ' ' : '') + street : (p.name || '');
           const sub    = [p.city, p.state, p.country].filter(Boolean).join(', ');
           return '<div class="addr-sugg-item" data-idx="' + i + '">'
                + '<div class="addr-sugg-main">' + esc(main) + '</div>'
