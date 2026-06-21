@@ -399,7 +399,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
         <label class="modal-label"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
-        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…">
+        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…" maxlength="20">
         <div class="modal-hint"><span class="t-es">Máx. 20 caracteres · letras, números y espacios</span><span class="t-en">Max. 20 characters · letters, numbers and spaces</span></div>
       </div>
       <div class="modal-qty">
@@ -450,16 +450,16 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 
         <div class="co-section"><span class="t-es">Información de contacto</span><span class="t-en">Contact Information</span></div>
         <div class="co-row">
-          <div class="co-field"><label class="co-label"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre"></div>
-          <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido"></div>
+          <div class="co-field"><label class="co-label"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre" maxlength="40"></div>
+          <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido" maxlength="40"></div>
         </div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" maxlength="20"></div>
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
           <label class="co-label"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label>
           <div class="addr-wrap">
-            <input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion" autocomplete="off">
+            <input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion" autocomplete="off" maxlength="120">
             <div id="addrSuggestions" class="addr-suggestions"></div>
           </div>
         </div>
@@ -510,8 +510,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <label class="co-label"><span class="t-es">Código ZIP</span><span class="t-en">ZIP Code</span></label>
           <input class="co-input" id="coZip" maxlength="5" inputmode="numeric">
         </div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad"></div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad" maxlength="50"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas" maxlength="200"></div>
 
         <div class="co-section" style="margin-top:20px"><span class="t-es">Método de pago</span><span class="t-en">Payment Method</span></div>
         <div class="pay-method-grid">
@@ -881,6 +881,9 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
       if (_ip && _ip.country) window.__visitorCountry = _ip.country;
     }
   } catch(_) {}
+  // Re-sincroniza el carrito con precios canónicos (evita precios obsoletos
+  // o manipulados en localStorage; el cobro real igual se valida en el backend)
+  reconcileCartPrices();
   applyTexts();
   renderFilters();
   renderMaterials();
@@ -888,6 +891,25 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
   renderCombos();
   updateCartUI();
 })();
+
+// Vuelve a aplicar los precios/recargos actuales del catálogo a los ítems guardados
+function reconcileCartPrices() {
+  if (!Array.isArray(cart) || !cart.length || !PRODUCTS.length) return;
+  let changed = false;
+  cart = cart.filter(item => {
+    if (item.isCombo) return true; // los combos conservan su precio fijo
+    const prod = PRODUCTS.find(p => p.id === item.id);
+    if (!prod) return false;       // producto ya no disponible → se quita del carrito
+    if (item.price !== prod.price || item.basePrice !== prod.basePrice || item.hasSurcharge !== !!prod.hasSurcharge) {
+      item.price        = prod.price;
+      item.basePrice    = prod.basePrice;
+      item.hasSurcharge = !!prod.hasSurcharge;
+      changed = true;
+    }
+    return true;
+  });
+  if (changed || cart.length !== JSON.parse(localStorage.getItem('cacusa-cart') || '[]').length) saveCart();
+}
 
 // ─── APLICAR CONFIG DINÁMICA ────────────────────────────────
 function applyTexts() {
@@ -1052,14 +1074,14 @@ function renderCombos() {
     const origTotal = items.reduce((s, p) => s + p.basePrice, 0);
     const saving = origTotal > c.price ? (origTotal - c.price).toFixed(2) : null;
     const imgEl = c.imageUrl
-      ? `<img class="combo-img" src="${c.imageUrl}" alt="${c.name}">`
+      ? `<img class="combo-img" src="${esc(c.imageUrl)}" alt="${esc(c.name)}">`
       : `<div class="combo-img-ph">🎁</div>`;
     return `
       <div class="combo-card" onclick="addComboToCart(${c.id})">
         ${imgEl}
         <div class="combo-body">
-          <div class="combo-name">${c.name}</div>
-          <div class="combo-desc">${items.map(p => p.name).slice(0,3).join(' + ')}${items.length > 3 ? ' +más' : ''}</div>
+          <div class="combo-name">${esc(c.name)}</div>
+          <div class="combo-desc">${esc(items.map(p => p.name).slice(0,3).join(' + '))}${items.length > 3 ? ' +más' : ''}</div>
           <div class="combo-prices">
             <span class="combo-price-now">$${(+c.price).toFixed(2)}</span>
             ${saving ? `<span class="combo-price-old">$${origTotal.toFixed(2)}</span><span class="combo-saving">Ahorras $${saving}</span>` : ''}
@@ -1148,7 +1170,8 @@ document.getElementById('qtyPlus').addEventListener('click', () => { qty++; docu
 
 document.getElementById('modalAddBtn').addEventListener('click', () => {
   if (!currentProduct) return;
-  const personText = document.getElementById('modalPersonText').value;
+  // Recorta a 20 caracteres como respaldo del maxlength del input
+  const personText = document.getElementById('modalPersonText').value.slice(0, 20);
   for (let i = 0; i < qty; i++) {
     cart.push({ ...currentProduct, personalization: personText, material: currentProduct.material || '', cartId: Date.now() + i });
   }
