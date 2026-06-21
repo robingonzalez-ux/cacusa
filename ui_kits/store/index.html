@@ -1400,12 +1400,12 @@ function renderCheckoutSummary() {
   const pais       = (document.getElementById('coPais').value || '').toUpperCase();
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
 
-  // Calcular impuesto
+  // Calcular impuesto (Zelle no aplica — el total que se guarda tampoco incluye impuesto)
   let taxAmt = 0, taxLabel = 'Impuesto';
-  if (pais === 'EC') {
+  if (!isZelle && pais === 'EC') {
     taxAmt   = (adjustedSubtotal + shippingCost) * 0.15;
     taxLabel = 'IVA Ecuador (15%)';
-  } else if (pais === 'US' && estado) {
+  } else if (!isZelle && pais === 'US' && estado) {
     const zip  = (document.getElementById('coZip').value || '').trim();
     const rate = getTaxRate(estado, zip);
     if (rate) {
