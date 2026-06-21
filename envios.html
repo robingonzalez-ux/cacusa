@@ -208,7 +208,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const T=(cfg.translations&&cfg.translations.en)||{};
         const pgEn=(cfg.pages_en&&cfg.pages_en.envios)||{};
         document.title='Shipping — CACUSA by Taitus';
-        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         setTxt('envIntro',pgEn.intro);
         setTxt('envEC1',pgEn.servientregaSameCityRate);
         setTxt('envEC2',pgEn.servientregaOtherCityRate);

@@ -195,7 +195,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const T=(cfg.translations&&cfg.translations.en)||{};
         const pgEn=(cfg.pages_en&&cfg.pages_en.cuidados)||{};
         document.title='Jewelry Care Guide — CACUSA by Taitus';
-        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         st('cuiIntro',pgEn.intro||'Thank you for your purchase and for supporting this Ecuadorian venture. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer. Here are our recommendations!');
         st('cuiSec1Body',pgEn.sec1Body||"Don't shower, swim, or wash dishes while wearing your piece. Constant moisture and chlorine or salt water dull the finish and weaken clasps and joints over time. Remove it before showering, swimming pools, or the ocean.");
         st('cuiSec2Body',pgEn.sec2Body||'Avoid direct contact with perfumes, creams, alcohol, lotions, and sunscreen. These products contain chemicals that react with the metal and accelerate loss of shine or color change.');

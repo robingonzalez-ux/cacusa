@@ -181,7 +181,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const T=(cfg.translations&&cfg.translations.en)||{};
         const pgEn=(cfg.pages_en&&cfg.pages_en.devoluciones)||{};
         document.title='Return Policy — CACUSA by Taitus';
-        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.textContent=v;});
+        document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         const devI=document.getElementById('devIntro');
         if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus, every piece is <strong>handcrafted and personalized</strong> for each client. As these are made-to-order pieces, we <strong>do not accept returns or exchanges</strong> once the purchase is confirmed.';
         const devP=document.getElementById('devPorQueBody');
