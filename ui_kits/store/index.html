@@ -583,6 +583,21 @@ const PRODUCTS_JSON_URL = '../../data/products.json';
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 
+// ─── FIREBASE AUTH (anónima) ─────────────────────────────────
+const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
+let _fbIdToken = null;
+async function _fbSignIn() {
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${_FB_API_KEY}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnSecureToken: true }) }
+    );
+    if (r.ok) { const d = await r.json(); _fbIdToken = d.idToken || null; }
+  } catch(_) {}
+}
+function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
+
 // ─── IDIOMA ─────────────────────────────────────────────────
 // Traducciones embebidas directamente — no dependen de fetch
 const __LANG = localStorage.getItem('cacusa-lang') || 'es';
@@ -834,8 +849,9 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
     PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   }
   // Apply per-product surcharges from Firebase (best-effort, non-blocking)
+  await _fbSignIn();
   try {
-    const _srRes = await fetch('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json');
+    const _srRes = await fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json'));
     if (_srRes.ok) {
       const _sr = await _srRes.json();
       if (_sr && typeof _sr === 'object') {
@@ -866,7 +882,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all';
   // Apply per-product markets + detect visitor country via IP (best-effort, non-blocking)
   try {
     const [_mktRes, _ipRes] = await Promise.all([
-      fetch('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json'),
+      fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json')),
       fetch('https://api.country.is/')
     ]);
     if (_mktRes.ok) {

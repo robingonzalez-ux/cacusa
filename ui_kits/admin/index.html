@@ -54,6 +54,22 @@ const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👸', color: '#E85D8A' },
   'robin.gonzalez':  { name: 'Robin González',  avatar: '🤴', color: '#9B5DE5' }
 };
+
+// ── Firebase Auth (anónima) ───────────────────────────────────────────────────
+const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
+let _fbIdToken = null;
+async function _fbSignIn() {
+  if (_fbIdToken) return;
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${_FB_API_KEY}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnSecureToken: true }) }
+    );
+    if (r.ok) { const d = await r.json(); _fbIdToken = d.idToken || null; }
+  } catch(_) {}
+}
+function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
 const DEFAULT_CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
 const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
@@ -1372,8 +1388,9 @@ function MercadoTab({ products }) {
 
   useEffect(() => {
     (async () => {
+      await _fbSignIn();
       try {
-        const [sr, mk] = await Promise.all([fetch(FB_SR), fetch(FB_MKT)]);
+        const [sr, mk] = await Promise.all([fetch(_fbUrl(FB_SR)), fetch(_fbUrl(FB_MKT))]);
         if (sr.ok) { const d = await sr.json(); setSurcharges(d && typeof d === 'object' ? d : {}); }
         if (mk.ok) { const d = await mk.json(); setMarkets(d && typeof d === 'object' ? d : {}); }
       } catch(_) {}
@@ -1383,10 +1400,11 @@ function MercadoTab({ products }) {
 
   const save = async () => {
     setSaving(true); setMsg('');
+    await _fbSignIn();
     try {
       const [r1, r2] = await Promise.all([
-        fetch(FB_SR,  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(surcharges) }),
-        fetch(FB_MKT, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(markets) })
+        fetch(_fbUrl(FB_SR),  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(surcharges) }),
+        fetch(_fbUrl(FB_MKT), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(markets) })
       ]);
       if (!r1.ok || !r2.ok) throw new Error('Firebase error');
       setMsg('✅ ¡Guardado!');
@@ -1596,8 +1614,9 @@ function App() {
 
   useEffect(() => {
     (async () => {
+      await _fbSignIn();
       try {
-        const [r1, r2] = await Promise.all([fetch(FB_SR), fetch(FB_MKT)]);
+        const [r1, r2] = await Promise.all([fetch(_fbUrl(FB_SR)), fetch(_fbUrl(FB_MKT))]);
         if (r1.ok) { const d = await r1.json(); if (d && typeof d === 'object') setFbSurcharges(d); }
         if (r2.ok) { const d = await r2.json(); if (d && typeof d === 'object') setFbMarkets(d); }
       } catch (_) {}
