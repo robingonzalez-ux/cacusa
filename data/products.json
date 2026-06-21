@@ -213,6 +213,41 @@
         1781473627668
       ]
     },
+    "home_en": {
+      "storyLabel": "Our story",
+      "storyTitle": "Artisans of the heart",
+      "storyQuote": "Each piece, a unique story",
+      "storyBody": "We are CACUSA by Taitus, artisan jewelry makers with presence in Ecuador and the United States. We create pieces for brave, independent women with values — and for the men who accompany them.",
+      "stats": [
+        {"num": "650", "label": "Pieces created"},
+        {"num": "5", "label": "Countries"},
+        {"num": "100", "label": "% Handmade"}
+      ],
+      "person": {
+        "label": "Customization",
+        "title": "Your piece, your story",
+        "subtitle": "Tell us what makes it special and we'll create it for you.",
+        "steps": [
+          {"title": "Choose your piece", "desc": "Necklace, bracelet, ring or earrings"},
+          {"title": "Customize", "desc": "Name, date or special message"},
+          {"title": "We create it", "desc": "Handmade, ready in 5–7 days"}
+        ]
+      },
+      "testimonials": [
+        {"t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.", "n": "Valentina M.", "l": "Quito, Ecuador"},
+        {"t": "My wife's ring is a work of art. She fell in love with it from the first moment.", "n": "Carlos R.", "l": "Miami, USA"},
+        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"},
+        {"t": "I ordered a necklace for my mom. She cried with emotion when she saw it. Thank you CACUSA.", "n": "Isabella T.", "l": "New York, USA"},
+        {"t": "Unique design, incredible service. I would definitely buy again. The best!", "n": "Camila V.", "l": "Cuenca, Ecuador"},
+        {"t": "I received my ring in record time. Beautiful, delicate and exactly what I ordered.", "n": "Andrea P.", "l": "Los Angeles, USA"},
+        {"t": "My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality.", "n": "Valentina M.", "l": "Quito, Ecuador"},
+        {"t": "The quality is incredible. I wear my bracelet every day and it gets so many compliments.", "n": "Sofía L.", "l": "Guayaquil, Ecuador"}
+      ],
+      "footer": {
+        "tagline": "we create to make you look more beautiful than you already are",
+        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
+      }
+    },
     "pages": {
       "envios": {
         "intro": "Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.",

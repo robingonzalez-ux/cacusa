@@ -565,7 +565,7 @@ html,body{overflow-x:hidden}
 <section id="testimonials">
   <div class="container" style="text-align:center">
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
+    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center"><span class="t-es">Ellas <em>confían</em> en CACUSA</span><span class="t-en">They <em>trust</em> CACUSA</span></h2></div>
   </div>
   <div class="testi-wrap"><div class="testi-track" id="tTrack2"></div></div>
 </section>
@@ -734,9 +734,9 @@ if (_L === 'en' && homeEn && Array.isArray(homeEn.testimonials)) window.__testim
     setTxt('hStoryTitle', homeD.storyTitle);
     if (homeD.storyQuote) setTxt('hStoryQuote', '"' + String(homeD.storyQuote).replace(/^"|"$/g, '') + '"');
     setTxt('hStoryBody', homeD.storyBody);
-    if (Array.isArray(home.stats)) {
+    if (Array.isArray(homeD.stats)) {
       const wraps = document.querySelectorAll('#hStoryStats > div');
-      home.stats.forEach((s, i) => {
+      homeD.stats.forEach((s, i) => {
         if (!wraps[i]) return;
         const numEl = wraps[i].querySelector('.stat-num');
         const labEl = wraps[i].querySelector('.stat-label');
@@ -832,7 +832,13 @@ document.querySelectorAll('button,a,.col-card,.prod-card,.ig-item,.hcard').forEa
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800));
 
 // ── TICKER ──────────────────────────────────────────────────
-const tickerMsgs = [
+const _tickerLang = localStorage.getItem('cacusa-lang') || 'es';
+const tickerMsgs = _tickerLang === 'en' ? [
+  'Free shipping to Ecuador on orders +$150','Customize your piece','Handmade with love','Ecuador & USA',
+  '925 Silver & 18k gold plating','10% off your first order','Unique artisan jewelry','New collection available',
+  'Free shipping to Ecuador on orders +$150','Customize your piece','Handmade with love','Ecuador & USA',
+  '925 Silver & 18k gold plating','10% off your first order','Unique artisan jewelry','New collection available',
+] : [
   'Envío gratis a Ecuador en pedidos +$150','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
   'Plata 925 y baño de oro 18k','Descuento 10% primera compra','Joyería artesanal única','Nueva colección disponible',
   'Envío gratis a Ecuador en pedidos +$150','Personaliza tu pieza','Hecho a mano con amor','Ecuador & USA',
@@ -1000,7 +1006,17 @@ const cntObs=new IntersectionObserver(es=>{
 cntEls.forEach(el=>cntObs.observe(el));
 
 // ── TESTIMONIALS ────────────────────────────────────────────
-const testis=[
+const _testiLang = localStorage.getItem('cacusa-lang') || 'es';
+const testis= _testiLang === 'en' ? [
+  {t:'"My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality."',n:'Valentina M.',l:'Quito, Ecuador'},
+  {t:'"My wife\'s ring is a work of art. She fell in love with it from the first moment."',n:'Carlos R.',l:'Miami, USA'},
+  {t:'"The quality is incredible. I wear my bracelet every day and it gets so many compliments."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
+  {t:'"I ordered a necklace for my mom. She cried with emotion when she saw it. Thank you CACUSA."',n:'Isabella T.',l:'New York, USA'},
+  {t:'"Unique design, incredible service. I would definitely buy again. The best!"',n:'Camila V.',l:'Cuenca, Ecuador'},
+  {t:'"I received my ring in record time. Beautiful, delicate and exactly what I ordered."',n:'Andrea P.',l:'Los Angeles, USA'},
+  {t:'"My necklace arrived perfectly, exactly as I dreamed. CACUSA made it a reality."',n:'Valentina M.',l:'Quito, Ecuador'},
+  {t:'"The quality is incredible. I wear my bracelet every day and it gets so many compliments."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
+] : [
   {t:'"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."',n:'Valentina M.',l:'Quito, Ecuador'},
   {t:'"El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento."',n:'Carlos R.',l:'Miami, USA'},
   {t:'"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."',n:'Sofía L.',l:'Guayaquil, Ecuador'},
