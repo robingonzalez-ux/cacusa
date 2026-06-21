@@ -52,6 +52,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .nav-back:hover{color:var(--pink)}
 .cart-btn{position:relative;background:var(--pink);color:white;border:none;border-radius:999px;padding:9px 20px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.05em;cursor:none;display:flex;align-items:center;gap:8px;transition:all .25s;box-shadow:0 2px 12px rgba(238,111,168,.35)}
 .cart-btn:hover{background:var(--pink-deep);transform:scale(1.03)}
+.install-btn{display:none;align-items:center;gap:6px;background:none;border:1.5px solid var(--pink);color:var(--pink);border-radius:999px;padding:8px 16px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.04em;cursor:none;transition:all .25s}
+.install-btn:hover{background:var(--pink-pale)}
 .cart-count{background:white;color:var(--pink);width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
 
 /* HERO */
@@ -320,6 +322,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   </a>
   <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
   <div class="nav-right">
+    <button class="install-btn" id="installBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <span class="t-es">Instalar app</span><span class="t-en">Install app</span>
+    </button>
     <button class="cart-btn" id="cartBtn">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
       <span class="t-es">Carrito</span><span class="t-en">Cart</span>
@@ -1730,6 +1736,34 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
   }
   showSuccess();
 }
+
+// PWA: registrar service worker + botón de instalación
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'flex';
+});
+document.getElementById('installBtn')?.addEventListener('click', async () => {
+  if (!_installPrompt) return;
+  _installPrompt.prompt();
+  const { outcome } = await _installPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('installBtn').style.display = 'none';
+    _installPrompt = null;
+  }
+});
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+  _installPrompt = null;
+});
 </script>
 </body>
 </html>
