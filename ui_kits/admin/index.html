@@ -903,7 +903,6 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
     try {
       setScanErr('Leyendo código…');
       const ZXing = await loadZXing();
-      const reader = new ZXing.BrowserMultiFormatReader();
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.src = url;
@@ -925,7 +924,13 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
         ctx.translate(cw / 2, ch / 2);
         ctx.rotate(deg * Math.PI / 180);
         ctx.drawImage(img, -Math.round(W * scale) / 2, -Math.round(H * scale) / 2, Math.round(W * scale), Math.round(H * scale));
-        try { decoded = (await reader.decodeFromCanvas(canvas)).getText(); break; } catch {}
+        try {
+          const imgData = ctx.getImageData(0, 0, cw, ch);
+          const lum    = new ZXing.RGBLuminanceSource(imgData.data, cw, ch);
+          const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum));
+          decoded = new ZXing.MultiFormatReader().decode(bitmap).getText();
+          break;
+        } catch {}
       }
       if (decoded) { handleTrackChange(decoded); setScanErr(''); }
       else setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
