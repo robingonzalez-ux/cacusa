@@ -344,16 +344,13 @@ function NtfyModal({ token, onClose }) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-              <a href={info.url} target="_blank" rel="noopener noreferrer"
-                style={{ flex: 1, padding: '11px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                🌐 Abrir en navegador
-              </a>
-              <a href={'ntfy://ntfy.sh/' + info.topic} rel="noopener noreferrer"
-                style={{ flex: 1, padding: '11px', background: '#F3EFF5', color: '#7A5F8A', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                📱 Abrir en app
-              </a>
+            <div style={{ background: '#F3EFF5', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#7A5F8A', lineHeight: 1.5 }}>
+              💡 En la app ntfy: toca <strong>+</strong> → escribe el canal <code style={{ background: '#E8D8F0', padding: '1px 5px', borderRadius: 4 }}>{info.topic}</code> → suscribir
             </div>
+            <a href={info.url} target="_blank" rel="noopener noreferrer"
+              style={{ padding: '11px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              🌐 Abrir ntfy.sh en navegador
+            </a>
           </div>
         )}
       </div>
