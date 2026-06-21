@@ -907,9 +907,16 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.src = url;
-      await new Promise(r => { img.onload = r; });
-      const result = await reader.decodeFromImageElement(img);
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+      // Reducir fotos grandes de cámara iOS para que ZXing las procese bien
+      const MAX = 1200;
+      const scale = Math.min(1, MAX / Math.max(img.width || 1, img.height || 1));
+      const canvas = document.createElement('canvas');
+      canvas.width  = Math.round((img.width  || 800) * scale);
+      canvas.height = Math.round((img.height || 600) * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
+      const result = await reader.decodeFromCanvas(canvas);
       handleTrackChange(result.getText());
       setScanErr('');
     } catch {
