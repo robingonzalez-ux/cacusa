@@ -173,6 +173,52 @@ async function translateToEn(text) {
     return data?.responseData?.translatedText || text;
   } catch (_) { return text; }
 }
+// Traduce el bloque "texts" (cabecera de la tienda) al inglés
+async function translateTextsBlock(texts) {
+  const t = async s => s ? await translateToEn(s) : '';
+  return {
+    heroLabel: await t(texts.heroLabel),
+    heroTitle: await t(texts.heroTitle),
+    heroSubtitle: texts.heroSubtitle,   // "by Taitus" — marca, no se traduce
+    instagram: texts.instagram,         // @usuario — no se traduce
+    perks: await Promise.all((texts.perks || []).map(p => translateToEn(p)))
+  };
+}
+// Traduce el bloque "home" (Quiénes somos / Personalización / testimonios)
+async function translateHomeBlock(home) {
+  const t = async s => s ? await translateToEn(s) : '';
+  const person = home.person || {};
+  return {
+    storyLabel: await t(home.storyLabel),
+    storyTitle: await t(home.storyTitle),
+    storyQuote: await t(home.storyQuote),
+    storyBody:  await t(home.storyBody),
+    stats: await Promise.all((home.stats || []).map(async s => ({ num: s.num, label: await translateToEn(s.label) }))),
+    person: {
+      label:    await t(person.label),
+      title:    await t(person.title),
+      subtitle: await t(person.subtitle),
+      steps: await Promise.all((person.steps || []).map(async st => ({ title: await translateToEn(st.title), desc: await translateToEn(st.desc) })))
+    },
+    testimonials: await Promise.all((home.testimonials || []).map(async x => ({ t: await translateToEn(x.t), n: x.n, l: x.l }))),
+    footer: {
+      tagline:   await t(home.footer && home.footer.tagline),
+      copyright: await t(home.footer && home.footer.copyright)
+    }
+  };
+}
+// Traduce el bloque "pages" (envíos / devoluciones / cuidados)
+async function translatePagesBlock(pages) {
+  const out = {};
+  for (const [pk, pv] of Object.entries(pages || {})) {
+    const page = {};
+    for (const [k, v] of Object.entries(pv || {})) {
+      page[k] = (typeof v === 'string' && v.trim()) ? await translateToEn(v) : v;
+    }
+    out[pk] = page;
+  }
+  return out;
+}
 // Guarda suscripción push en el backend
 const apiSubscribe = (token, subscription) => apiCall('subscribe', { token, subscription });
 
@@ -1540,6 +1586,10 @@ function App() {
   const [fbSurcharges, setFbSurcharges]     = useState({});
   const [fbMarkets, setFbMarkets]           = useState({});
   const [combos, setCombos]                 = useState([]);
+  // Bloques en inglés cargados del JSON (se preservan/regeneran al publicar)
+  const enRef   = React.useRef({ translations: null, texts_en: null, home_en: null, pages_en: null });
+  // Snapshot del español al cargar, para detectar cambios y re-traducir solo lo editado
+  const snapRef = React.useRef({ texts: '', home: '', pages: '' });
 
   const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
   const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
@@ -1581,26 +1631,37 @@ function App() {
         if (Array.isArray(cfg.categories) && cfg.categories.length) setCategories(cfg.categories);
         if (Array.isArray(cfg.materials)  && cfg.materials.length)  setMaterials(cfg.materials);
         if (cfg.shipping && typeof cfg.shipping === 'object') setShipping({ ...DEFAULT_SHIPPING, ...cfg.shipping });
-        if (cfg.texts && typeof cfg.texts === 'object') setTexts({ ...DEFAULT_TEXTS, ...cfg.texts });
-        if (cfg.home && typeof cfg.home === 'object') {
-          const h = cfg.home;
-          setHome({
-            ...DEFAULT_HOME, ...h,
-            stats: Array.isArray(h.stats) ? h.stats : DEFAULT_HOME.stats,
-            person: (h.person && typeof h.person === 'object')
-              ? { ...DEFAULT_HOME.person, ...h.person, steps: Array.isArray(h.person.steps) ? h.person.steps : DEFAULT_HOME.person.steps }
-              : DEFAULT_HOME.person,
-            testimonials: Array.isArray(h.testimonials) ? h.testimonials : DEFAULT_HOME.testimonials,
-            footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
-          });
-        }
-        if (cfg.pages && typeof cfg.pages === 'object') {
-          setPages({
-            envios:       { ...DEFAULT_PAGES.envios,       ...(cfg.pages.envios       || {}) },
-            devoluciones: { ...DEFAULT_PAGES.devoluciones, ...(cfg.pages.devoluciones || {}) },
-            cuidados:     { ...DEFAULT_PAGES.cuidados,     ...(cfg.pages.cuidados     || {}) }
-          });
-        }
+        const mergedTexts = (cfg.texts && typeof cfg.texts === 'object') ? { ...DEFAULT_TEXTS, ...cfg.texts } : DEFAULT_TEXTS;
+        setTexts(mergedTexts);
+        const h = (cfg.home && typeof cfg.home === 'object') ? cfg.home : {};
+        const mergedHome = {
+          ...DEFAULT_HOME, ...h,
+          stats: Array.isArray(h.stats) ? h.stats : DEFAULT_HOME.stats,
+          person: (h.person && typeof h.person === 'object')
+            ? { ...DEFAULT_HOME.person, ...h.person, steps: Array.isArray(h.person.steps) ? h.person.steps : DEFAULT_HOME.person.steps }
+            : DEFAULT_HOME.person,
+          testimonials: Array.isArray(h.testimonials) ? h.testimonials : DEFAULT_HOME.testimonials,
+          footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
+        };
+        setHome(mergedHome);
+        const mergedPages = {
+          envios:       { ...DEFAULT_PAGES.envios,       ...((cfg.pages && cfg.pages.envios)       || {}) },
+          devoluciones: { ...DEFAULT_PAGES.devoluciones, ...((cfg.pages && cfg.pages.devoluciones) || {}) },
+          cuidados:     { ...DEFAULT_PAGES.cuidados,     ...((cfg.pages && cfg.pages.cuidados)     || {}) }
+        };
+        setPages(mergedPages);
+        // Preserva los bloques en inglés y guarda snapshot del español (para re-traducir solo lo editado)
+        enRef.current = {
+          translations: cfg.translations || null,
+          texts_en:     cfg.texts_en     || null,
+          home_en:      cfg.home_en      || null,
+          pages_en:     cfg.pages_en     || null
+        };
+        snapRef.current = {
+          texts: JSON.stringify(mergedTexts),
+          home:  JSON.stringify(mergedHome),
+          pages: JSON.stringify(mergedPages)
+        };
       } else {
         setProducts([]);
         setSyncMsg('📦 No hay productos aún. Agrega tu primer producto y haz clic en "Publicar".');
@@ -1619,15 +1680,54 @@ function App() {
   const publish = async () => {
     setSyncing(true); setSyncMsg('☁️ Guardando de forma segura…');
     try {
+      // ── Traducción automática al inglés ──
+      // Regenera un bloque solo si su versión en español cambió desde la carga; si no, preserva la traducción existente.
+      let texts_en = enRef.current.texts_en;
+      let home_en  = enRef.current.home_en;
+      let pages_en = enRef.current.pages_en;
+      if (JSON.stringify(texts) !== snapRef.current.texts || !texts_en) {
+        setSyncMsg('🌐 Traduciendo textos de la tienda…'); texts_en = await translateTextsBlock(texts);
+      }
+      if (JSON.stringify(home) !== snapRef.current.home || !home_en) {
+        setSyncMsg('🌐 Traduciendo sección "Nosotros"…');  home_en = await translateHomeBlock(home);
+      }
+      if (JSON.stringify(pages) !== snapRef.current.pages || !pages_en) {
+        setSyncMsg('🌐 Traduciendo páginas de ayuda…');    pages_en = await translatePagesBlock(pages);
+      }
+      // Rellena traducciones de productos que aún no las tengan (las nuevas ya se traducen al guardar)
+      let prodsOut = products;
+      const needTr = products.filter(p => p.name && (!p.name_en || !p.description_en));
+      if (needTr.length) {
+        setSyncMsg('🌐 Traduciendo productos al inglés…');
+        prodsOut = [];
+        for (const p of products) {
+          if (p.name && (!p.name_en || !p.description_en)) {
+            const [ne, de] = await Promise.all([
+              p.name_en ? Promise.resolve(p.name_en) : translateToEn(p.name),
+              p.description_en ? Promise.resolve(p.description_en) : translateToEn(p.description || '')
+            ]);
+            prodsOut.push({ ...p, name_en: ne, description_en: de });
+          } else prodsOut.push(p);
+        }
+        setProducts(prodsOut);
+      }
+      setSyncMsg('☁️ Guardando de forma segura…');
       const json = JSON.stringify({
         version: '1.0',
         lastUpdated: new Date().toISOString(),
         updatedBy: session.username,
         whatsapp: whatsappNum,
-        config: { whatsapp: whatsappNum, categories, materials, shipping, texts, home, pages },
-        products,
+        config: {
+          whatsapp: whatsappNum, categories, materials, shipping,
+          texts, texts_en, home, home_en, pages, pages_en,
+          translations: enRef.current.translations || undefined
+        },
+        products: prodsOut,
         combos
       }, null, 2);
+      // Refresca el snapshot para no re-traducir lo mismo en la próxima publicación de esta sesión
+      enRef.current = { translations: enRef.current.translations, texts_en, home_en, pages_en };
+      snapRef.current = { texts: JSON.stringify(texts), home: JSON.stringify(home), pages: JSON.stringify(pages) };
       await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
       // Pedidos (no bloquea si falla)
       try {
