@@ -453,7 +453,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-field"><label class="co-label"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre"></div>
           <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido"></div>
         </div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Teléfono WhatsApp</span><span class="t-en">WhatsApp Phone</span></label><input class="co-input" placeholder="+1 (305) 555-1234" id="coTel"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel"></div>
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
@@ -466,11 +466,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         <div class="co-field">
           <label class="co-label"><span class="t-es">País</span><span class="t-en">Country</span></label>
           <select class="co-input" id="coPais">
-            <option value="US" selected>&#x1F1FA;&#x1F1F8; Estados Unidos</option>
-            <option value="EC">&#x1F1EA;&#x1F1E8; Ecuador</option>
-            <option value="CO">&#x1F1E8;&#x1F1F4; Colombia</option>
-            <option value="PE">&#x1F1F5;&#x1F1EA; Per&#xFA;</option>
-            <option value="MX">&#x1F1F2;&#x1F1FD; M&#xE9;xico</option>
+            <option value="US" selected>Estados Unidos</option>
+            <option value="EC">Ecuador</option>
+            <option value="CO">Colombia</option>
+            <option value="PE">Per&#xFA;</option>
+            <option value="MX">M&#xE9;xico</option>
             <option value="OTHER">Otro</option>
           </select>
         </div>
@@ -508,7 +508,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
         </div>
         <div class="co-field" id="coZipWrap">
           <label class="co-label"><span class="t-es">Código ZIP</span><span class="t-en">ZIP Code</span></label>
-          <input class="co-input" placeholder="33101" id="coZip" maxlength="5" inputmode="numeric">
+          <input class="co-input" id="coZip" maxlength="5" inputmode="numeric">
         </div>
         <div class="co-field"><label class="co-label"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad"></div>
         <div class="co-field"><label class="co-label"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas"></div>
@@ -597,7 +597,7 @@ const __EN_T = {
   "store.waBadge":"Secure payment with Square 🔒","store.coTitle":"Checkout",
   "store.coSubtitle":"CACUSA by Taitus · Personalized Jewelry","store.coContactSection":"Contact Information",
   "store.coNombre":"First Name","store.phNombre":"First Name","store.coApellido":"Last Name","store.phApellido":"Last Name",
-  "store.coTel":"WhatsApp Phone","store.coShippingSection":"Shipping Address","store.coPais":"Country",
+  "store.coTel":"Mobile Number","store.coShippingSection":"Shipping Address","store.coPais":"Country",
   "store.coEstado":"State","store.coZip":"ZIP Code","store.coCiudad":"City","store.coAddress":"Full Address",
   "store.coNotes":"Additional notes (optional)","store.phNotas":"Color, size, special detail…",
   "store.coPayMethod":"Payment Method","store.paySquare":"Square / Credit Card","store.payZelleSub":"-4% discount",
@@ -611,7 +611,7 @@ const __EN_T = {
   "store.successBtn":"Continue shopping","store.quickView":"Quick view →","store.viewBtn":"+ View",
   "store.emptyCategory":"No products in this category yet.","store.cartEmpty":"Your cart is empty",
   "store.shippingFree":"🎉 Free shipping unlocked!","store.coFree":"Free",
-  "store.coError1":"Please enter your name and WhatsApp number.","store.coError2":"Please select your state.",
+  "store.coError1":"Please enter your name and mobile number.","store.coError2":"Please select your state.","store.coError3":"Please enter a valid phone number.",
   "store.mktLocal":"Local product","store.mktImport":"Imported from the US","store.mktEcOnly":"Shipped from Ecuador",
   "tag.nuevo":"New","tag.bestseller":"Bestseller",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
@@ -1438,13 +1438,22 @@ function selectPayMethod(el) {
   renderCheckoutSummary();
 }
 
+function isValidPhone(tel) {
+  const digits = tel.replace(/[\s\-\(\)\+\.]/g, '');
+  return /^\d{7,15}$/.test(digits);
+}
+
 // ─── ZELLE / TRANSFERENCIA BUTTON ────────────────────────────
 document.getElementById('zelleBtn').addEventListener('click', () => {
   const errorEl = document.getElementById('coError');
   const nombre  = document.getElementById('coNombre').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
   if (!nombre || !tel) {
-    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
+    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y número móvil.');
+    return;
+  }
+  if (!isValidPhone(tel)) {
+    errorEl.textContent = t('store.coError3', 'Por favor ingresa un número de teléfono válido.');
     return;
   }
   errorEl.textContent = '';
@@ -1480,7 +1489,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const tel     = document.getElementById('coTel').value.trim();
 
   if (!nombre || !tel) {
-    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
+    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y número móvil.');
+    return;
+  }
+  if (!isValidPhone(tel)) {
+    errorEl.textContent = t('store.coError3', 'Por favor ingresa un número de teléfono válido.');
     return;
   }
   errorEl.textContent = '';
