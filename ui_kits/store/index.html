@@ -1339,6 +1339,13 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   }
   errorEl.textContent = '';
 
+  const paisVal = document.getElementById('coPais').value;
+  const estadoVal = document.getElementById('coEstado').value;
+  if (paisVal === 'US' && !estadoVal) {
+    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    return;
+  }
+
   const btn = document.getElementById('payBtn');
   btn.disabled = true;
   btn.classList.add('loading');
@@ -1354,14 +1361,6 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     address:  document.getElementById('coDireccion').value.trim(),
     notes:    document.getElementById('coNotas').value.trim()
   };
-
-  const paisVal = document.getElementById('coPais').value;
-  const estadoVal = document.getElementById('coEstado').value;
-  if (paisVal === 'US' && !estadoVal) {
-    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
-    btn.disabled = false; btn.classList.remove('loading');
-    return;
-  }
 
   const _subtotal = cart.reduce((s, i) => s + i.price, 0);
   const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
