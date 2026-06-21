@@ -816,6 +816,21 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   );
 }
 
+// ── ZXing loader (para escaneo en iOS) ─────────────────────────────────────
+let _zxingPromise = null;
+function loadZXing() {
+  if (_zxingPromise) return _zxingPromise;
+  _zxingPromise = new Promise((resolve, reject) => {
+    if (window.ZXing) { resolve(window.ZXing); return; }
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js';
+    s.onload = () => resolve(window.ZXing);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return _zxingPromise;
+}
+
 // ── Order Card ─────────────────────────────────────────────────────────────
 function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
   const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -835,14 +850,31 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
     e.target.value = '';
     if (!file) return;
     setScanErr('');
-    if (!('BarcodeDetector' in window)) { setScanErr('Escaneo no disponible en este navegador.'); return; }
+    // BarcodeDetector nativo (Chrome/Android)
+    if ('BarcodeDetector' in window) {
+      try {
+        const bitmap = await createImageBitmap(file);
+        const detector = new BarcodeDetector({ formats: ['code_128','code_39','qr_code','ean_13','ean_8','upc_a','upc_e','codabar','itf','data_matrix','pdf417'] });
+        const results = await detector.detect(bitmap);
+        if (results.length > 0) { handleTrackChange(results[0].rawValue); return; }
+      } catch {}
+    }
+    // Fallback ZXing (iOS Safari + cualquier navegador)
     try {
-      const bitmap = await createImageBitmap(file);
-      const detector = new BarcodeDetector({ formats: ['code_128','code_39','qr_code','ean_13','ean_8','upc_a','upc_e','codabar','itf','data_matrix','pdf417'] });
-      const results = await detector.detect(bitmap);
-      if (results.length > 0) { handleTrackChange(results[0].rawValue); }
-      else { setScanErr('No se detectó código. Intenta más cerca o escríbelo.'); }
-    } catch { setScanErr('Error al leer la imagen.'); }
+      setScanErr('Leyendo código…');
+      const ZXing = await loadZXing();
+      const reader = new ZXing.BrowserMultiFormatReader();
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise(r => { img.onload = r; });
+      const result = await reader.decodeFromImageElement(img);
+      URL.revokeObjectURL(url);
+      handleTrackChange(result.getText());
+      setScanErr('');
+    } catch {
+      setScanErr('No se detectó código. Acerca más la cámara e intenta de nuevo.');
+    }
   };
 
   const buildStatusWaUrl = () => {
