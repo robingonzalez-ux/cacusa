@@ -1875,12 +1875,26 @@ function App() {
     }
   }, [session]);
 
+  useEffect(() => {
+    if (!session) return;
+    const silent = () => loadData(true);
+    const onVisible = () => { if (!document.hidden) silent(); };
+    const iv = setInterval(silent, 30000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', silent);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', silent);
+    };
+  }, [session]);
+
   const sessionExpired = () => {
     setSyncMsg('⚠️ Tu sesión expiró por seguridad. Cierra sesión y vuelve a entrar.');
   };
 
-  const loadData = async () => {
-    setLoading(true); setSyncMsg('');
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true); setSyncMsg('');
     try {
       const res = await apiLoad(session.token);
       // ── Productos + configuración ──
