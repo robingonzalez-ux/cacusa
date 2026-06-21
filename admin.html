@@ -159,9 +159,9 @@
       Selecciona en qué región está disponible cada producto. La tienda detectará el país del visitante por IP y mostrará una leyenda informativa en cada producto.
     </div>
     <div class="market-legend">
-      <span class="mkt-chip mkt-chip-ec">🇪🇨 Ecuador — producto local</span>
-      <span class="mkt-chip mkt-chip-us">🇺🇸 USA/Inter. — envío internacional</span>
-      <span class="mkt-chip mkt-chip-both">🌍 Ambos — disponible globalmente</span>
+      <span class="mkt-chip mkt-chip-ec">Ecuador — producto local</span>
+      <span class="mkt-chip mkt-chip-us">USA/Inter. — envío internacional</span>
+      <span class="mkt-chip mkt-chip-both">Ambos — disponible globalmente</span>
     </div>
     <div class="section-label">Catálogo — Disponibilidad por región</div>
     <div id="prod-list-mercado"><div class="empty-state">Cargando…</div></div>
@@ -307,7 +307,7 @@ function updatePreciosSummary() {
 }
 
 // ── Mercado Tab ──
-const MKT_LABELS = { both: '🌍 Ambos', ec: '🇪🇨 Ecuador', us: '🇺🇸 USA/Inter.' };
+const MKT_LABELS = { both: 'Ambos', ec: 'Ecuador', us: 'USA/Inter.' };
 
 function renderMercadoList() {
   if (!adminProds.length) { document.getElementById('prod-list-mercado').innerHTML = '<div class="empty-state">No hay productos.</div>'; return; }
@@ -322,9 +322,9 @@ function renderMercadoList() {
         <div class="prod-cat">${p.category || p.cat || ''} · $${p.price.toFixed(2)}</div>
       </div>
       <select class="mkt-sel mkt-${m}" data-id="${p.id}" onchange="onMarketChange(this)">
-        <option value="both" ${m==='both'?'selected':''}>🌍 Ambos</option>
-        <option value="ec"   ${m==='ec'  ?'selected':''}>🇪🇨 Ecuador</option>
-        <option value="us"   ${m==='us'  ?'selected':''}>🇺🇸 USA/Inter.</option>
+        <option value="both" ${m==='both'?'selected':''}>Ambos</option>
+        <option value="ec"   ${m==='ec'  ?'selected':''}>Ecuador</option>
+        <option value="us"   ${m==='us'  ?'selected':''}>USA/Inter.</option>
       </select>
     </div>`;
   }).join('');
@@ -346,8 +346,8 @@ function updateMercadoSummary() {
   const sec  = document.getElementById('mkt-summary-section');
   if (ec.length === 0 && us.length === 0) { sec.style.display = 'none'; return; }
   sec.style.display = 'block';
-  const rows = [...ec.map(p => `<div class="s-row"><span>${p.name}</span><div class="s-badges"><span class="s-badge s-badge-ec">🇪🇨 Ecuador</span></div></div>`),
-                ...us.map(p => `<div class="s-row"><span>${p.name}</span><div class="s-badges"><span class="s-badge s-badge-us">🇺🇸 USA</span></div></div>`)];
+  const rows = [...ec.map(p => `<div class="s-row"><span>${p.name}</span><div class="s-badges"><span class="s-badge s-badge-ec">Ecuador</span></div></div>`),
+                ...us.map(p => `<div class="s-row"><span>${p.name}</span><div class="s-badges"><span class="s-badge s-badge-us">USA</span></div></div>`)];
   document.getElementById('mkt-summary-card').innerHTML = rows.join('') ||
     '<div style="font-size:13px;color:var(--ink2);padding:4px 0">Todos los productos están disponibles globalmente.</div>';
 }
