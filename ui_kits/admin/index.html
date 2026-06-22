@@ -876,18 +876,21 @@ function loadQuagga() {
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
-function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
+function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrierChange }) {
   const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
   const estado = order.estado || 'Nuevo';
   const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
   const nextState = ORDER_STATES[nextIdx];
   const waNum = ((order.cliente && order.cliente.telefono) || '').replace(/[^0-9]/g, '');
-  const [trackVal, setTrackVal] = React.useState(order.tracking || '');
-  const [scanErr, setScanErr]   = React.useState('');
+  const [trackVal, setTrackVal]     = React.useState(order.tracking || '');
+  const [carrierVal, setCarrierVal] = React.useState(order.carrier || '');
+  const [scanErr, setScanErr]       = React.useState('');
   const scanInputRef = React.useRef(null);
   React.useEffect(() => { setTrackVal(order.tracking || ''); }, [order.tracking]);
+  React.useEffect(() => { setCarrierVal(order.carrier || ''); }, [order.carrier]);
 
-  const handleTrackChange = v => { setTrackVal(v); onTrackingChange && onTrackingChange(order, v); };
+  const handleTrackChange   = v => { setTrackVal(v);   onTrackingChange && onTrackingChange(order, v); };
+  const handleCarrierChange = v => { setCarrierVal(v); onCarrierChange  && onCarrierChange(order, v); };
 
   const handleScanFile = async e => {
     const file = e.target.files[0];
@@ -938,7 +941,8 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
   const buildStatusWaUrl = () => {
     const nombre = (order.cliente && order.cliente.nombre) || 'Cliente';
     const num = order.numero ? ' *#' + order.numero + '*' : '';
-    const trackLine = trackVal ? '\n📦 *Tracking:* ' + trackVal : '';
+    const carrierLine = carrierVal ? ' vía *' + carrierVal + '*' : '';
+    const trackLine = trackVal ? '\n📦 *Tracking' + carrierLine + ':* ' + trackVal : (carrierVal ? '\n🚛 *Transportista:* ' + carrierVal : '');
     const STATE_MSG = {
       'Confirmado':  '✅ Tu pedido ha sido *confirmado*. Estamos preparando todo con mucho cariño.',
       'En proceso':  '🔨 Tu pedido está *en proceso de elaboración*. Cada pieza se hace a mano especialmente para ti.',
@@ -998,7 +1002,19 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
             style={{ display: 'none' }} onChange={handleScanFile} />
         </div>
         {scanErr && <div style={{ fontSize: 11, color: '#EF4444', marginTop: 4 }}>{scanErr}</div>}
-        {trackVal && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>Este código se incluye en el mensaje WA al notificar estado "Enviado".</div>}
+        <select value={carrierVal} onChange={e => handleCarrierChange(e.target.value)}
+          style={{ marginTop: 6, width: '100%', padding: '7px 10px', border: '1.5px solid #BFDBFE', borderRadius: 8, fontSize: 12, outline: 'none', fontFamily: 'inherit', background: 'white', color: carrierVal ? '#333' : '#9CA3AF', cursor: 'pointer' }}>
+          <option value="">— Empresa de transporte (opcional) —</option>
+          <option>USPS</option>
+          <option>UPS</option>
+          <option>FedEx</option>
+          <option>DHL</option>
+          <option>Amazon Logistics</option>
+          <option>Correos del Ecuador</option>
+          <option>Servientrega</option>
+          <option>Tramaco</option>
+        </select>
+        {trackVal && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>Tracking y transportista se incluyen en el mensaje WA al notificar estado "Enviado".</div>}
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -2335,6 +2351,7 @@ function App() {
                                 onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
                                 onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
                                 onTrackingChange={(ord, tracking) => { const u = orders.map(x => x.id === ord.id ? { ...x, tracking } : x); setOrders(u); saveOrdersNow(u); }}
+                                onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
                               />
                             ))}
                           </div>
@@ -2405,6 +2422,7 @@ function App() {
                                 <OrderCard key={o.id} order={o}
                                   onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
                                   onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
+                                  onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
                                 />
                               ))}
                             </div>
