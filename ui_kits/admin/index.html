@@ -947,7 +947,8 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
       'Cancelado':   'Tu pedido ha sido *cancelado*. Si tienes preguntas, escríbenos.',
     };
     const stateMsg = STATE_MSG[estado] || 'Tu pedido está en estado: *' + estado + '*.';
-    const msg = 'Hola ' + nombre + '! 🌸\n' + stateMsg + '\n' + (order.numero ? 'Pedido' + num + '\n' : '') + '\nGracias por confiar en *CACUSA by Taitus* 💕';
+    const numLine = order.numero ? '🧾 *Pedido' + num + '*\n' : '';
+    const msg = 'Hola ' + nombre + '! 🌸\n' + numLine + stateMsg + '\n\nGracias por confiar en *CACUSA by Taitus* 💕';
     return waNum ? 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg) : null;
   };
   const waStatusUrl = buildStatusWaUrl();
