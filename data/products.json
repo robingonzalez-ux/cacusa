@@ -598,7 +598,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicada cadena con medallón circular del ángel de la guarda en acero inoxidable. Una pieza de fe y protección para llevar siempre contigo.",
+      "description_en": "Delicate chain with a circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473494467_img_3351_jpeg.jpg",
@@ -606,8 +607,7 @@
       "focalY": 73.48639140899833,
       "zoom": 1.15,
       "material": "Acero inoxidable",
-      "id": 1781473526943,
-      "description_en": ""
+      "id": 1781473526943
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa ",
@@ -638,6 +638,7 @@
       "color": "rose",
       "tag": null,
       "description": "Collar entorchado con dije de perla barroca",
+      "description_en": "Baroque pearl charm ruffled necklace",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781875284644_img_0917_jpeg.jpg",
@@ -646,8 +647,7 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781875334358,
-      "name_en": "Pearl Necklace",
-      "description_en": "Baroque pearl charm ruffled necklace"
+      "name_en": "Pearl Necklace"
     },
     {
       "name": "Cadena clip con dije de árbol de vida ",
@@ -658,6 +658,7 @@
       "color": "rose",
       "tag": null,
       "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
+      "description_en": "Comes as a set with tree of life earrings. Elegant carved clip chain with a special clasp and an 18k gold-plated micro zirconia tree of life charm.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877139549_img_0914_jpeg.jpg",
@@ -666,8 +667,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877227517,
-      "name_en": "Chain clip with tree of life charm",
-      "description_en": "It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life"
+      "name_en": "Chain clip with tree of life charm"
     },
     {
       "name": "Cadena con dije de gato y panza de corazón con circones ",
@@ -678,6 +678,7 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones ",
+      "description_en": "Classic style chain with a special kitten charm featuring a zirconia heart belly. Adorable and feminine.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877299384_img_0912_jpeg.jpg",
@@ -686,8 +687,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877358815,
-      "name_en": "Cat charm chain and heart belly with zircons",
-      "description_en": "Classic style chain with a special zircon heart belly kitten charm"
+      "name_en": "Cat Charm Chain with Zirconia Heart Belly"
     },
     {
       "name": "Cadena de balines con dije de corazón con circones ",
@@ -698,6 +698,7 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
+      "description_en": "Gold-plated ball chain with a heart charm filled with 18k gold-plated micro zirconia. Elegance and sparkle in one piece.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877512539_img_0944_jpeg.jpg",
@@ -706,8 +707,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374,
-      "name_en": "Heart charm pellet chain with zircons",
-      "description_en": "Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons"
+      "name_en": "Ball Chain with Zirconia Heart Charm"
     },
     {
       "name": "Anillo ajustable color plateado ",
@@ -717,7 +717,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante anillo ajustable con baño de rodio plateado. Diseño minimalista y sofisticado que combina con cualquier look.",
+      "description_en": "Elegant adjustable ring with rhodium silver plating. Minimalist and sophisticated design that complements any look.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877751373_image_jpg.jpg",
@@ -726,8 +727,7 @@
       "zoom": 1,
       "material": "Baño de Rodio",
       "id": 1781877838074,
-      "name_en": "Silver Adjustable Ring",
-      "description_en": ""
+      "name_en": "Silver Adjustable Ring"
     },
     {
       "name": "Anillo ajustable de circones e inicial ",
@@ -738,6 +738,7 @@
       "color": "rose",
       "tag": null,
       "description": "También disponible en dorado. ",
+      "description_en": "Also available in gold.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877903161_image_jpg.jpg",
@@ -746,8 +747,7 @@
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781877944864,
-      "name_en": "Adjustable ring of zircons and initial",
-      "description_en": "Also available in gold."
+      "name_en": "Adjustable ring of zircons and initial"
     },
     {
       "name": "Anillo dorado ajustable de hoja ",
@@ -757,7 +757,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicado anillo ajustable con diseño de hoja en baño de oro 18k. Perfecto para un toque natural y elegante.",
+      "description_en": "Delicate adjustable ring with a leaf design in 18k gold plating. Perfect for a natural and elegant touch.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877979684_image_jpg.jpg",
@@ -766,8 +767,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781878011948,
-      "name_en": "Gold Leaf Adjustable Ring",
-      "description_en": ""
+      "name_en": "Gold Leaf Adjustable Ring"
     },
     {
       "name": "Anillo ajustable con microcircones en degrade ",
@@ -777,7 +777,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Sofisticado anillo ajustable con microcircones en degradé dorado. Un diseño que captura la luz en cada movimiento.",
+      "description_en": "Sophisticated adjustable ring with micro zirconia in a gold degradé setting. A design that captures light with every movement.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878052802_image_jpg.jpg",
@@ -786,8 +787,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781878104655,
-      "name_en": "Adjustable ring with micro-zircons in degradation",
-      "description_en": ""
+      "name_en": "Adjustable Ring with Micro Zirconia Degradé"
     },
     {
       "name": "Anillo dorado ajustable de circones fucsia ",
@@ -797,7 +797,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Llamativo anillo ajustable bañado en oro con vibrantes circones color fucsia. Perfecto para dar un toque de color a tu look.",
+      "description_en": "Eye-catching adjustable gold-plated ring with vibrant fuchsia zirconia stones. Perfect for adding a bold pop of color.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878163372_image_jpg.jpg",
@@ -806,8 +807,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781878207350,
-      "name_en": "Fuchsia Zirconia Adjustable Gold Ring",
-      "description_en": ""
+      "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
     },
     {
       "name": "Anillo talla 7 con tres microcircones de colores ",
@@ -817,7 +817,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante anillo talla 7 en acero inoxidable adornado con tres microcircones de colores. Delicado, colorido y perfecto para el uso diario.",
+      "description_en": "Elegant size 7 stainless steel ring adorned with three colorful micro zirconia stones. Delicate, colorful and perfect for everyday wear.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878251959_image_jpg.jpg",
@@ -826,8 +827,7 @@
       "zoom": 1.9,
       "material": "Acero inoxidable",
       "id": 1781878296526,
-      "name_en": "Ring size 7 with three coloured microcircles",
-      "description_en": ""
+      "name_en": "Size 7 Ring with Three Colorful Micro Zirconia"
     },
     {
       "name": "Anillo TIFFY ajustable con microcircones ",
@@ -837,7 +837,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicado anillo ajustable estilo Tiffy con brillantes microcircones en baño de oro 18k. Elegancia y brillo en su forma más pura.",
+      "description_en": "Delicate adjustable Tiffy-style ring with sparkling micro zirconia in 18k gold plating. Elegance and brilliance in their purest form.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878391322_image_jpg.jpg",
@@ -846,8 +847,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781878427634,
-      "name_en": "Adjustable TIFFY ring with microcircles",
-      "description_en": ""
+      "name_en": "Adjustable TIFFY Ring with Micro Zirconia"
     },
     {
       "name": "Ear cuff ancho plateado ",
@@ -857,7 +857,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Ear cuff ancho en plata 925. Diseño moderno que no requiere perforación. Ideal para un look edgy y sofisticado.",
+      "description_en": "Wide ear cuff in 925 silver. Modern piercing-free design. Ideal for an edgy and sophisticated look.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878519989_image_jpg.jpg",
@@ -866,8 +867,7 @@
       "zoom": 1.6,
       "material": "Plata 925",
       "id": 1781878560407,
-      "name_en": "Silver Wide Ear Cuff",
-      "description_en": ""
+      "name_en": "Silver Wide Ear Cuff"
     },
     {
       "name": "Entorchado dorado con piedra azul zafiro",
@@ -878,6 +878,7 @@
       "color": "rose",
       "tag": null,
       "description": "También lo puedes pedir con su pulsera en juego ",
+      "description_en": "Also available as a matching set with its bracelet.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878605734_image_jpg.jpg",
@@ -886,8 +887,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781878646387,
-      "name_en": "Gold enchanted with sapphire blue stone",
-      "description_en": "You can also order it with his bracelet in play"
+      "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
     },
     {
       "name": "Triple línea de circones con 3 piedras ",
@@ -897,7 +897,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Anillo de triple banda con elegantes circones y tres piedras centrales en baño de oro 18k. Diseño sofisticado y moderno.",
+      "description_en": "Triple band ring with elegant zirconia and three central stones in 18k gold plating. Sophisticated and modern design.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878676074_image_jpg.jpg",
@@ -906,8 +907,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781878707797,
-      "name_en": "Triple line of zircons with 3 stones",
-      "description_en": ""
+      "name_en": "Triple Zirconia Band Ring with 3 Stones"
     },
     {
       "name": "Círculo de microcircones con un fondo de nácar y un microcircones central ",
@@ -917,7 +917,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Ajustable ",
+      "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
+      "description_en": "Adjustable. Ring featuring a circle of micro zirconia over a mother-of-pearl background with a central stone. Artisanal elegance in every detail.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879077458_image_jpg.jpg",
@@ -926,8 +927,7 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781879127320,
-      "name_en": "Micro-circle with a mother-of-pearl background and a central micro-circle",
-      "description_en": "Maximum adjustability"
+      "name_en": "Adjustable Micro Zirconia Circle Ring with Mother-of-Pearl"
     },
     {
       "name": "Ajustable. Anillo chuncky con circones verdes ",
@@ -937,7 +937,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Llamativo anillo chunky ajustable con circones verdes sobre base dorada de 18k. Audaz, moderno y lleno de personalidad.",
+      "description_en": "Eye-catching adjustable chunky ring with green zirconia on an 18k gold base. Bold, modern and full of personality.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879156208_image_jpg.jpg",
@@ -946,8 +947,7 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781879189744,
-      "name_en": "Adjustable Chuncky ring with green zircons",
-      "description_en": ""
+      "name_en": "Adjustable Chunky Ring with Green Zirconia"
     },
     {
       "name": "Entorchado ajustable ",
@@ -957,7 +957,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante anillo ajustable entorchado en baño de rodio plateado. Diseño clásico y refinado para el uso diario.",
+      "description_en": "Elegant adjustable twisted ring in rhodium silver plating. Classic and refined design for everyday wear.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879542821_image_jpg.jpg",
@@ -966,8 +967,7 @@
       "zoom": 1.45,
       "material": "Baño de Rodio",
       "id": 1781879577380,
-      "name_en": "Adjustable twisting",
-      "description_en": ""
+      "name_en": "Adjustable Twisted Ring"
     },
     {
       "name": "Doble estrella de microcircon. Ajustable ",
@@ -977,7 +977,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Romántico anillo ajustable con doble estrella de microcircones en baño de oro 18k. Captura el brillo de las estrellas en tu mano.",
+      "description_en": "Romantic adjustable ring featuring a double star of micro zirconia in 18k gold plating. Captures the sparkle of stars on your hand.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879626808_image_jpg.jpg",
@@ -986,8 +987,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781879659210,
-      "name_en": "Double Star Microzircon - Adjustable",
-      "description_en": ""
+      "name_en": "Adjustable Double Star Micro Zirconia Ring"
     },
     {
       "name": "Corazón dorado. Anillo entorchado ajustable ",
@@ -997,7 +997,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Tierno anillo entorchado ajustable con corazón dorado en baño de oro 18k. Perfecto para llevar el amor en tus manos.",
+      "description_en": "Sweet adjustable twisted ring with a golden heart in 18k gold plating. Perfect for carrying love in your hands.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879698277_image_jpg.jpg",
@@ -1006,8 +1007,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781879732319,
-      "name_en": "Golden heart. Adjustable looped ring",
-      "description_en": ""
+      "name_en": "Golden Heart Adjustable Twisted Ring"
     },
     {
       "name": "Anillo doble línea llana con corazón plateado ",
@@ -1017,7 +1017,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante anillo de doble banda lisa con un delicado corazón plateado en baño de rodio. Diseño romántico y minimalista.",
+      "description_en": "Elegant double flat-band ring with a delicate silver heart in rhodium plating. Romantic and minimalist design.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879783335_image_jpg.jpg",
@@ -1026,8 +1027,7 @@
       "zoom": 1.45,
       "material": "Baño de Rodio",
       "id": 1781879811459,
-      "name_en": "Flat-line double ring with silver heart",
-      "description_en": ""
+      "name_en": "Double Flat Band Ring with Silver Heart"
     },
     {
       "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
@@ -1037,7 +1037,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Espectacular anillo talla 7 en plata 925 con piedra central color esmeralda flanqueada por dos microcircones a cada lado. Elegancia clásica.",
+      "description_en": "Spectacular size 7 ring in 925 silver with a central emerald-colored stone flanked by two micro zirconia on each side. Classic elegance.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879864973_image_jpg.jpg",
@@ -1046,8 +1047,7 @@
       "zoom": 1.45,
       "material": "Plata 925",
       "id": 1781879917484,
-      "name_en": "Ring size 7 with emerald stone and two microcircums on each side",
-      "description_en": ""
+      "name_en": "Size 7 Ring with Emerald Stone and Micro Zirconia"
     },
     {
       "name": "Anillo ajustable con 3 circones ",
@@ -1057,7 +1057,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Clásico anillo ajustable con tres circones brillantes en baño de oro 18k. Sencillo, elegante y versátil para cualquier ocasión.",
+      "description_en": "Classic adjustable ring with three sparkling zirconia stones in 18k gold plating. Simple, elegant and versatile for any occasion.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880012052_image_jpg.jpg",
@@ -1066,8 +1067,7 @@
       "zoom": 2.05,
       "material": "Baño de oro 18k",
       "id": 1781880053907,
-      "name_en": "Adjustable ring with 3 zircons",
-      "description_en": ""
+      "name_en": "Adjustable Ring with 3 Zirconia"
     },
     {
       "name": "Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable ",
@@ -1077,7 +1077,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Singular anillo ajustable con dos peces: uno liso y otro con microcircones, ambos con el ojo turco protector. Bañado en oro 18k.",
+      "description_en": "Unique adjustable ring featuring two fish: one plain and one with micro zirconia, both with the protective evil eye. 18k gold plated.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880075134_image_jpg.jpg",
@@ -1086,8 +1087,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781880127649,
-      "name_en": "Two fish, one flat, the other with microcircums. Both with Turkish eye. Adjustable ring",
-      "description_en": ""
+      "name_en": "Adjustable Two Fish & Evil Eye Ring"
     },
     {
       "name": "Anillo ajustable de circones ",
@@ -1097,7 +1097,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicado anillo ajustable cubierto de circones brillantes en baño de oro 18k. Elegancia y brillo que te acompaña todo el día.",
+      "description_en": "Delicate adjustable ring covered in sparkling zirconia stones in 18k gold plating. Elegance and brilliance that stays with you all day.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880246199_image_jpg.jpg",
@@ -1106,8 +1107,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781880268274,
-      "name_en": "Adjustable Zircon Ring",
-      "description_en": ""
+      "name_en": "Adjustable Zirconia Ring"
     },
     {
       "name": "Anillos ajustable con trébol negro ",
@@ -1118,6 +1118,7 @@
       "color": "rose",
       "tag": null,
       "description": "El acero inoxidable tiene a su vez un baño de oro. ",
+      "description_en": "Stainless steel with a gold plating. Adjustable ring with a black clover detail for a bold and unique look.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880290838_image_jpg.jpg",
@@ -1126,8 +1127,7 @@
       "zoom": 1.3,
       "material": "Acero inoxidable",
       "id": 1781880340918,
-      "name_en": "Black Clover Adjustable Rings",
-      "description_en": "Stainless steel has a gold plating."
+      "name_en": "Black Clover Adjustable Ring"
     },
     {
       "name": "Anillo dorado ajustable ",
@@ -1137,7 +1137,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Anillo dorado ajustable de diseño limpio y elegante en baño de oro 18k. El básico dorado que toda colección necesita.",
+      "description_en": "Clean and elegant adjustable gold ring in 18k gold plating. The gold essential that every collection needs.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880443851_image_jpg.jpg",
@@ -1146,8 +1147,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781880466753,
-      "name_en": "Adjustable gold ring",
-      "description_en": ""
+      "name_en": "Adjustable Gold Ring"
     },
     {
       "name": "Anillo ajustable con circones blancos ",
@@ -1157,7 +1157,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Refinado anillo ajustable con circones blancos sobre base dorada de 18k. Brillo clásico que complementa cualquier estilo.",
+      "description_en": "Refined adjustable ring with white zirconia stones on an 18k gold base. Classic sparkle that complements any style.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781881454611_image_jpg.jpg",
@@ -1166,8 +1167,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781881478183,
-      "name_en": "Adjustable ring with white zircons",
-      "description_en": ""
+      "name_en": "Adjustable Ring with White Zirconia"
     },
     {
       "name": "Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón ",
@@ -1177,7 +1177,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Llamativo anillo chunky con círculo de circones, fondo de nácar y silueta de corazón de circones en dorado 18k. Moderno y con carácter.",
+      "description_en": "Statement chunky ring with a circle of zirconia, mother-of-pearl background and a zirconia heart silhouette in 18k gold. Modern and bold.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781881501235_image_jpg.jpg",
@@ -1186,8 +1187,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781881544132,
-      "name_en": "Chuncky with a circle of zircons, where mother of pearl and a silhouette of heart zircons",
-      "description_en": ""
+      "name_en": "Chunky Ring with Zirconia Circle, Mother-of-Pearl & Heart Silhouette"
     },
     {
       "name": "Cadena con dije de Cruz grande con piedras color esmeralda ",
@@ -1197,7 +1197,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante cadena con imponente dije de cruz adornado con brillantes piedras color esmeralda en baño de oro 18k. Fe y estilo en una sola pieza.",
+      "description_en": "Elegant chain with a striking cross charm adorned with brilliant emerald-colored stones in 18k gold plating. Faith and style in one piece.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884575200_img_0941_jpeg.jpg",
@@ -1206,8 +1207,7 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781884615354,
-      "name_en": "Large cross charm chain with emerald stones",
-      "description_en": ""
+      "name_en": "Large Emerald Cross Charm Chain"
     },
     {
       "name": "Cadena delicada con dije de corazón nacarado ",
@@ -1217,7 +1217,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicada cadena dorada con un romántico dije de corazón nacarado en baño de oro 18k. Femenina y elegante para el uso diario.",
+      "description_en": "Delicate gold chain with a romantic mother-of-pearl heart charm in 18k gold plating. Feminine and elegant for everyday wear.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884634034_img_0940_jpeg.jpg",
@@ -1226,8 +1227,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781884804624,
-      "name_en": "Delicate chain with pearly heart charm",
-      "description_en": ""
+      "name_en": "Delicate Chain with Mother-of-Pearl Heart Charm"
     },
     {
       "name": "Cadena veneciana con un dije de Cruz de circones ",
@@ -1238,6 +1238,7 @@
       "color": "rose",
       "tag": null,
       "description": "Plata ley 925 con un baño de oro de 18 kilates ",
+      "description_en": "925 sterling silver with an 18-carat gold plating",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884824191_img_0937_jpeg.jpg",
@@ -1246,8 +1247,7 @@
       "zoom": 1.6,
       "material": "Plata 925 con un baño de oro de 18k",
       "id": 1781884881874,
-      "name_en": "Venetian chain with a Zircon Cross charm",
-      "description_en": "925 sterling silver with an 18-carat gold plating"
+      "name_en": "Venetian Chain with Zirconia Cross Charm"
     },
     {
       "name": "3 corazónes de nácar y dos llanos ",
@@ -1257,7 +1257,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Romántica cadena con cinco dijes: tres corazones de nácar y dos llanos en dorado 18k. Un diseño lleno de delicadeza y amor.",
+      "description_en": "Romantic chain with five charms: three mother-of-pearl hearts and two plain ones in 18k gold. A design full of delicacy and love.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884900943_img_0936_jpeg.jpg",
@@ -1266,8 +1267,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781884932644,
-      "name_en": "3 mother-of-pearl hearts and two plains",
-      "description_en": ""
+      "name_en": "3 Mother-of-Pearl Hearts & 2 Plain Heart Charms Chain"
     },
     {
       "name": "San Benito con cruz ",
@@ -1277,7 +1277,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Cadena protectora con medallón de San Benito y dije de cruz en baño de oro 18k. Fe y elegancia en una sola pieza.",
+      "description_en": "Protective chain with a Saint Benedict medallion and cross charm in 18k gold plating. Faith and elegance united in one piece.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884950194_img_0933_jpeg.jpg",
@@ -1286,8 +1287,7 @@
       "zoom": 0.85,
       "material": "Baño de oro 18k",
       "id": 1781884983133,
-      "name_en": "Saint Benedict with a cross",
-      "description_en": ""
+      "name_en": "Saint Benedict Chain with Cross"
     },
     {
       "name": "Corazón de perla con una silueta de corazón de circon ",
@@ -1297,7 +1297,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Delicado dije que combina un corazón de perla con una silueta de corazón de circones sobre cadena dorada de 18k. Romántico y sofisticado.",
+      "description_en": "Delicate charm combining a pearl heart with a zirconia heart silhouette on an 18k gold chain. Romantic and sophisticated.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885001334_img_0932_jpeg.jpg",
@@ -1306,8 +1307,7 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781885024731,
-      "name_en": "Heart of pearl with a zircon heart silhouette",
-      "description_en": ""
+      "name_en": "Pearl Heart with Zirconia Heart Silhouette Chain"
     },
     {
       "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
@@ -1317,7 +1317,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Llamativa cadena dorada con dije de ópalo turquesa que crea un efecto de cadena doble en el frente. Única, original y sofisticada.",
+      "description_en": "Striking gold chain with a turquoise opal charm that creates a double-chain effect at the front. Unique, original and sophisticated.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885074186_img_0929_jpeg.jpg",
@@ -1326,8 +1327,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781885110437,
-      "name_en": "Turquoise opal charm chain. On the front it looks like a double chain",
-      "description_en": ""
+      "name_en": "Turquoise Opal Charm Chain with Double-Chain Effect"
     },
     {
       "name": "Cadena de circon rosado bajo",
@@ -1337,7 +1337,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Elegante cadena con circones rosados en tono suave y delicado sobre base dorada de 18k. Romanticismo y feminidad en cada detalle.",
+      "description_en": "Elegant chain with soft pink zirconia stones on an 18k gold base. Romance and femininity in every detail.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885169639_img_0928_jpeg.jpg",
@@ -1346,8 +1347,7 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781885197196,
-      "name_en": "Low pink zircon chain",
-      "description_en": ""
+      "name_en": "Soft Pink Zirconia Chain"
     },
     {
       "name": "Dije de balletista con inicial ",
@@ -1357,7 +1357,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Encantador dije personalizable de bailarina con tu inicial en baño de oro 18k. El regalo perfecto para las amantes del ballet y la danza.",
+      "description_en": "Charming personalized ballerina charm with your initial in 18k gold plating. The perfect gift for ballet and dance lovers.",
       "personalized": true,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885222961_img_0925_jpeg.jpg",
@@ -1366,8 +1367,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781885271521,
-      "name_en": "Ballet player with initial",
-      "description_en": ""
+      "name_en": "Ballerina Charm with Initial"
     },
     {
       "name": "Cadena con placa grabada a láser ",
@@ -1378,6 +1378,7 @@
       "color": "rose",
       "tag": null,
       "description": "Un grabado a láser. Puedes personalizar el labrado de la cadena. Puedes elegir entre distintas formas de placa. Rectangular, circular, en forma de corazón, dorada, plateada. \nSi deseas personalizar con dos grabados a láser el valor es $65",
+      "description_en": "One laser engraving included. Customize the chain plate in your chosen shape: rectangular, circular, heart-shaped, gold or silver. \nFor two laser engravings the price is $65.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781885292209_7d9f9d34_f5c7_4f06_b249_e644df5ddf00_jpe.jpg",
@@ -1386,8 +1387,7 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781885393238,
-      "name_en": "Chain with laser engraved plate",
-      "description_en": "A laser engraving. You can customize the working of the chain. You can choose from different plate shapes. Rectangular, circular, heart-shaped, gold, silver. \nIf you want to customise with two laser engravings the value is $65"
+      "name_en": "Chain with Laser Engraved Plate"
     },
     {
       "name": "Anillo de doble infinito uno con microcircones y otro llano ",
@@ -1397,7 +1397,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Romántico anillo con símbolo de doble infinito: uno decorado con microcircones y otro en diseño liso, en baño de oro 18k.",
+      "description_en": "Romantic ring featuring a double infinity symbol: one adorned with micro zirconia and one in a plain design, in 18k gold plating.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781891767767_image_jpg.jpg",
@@ -1406,8 +1407,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781891993137,
-      "name_en": "Double infinite ring, one with microcircles and the other flat",
-      "description_en": ""
+      "name_en": "Double Infinity Ring with Micro Zirconia and Plain Band"
     },
     {
       "name": "Anillo de aquamarina ",
@@ -1417,7 +1417,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Sereno anillo ajustable con piedra de aguamarina en vibrante tono azul sobre base dorada de 18k. Frescura y elegancia en tu mano.",
+      "description_en": "Serene adjustable ring with an aquamarine stone in a vibrant blue tone on an 18k gold base. Freshness and elegance on your hand.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892367817_image_jpg.jpg",
@@ -1426,8 +1427,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781892443591,
-      "name_en": "Aquamarine Ring",
-      "description_en": ""
+      "name_en": "Aquamarine Ring"
     },
     {
       "name": "Anillo ajustable de ojo turco ",
@@ -1437,7 +1437,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Protector anillo ajustable con el ojo turco en base dorada de 18k. Un símbolo de protección y buena energía que luce hermoso en tu mano.",
+      "description_en": "Protective adjustable ring featuring the evil eye on an 18k gold base. A symbol of protection and good energy that looks beautiful on your hand.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892857275_image_jpg.jpg",
@@ -1446,8 +1447,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781892913830,
-      "name_en": "Turkish Eye Adjustable Ring",
-      "description_en": ""
+      "name_en": "Evil Eye Adjustable Ring"
     },
     {
       "name": "Anillo",
@@ -1457,7 +1457,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Anillo artesanal en baño de oro 18k. Elegante y versátil, perfecto para el uso diario o para ocasiones especiales.",
+      "description_en": "Artisanal ring in 18k gold plating. Elegant and versatile, perfect for everyday wear or special occasions.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892983627_image_jpg.jpg",
@@ -1466,8 +1467,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781893045956,
-      "name_en": "ing",
-      "description_en": ""
+      "name_en": "Ring"
     },
     {
       "name": "Pulseras de pareja Ying y el yang",
@@ -1477,7 +1477,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "",
+      "description": "Par de pulseras para parejas con el símbolo del yin y el yang en acero inoxidable. Representa el equilibrio y la unión perfecta de dos almas.",
+      "description_en": "Pair of couple's bracelets featuring the yin and yang symbol in stainless steel. Represents the balance and perfect union of two souls.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781977710324_img_6860_jpeg.jpg",
@@ -1486,8 +1487,7 @@
       "zoom": 0.55,
       "material": "Acero inoxidable",
       "id": 1781977774245,
-      "name_en": "Couple bracelets Ying and yang",
-      "description_en": ""
+      "name_en": "Yin & Yang Couple Bracelets"
     },
     {
       "name": "Aretes con circones ",
@@ -1498,6 +1498,7 @@
       "color": "rose",
       "tag": null,
       "description": "Elegante diseño de aretes con forma. Rodeado de microcircones. Ideales para elevar tu look. ",
+      "description_en": "Elegant shaped earring design. Surrounded by micro-zircons. Ideal to elevate your look.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1782055672909_55514bd1_9351_4144_9ba4_bc10dc733d79_jpe.jpg",
@@ -1506,7 +1507,6 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "name_en": "Zircon Earrings",
-      "description_en": "Elegant shaped earring design. Surrounded by micro-zircons. Ideal to elevate your look.",
       "id": 1782055740145,
       "promo": null
     }
