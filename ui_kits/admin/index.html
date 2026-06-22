@@ -861,10 +861,14 @@ let _quaggaPromise = null;
 function loadQuagga() {
   if (_quaggaPromise) return _quaggaPromise;
   _quaggaPromise = new Promise((resolve, reject) => {
-    if (window.Quagga) { resolve(window.Quagga); return; }
+    const existing = window.Quagga?.default ?? window.Quagga;
+    if (existing?.decodeSingle) { resolve(existing); return; }
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js';
-    s.onload = () => window.Quagga ? resolve(window.Quagga) : reject(new Error('Quagga not found'));
+    s.onload = () => {
+      const Q = window.Quagga?.default ?? window.Quagga;
+      Q?.decodeSingle ? resolve(Q) : reject(new Error('Quagga API not found'));
+    };
     s.onerror = () => reject(new Error('Quagga failed to load'));
     document.head.appendChild(s);
   });
@@ -890,13 +894,18 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange }) {
     e.target.value = '';
     if (!file) return;
     setScanErr('');
-    // BarcodeDetector nativo (Chrome/Android)
+    // BarcodeDetector nativo (Chrome/Android/Safari 17+)
     if ('BarcodeDetector' in window) {
       try {
-        const bitmap = await createImageBitmap(file);
-        const detector = new BarcodeDetector({ formats: ['code_128','code_39','qr_code','ean_13','ean_8','upc_a','upc_e','codabar','itf','data_matrix','pdf417'] });
-        const results = await detector.detect(bitmap);
-        if (results.length > 0) { handleTrackChange(results[0].rawValue); return; }
+        const supported = await BarcodeDetector.getSupportedFormats().catch(() => []);
+        const want = ['code_128','code_39','qr_code','ean_13','ean_8','upc_e','itf','data_matrix','pdf417'];
+        const formats = supported.length ? want.filter(f => supported.includes(f)) : want;
+        if (formats.length > 0) {
+          const bitmap = await createImageBitmap(file);
+          const detector = new BarcodeDetector({ formats });
+          const results = await detector.detect(bitmap);
+          if (results.length > 0) { handleTrackChange(results[0].rawValue); return; }
+        }
       } catch {}
     }
     // Fallback Quagga2 (iOS Safari + cualquier navegador — diseñado para Code 128)
