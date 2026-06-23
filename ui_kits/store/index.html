@@ -1722,6 +1722,9 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
+  _gcCode=null; _gcBalance=0; _gcApplied=0;
+  document.getElementById('gcCodeInput').value='';
+  document.getElementById('gcMsg').textContent='';
   showSuccess();
 });
 
@@ -1924,6 +1927,9 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
+  _gcCode=null; _gcBalance=0; _gcApplied=0;
+  document.getElementById('gcCodeInput').value='';
+  document.getElementById('gcMsg').textContent='';
   showSuccess();
 });
 
@@ -2171,8 +2177,8 @@ async function applyGiftCard() {
   try {
     await _fbSignIn();
     const res  = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${raw}.json`));
-    const data = await res.json();
-    if (!data || data.active === false) {
+    const data = res.ok ? await res.json() : null;
+    if (!data || data.error || data.active === false) {
       msgEl.className='gc-msg err';
       msgEl.textContent=(__LANG==='en'?'Invalid or already used code.':'Código no válido o ya utilizado.');
       _gcCode=null; _gcBalance=0; _gcApplied=0;

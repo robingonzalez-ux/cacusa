@@ -666,8 +666,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
       await _fbSignIn();
       const url = _fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}.json`);
       const res = await fetch(url);
+      if (!res.ok) { setReviews([]); setRevLoading(false); return; }
       const data = await res.json();
-      setReviews(data && typeof data === 'object' ? Object.entries(data).map(([key, val]) => ({ key, ...val })) : []);
+      setReviews(data && typeof data === 'object' && !data.error ? Object.entries(data).map(([key, val]) => ({ key, ...val })) : []);
     } catch(_) { setReviews([]); }
     setRevLoading(false);
   };
@@ -1511,8 +1512,9 @@ function GiftCardsTab() {
     try {
       await _fbSignIn();
       const res  = await fetch(_fbUrl(`${FB_GC}.json`));
+      if (!res.ok) { setCards([]); setLoading(false); return; }
       const data = await res.json();
-      setCards(data && typeof data === 'object'
+      setCards(data && typeof data === 'object' && !data.error
         ? Object.entries(data).map(([code, v]) => ({ code, ...v })).sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''))
         : []);
     } catch(_) { setCards([]); }
@@ -1529,9 +1531,10 @@ function GiftCardsTab() {
     const entry = { amount: amt, balance: amt, active: true, createdAt: new Date().toISOString().slice(0,10), note: note.trim() || null };
     try {
       await _fbSignIn();
-      await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
+      const r = await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
         method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)
       });
+      if (!r.ok) throw new Error('write_failed');
       setCards(prev => [{ code, ...entry }, ...(prev||[])]);
       setCreateMsg(`✅ Creada: ${code}`);
       setNote('');
