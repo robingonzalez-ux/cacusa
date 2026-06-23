@@ -246,6 +246,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .zelle-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(125,60,152,.45)}
 .co-discount-line{display:flex;justify-content:space-between;font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:10px}
 .co-discount-line strong{font-weight:600;color:#27ae60}
+.gc-wrap{margin:14px 0}
+.gc-row{display:flex;gap:8px}
+.gc-inp{flex:1;padding:10px 12px;border:1.5px solid var(--ink-light);border-radius:10px;font-size:13px;font-family:var(--fu);letter-spacing:.08em;text-transform:uppercase;outline:none;background:var(--cream)}
+.gc-inp:focus{border-color:var(--pink)}
+.gc-btn{padding:10px 16px;background:linear-gradient(135deg,var(--pink),#9B5DE5);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;font-family:var(--fu)}
+.gc-btn:disabled{opacity:.5;cursor:wait}
+.gc-msg{font-size:12px;margin-top:5px;font-weight:500;min-height:16px}
+.gc-msg.ok{color:#059669}.gc-msg.err{color:#DC2626}
+.co-gc-line{display:flex;justify-content:space-between;font-family:var(--fu);font-size:13px;margin-bottom:10px;color:#059669;font-weight:600}
 .co-summary-title{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:20px}
 .co-sum-item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--ink-light)}
 .co-si-img{width:52px;height:52px;border-radius:10px;flex-shrink:0;position:relative;overflow:hidden}
@@ -646,6 +655,17 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           </div>
         </div>
 
+        <div class="gc-wrap">
+          <div style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">🎁 <span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span></div>
+          <div class="gc-row">
+            <input class="gc-inp" id="gcCodeInput" placeholder="CACUSA-XXXX-XXXX" maxlength="18" autocomplete="off" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()">
+            <button class="gc-btn" id="gcApplyBtn" onclick="applyGiftCard()">
+              <span class="t-es">Aplicar</span><span class="t-en">Apply</span>
+            </button>
+          </div>
+          <div class="gc-msg" id="gcMsg"></div>
+        </div>
+
         <div class="co-error" id="coError"></div>
 
         <button class="pay-btn" id="payBtn">
@@ -673,6 +693,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-line"><span><span class="t-es">Envío</span><span class="t-en">Shipping</span></span><strong id="coEnvio"><span class="t-es">Por calcular</span><span class="t-en">To be calculated</span></strong></div>
           <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel"><span class="t-es">Impuesto</span><span class="t-en">Tax</span></span><strong id="coImpuesto">$0</strong></div>
           <div class="co-discount-line" id="coZelleRow" style="display:none"><span>💸 <span class="t-es">Descuento Zelle (4%)</span><span class="t-en">Zelle Discount (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
+          <div class="co-gc-line" id="coGcRow" style="display:none"><span>🎁 <span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span> <small id="coGcCode" style="opacity:.65;font-weight:400"></small></span><strong>-$<span id="coGcAmt">0.00</span></strong></div>
           <div class="co-total"><span>Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
@@ -962,6 +983,7 @@ let currentProduct = null, qty = 1, activeFilter = 'all', searchTerm = '';
 let _reviewSummaries = {};
 let _galleryImages = [], _galleryIdx = 0;
 let _lbImages = [], _lbIdx = 0;
+let _gcCode = null, _gcBalance = 0, _gcApplied = 0;
 let _revRating = 5;
 
 // ─── LOAD DATA ──────────────────────────────────────────────
@@ -1589,6 +1611,8 @@ function renderCheckoutSummary() {
   }
 
   const totalFinal = adjustedSubtotal + shippingCost + taxAmt;
+  _gcApplied = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
+  const grandTotal = parseFloat((totalFinal - _gcApplied).toFixed(2));
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
@@ -1607,7 +1631,15 @@ function renderCheckoutSummary() {
   } else {
     zelleRow.style.display = 'none';
   }
-  document.getElementById('coTotal').textContent = '$' + totalFinal.toFixed(2);
+  const gcRow = document.getElementById('coGcRow');
+  if (_gcApplied > 0) {
+    gcRow.style.display = '';
+    document.getElementById('coGcAmt').textContent   = _gcApplied.toFixed(2);
+    document.getElementById('coGcCode').textContent  = _gcCode;
+  } else {
+    gcRow.style.display = 'none';
+  }
+  document.getElementById('coTotal').textContent = '$' + grandTotal.toFixed(2);
   document.getElementById('coSummaryItems').innerHTML = cart.map(item => `
     <div class="co-sum-item">
       <div class="co-si-img" style="${imgBgStyle(item)}">
@@ -1672,18 +1704,21 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     if (rate) zelleTax = (zelleSubtotal + shippingCost) * rate;
   }
   const totalFinal = zelleSubtotal + shippingCost + zelleTax;
+  const zelleGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
+  const totalConGC = parseFloat((totalFinal - zelleGcDiscount).toFixed(2));
 
   _currentOrderNum = generateOrderNum();
   submitOrder({
     numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
-    total:     parseFloat(totalFinal.toFixed(2)),
+    total:     totalConGC,
     pago:      'Zelle/Transferencia',
     estado:    'Nuevo',
-    notas:     notas || undefined
+    notas:     (notas ? notas + (zelleGcDiscount > 0 ? ` | GC:${_gcCode}(-$${zelleGcDiscount})` : '') : (zelleGcDiscount > 0 ? `GC:${_gcCode}(-$${zelleGcDiscount})` : undefined))
   });
 
+  redeemGiftCard(zelleGcDiscount);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -1731,12 +1766,16 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
   const _subtotal = cart.reduce((s, i) => s + i.price, 0);
   const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
+  const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _subtotal + _shippingCost).toFixed(2)) : 0;
+  const _squareItems  = _sqGcDiscount > 0
+    ? [...cart, { name: (_gcCode || 'Tarjeta de regalo'), price: -_sqGcDiscount }]
+    : cart;
 
   try {
     const resp = await fetch(SQUARE_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: cart, customer, shippingCost: _shippingCost })
+      body: JSON.stringify({ items: _squareItems, customer, shippingCost: _shippingCost })
     });
     const data = await resp.json();
 
@@ -1755,12 +1794,13 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         direccion: customer.address,
       },
       productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
-      total:     parseFloat((_subtotal + _shippingCost).toFixed(2)),
+      total:     parseFloat((_subtotal + _shippingCost - _sqGcDiscount).toFixed(2)),
       pago:      'Square',
       estado:    'Nuevo',
-      notas:     customer.notes || undefined
+      notas:     customer.notes || (_sqGcDiscount > 0 ? `GC:${_gcCode}(-$${_sqGcDiscount})` : undefined)
     };
     sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
+    redeemGiftCard(_sqGcDiscount);
     cart = []; saveCart(); updateCartUI();
     window.location.href = data.checkoutUrl;
 
@@ -1821,7 +1861,11 @@ function buildWhatsAppUrl() {
   });
   msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total.toFixed(2);
   msg += (_waEN ? '\n🚚 *Shipping:* ' : '\n🚚 *Envío:* ') + envio;
-  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + totalFinal.toFixed(2);
+  if (_gcApplied > 0) {
+    msg += (_waEN ? '\n🎁 *Gift card (' + _gcCode + '):* -$' : '\n🎁 *Tarjeta de regalo (' + _gcCode + '):* -$') + _gcApplied.toFixed(2);
+  }
+  const _waTotalFinal = parseFloat((totalFinal - _gcApplied).toFixed(2));
+  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + _waTotalFinal.toFixed(2);
   if (isZelle) {
     msg += _waEN
       ? '\n\n💸 *Payment:* Zelle / Bank Transfer\n📧 Zelle: facturacioncacusa@gmail.com'
@@ -1863,17 +1907,20 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const total      = cart.reduce((s, i) => s + i.price, 0);
   const free       = total >= SHIPPING.freeThreshold;
   const totalFinal = free ? total : total + SHIPPING.cost;
+  const waGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
+  const totalConGC   = parseFloat((totalFinal - waGcDiscount).toFixed(2));
   _currentOrderNum = generateOrderNum();
   submitOrder({
     numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
-    total:  parseFloat(totalFinal.toFixed(2)),
+    total:  totalConGC,
     pago:   'WhatsApp',
     estado: 'Nuevo',
-    notas:  notas || undefined
+    notas:  notas || (waGcDiscount > 0 ? `GC:${_gcCode}(-$${waGcDiscount})` : undefined)
   });
 
+  redeemGiftCard(waGcDiscount);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -2111,6 +2158,54 @@ async function submitReview() {
   }
   btn.disabled = false;
   btn.textContent = __LANG === 'en' ? 'Submit' : 'Enviar';
+}
+
+// ─── GIFT CARDS ───────────────────────────────────────────────
+async function applyGiftCard() {
+  const raw = (document.getElementById('gcCodeInput').value || '').trim().toUpperCase().replace(/\s/g,'');
+  const msgEl = document.getElementById('gcMsg');
+  if (!raw) { msgEl.className='gc-msg err'; msgEl.textContent=(__LANG==='en'?'Enter a gift card code.':'Ingresa un código de tarjeta de regalo.'); return; }
+  const btn = document.getElementById('gcApplyBtn');
+  btn.disabled = true;
+  msgEl.className='gc-msg'; msgEl.textContent='…';
+  try {
+    await _fbSignIn();
+    const res  = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${raw}.json`));
+    const data = await res.json();
+    if (!data || data.active === false) {
+      msgEl.className='gc-msg err';
+      msgEl.textContent=(__LANG==='en'?'Invalid or already used code.':'Código no válido o ya utilizado.');
+      _gcCode=null; _gcBalance=0; _gcApplied=0;
+    } else if (!data.balance || Number(data.balance)<=0) {
+      msgEl.className='gc-msg err';
+      msgEl.textContent=(__LANG==='en'?'This gift card has no remaining balance.':'Esta tarjeta de regalo ya no tiene saldo.');
+      _gcCode=null; _gcBalance=0; _gcApplied=0;
+    } else {
+      _gcCode=raw; _gcBalance=Number(data.balance);
+      msgEl.className='gc-msg ok';
+      msgEl.textContent=`✅ $${_gcBalance.toFixed(2)} ${__LANG==='en'?'credit applied':'de crédito aplicado'}`;
+    }
+  } catch(_) {
+    msgEl.className='gc-msg err';
+    msgEl.textContent=(__LANG==='en'?'Error verifying code. Try again.':'Error al verificar. Intenta de nuevo.');
+  }
+  btn.disabled=false;
+  renderCheckoutSummary();
+}
+
+async function redeemGiftCard(amountUsed) {
+  if (!_gcCode || amountUsed<=0) return;
+  try {
+    await _fbSignIn();
+    const res  = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${_gcCode}.json`));
+    const data = await res.json();
+    if (!data) return;
+    const newBal = parseFloat(Math.max(0,(data.balance||0)-amountUsed).toFixed(2));
+    await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${_gcCode}.json`), {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ balance:newBal, active:newBal>0 })
+    });
+  } catch(_) {}
 }
 
 // PWA: registrar service worker + botón de instalación

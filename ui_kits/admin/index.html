@@ -1488,6 +1488,144 @@ function PagesTab({ pages, setPages, setDirty }) {
   );
 }
 
+// ── Gift Cards Tab ───────────────────────────────────────────────────────────
+function generateGCCode() {
+  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  const seg = () => Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+  return `CACUSA-${seg()}-${seg()}`;
+}
+
+function GiftCardsTab() {
+  const [cards, setCards]         = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [amount, setAmount]       = useState('25');
+  const [note, setNote]           = useState('');
+  const [creating, setCreating]   = useState(false);
+  const [createMsg, setCreateMsg] = useState('');
+  const [copied, setCopied]       = useState('');
+
+  const FB_GC = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards';
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      await _fbSignIn();
+      const res  = await fetch(_fbUrl(`${FB_GC}.json`));
+      const data = await res.json();
+      setCards(data && typeof data === 'object'
+        ? Object.entries(data).map(([code, v]) => ({ code, ...v })).sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''))
+        : []);
+    } catch(_) { setCards([]); }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) { setCreateMsg('❌ Ingresa un monto válido.'); return; }
+    setCreating(true); setCreateMsg('');
+    const code = generateGCCode();
+    const entry = { amount: amt, balance: amt, active: true, createdAt: new Date().toISOString().slice(0,10), note: note.trim() || null };
+    try {
+      await _fbSignIn();
+      await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)
+      });
+      setCards(prev => [{ code, ...entry }, ...(prev||[])]);
+      setCreateMsg(`✅ Creada: ${code}`);
+      setNote('');
+    } catch(_) { setCreateMsg('❌ Error al crear. Intenta de nuevo.'); }
+    setCreating(false);
+  };
+
+  const deactivate = async code => {
+    if (!confirm(`¿Desactivar la tarjeta ${code}?`)) return;
+    try {
+      await _fbSignIn();
+      await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
+        method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ active:false })
+      });
+      setCards(prev => prev.map(c => c.code===code ? {...c,active:false} : c));
+    } catch(_) { alert('Error al desactivar'); }
+  };
+
+  const copyCode = code => {
+    navigator.clipboard.writeText(code).catch(()=>{});
+    setCopied(code);
+    setTimeout(()=>setCopied(''),2000);
+  };
+
+  const inp  = { padding:'10px 13px', border:'1.5px solid #e4e4e4', borderRadius:10, fontSize:14, outline:'none', background:'white' };
+  const amounts = ['10','25','50','100'];
+
+  return (
+    <div style={{ maxWidth:640, margin:'0 auto', paddingBottom:40 }}>
+      {/* Create form */}
+      <div style={{ background:'white', borderRadius:16, padding:'20px 22px', marginBottom:20, boxShadow:'0 2px 12px rgba(0,0,0,.06)' }}>
+        <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:14 }}>🎁 Nueva tarjeta de regalo</div>
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
+          {amounts.map(a => (
+            <button key={a} onClick={() => setAmount(a)}
+              style={{ padding:'8px 18px', borderRadius:99, border:'1.5px solid', borderColor:amount===a?'#E85D8A':'#ddd', background:amount===a?'#FFF0F7':'white', color:amount===a?'#E85D8A':'#555', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+              ${a}
+            </button>
+          ))}
+          <input value={amount} onChange={e=>setAmount(e.target.value)} type="number" min="1" step="1"
+            placeholder="Otro monto" style={{ ...inp, width:120 }} />
+        </div>
+        <input value={note} onChange={e=>setNote(e.target.value)} placeholder="Nota (ej: Para María García — cumpleaños)"
+          style={{ ...inp, width:'100%', boxSizing:'border-box', marginBottom:12 }} />
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <button onClick={create} disabled={creating}
+            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
+            {creating ? '⏳ Creando…' : '+ Crear tarjeta de regalo'}
+          </button>
+          {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
+        </div>
+      </div>
+
+      {/* Cards list */}
+      <div style={{ background:'white', borderRadius:16, padding:'20px 22px', boxShadow:'0 2px 12px rgba(0,0,0,.06)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase' }}>Tarjetas emitidas</div>
+          <button onClick={load} style={{ fontSize:12, color:'#9B5DE5', fontWeight:600, cursor:'pointer', background:'none', border:'none' }}>↺ Recargar</button>
+        </div>
+        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>Cargando…</div>}
+        {!loading && (!cards || cards.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>No hay tarjetas emitidas aún</div>}
+        {!loading && cards && cards.map(c => (
+          <div key={c.code} style={{ display:'flex', gap:12, alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f0f5', flexWrap:'wrap' }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                <code style={{ fontSize:13, fontWeight:700, color:'#333', letterSpacing:'.05em', background:'#F5F0FF', padding:'2px 8px', borderRadius:6 }}>{c.code}</code>
+                <span style={{ fontSize:12, fontWeight:700, padding:'2px 9px', borderRadius:99, background:c.active&&c.balance>0?'#DCFCE7':'#F3F4F6', color:c.active&&c.balance>0?'#166534':'#6B7280' }}>
+                  {c.active&&c.balance>0 ? `✓ $${(c.balance||0).toFixed(2)} disponible` : 'Agotada / inactiva'}
+                </span>
+              </div>
+              <div style={{ fontSize:11, color:'#aaa', marginTop:4 }}>
+                Valor original: ${(c.amount||0).toFixed(2)} · {c.createdAt||''}
+                {c.note ? ` · ${c.note}` : ''}
+              </div>
+            </div>
+            <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+              <button onClick={()=>copyCode(c.code)}
+                style={{ padding:'6px 12px', borderRadius:8, border:'1.5px solid #e0e0e0', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:copied===c.code?'#059669':'#555' }}>
+                {copied===c.code ? '✓ Copiado' : '📋 Copiar'}
+              </button>
+              {c.active && (
+                <button onClick={()=>deactivate(c.code)}
+                  style={{ padding:'6px 12px', borderRadius:8, border:'1.5px solid #FFB3C1', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:'#DC2626' }}>
+                  Desactivar
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── Settings Tab ────────────────────────────────────────────────────────────
 function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, products, setProducts, setDirty }) {
   const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
@@ -2310,6 +2448,7 @@ function App() {
             ['mercado',    '🌍 Mercado',    0],
             ['landing',    '🏠 Landing',    0],
             ['pages',      '📄 Páginas',    0],
+            ['giftcards',  '🎁 Gift Cards',  0],
             ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -2562,6 +2701,9 @@ function App() {
         {activeTab === 'mercado' && (
           <MercadoTab products={products} />
         )}
+
+        {/* ── Gift Cards tab ── */}
+        {activeTab === 'giftcards' && <GiftCardsTab />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (
