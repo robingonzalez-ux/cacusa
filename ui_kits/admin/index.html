@@ -593,9 +593,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const mats = (materials && materials.length) ? materials : DEFAULT_MATERIALS;
   const isNew = !product?.id;
   const initMkt = product ? (fbMarkets[product.id] || 'both') : 'both';
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true, promoEnabled: false, promoPrice: '', promoLabel: 'Oferta', promoEndsAt: '' };
+  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true, promoEnabled: false, promoPrice: '', promoLabel: 'Oferta', promoEndsAt: '', images: [] };
   const [form, setForm] = useState(product
-    ? { ...product, tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec', promoEnabled: !!(product.promo && product.promo.price), promoPrice: (product.promo && product.promo.price) || '', promoLabel: (product.promo && product.promo.label) || 'Oferta', promoEndsAt: (product.promo && product.promo.endsAt) || '' }
+    ? { ...product, images: product.images || [], tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec', promoEnabled: !!(product.promo && product.promo.price), promoPrice: (product.promo && product.promo.price) || '', promoLabel: (product.promo && product.promo.label) || 'Oferta', promoEndsAt: (product.promo && product.promo.endsAt) || '' }
     : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
   const [uploading, setUploading] = useState(false);
@@ -603,7 +603,12 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const [dragOver, setDragOver] = useState(false);
   const [translating, setTranslating] = useState(false);
   const fileRef = useRef();
+  const galleryFileRef = useRef();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryMsg, setGalleryMsg] = useState('');
+  const [reviews, setReviews] = useState(null);
+  const [revLoading, setRevLoading] = useState(false);
 
   const uploadFile = async file => {
     if (!file) return;
@@ -635,6 +640,44 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const handleDrop = e => {
     e.preventDefault(); setDragOver(false);
     uploadFile(e.dataTransfer.files[0]);
+  };
+
+  const uploadGalleryFile = async file => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setGalleryMsg('❌ No es una imagen válida.'); return; }
+    if (file.size > 10 * 1024 * 1024) { setGalleryMsg('❌ Muy pesada (máx 10MB).'); return; }
+    setGalleryUploading(true); setGalleryMsg('');
+    try {
+      const b64 = await compressImage(file);
+      const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40) || 'extra';
+      const fname = `${Date.now()}_${slug}.jpg`;
+      const res = await apiUpload(token, `${IMAGES_PATH}/${fname}`, b64, `Imagen galería: ${fname}`);
+      setForm(f => ({ ...f, images: [...(f.images || []), res.url] }));
+      setGalleryMsg('✅ Foto agregada a la galería');
+    } catch (e) {
+      setGalleryMsg('❌ Error al subir: ' + e.message);
+    } finally { setGalleryUploading(false); }
+  };
+
+  const loadReviews = async () => {
+    if (!product?.id) return;
+    setRevLoading(true);
+    try {
+      await _fbSignIn();
+      const url = _fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}.json`);
+      const res = await fetch(url);
+      const data = await res.json();
+      setReviews(data && typeof data === 'object' ? Object.entries(data).map(([key, val]) => ({ key, ...val })) : []);
+    } catch(_) { setReviews([]); }
+    setRevLoading(false);
+  };
+
+  const deleteReview = async key => {
+    try {
+      await _fbSignIn();
+      await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}/${key}.json`), { method: 'DELETE' });
+      setReviews(r => r.filter(x => x.key !== key));
+    } catch(_) { alert('Error al eliminar la reseña'); }
   };
 
   const save = async () => {
@@ -715,6 +758,38 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             </div>
           )}
         </div>
+
+        {/* Additional gallery images */}
+        <details style={{ marginTop: 4, marginBottom: 20, background: '#FAF7FB', borderRadius: 12, padding: '10px 14px' }}
+          open={(form.images || []).length > 0}>
+          <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#7A6880', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
+            🖼️ Galería de fotos adicionales — {(form.images || []).length === 0 ? 'ninguna' : `${(form.images || []).length} foto${(form.images || []).length > 1 ? 's' : ''}`}
+            <span style={{ fontSize: 10, fontWeight: 400, color: '#aaa' }}>para el carrusel en la tienda</span>
+          </summary>
+          <div style={{ marginTop: 12 }}>
+            {(form.images || []).length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+                {(form.images || []).map((url, i) => (
+                  <div key={i} style={{ position: 'relative', width: 76, height: 76, borderRadius: 8, overflow: 'hidden', border: '1.5px solid #e0e0e0', background: '#eee' }}>
+                    <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button onClick={() => setForm(f => ({ ...f, images: f.images.filter((_, j) => j !== i) }))}
+                      title="Quitar foto"
+                      style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, borderRadius: '50%', background: 'rgba(26,17,36,.75)', color: 'white', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <input ref={galleryFileRef} type="file" accept="image/*"
+              onChange={e => { uploadGalleryFile(e.target.files[0]); e.target.value = ''; }}
+              style={{ display: 'none' }} />
+            <button onClick={() => !galleryUploading && galleryFileRef.current.click()}
+              disabled={galleryUploading}
+              style={{ width: '100%', padding: '9px', border: '2px dashed #C4A6E8', borderRadius: 10, background: 'white', color: '#9B5DE5', fontSize: 13, fontWeight: 600, cursor: galleryUploading ? 'wait' : 'pointer', opacity: galleryUploading ? 0.6 : 1 }}>
+              {galleryUploading ? '⏳ Subiendo…' : '+ Agregar otra foto al carrusel'}
+            </button>
+            {galleryMsg && <div style={{ fontSize: 12, marginTop: 6, color: galleryMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{galleryMsg}</div>}
+          </div>
+        </details>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ gridColumn: 'span 2' }}>
@@ -843,6 +918,38 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             </div>
           )}
         </div>
+
+        {/* Reviews moderation (existing products only) */}
+        {!isNew && (
+          <details style={{ background: '#FFF9FF', borderRadius: 12, padding: '10px 14px', marginBottom: 16, border: '1px solid #EDD5F5' }}
+            onToggle={e => { if (e.target.open && reviews === null) loadReviews(); }}>
+            <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#7A6880', listStyle: 'none' }}>
+              ⭐ Reseñas de clientes{reviews !== null ? ` (${reviews.length})` : ''}
+            </summary>
+            <div style={{ marginTop: 12 }}>
+              {revLoading && <div style={{ fontSize: 13, color: '#9B5DE5', textAlign: 'center', padding: '12px 0' }}>Cargando reseñas…</div>}
+              {!revLoading && reviews !== null && reviews.length === 0 && (
+                <div style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '8px 0' }}>No hay reseñas aún para este producto</div>
+              )}
+              {!revLoading && reviews && reviews.map(r => (
+                <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f0e8f8' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{r.name || 'Anónimo'}</span>
+                      <span style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>{'★'.repeat(r.rating || 0)}{'☆'.repeat(5 - (r.rating || 0))}</span>
+                      <span style={{ fontSize: 11, color: '#aaa', marginLeft: 'auto' }}>{r.date || ''}</span>
+                    </div>
+                    {r.comment && <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>{r.comment}</div>}
+                  </div>
+                  <button onClick={() => deleteReview(r.key)}
+                    style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FFB3C1', background: 'white', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
