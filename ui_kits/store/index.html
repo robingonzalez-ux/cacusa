@@ -370,6 +370,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .lb-navbtn:hover{background:rgba(255,255,255,.25)}
 #lbClose{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.12);border:none;border-radius:50%;width:40px;height:40px;color:white;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:10;padding:0}
 #lbClose:hover{background:rgba(255,255,255,.3)}
+#lbWish{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.12);border:none;border-radius:50%;width:40px;height:40px;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:10;padding:0}
+#lbWish:hover{background:rgba(255,255,255,.25)}
+#lbWish.liked{background:rgba(238,111,168,.35)}
 .lb-footer{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0 4px}
 #lbCounter{color:rgba(255,255,255,.45);font-family:var(--fu);font-size:11px}
 .lb-thumbs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:0 16px}
@@ -809,6 +812,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- LIGHTBOX -->
 <div id="lightbox">
   <button id="lbClose">&#x2715;</button>
+  <button id="lbWish" onclick="toggleWishFromModal()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" id="lbWishPath"/></svg>
+  </button>
   <div class="lb-main">
     <button class="lb-navbtn" id="lbPrev" onclick="lbGoTo(_lbIdx-1)">&#8249;</button>
     <img id="lbImg" src="" alt="">
@@ -1432,15 +1438,23 @@ function _syncCardWish(id) {
   if (path) path.style.fill = isIn ? 'var(--pink)' : '';
 }
 function _syncModalWish() {
-  const btn = document.getElementById('modalWishBtn');
-  if (!btn || !currentProduct) return;
+  if (!currentProduct) return;
   const isIn = _wish.has(currentProduct.id);
-  btn.classList.toggle('liked', isIn);
-  const svgPath = btn.querySelector('path');
-  if (svgPath) svgPath.style.fill = isIn ? 'var(--pink)' : 'none';
-  const es = btn.querySelector('.t-es'), en = btn.querySelector('.t-en');
-  if (es) es.textContent = isIn ? 'Guardado en lista ✓' : 'Guardar en lista de deseos';
-  if (en) en.textContent = isIn ? 'Saved to wishlist ✓' : 'Save to wishlist';
+  const btn = document.getElementById('modalWishBtn');
+  if (btn) {
+    btn.classList.toggle('liked', isIn);
+    const svgPath = btn.querySelector('path');
+    if (svgPath) svgPath.style.fill = isIn ? 'var(--pink)' : 'none';
+    const es = btn.querySelector('.t-es'), en = btn.querySelector('.t-en');
+    if (es) es.textContent = isIn ? 'Guardado en lista ✓' : 'Guardar en lista de deseos';
+    if (en) en.textContent = isIn ? 'Saved to wishlist ✓' : 'Save to wishlist';
+  }
+  const lbBtn = document.getElementById('lbWish');
+  if (lbBtn) {
+    lbBtn.classList.toggle('liked', isIn);
+    const lbPath = document.getElementById('lbWishPath');
+    if (lbPath) lbPath.style.fill = isIn ? 'var(--pink)' : 'none';
+  }
 }
 function toggleWish(id, btn) {
   id = Number(id);
@@ -2278,6 +2292,11 @@ function openLightbox(images, idx) {
     `<div class="lb-thumb ${i===_lbIdx?'active':''}" onclick="lbGoTo(${i})"><img src="${esc(url)}" loading="lazy" alt=""></div>`
   ).join('') : '';
   renderLbSlide();
+  const _lbW = document.getElementById('lbWish');
+  const _lbWp = document.getElementById('lbWishPath');
+  const _inW = currentProduct && _wish.has(currentProduct.id);
+  if (_lbW) _lbW.classList.toggle('liked', !!_inW);
+  if (_lbWp) _lbWp.style.fill = _inW ? 'var(--pink)' : 'none';
   document.getElementById('lightbox').classList.add('open');
 }
 function renderLbSlide() {
