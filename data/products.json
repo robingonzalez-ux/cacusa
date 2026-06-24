@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-24T14:02:08.147Z",
+  "lastUpdated": "2026-06-24T14:06:00.675Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1510,6 +1510,35 @@
       "name_en": "Zircon Earrings",
       "id": 1782055740145,
       "promo": null
+    },
+    {
+      "name": "GG ",
+      "category": "Juegos",
+      "price": 75,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cadena GG junto con sus aretes, la cadena viene con 5 símbolos GG y 7 circones. \nCon un labrado delicado y elegante ideal para hacerte sentir más confidente y segura. Los aretes son delicados y livianos. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1782309816739_image_jpg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1782309832912_image_jpg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1782309856545_image_jpg.jpg"
+      ],
+      "name_en": "GG",
+      "description_en": "GG chain along with its earrings, the chain comes with 5 GG symbols and 7 zircons. \nWith a delicate and elegant workmanship ideal to make you feel more confident and secure. The earrings are delicate and lightweight.",
+      "id": 1782309956499,
+      "promo": {
+        "price": 68,
+        "label": "Oferta",
+        "endsAt": "2026-06-26"
+      }
     }
   ],
   "combos": []
