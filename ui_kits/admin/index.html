@@ -1493,13 +1493,7 @@ function PagesTab({ pages, setPages, setDirty }) {
 }
 
 // ── Gift Cards Tab ───────────────────────────────────────────────────────────
-function generateGCCode() {
-  const chars = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-  const seg = () => Array.from({length:4},()=>chars[Math.floor(Math.random()*chars.length)]).join('');
-  return `CACUSA-${seg()}-${seg()}`;
-}
-
-function GiftCardsTab() {
+function GiftCardsTab({ token }) {
   const [cards, setCards]         = useState(null);
   const [loading, setLoading]     = useState(true);
   const [amount, setAmount]       = useState('25');
@@ -1508,18 +1502,12 @@ function GiftCardsTab() {
   const [createMsg, setCreateMsg] = useState('');
   const [copied, setCopied]       = useState('');
 
-  const FB_GC = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards';
-
+  // Las gift cards viven en KV (worker), nunca en Firebase ni en el navegador.
   const load = async () => {
     setLoading(true);
     try {
-      await _fbSignIn();
-      const res  = await fetch(_fbUrl(`${FB_GC}.json`));
-      if (!res.ok) { setCards([]); setLoading(false); return; }
-      const data = await res.json();
-      setCards(data && typeof data === 'object' && !data.error
-        ? Object.entries(data).map(([code, v]) => ({ code, ...v })).sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''))
-        : []);
+      const data = await apiCall('giftcard/list', { token });
+      setCards(Array.isArray(data.cards) ? data.cards : []);
     } catch(_) { setCards([]); }
     setLoading(false);
   };
@@ -1530,16 +1518,11 @@ function GiftCardsTab() {
     const amt = parseFloat(amount);
     if (!amt || amt <= 0) { setCreateMsg('❌ Ingresa un monto válido.'); return; }
     setCreating(true); setCreateMsg('');
-    const code = generateGCCode();
-    const entry = { amount: amt, balance: amt, active: true, createdAt: new Date().toISOString().slice(0,10), note: note.trim() || null };
     try {
-      await _fbSignIn();
-      const r = await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
-        method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entry)
-      });
-      if (!r.ok) throw new Error('write_failed');
-      setCards(prev => [{ code, ...entry }, ...(prev||[])]);
-      setCreateMsg(`✅ Creada: ${code}`);
+      const data = await apiCall('giftcard/create', { token, amount: amt, note: note.trim() });
+      if (!data.card) throw new Error('write_failed');
+      setCards(prev => [data.card, ...(prev||[])]);
+      setCreateMsg(`✅ Creada: ${data.card.code}`);
       setNote('');
     } catch(_) { setCreateMsg('❌ Error al crear. Intenta de nuevo.'); }
     setCreating(false);
@@ -1548,10 +1531,7 @@ function GiftCardsTab() {
   const deactivate = async code => {
     if (!confirm(`¿Desactivar la tarjeta ${code}?`)) return;
     try {
-      await _fbSignIn();
-      await fetch(_fbUrl(`${FB_GC}/${code}.json`), {
-        method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ active:false })
-      });
+      await apiCall('giftcard/deactivate', { token, code });
       setCards(prev => prev.map(c => c.code===code ? {...c,active:false} : c));
     } catch(_) { alert('Error al desactivar'); }
   };
@@ -2709,7 +2689,7 @@ function App() {
         )}
 
         {/* ── Gift Cards tab ── */}
-        {activeTab === 'giftcards' && <GiftCardsTab />}
+        {activeTab === 'giftcards' && <GiftCardsTab token={session.token} />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (

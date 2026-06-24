@@ -1998,19 +1998,24 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
   const _subtotal = cart.reduce((s, i) => s + i.price, 0);
   const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
+  // Estimación solo para mostrar/guardar; la redención real la hace el worker server-side.
   const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _subtotal + _shippingCost).toFixed(2)) : 0;
-  const _squareItems  = _sqGcDiscount > 0
-    ? [...cart, { name: (_gcCode || 'Tarjeta de regalo'), price: -_sqGcDiscount }]
-    : cart;
 
   try {
     const resp = await fetch(SQUARE_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: _squareItems, customer, shippingCost: _shippingCost })
+      // El código de la gift card va aparte; el worker valida y redime contra KV.
+      body: JSON.stringify({ items: cart, customer, shippingCost: _shippingCost, giftCardCode: _gcCode || undefined })
     });
     const data = await resp.json();
 
+    // La tarjeta cubre el total → no se puede cobrar $0 por Square: usar WhatsApp.
+    if (data && data.giftCardCoversTotal) {
+      throw new Error(__LANG === 'en'
+        ? 'Your gift card covers the full total — please finish via WhatsApp'
+        : 'Tu tarjeta de regalo cubre el total — finaliza por WhatsApp');
+    }
     if (!resp.ok || !data.checkoutUrl) {
       throw new Error(data.error || 'No se pudo crear el pago');
     }
@@ -2032,7 +2037,8 @@ document.getElementById('payBtn').addEventListener('click', async () => {
       notas:     customer.notes || (_sqGcDiscount > 0 ? `GC:${_gcCode}(-$${_sqGcDiscount})` : undefined)
     };
     sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
-    redeemGiftCard(_sqGcDiscount);
+    // El worker ya redimió la tarjeta server-side: limpiamos el estado local.
+    _gcCode=null; _gcBalance=0; _gcApplied=0;
     cart = []; saveCart(); updateCartUI();
     window.location.href = data.checkoutUrl;
 
@@ -2474,16 +2480,14 @@ async function applyGiftCard() {
   btn.disabled = true;
   msgEl.className='gc-msg'; msgEl.textContent='…';
   try {
-    await _fbSignIn();
-    const res  = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${raw}.json`));
+    // Validación server-side: el worker lee KV (privado). El navegador nunca ve otros códigos.
+    const res  = await fetch(ADMIN_WORKER_URL + '/giftcard/validate', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ code: raw })
+    });
     const data = res.ok ? await res.json() : null;
-    if (!data || data.error || data.active === false) {
+    if (!data || !data.valid || !(Number(data.balance) > 0)) {
       msgEl.className='gc-msg err';
       msgEl.textContent=(__LANG==='en'?'Invalid or already used code.':'Código no válido o ya utilizado.');
-      _gcCode=null; _gcBalance=0; _gcApplied=0;
-    } else if (!data.balance || Number(data.balance)<=0) {
-      msgEl.className='gc-msg err';
-      msgEl.textContent=(__LANG==='en'?'This gift card has no remaining balance.':'Esta tarjeta de regalo ya no tiene saldo.');
       _gcCode=null; _gcBalance=0; _gcApplied=0;
     } else {
       _gcCode=raw; _gcBalance=Number(data.balance);
@@ -2498,17 +2502,13 @@ async function applyGiftCard() {
   renderCheckoutSummary();
 }
 
+// Redención server-side (Zelle / WhatsApp). Square redime dentro de su propio worker.
 async function redeemGiftCard(amountUsed) {
   if (!_gcCode || amountUsed<=0) return;
   try {
-    await _fbSignIn();
-    const res  = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${_gcCode}.json`));
-    const data = await res.json();
-    if (!data) return;
-    const newBal = parseFloat(Math.max(0,(data.balance||0)-amountUsed).toFixed(2));
-    await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_giftcards/${_gcCode}.json`), {
-      method:'PATCH', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ balance:newBal, active:newBal>0 })
+    await fetch(ADMIN_WORKER_URL + '/giftcard/redeem', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ code: _gcCode, amount: amountUsed })
     });
   } catch(_) {}
 }
