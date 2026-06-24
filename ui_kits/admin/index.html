@@ -972,7 +972,10 @@ function loadQuagga() {
     const existing = window.Quagga?.default ?? window.Quagga;
     if (existing?.decodeSingle) { resolve(existing); return; }
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js';
+    // Versión fijada + SRI para evitar manipulación de la cadena de suministro (jsdelivr)
+    s.src = 'https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js';
+    s.integrity = 'sha384-IkRTkdAeAAAqE2ct5zNAfMiX8+H35pGJp8j7+ZFwh7PKaJh5eunsOFAb9l6Z9R7r';
+    s.crossOrigin = 'anonymous';
     s.onload = () => {
       const Q = window.Quagga?.default ?? window.Quagga;
       Q?.decodeSingle ? resolve(Q) : reject(new Error('Quagga API not found'));
