@@ -583,7 +583,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-field"><label class="co-label"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre" maxlength="40"></div>
           <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido" maxlength="40"></div>
         </div>
-        <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" maxlength="20"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" placeholder="09X XXX XXXX" maxlength="20"></div>
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
@@ -794,7 +794,7 @@ const __EN_T = {
 if (__LANG === 'en') {
   const _sortOpts = {default:'Sort: Featured','price-asc':'Price: low to high','price-desc':'Price: high to low',new:'Newest'};
   document.querySelectorAll('#sortSelect option').forEach(o => { if (_sortOpts[o.value]) o.textContent = _sortOpts[o.value]; });
-  const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coNotas:'Color, size, special detail…'};
+  const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coTel:'(555) 123-4567',coNotas:'Color, size, special detail…'};
   Object.entries(_phs).forEach(([id,ph]) => { const el = document.getElementById(id); if (el) el.placeholder = ph; });
   document.title = 'Store — CACUSA by Taitus';
 }
