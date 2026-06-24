@@ -5,13 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>CACUSA by Taitus — Joyería artesanal personalizada</title>
+  <meta name="description" content="Joyería artesanal personalizada — anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.">
+  <link rel="canonical" href="https://cacusabytaitus.com/ui_kits/store/">
+  <meta name="robots" content="index, follow">
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta id="og-url" property="og:url" content="https://cacusabytaitus.com/ui_kits/store/">
+  <meta property="og:site_name" content="CACUSA by Taitus">
+  <meta id="og-title" property="og:title" content="CACUSA by Taitus — Joyería artesanal personalizada">
+  <meta id="og-description" property="og:description" content="Anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.">
+  <meta id="og-image" property="og:image" content="https://cacusabytaitus.com/assets/icon-512.jpg">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:locale" content="es_US">
+  <meta property="og:locale:alternate" content="en_US">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta id="tw-title" name="twitter:title" content="CACUSA by Taitus — Joyería artesanal personalizada">
+  <meta id="tw-description" name="twitter:description" content="Anillos, collares, pulseras y aretes hechos a mano. Personalización gratis.">
+  <meta id="tw-image" name="twitter:image" content="https://cacusabytaitus.com/assets/icon-512.jpg">
+  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="theme-color" content="#EE6FA8">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="CACUSA">
-  <meta property="og:image" content="https://cacusabytaitus.com/assets/icon-512.jpg">
+  <!-- Schema.org: Organization + WebSite -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg","width":512,"height":512},"description":"Joyería artesanal personalizada — anillos, collares, pulseras y aretes.","contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["Spanish","English"]}},{"@type":"WebSite","@id":"https://cacusabytaitus.com/ui_kits/store/#website","url":"https://cacusabytaitus.com/ui_kits/store/","name":"CACUSA by Taitus","publisher":{"@id":"https://cacusabytaitus.com/#organization"},"inLanguage":["es","en"]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com"},{"@type":"ListItem","position":2,"name":"Tienda","item":"https://cacusabytaitus.com/ui_kits/store/"}]}]}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1068,6 +1089,8 @@ let _revRating = 5;
   loadReviewSummaries();
   renderCombos();
   updateCartUI();
+  const _autoP = new URLSearchParams(window.location.search).get('p');
+  if (_autoP) { const _ap = PRODUCTS.find(x => String(x.id) === String(_autoP)); if (_ap) openModal(_ap.id); }
 })();
 
 // Vuelve a aplicar los precios/recargos actuales del catálogo a los ítems guardados
@@ -1350,6 +1373,8 @@ function openModal(id) {
   }
   loadProductReviews(p.id);
   setRevRating(5);
+  history.pushState({productId: p.id}, '', '?p=' + encodeURIComponent(p.id));
+  _injectProductSchema(p);
 }
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
@@ -1358,6 +1383,8 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  const _u = new URL(window.location.href); _u.searchParams.delete('p'); history.pushState({}, '', _u.toString());
+  _clearProductSchema();
 }
 
 document.getElementById('qtyMinus').addEventListener('click', () => { if (qty > 1) { qty--; document.getElementById('qtyNum').textContent = qty; } });
@@ -2087,6 +2114,70 @@ document.addEventListener('keydown', e => {
 });
 addSwipe(document.getElementById('lightbox'), () => lbGoTo(_lbIdx + 1), () => lbGoTo(_lbIdx - 1));
 
+// ─── SEO: SCHEMA DINÁMICO ─────────────────────────────────
+const _SEO_BASE = 'https://cacusabytaitus.com/ui_kits/store/';
+const _SEO_ORG  = 'https://cacusabytaitus.com/#organization';
+const _SEO_IMG_DEFAULT = 'https://cacusabytaitus.com/assets/icon-512.jpg';
+function _setMeta(id, val) { const el = document.getElementById(id); if (el) el.setAttribute('content', val); }
+function _injectProductSchema(p) {
+  const imgs = getProductImages(p);
+  const name = (__LANG === 'en' && p.name_en) ? p.name_en : p.name;
+  const desc = (__LANG === 'en' && p.description_en) ? p.description_en : (p.desc || '');
+  const url  = _SEO_BASE + '?p=' + encodeURIComponent(p.id);
+  // OG + Twitter
+  _setMeta('og-url', url);
+  _setMeta('og-title', name + ' — CACUSA by Taitus');
+  _setMeta('og-description', desc || name);
+  if (imgs.length) _setMeta('og-image', imgs[0]);
+  _setMeta('tw-title', name + ' — CACUSA by Taitus');
+  _setMeta('tw-description', desc || name);
+  if (imgs.length) _setMeta('tw-image', imgs[0]);
+  // BreadcrumbList + Product JSON-LD
+  const schema = { '@context': 'https://schema.org', '@graph': [
+    { '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'CACUSA', item: 'https://cacusabytaitus.com' },
+      { '@type': 'ListItem', position: 2, name: __LANG === 'en' ? 'Store' : 'Tienda', item: _SEO_BASE },
+      { '@type': 'ListItem', position: 3, name, item: url }
+    ]},
+    { '@type': 'Product', name, description: desc || name,
+      ...(imgs.length ? { image: imgs } : {}),
+      ...(p.material ? { material: p.material } : {}),
+      brand: { '@type': 'Brand', name: 'CACUSA by Taitus' },
+      offers: { '@type': 'Offer', priceCurrency: 'USD', price: String(p.price),
+        availability: 'https://schema.org/InStock', url, seller: { '@id': _SEO_ORG } }
+    }
+  ]};
+  let el = document.getElementById('ld-product');
+  if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = 'ld-product'; document.head.appendChild(el); }
+  el.textContent = JSON.stringify(schema);
+}
+function _clearProductSchema() {
+  const el = document.getElementById('ld-product'); if (el) el.remove();
+  _setMeta('og-url', _SEO_BASE);
+  _setMeta('og-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
+  _setMeta('og-description', 'Anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.');
+  _setMeta('og-image', _SEO_IMG_DEFAULT);
+  _setMeta('tw-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
+  _setMeta('tw-description', 'Anillos, collares, pulseras y aretes hechos a mano. Personalización gratis.');
+  _setMeta('tw-image', _SEO_IMG_DEFAULT);
+}
+function _patchSchemaRating(avg, count, reviews) {
+  const el = document.getElementById('ld-product'); if (!el) return;
+  try {
+    const s = JSON.parse(el.textContent);
+    const prod = s['@graph'] ? s['@graph'].find(n => n['@type'] === 'Product') : s;
+    if (!prod) return;
+    prod.aggregateRating = { '@type': 'AggregateRating', ratingValue: avg.toFixed(1), reviewCount: count, bestRating: '5', worstRating: '1' };
+    prod.review = reviews.slice(0, 5).map(rv => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: rv.name || 'Anónimo' },
+      reviewRating: { '@type': 'Rating', ratingValue: String(rv.rating || 5), bestRating: '5', worstRating: '1' },
+      reviewBody: rv.comment || '', datePublished: rv.date || ''
+    }));
+    el.textContent = JSON.stringify(s);
+  } catch(_) {}
+}
+
 // ─── REVIEWS ──────────────────────────────────────────────
 function setRevRating(n) {
   _revRating = n;
@@ -2118,6 +2209,7 @@ async function loadProductReviews(productId) {
     document.getElementById('revScore').textContent = avg.toFixed(1);
     document.getElementById('revStarsDisplay').innerHTML = renderStars(avg);
     document.getElementById('revCountText').textContent = `(${reviews.length})`;
+    _patchSchemaRating(avg, reviews.length, reviews);
     list.innerHTML = reviews.slice(0, 5).map(rv => `
       <div class="review-item">
         <div class="review-top">
