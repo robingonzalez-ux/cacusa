@@ -1199,6 +1199,7 @@ function dismissToast() {
   const el = document.getElementById('cacusaToast');
   if (el) el.classList.remove('show');
 }
+document.getElementById('cacusaToast').addEventListener('click', dismissToast);
 function imgBgStyle(p) {
   return p && p.imageUrl ? '' : 'background:' + ((p && p.grad) || 'var(--grad)');
 }
@@ -1374,7 +1375,7 @@ function openModal(id) {
   if (p.hasSurcharge) {
     showToast(__LANG === 'en'
       ? '💸 This product has <strong>4% off</strong> when paying by Zelle or bank transfer'
-      : '💸 Este producto tiene <strong>4% de descuento</strong> pagando por Zelle o transferencia');
+      : '💸 Este producto tiene <strong>4% de descuento</strong> pagando por Zelle o transferencia', 3000);
   }
   loadProductReviews(p.id);
   setRevRating(5);
