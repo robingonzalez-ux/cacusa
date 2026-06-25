@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
+
+Sitemap: https://cacusabytaitus.com/sitemap.xml
