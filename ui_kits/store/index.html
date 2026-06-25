@@ -757,6 +757,17 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="gc-msg" id="gcMsg"></div>
         </div>
 
+        <div class="gc-wrap">
+          <div style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">🏷️ <span class="t-es">Cupón de descuento</span><span class="t-en">Discount coupon</span></div>
+          <div class="gc-row">
+            <input class="gc-inp" id="cpCodeInput" placeholder="CÓDIGO" maxlength="30" autocomplete="off" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()">
+            <button class="gc-btn" id="cpApplyBtn" onclick="applyCoupon()">
+              <span class="t-es">Aplicar</span><span class="t-en">Apply</span>
+            </button>
+          </div>
+          <div class="gc-msg" id="cpMsg"></div>
+        </div>
+
         <div class="co-error" id="coError"></div>
 
         <button class="pay-btn" id="payBtn">
@@ -785,6 +796,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel"><span class="t-es">Impuesto</span><span class="t-en">Tax</span></span><strong id="coImpuesto">$0</strong></div>
           <div class="co-discount-line" id="coZelleRow" style="display:none"><span>💸 <span class="t-es">Descuento Zelle (4%)</span><span class="t-en">Zelle Discount (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
           <div class="co-gc-line" id="coGcRow" style="display:none"><span>🎁 <span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span> <small id="coGcCode" style="opacity:.65;font-weight:400"></small></span><strong>-$<span id="coGcAmt">0.00</span></strong></div>
+          <div class="co-discount-line" id="coCpRow" style="display:none"><span>🏷️ <span class="t-es">Cupón</span><span class="t-en">Coupon</span> <small id="coCpCode" style="opacity:.65;font-weight:400"></small></span><strong>-$<span id="coCpAmt">0.00</span></strong></div>
           <div class="co-total"><span>Total</span><strong id="coTotal">$0</strong></div>
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
@@ -1078,6 +1090,7 @@ let _reviewSummaries = {};
 let _galleryImages = [], _galleryIdx = 0;
 let _lbImages = [], _lbIdx = 0;
 let _gcCode = null, _gcBalance = 0, _gcApplied = 0;
+let _cpCode = null, _cpType = null, _cpAmount = 0, _cpDiscount = 0;
 let _revRating = 5;
 
 // ─── LOAD DATA ──────────────────────────────────────────────
@@ -1841,7 +1854,15 @@ function renderCheckoutSummary() {
 
   const totalFinal = adjustedSubtotal + shippingCost + taxAmt;
   _gcApplied = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
-  const grandTotal = parseFloat((totalFinal - _gcApplied).toFixed(2));
+  const afterGc = totalFinal - _gcApplied;
+  if (_cpCode && _cpType) {
+    _cpDiscount = _cpType === 'percent'
+      ? parseFloat((afterGc * _cpAmount / 100).toFixed(2))
+      : parseFloat(Math.min(_cpAmount, afterGc).toFixed(2));
+  } else {
+    _cpDiscount = 0;
+  }
+  const grandTotal = parseFloat((afterGc - _cpDiscount).toFixed(2));
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
@@ -1867,6 +1888,14 @@ function renderCheckoutSummary() {
     document.getElementById('coGcCode').textContent  = _gcCode;
   } else {
     gcRow.style.display = 'none';
+  }
+  const cpRow = document.getElementById('coCpRow');
+  if (_cpDiscount > 0) {
+    cpRow.style.display = '';
+    document.getElementById('coCpAmt').textContent  = _cpDiscount.toFixed(2);
+    document.getElementById('coCpCode').textContent = _cpCode;
+  } else {
+    cpRow.style.display = 'none';
   }
   document.getElementById('coTotal').textContent = '$' + grandTotal.toFixed(2);
   document.getElementById('coSummaryItems').innerHTML = cart.map(item => `
@@ -1934,9 +1963,17 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   }
   const totalFinal = zelleSubtotal + shippingCost + zelleTax;
   const zelleGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
-  const totalConGC = parseFloat((totalFinal - zelleGcDiscount).toFixed(2));
+  const afterZelleGc = totalFinal - zelleGcDiscount;
+  const zelleCpDiscount = (_cpCode && _cpType)
+    ? parseFloat((_cpType==='percent' ? afterZelleGc*_cpAmount/100 : Math.min(_cpAmount, afterZelleGc)).toFixed(2))
+    : 0;
+  const totalConGC = parseFloat((afterZelleGc - zelleCpDiscount).toFixed(2));
 
   _currentOrderNum = generateOrderNum();
+  const zelleExtras = [
+    zelleGcDiscount > 0 ? `GC:${_gcCode}(-$${zelleGcDiscount})` : '',
+    zelleCpDiscount > 0 ? `CP:${_cpCode}(-$${zelleCpDiscount})` : ''
+  ].filter(Boolean).join(' | ');
   submitOrder({
     numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
@@ -1944,7 +1981,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     total:     totalConGC,
     pago:      'Zelle/Transferencia',
     estado:    'Nuevo',
-    notas:     (notas ? notas + (zelleGcDiscount > 0 ? ` | GC:${_gcCode}(-$${zelleGcDiscount})` : '') : (zelleGcDiscount > 0 ? `GC:${_gcCode}(-$${zelleGcDiscount})` : undefined))
+    notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined
   });
 
   redeemGiftCard(zelleGcDiscount);
@@ -1952,8 +1989,11 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
+  _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
   document.getElementById('gcCodeInput').value='';
   document.getElementById('gcMsg').textContent='';
+  document.getElementById('cpCodeInput').value='';
+  document.getElementById('cpMsg').textContent='';
   showSuccess();
 });
 
@@ -1998,15 +2038,18 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
   const _subtotal = cart.reduce((s, i) => s + i.price, 0);
   const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
-  // Estimación solo para mostrar/guardar; la redención real la hace el worker server-side.
-  const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _subtotal + _shippingCost).toFixed(2)) : 0;
+  const _sqBase = _subtotal + _shippingCost;
+  const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _sqBase).toFixed(2)) : 0;
+  const _sqAfterGc = _sqBase - _sqGcDiscount;
+  const _sqCpDiscount = (_cpCode && _cpType)
+    ? parseFloat((_cpType==='percent' ? _sqAfterGc*_cpAmount/100 : Math.min(_cpAmount, _sqAfterGc)).toFixed(2))
+    : 0;
 
   try {
     const resp = await fetch(SQUARE_WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // El código de la gift card va aparte; el worker valida y redime contra KV.
-      body: JSON.stringify({ items: cart, customer, shippingCost: _shippingCost, giftCardCode: _gcCode || undefined })
+      body: JSON.stringify({ items: cart, customer, shippingCost: _shippingCost, giftCardCode: _gcCode || undefined, couponCode: _cpCode || undefined })
     });
     const data = await resp.json();
 
@@ -2031,14 +2074,14 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         direccion: customer.address,
       },
       productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
-      total:     parseFloat((_subtotal + _shippingCost - _sqGcDiscount).toFixed(2)),
+      total:     parseFloat((_sqBase - _sqGcDiscount - _sqCpDiscount).toFixed(2)),
       pago:      'Square',
       estado:    'Nuevo',
-      notas:     customer.notes || (_sqGcDiscount > 0 ? `GC:${_gcCode}(-$${_sqGcDiscount})` : undefined)
+      notas:     [customer.notes, _sqGcDiscount>0?`GC:${_gcCode}(-$${_sqGcDiscount})`:'', _sqCpDiscount>0?`CP:${_cpCode}(-$${_sqCpDiscount})`:''].filter(Boolean).join(' | ') || undefined
     };
     sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
-    // El worker ya redimió la tarjeta server-side: limpiamos el estado local.
     _gcCode=null; _gcBalance=0; _gcApplied=0;
+    _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
     cart = []; saveCart(); updateCartUI();
     window.location.href = data.checkoutUrl;
 
@@ -2146,8 +2189,16 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const free       = total >= SHIPPING.freeThreshold;
   const totalFinal = free ? total : total + SHIPPING.cost;
   const waGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
-  const totalConGC   = parseFloat((totalFinal - waGcDiscount).toFixed(2));
+  const afterWaGc = totalFinal - waGcDiscount;
+  const waCpDiscount = (_cpCode && _cpType)
+    ? parseFloat((_cpType==='percent' ? afterWaGc*_cpAmount/100 : Math.min(_cpAmount, afterWaGc)).toFixed(2))
+    : 0;
+  const totalConGC   = parseFloat((afterWaGc - waCpDiscount).toFixed(2));
   _currentOrderNum = generateOrderNum();
+  const waExtras = [
+    waGcDiscount > 0 ? `GC:${_gcCode}(-$${waGcDiscount})` : '',
+    waCpDiscount > 0 ? `CP:${_cpCode}(-$${waCpDiscount})` : ''
+  ].filter(Boolean).join(' | ');
   submitOrder({
     numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
@@ -2155,7 +2206,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
     total:  totalConGC,
     pago:   'WhatsApp',
     estado: 'Nuevo',
-    notas:  notas || (waGcDiscount > 0 ? `GC:${_gcCode}(-$${waGcDiscount})` : undefined)
+    notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined
   });
 
   redeemGiftCard(waGcDiscount);
@@ -2163,8 +2214,11 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
+  _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
   document.getElementById('gcCodeInput').value='';
   document.getElementById('gcMsg').textContent='';
+  document.getElementById('cpCodeInput').value='';
+  document.getElementById('cpMsg').textContent='';
   showSuccess();
 });
 
@@ -2500,6 +2554,36 @@ async function applyGiftCard() {
   }
   btn.disabled=false;
   renderCheckoutSummary();
+}
+
+// ─── COUPONS ──────────────────────────────────────────────────
+async function applyCoupon() {
+  const raw = (document.getElementById('cpCodeInput').value || '').trim().toUpperCase().replace(/\s/g,'');
+  const msgEl = document.getElementById('cpMsg');
+  if (!raw) { msgEl.className='gc-msg err'; msgEl.textContent=(__LANG==='en'?'Enter a coupon code.':'Ingresa un código de cupón.'); return; }
+  const btn = document.getElementById('cpApplyBtn');
+  btn.disabled = true;
+  msgEl.className='gc-msg'; msgEl.textContent='…';
+  try {
+    const res = await fetch(ADMIN_WORKER_URL + '/coupon/validate', {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code: raw })
+    });
+    const data = res.ok ? await res.json() : null;
+    if (!data || !data.valid) {
+      msgEl.className='gc-msg err';
+      msgEl.textContent=(__LANG==='en'?'Invalid or expired coupon.':'Cupón inválido o vencido.');
+      btn.disabled=false; return;
+    }
+    _cpCode=data.code; _cpType=data.type; _cpAmount=data.amount;
+    renderCheckoutSummary();
+    const disc = _cpType==='percent' ? `${_cpAmount}% OFF` : `$${_cpAmount.toFixed(2)} OFF`;
+    msgEl.className='gc-msg ok';
+    msgEl.textContent=(__LANG==='en' ? `✅ Applied: ${disc}` : `✅ Aplicado: ${disc} — confirma el uso desde el admin después de recibir el pago`);
+  } catch(_) {
+    msgEl.className='gc-msg err';
+    msgEl.textContent=(__LANG==='en'?'Could not verify coupon.':'No se pudo verificar el cupón.');
+  }
+  btn.disabled=false;
 }
 
 // Redención server-side (Zelle / WhatsApp). Square redime dentro de su propio worker.

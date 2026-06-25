@@ -1640,6 +1640,181 @@ function GiftCardsTab({ token }) {
   );
 }
 
+// ── Coupons Tab ─────────────────────────────────────────────────────────────
+function CouponsTab({ token }) {
+  const [coupons, setCoupons]   = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [form, setForm]         = useState({ code:'', type:'percent', amount:'10', maxUses:'', expiresAt:'', note:'' });
+  const [creating, setCreating] = useState(false);
+  const [createMsg, setCreateMsg] = useState('');
+  const [useMsg, setUseMsg]     = useState({});
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = await apiCall('coupon/list', { token });
+      setCoupons(Array.isArray(data.coupons) ? data.coupons : []);
+    } catch(_) { setCoupons([]); }
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const setF = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const create = async () => {
+    if (!form.code.trim()) { setCreateMsg('❌ Ingresa un código.'); return; }
+    const amount = parseFloat(form.amount);
+    if (!amount || amount <= 0) { setCreateMsg('❌ Monto/porcentaje inválido.'); return; }
+    if (form.type === 'percent' && amount > 100) { setCreateMsg('❌ Máximo 100%.'); return; }
+    setCreating(true); setCreateMsg('');
+    try {
+      const data = await apiCall('coupon/create', {
+        token,
+        code: form.code.trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''),
+        type: form.type, amount,
+        maxUses: form.maxUses ? parseInt(form.maxUses) : null,
+        expiresAt: form.expiresAt || null,
+        note: form.note.trim()
+      });
+      if (!data.coupon) throw new Error(data.error || 'Error');
+      setCoupons(prev => [data.coupon, ...(prev || [])]);
+      setCreateMsg(`✅ Creado: ${data.coupon.code}`);
+      setForm({ code:'', type:'percent', amount:'10', maxUses:'', expiresAt:'', note:'' });
+    } catch(e) { setCreateMsg('❌ ' + (e.message || 'Error al crear.')); }
+    setCreating(false);
+  };
+
+  const deactivate = async code => {
+    if (!confirm(`¿Desactivar el cupón ${code}?`)) return;
+    try {
+      await apiCall('coupon/deactivate', { token, code });
+      setCoupons(prev => prev.map(c => c.code===code ? {...c,active:false} : c));
+    } catch(_) { alert('Error al desactivar'); }
+  };
+
+  const deleteCoupon = async code => {
+    if (!confirm(`¿Eliminar permanentemente el cupón ${code}? Esta acción no se puede deshacer.`)) return;
+    try {
+      await apiCall('coupon/delete', { token, code });
+      setCoupons(prev => prev.filter(c => c.code !== code));
+    } catch(_) { alert('Error al eliminar'); }
+  };
+
+  const registerUse = async code => {
+    try {
+      const data = await apiCall('coupon/use', { token, code });
+      if (!data.coupon) throw new Error();
+      setCoupons(prev => prev.map(c => c.code===code ? data.coupon : c));
+      setUseMsg(m => ({...m, [code]:'✅ Uso registrado'}));
+      setTimeout(() => setUseMsg(m => { const n={...m}; delete n[code]; return n; }), 3000);
+    } catch(_) { setUseMsg(m => ({...m, [code]:'❌ Error'})); }
+  };
+
+  const inp = { padding:'10px 13px', border:'1.5px solid #e4e4e4', borderRadius:10, fontSize:14, outline:'none', background:'white' };
+  const lbl = { fontSize:11, fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:5, display:'block' };
+
+  return (
+    <div style={{ maxWidth:640, margin:'0 auto', paddingBottom:40 }}>
+      {/* Formulario de creación */}
+      <div style={{ background:'white', borderRadius:16, padding:'20px 22px', marginBottom:20, boxShadow:'0 2px 12px rgba(0,0,0,.06)' }}>
+        <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase', marginBottom:14 }}>🏷️ Nuevo cupón de descuento</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
+          <div>
+            <label style={lbl}>Código</label>
+            <input value={form.code} onChange={e=>setF('code',e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g,''))} placeholder="VERANO20"
+              style={{ ...inp, width:'100%', boxSizing:'border-box', textTransform:'uppercase', letterSpacing:'.08em' }} />
+          </div>
+          <div>
+            <label style={lbl}>Tipo</label>
+            <select value={form.type} onChange={e=>setF('type',e.target.value)} style={{ ...inp, width:'100%', boxSizing:'border-box' }}>
+              <option value="percent">% Porcentaje</option>
+              <option value="fixed">$ Monto fijo</option>
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>{form.type==='percent'?'Porcentaje (1-100)':'Monto ($)'}</label>
+            <input type="number" min="1" step={form.type==='percent'?'1':'0.01'} value={form.amount} onChange={e=>setF('amount',e.target.value)}
+              style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+          </div>
+          <div>
+            <label style={lbl}>Usos máximos</label>
+            <input type="number" min="1" step="1" value={form.maxUses} onChange={e=>setF('maxUses',e.target.value)} placeholder="Ilimitado"
+              style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+          </div>
+          <div>
+            <label style={lbl}>Vence el</label>
+            <input type="date" value={form.expiresAt} onChange={e=>setF('expiresAt',e.target.value)} style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+          </div>
+          <div>
+            <label style={lbl}>Nota interna</label>
+            <input value={form.note} onChange={e=>setF('note',e.target.value)} placeholder="Campaña verano…" style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+          </div>
+        </div>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <button onClick={create} disabled={creating}
+            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
+            {creating ? '⏳ Creando…' : '+ Crear cupón'}
+          </button>
+          {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
+        </div>
+      </div>
+
+      {/* Lista de cupones */}
+      <div style={{ background:'white', borderRadius:16, padding:'20px 22px', boxShadow:'0 2px 12px rgba(0,0,0,.06)' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase' }}>Cupones creados</div>
+          <button onClick={load} style={{ fontSize:12, color:'#9B5DE5', fontWeight:600, cursor:'pointer', background:'none', border:'none' }}>↺ Recargar</button>
+        </div>
+        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>Cargando…</div>}
+        {!loading && (!coupons || coupons.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>No hay cupones creados aún</div>}
+        {!loading && coupons && coupons.map(c => {
+          const expired    = c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date();
+          const exhausted  = c.maxUses != null && c.usedCount >= c.maxUses;
+          const statusOk   = c.active && !expired && !exhausted;
+          return (
+            <div key={c.code} style={{ padding:'12px 0', borderBottom:'1px solid #f3f0f5' }}>
+              <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+                <code style={{ fontSize:13, fontWeight:700, color:'#333', letterSpacing:'.05em', background:'#F5F0FF', padding:'2px 8px', borderRadius:6 }}>{c.code}</code>
+                <span style={{ fontSize:12, fontWeight:700, padding:'2px 9px', borderRadius:99,
+                  background:statusOk?'#DCFCE7':'#F3F4F6', color:statusOk?'#166534':'#6B7280' }}>
+                  {statusOk ? '✓ Activo' : expired ? 'Vencido' : exhausted ? 'Agotado' : 'Inactivo'}
+                </span>
+                <span style={{ fontSize:13, color:'#333', fontWeight:700 }}>
+                  {c.type==='percent' ? `${c.amount}% OFF` : `$${(c.amount||0).toFixed(2)} OFF`}
+                </span>
+                <span style={{ fontSize:11, color:'#aaa' }}>
+                  Usos: {c.usedCount||0}{c.maxUses!=null?`/${c.maxUses}`:''}
+                  {c.expiresAt ? ` · Vence: ${c.expiresAt}` : ''}
+                  {c.note ? ` · ${c.note}` : ''}
+                </span>
+              </div>
+              <div style={{ display:'flex', gap:6, marginTop:8, flexWrap:'wrap', alignItems:'center' }}>
+                {statusOk && (
+                  <button onClick={()=>registerUse(c.code)}
+                    style={{ padding:'5px 12px', borderRadius:8, border:'1.5px solid #9B5DE5', background:'#F5F0FF', fontSize:12, fontWeight:700, cursor:'pointer', color:'#9B5DE5' }}>
+                    +1 Uso (confirmar pago)
+                  </button>
+                )}
+                {useMsg[c.code] && <span style={{ fontSize:11, fontWeight:600, color:useMsg[c.code].startsWith('✅')?'#065F46':'#DC2626' }}>{useMsg[c.code]}</span>}
+                {c.active && (
+                  <button onClick={()=>deactivate(c.code)}
+                    style={{ padding:'5px 12px', borderRadius:8, border:'1.5px solid #FFB3C1', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:'#DC2626' }}>
+                    Desactivar
+                  </button>
+                )}
+                <button onClick={()=>deleteCoupon(c.code)}
+                  style={{ padding:'5px 12px', borderRadius:8, border:'1.5px solid #eee', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:'#999' }}>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Settings Tab ────────────────────────────────────────────────────────────
 function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, products, setProducts, setDirty }) {
   const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
@@ -2463,6 +2638,7 @@ function App() {
             ['landing',    '🏠 Landing',    0],
             ['pages',      '📄 Páginas',    0],
             ['giftcards',  '🎁 Gift Cards',  0],
+            ['cupones',    '🏷️ Cupones',    0],
             ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -2718,6 +2894,9 @@ function App() {
 
         {/* ── Gift Cards tab ── */}
         {activeTab === 'giftcards' && <GiftCardsTab token={session.token} />}
+
+        {/* ── Cupones tab ── */}
+        {activeTab === 'cupones' && <CouponsTab token={session.token} />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (
