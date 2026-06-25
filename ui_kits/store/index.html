@@ -209,6 +209,15 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 #modal-overlay.open .modal-box{transform:scale(1) translateY(0)}
 .modal-close{position:absolute;top:20px;right:20px;background:var(--pink-pale);border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:none;display:flex;align-items:center;justify-content:center;color:var(--pink);transition:all .2s;z-index:10}
 .modal-close:hover{background:var(--pink);color:white}
+.related-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:600px){.related-grid{grid-template-columns:repeat(2,1fr)}}
+.related-card{border-radius:14px;overflow:hidden;border:1.5px solid var(--pink-pale);cursor:pointer;transition:transform .2s,box-shadow .2s}
+.related-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(238,111,168,.2)}
+.related-card-img{height:110px;background-size:cover;background-position:center}
+.related-card-body{padding:9px 12px 12px}
+.related-card-tag{font-family:var(--fu);font-size:9px;font-weight:700;color:var(--pink);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.related-card-name{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:4px}
+.related-card-price{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink)}
 .modal-img{height:100%;border-radius:28px 0 0 28px;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .gallery-main{flex:1;min-height:340px;position:relative;overflow:hidden;cursor:zoom-in}
 .gallery-main .modal-img-bg{width:100%;height:100%;transition:transform .55s cubic-bezier(.4,0,.2,1)}
@@ -767,6 +776,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <button class="rev-submit" id="revSubmitBtn" onclick="submitReview()"><span class="t-es">Enviar</span><span class="t-en">Submit</span></button>
         </div>
       </div>
+    </div>
+    <!-- RELATED PRODUCTS -->
+    <div id="relatedProducts" style="grid-column:1/-1;display:none;padding:0 32px 32px">
+      <div style="border-top:1.5px solid var(--pink-pale);padding-top:24px;margin-bottom:16px;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.12em;text-transform:uppercase">
+        <span class="t-es">También te puede gustar</span><span class="t-en">You may also like</span>
+      </div>
+      <div id="relatedGrid" class="related-grid"></div>
     </div>
   </div>
 </div>
@@ -1745,6 +1761,7 @@ function openModal(id) {
   setRevRating(5);
   history.pushState({productId: p.id}, '', '?p=' + encodeURIComponent(p.id));
   _injectProductSchema(p);
+  _renderRelatedProducts(p);
 }
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
@@ -2536,6 +2553,38 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') lbGoTo(_lbIdx - 1);
 });
 addSwipe(document.getElementById('lightbox'), () => lbGoTo(_lbIdx + 1), () => lbGoTo(_lbIdx - 1));
+
+// ─── RELACIONADOS ──────────────────────────────────────────
+function _renderRelatedProducts(p) {
+  const container = document.getElementById('relatedProducts');
+  const grid = document.getElementById('relatedGrid');
+  if (!container || !grid) return;
+  const related = PRODUCTS
+    .filter(x => x.id !== p.id && x.cat === p.cat)
+    .sort((a, b) => {
+      const sa = (a.badge === 'badge-sale' || a.badge === 'badge-promo' || a.isPromo) ? 0 : 1;
+      const sb = (b.badge === 'badge-sale' || b.badge === 'badge-promo' || b.isPromo) ? 0 : 1;
+      return sa - sb;
+    })
+    .slice(0, 4);
+  if (related.length < 2) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  grid.innerHTML = related.map(r => {
+    const rName = (__LANG === 'en' && r.name_en) ? r.name_en : r.name;
+    const imgs = getProductImages(r);
+    const imgStyle = imgs[0]
+      ? `background-image:url('${imgs[0].replace(/'/g, '%27')}')`
+      : imgBgStyle(r);
+    return `<div class="related-card" onclick="openModal(${r.id})">
+      <div class="related-card-img" style="${imgStyle}"></div>
+      <div class="related-card-body">
+        ${r.badge ? `<div class="related-card-tag">${esc(tagLabel(r.tag))}</div>` : ''}
+        <div class="related-card-name">${esc(rName)}</div>
+        <div class="related-card-price">$${(+r.price).toFixed(2)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // ─── SEO: SCHEMA DINÁMICO ─────────────────────────────────
 const _SEO_BASE = 'https://cacusabytaitus.com/ui_kits/store/';
