@@ -1739,7 +1739,8 @@ function openModal(id) {
   document.getElementById('modalName').textContent = __LANG === 'en' && p.name_en ? p.name_en : p.name;
   const _mLang = __LANG === 'en';
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
-  document.getElementById('modalPrice').textContent = '$' + p.price + (p.oldPrice ? (_mLang ? ' — was $' : ' — antes $') + p.oldPrice : '');
+  const _origPrice = (p.isPromo && p.originalPrice) ? (+p.originalPrice).toFixed(2) : (p.oldPrice || null);
+  document.getElementById('modalPrice').textContent = '$' + (+p.price).toFixed(2) + (_origPrice ? (_mLang ? ' — was $' : ' — antes $') + _origPrice : '');
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
