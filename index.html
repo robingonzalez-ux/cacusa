@@ -1134,6 +1134,7 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
   msg+=_vigL?'📧 *Email:* '+email+'\n\nHi, I saw the 10% offer on my first purchase and would love to use it. ✨':'📧 *Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
   const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
   window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
+  fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es'})}).catch(()=>{});
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
 });
 

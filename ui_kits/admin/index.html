@@ -1640,6 +1640,51 @@ function GiftCardsTab({ token }) {
   );
 }
 
+// ── Leads Tab (registros 10%) ────────────────────────────────────────────────
+function LeadsTab({ token }) {
+  const [leads, setLeads] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiCall('lead/list', { token })
+      .then(d => setLeads(Array.isArray(d.leads) ? d.leads : []))
+      .catch(() => setLeads([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const inp = { padding: '8px 12px', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: 13, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };
+  const fmt = iso => { try { return new Date(iso).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); } catch { return iso; } };
+
+  return (
+    <div style={{ maxWidth: 700 }}>
+      <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Registros 10% descuento</div>
+      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida.</div>
+
+      {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
+      {!loading && leads && leads.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>No hay registros aún.</div>
+      )}
+      {!loading && leads && leads.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 10 }}>{leads.length} registro{leads.length !== 1 ? 's' : ''}</div>
+          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 160px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#A89AAF', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <span>Email</span><span>Idioma</span><span>Fecha</span>
+            </div>
+            {leads.map((l, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 160px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500 }}>{l.email}</span>
+                <span style={{ fontSize: 12, color: '#A89AAF' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
+                <span style={{ fontSize: 12, color: '#A89AAF' }}>{fmt(l.date)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Coupons Tab ─────────────────────────────────────────────────────────────
 function CouponsTab({ token }) {
   const [coupons, setCoupons]   = useState(null);
@@ -2639,6 +2684,7 @@ function App() {
             ['pages',      '📄 Páginas',    0],
             ['giftcards',  '🎁 Gift Cards',  0],
             ['cupones',    '🏷️ Cupones',    0],
+            ['leads',      '📋 Leads 10%',  0],
             ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -2897,6 +2943,9 @@ function App() {
 
         {/* ── Cupones tab ── */}
         {activeTab === 'cupones' && <CouponsTab token={session.token} />}
+
+        {/* ── Leads 10% tab ── */}
+        {activeTab === 'leads' && <LeadsTab token={session.token} />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (

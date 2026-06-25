@@ -842,6 +842,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
           <div class="co-field"><label class="co-label"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido" maxlength="40"></div>
         </div>
         <div class="co-field"><label class="co-label"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" placeholder="09X XXX XXXX" maxlength="20"></div>
+        <div class="co-field"><label class="co-label"><span class="t-es">Email (opcional)</span><span class="t-en">Email (optional)</span></label><input class="co-input" id="coEmail" type="email" inputmode="email" placeholder="correo@ejemplo.com" maxlength="80"></div>
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
         <div class="co-field">
@@ -2384,6 +2385,8 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   });
 
   redeemGiftCard(waGcDiscount);
+  const emailVal = (document.getElementById('coEmail').value || '').trim();
+  if (_cpCode) burnCoupon(_cpCode, tel, emailVal);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -2771,8 +2774,11 @@ async function applyCoupon() {
   btn.disabled = true;
   msgEl.className='gc-msg'; msgEl.textContent='…';
   try {
+    const telVal = (document.getElementById('coTel').value || '').trim();
+    const emailVal = (document.getElementById('coEmail').value || '').trim();
     const res = await fetch(ADMIN_WORKER_URL + '/coupon/validate', {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code: raw })
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code: raw, phone: telVal || undefined, email: emailVal || undefined })
     });
     const data = res.ok ? await res.json() : null;
     if (!data || !data.valid) {
@@ -2790,6 +2796,14 @@ async function applyCoupon() {
     msgEl.textContent=(__LANG==='en'?'Could not verify coupon.':'No se pudo verificar el cupón.');
   }
   btn.disabled=false;
+}
+
+function burnCoupon(code, phone, email) {
+  if (!code) return;
+  fetch(ADMIN_WORKER_URL + '/coupon/burn', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, phone: phone || '', email: email || '' })
+  }).catch(() => {});
 }
 
 // Redención server-side (Zelle / WhatsApp). Square redime dentro de su propio worker.
