@@ -1284,12 +1284,12 @@ let _revRating = 5;
   } catch(e) {
     PRODUCTS = FALLBACK_PRODUCTS.map(normalizeProd);
   }
-  // Apply per-product surcharges from Firebase (best-effort, non-blocking)
-  await _fbSignIn();
+  // Apply per-product surcharges desde el worker (best-effort, non-blocking)
   try {
-    const _srRes = await fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json'));
+    const _srRes = await fetch(ADMIN_WORKER_URL + '/pub/surcharges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
     if (_srRes.ok) {
-      const _sr = await _srRes.json();
+      const _srData = await _srRes.json();
+      const _sr = _srData.surcharges;
       if (_sr && typeof _sr === 'object') {
         PRODUCTS.forEach(p => {
           if (_sr[p.id] === true) {
@@ -1318,11 +1318,12 @@ let _revRating = 5;
   // Apply per-product markets + detect visitor country via IP (best-effort, non-blocking)
   try {
     const [_mktRes, _ipRes] = await Promise.all([
-      fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json')),
+      fetch(ADMIN_WORKER_URL + '/pub/markets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
       fetch('https://api.country.is/')
     ]);
     if (_mktRes.ok) {
-      const _mkt = await _mktRes.json();
+      const _mktData = await _mktRes.json();
+      const _mkt = _mktData.markets;
       if (_mkt && typeof _mkt === 'object') {
         window.__markets = _mkt;
         PRODUCTS.forEach(p => { p.market = _mkt[p.id] || 'both'; });

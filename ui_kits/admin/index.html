@@ -2132,10 +2132,7 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
 }
 
 // ── Mercado Tab ─────────────────────────────────────────────────────────────
-function MercadoTab({ products }) {
-  const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
-  const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
-
+function MercadoTab({ products, token }) {
   const [surcharges, setSurcharges] = useState({});
   const [markets, setMarkets]       = useState({});
   const [fbLoading, setFbLoading]   = useState(true);
@@ -2147,11 +2144,13 @@ function MercadoTab({ products }) {
 
   useEffect(() => {
     (async () => {
-      await _fbSignIn();
       try {
-        const [sr, mk] = await Promise.all([fetch(_fbUrl(FB_SR)), fetch(_fbUrl(FB_MKT))]);
-        if (sr.ok) { const d = await sr.json(); setSurcharges(d && typeof d === 'object' ? d : {}); }
-        if (mk.ok) { const d = await mk.json(); setMarkets(d && typeof d === 'object' ? d : {}); }
+        const [sr, mk] = await Promise.all([
+          apiCall('pub/surcharges', {}),
+          apiCall('pub/markets', {})
+        ]);
+        setSurcharges(sr.surcharges && typeof sr.surcharges === 'object' ? sr.surcharges : {});
+        setMarkets(mk.markets && typeof mk.markets === 'object' ? mk.markets : {});
       } catch(_) {}
       setFbLoading(false);
     })();
@@ -2159,13 +2158,12 @@ function MercadoTab({ products }) {
 
   const save = async () => {
     setSaving(true); setMsg('');
-    await _fbSignIn();
     try {
       const [r1, r2] = await Promise.all([
-        fetch(_fbUrl(FB_SR),  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(surcharges) }),
-        fetch(_fbUrl(FB_MKT), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(markets) })
+        apiCall('surcharge/save', { token, surcharges }),
+        apiCall('market/save',    { token, markets })
       ]);
-      if (!r1.ok || !r2.ok) throw new Error('Firebase error');
+      if (!r1.ok || !r2.ok) throw new Error('Error');
       setMsg('✅ ¡Guardado!');
       setTimeout(() => setMsg(''), 4000);
     } catch(e) {
@@ -2372,16 +2370,15 @@ function App() {
   // Snapshot del español al cargar, para detectar cambios y re-traducir solo lo editado
   const snapRef = React.useRef({ texts: '', home: '', pages: '' });
 
-  const FB_SR  = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_surcharges.json';
-  const FB_MKT = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_markets.json';
-
   useEffect(() => {
     (async () => {
-      await _fbSignIn();
       try {
-        const [r1, r2] = await Promise.all([fetch(_fbUrl(FB_SR)), fetch(_fbUrl(FB_MKT))]);
-        if (r1.ok) { const d = await r1.json(); if (d && typeof d === 'object') setFbSurcharges(d); }
-        if (r2.ok) { const d = await r2.json(); if (d && typeof d === 'object') setFbMarkets(d); }
+        const [sr, mk] = await Promise.all([
+          apiCall('pub/surcharges', {}),
+          apiCall('pub/markets', {})
+        ]);
+        if (sr.surcharges && typeof sr.surcharges === 'object') setFbSurcharges(sr.surcharges);
+        if (mk.markets   && typeof mk.markets   === 'object') setFbMarkets(mk.markets);
       } catch (_) {}
     })();
   }, []);
@@ -2562,8 +2559,8 @@ function App() {
     setFbMarkets(newMarkets);
     try {
       await Promise.all([
-        fetch(FB_SR,  { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newSurcharges) }),
-        fetch(FB_MKT, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMarkets) })
+        apiCall('surcharge/save', { token: session.token, surcharges: newSurcharges }),
+        apiCall('market/save',    { token: session.token, markets: newMarkets })
       ]);
     } catch (_) {}
     setDirty(true); setShowModal(false); setEditProd(null);
@@ -2935,7 +2932,7 @@ function App() {
 
         {/* ── Mercado tab ── */}
         {activeTab === 'mercado' && (
-          <MercadoTab products={products} />
+          <MercadoTab products={products} token={session.token} />
         )}
 
         {/* ── Gift Cards tab ── */}
