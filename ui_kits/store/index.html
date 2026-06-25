@@ -1484,7 +1484,12 @@ function renderProducts() {
   }
   const sort = document.getElementById('sortSelect').value;
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
-  if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  else if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  else filtered = [...filtered].sort((a, b) => {
+    const sa = (a.badge === 'badge-sale' || a.badge === 'badge-promo' || a.isPromo) ? 0 : 1;
+    const sb = (b.badge === 'badge-sale' || b.badge === 'badge-promo' || b.isPromo) ? 0 : 1;
+    return sa - sb;
+  });
   if (filtered.length === 0) {
     const msg = searchTerm
       ? 'No hay productos que coincidan con "' + searchTerm + '".'
