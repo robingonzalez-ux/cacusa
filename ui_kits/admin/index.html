@@ -2675,7 +2675,7 @@ function App() {
           {[
             ['products',   '💎 Productos',  products.length],
             ['orders',     '📦 Pedidos',    pendingOrders],
-            ['descuentos', '🏷️ Descuentos', products.filter(p => p.promo && p.promo.price).length + combos.length],
+            ['descuentos', '🏷️ Descuentos', products.filter(p => p.promo && p.promo.price && (!p.promo.endsAt || new Date(p.promo.endsAt) >= new Date())).length + combos.length],
             ['mercado',    '🌍 Mercado',    0],
             ['landing',    '🏠 Landing',    0],
             ['pages',      '📄 Páginas',    0],
