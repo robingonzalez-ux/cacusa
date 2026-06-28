@@ -99,10 +99,10 @@ body{font-family:var(--fu);background:var(--pearl);color:var(--ink);overflow-x:h
 /* ── LOADER ────────────────────────────────────────── */
 #loader{position:fixed;inset:0;background:var(--grad-full);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:opacity .8s,visibility .8s}
 #loader.hidden{opacity:0;visibility:hidden}
-.loader-w{font-family:var(--fd);font-weight:900;font-size:72px;letter-spacing:.2em;text-transform:uppercase;color:white;animation:ldW 1.2s cubic-bezier(.4,0,.2,1) forwards;opacity:0;text-shadow:0 2px 24px rgba(255,255,255,.4)}
-.loader-s{font-family:var(--fs);font-size:32px;color:rgba(255,255,255,.7);animation:ldS 1s .4s both}
+.loader-w{font-family:var(--fd);font-weight:900;font-size:72px;letter-spacing:.2em;text-transform:uppercase;color:white;animation:ldW .7s cubic-bezier(.4,0,.2,1) forwards;opacity:0;text-shadow:0 2px 24px rgba(255,255,255,.4)}
+.loader-s{font-family:var(--fs);font-size:32px;color:rgba(255,255,255,.7);animation:ldS .6s .2s both}
 .loader-bar{width:100px;height:1.5px;background:rgba(255,255,255,.25);margin-top:28px;border-radius:1px;overflow:hidden}
-.loader-prog{height:100%;background:white;animation:ldB 1.5s .3s cubic-bezier(.4,0,.2,1) forwards;width:0}
+.loader-prog{height:100%;background:white;animation:ldB .6s .15s cubic-bezier(.4,0,.2,1) forwards;width:0}
 @keyframes ldW{from{opacity:0;letter-spacing:.5em}to{opacity:1;letter-spacing:.2em}}
 @keyframes ldS{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes ldB{to{width:100%}}
@@ -870,7 +870,7 @@ if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
 }
 
 // ── LOADER ──────────────────────────────────────────────────
-window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800));
+window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('hidden'),900));
 
 // ── TICKER ──────────────────────────────────────────────────
 const _tickerLang = localStorage.getItem('cacusa-lang') || 'es';
