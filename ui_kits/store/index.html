@@ -13,7 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>CACUSA by Taitus — Joyería artesanal personalizada</title>
-  <meta name="description" content="CACUSA by Taitus — bisutería y joyería artesanal personalizada hecha a mano. Anillos, collares, pulseras y aretes en plata 925, baño de oro 18k y acero inoxidable. Grabado e iniciales gratis. Envíos a Ecuador y USA.">
+  <meta id="meta-desc" name="description" content="CACUSA by Taitus — bisutería y joyería artesanal personalizada hecha a mano. Anillos, collares, pulseras y aretes en plata 925, baño de oro 18k y acero inoxidable. Grabado e iniciales gratis. Envíos a Ecuador y USA.">
   <meta name="keywords" content="bisutería personalizada, joyería artesanal, joyería personalizada Ecuador, bisutería USA, plata 925, baño de oro 18k, anillos personalizados, collares artesanales, pulseras tejidas, aretes hechos a mano, CACUSA, Taitus, joyería hecha a mano, regalo personalizado">
   <link rel="canonical" href="https://cacusabytaitus.com/ui_kits/store/">
   <meta name="robots" content="index, follow">
@@ -2612,6 +2612,9 @@ function _injectProductSchema(p) {
   const name = (__LANG === 'en' && p.name_en) ? p.name_en : p.name;
   const desc = (__LANG === 'en' && p.description_en) ? p.description_en : (p.desc || '');
   const url  = _SEO_BASE + '?p=' + encodeURIComponent(p.id);
+  // Título y meta description (lo que Google muestra en resultados)
+  document.title = name + ' — CACUSA by Taitus';
+  _setMeta('meta-desc', (desc || name).slice(0, 160));
   // OG + Twitter
   _setMeta('og-url', url);
   _setMeta('og-title', name + ' — CACUSA by Taitus');
@@ -2641,6 +2644,8 @@ function _injectProductSchema(p) {
 }
 function _clearProductSchema() {
   const el = document.getElementById('ld-product'); if (el) el.remove();
+  document.title = 'CACUSA by Taitus — Joyería artesanal personalizada';
+  _setMeta('meta-desc', 'CACUSA by Taitus — bisutería y joyería artesanal personalizada hecha a mano. Anillos, collares, pulseras y aretes en plata 925, baño de oro 18k y acero inoxidable. Grabado e iniciales gratis. Envíos a Ecuador y USA.');
   _setMeta('og-url', _SEO_BASE);
   _setMeta('og-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
   _setMeta('og-description', 'Anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.');
