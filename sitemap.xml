@@ -1,15 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
   <url>
     <loc>https://cacusabytaitus.com/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/"/>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
   <url>
     <loc>https://cacusabytaitus.com/ui_kits/store/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/ui_kits/store/"/>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=1</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=2</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=3</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=4</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=5</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=6</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=7</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/ui_kits/store/?p=8</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/envios.html</loc>
     <changefreq>monthly</changefreq>
@@ -25,4 +74,5 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
 </urlset>
