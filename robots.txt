@@ -1,8 +1,35 @@
 User-agent: *
 Allow: /
-
 Disallow: /ui_kits/admin/
 Disallow: /data/orders.json
 Disallow: /data/products.json
+
+# Google
+User-agent: Googlebot
+Allow: /
+
+# Bing
+User-agent: bingbot
+Allow: /
+
+# ChatGPT / OpenAI
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+
+# Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# Anthropic (Claude)
+User-agent: ClaudeBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+
+# Meta (para futuro Meta AI)
+User-agent: FacebookBot
+Allow: /
 
 Sitemap: https://cacusabytaitus.com/sitemap.xml
