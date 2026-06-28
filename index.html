@@ -41,6 +41,8 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <title>CACUSA by Taitus — Joyería Personalizada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script>document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';</script>
 <style>
@@ -839,22 +841,25 @@ if (_L === 'en' && homeEn && Array.isArray(homeEn.testimonials)) window.__testim
 })();
 
 // ── CURSOR ──────────────────────────────────────────────────
-const cur = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove', e => {
-  mx=e.clientX; my=e.clientY;
-  cur.style.left=(mx-5)+'px'; cur.style.top=(my-5)+'px';
-});
-(function anim(){
-  rx+=(mx-rx-16)*.14; ry+=(my-ry-16)*.14;
-  ring.style.left=rx+'px'; ring.style.top=ry+'px';
-  requestAnimationFrame(anim);
-})();
-document.querySelectorAll('button,a,.col-card,.prod-card,.ig-item,.hcard').forEach(el=>{
-  el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
-  el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
-});
+// Cursor personalizado: solo en dispositivos con mouse real (no táctil) — ahorra batería/CPU en móvil
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const cur = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => {
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=(mx-5)+'px'; cur.style.top=(my-5)+'px';
+  });
+  (function anim(){
+    rx+=(mx-rx-16)*.14; ry+=(my-ry-16)*.14;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(anim);
+  })();
+  document.querySelectorAll('button,a,.col-card,.prod-card,.ig-item,.hcard').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
+  });
+}
 
 // ── LOADER ──────────────────────────────────────────────────
 window.addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1800));
