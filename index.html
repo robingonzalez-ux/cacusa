@@ -557,7 +557,7 @@ html,body{overflow-x:hidden}
         </div>
       </div>
       <div class="story-visual">
-        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="CACUSA — joyería artesanal" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
         <div class="s-img reveal-right" data-delay="1" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
         <div class="s-img reveal-right" data-delay="2" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
       </div>
@@ -1009,7 +1009,7 @@ revEls.forEach(el=>obs.observe(el));
     const oldP  = p.oldPrice ? `<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>` : '';
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50, z = p.zoom ?? 1;
     const img = p.imageUrl
-      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
+      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;
     const badge = p.tag ? `<div class="prod-badge">${esc(p.tag)}</div>` : '';
     const card = document.createElement('div');
@@ -1141,7 +1141,7 @@ if(igG && BEHOLD_FEED_ID){
         item.className='ig-item';
         item.innerHTML=`
           <a href="${p.permalink||'https://www.instagram.com/cacusabytaitus/'}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;cursor:none">
-            <img class="ig-bg" src="${src}" alt="Publicación de CACUSA en Instagram" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+            <img class="ig-bg" src="${src}" alt="Joyería artesanal personalizada CACUSA en Instagram" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
             <div class="ig-hover"><div class="ig-icon">${isVid?'▶':'♡'}</div></div>
           </a>`;
         igG.appendChild(item);

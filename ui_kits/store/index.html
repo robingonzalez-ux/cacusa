@@ -1472,7 +1472,8 @@ function imgInner(p, alt) {
   if (p && p.imageUrl) {
     const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
     const zoom = p.zoom != null ? p.zoom : 1;
-    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(alt) + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
+    const altText = alt ? alt + ' — joyería artesanal personalizada CACUSA' : 'Joyería artesanal personalizada CACUSA';
+    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(altText) + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
   }
   return '';
 }
@@ -2495,7 +2496,7 @@ function renderGallerySlide() {
   if (url) {
     const pos = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
     const zoom = _galleryImages.length > 1 ? 1 : (p.zoom != null ? p.zoom : 1);
-    imgBg.innerHTML = `<img src="${esc(url)}" alt="${esc(p.name)}" style="width:100%;height:100%;object-fit:cover;object-position:${pos};transform:scale(${zoom});transform-origin:${pos};display:block">`;
+    imgBg.innerHTML = `<img src="${esc(url)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" style="width:100%;height:100%;object-fit:cover;object-position:${pos};transform:scale(${zoom});transform-origin:${pos};display:block">`;
     imgBg.style.cssText = 'width:100%;height:100%';
   } else {
     imgBg.innerHTML = '';
@@ -2546,7 +2547,9 @@ function openLightbox(images, idx) {
   document.getElementById('lightbox').classList.add('open');
 }
 function renderLbSlide() {
-  document.getElementById('lbImg').src = _lbImages[_lbIdx] || '';
+  const _lbI = document.getElementById('lbImg');
+  _lbI.src = _lbImages[_lbIdx] || '';
+  _lbI.alt = currentProduct ? (currentProduct.name + ' — joyería artesanal personalizada CACUSA') : '';
   document.getElementById('lbCounter').textContent = _lbImages.length > 1 ? (_lbIdx + 1) + ' / ' + _lbImages.length : '';
   document.querySelectorAll('#lbThumbs .lb-thumb').forEach((t, i) => t.classList.toggle('active', i === _lbIdx));
 }
