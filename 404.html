@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#EE6FA8">
+<title>Página no encontrada — CACUSA by Taitus</title>
+<link rel="icon" href="/apple-touch-icon.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700;900&family=Pinyon+Script&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:32px;
+    background:linear-gradient(160deg,#fff5f9 0%,#ffeaf3 45%,#fbe3ee 100%);
+    color:#3a2330;font-family:'Outfit',sans-serif;
+  }
+  .mark{font-family:'Pinyon Script',cursive;font-size:clamp(38px,8vw,68px);color:#EE6FA8;line-height:1;margin-bottom:8px}
+  .code{font-family:'Bodoni Moda',serif;font-weight:900;font-size:clamp(72px,18vw,140px);color:#EE6FA8;line-height:.9;letter-spacing:2px}
+  h1{font-family:'Bodoni Moda',serif;font-weight:700;font-size:clamp(22px,4vw,34px);margin:18px 0 10px;color:#2a1620}
+  p{font-size:clamp(15px,2.4vw,18px);max-width:480px;color:#6b4a5a;line-height:1.55;margin-bottom:28px}
+  .btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+  a.btn{
+    display:inline-block;padding:14px 30px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px;
+    transition:transform .15s ease,box-shadow .15s ease;
+  }
+  a.primary{background:#EE6FA8;color:#fff;box-shadow:0 8px 22px rgba(238,111,168,.35)}
+  a.secondary{background:#fff;color:#EE6FA8;border:1.5px solid #EE6FA8}
+  a.btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(238,111,168,.4)}
+  .hint{margin-top:26px;font-size:13px;color:#a98a99}
+</style>
+</head>
+<body>
+  <div class="mark">CACUSA by Taitus</div>
+  <div class="code">404</div>
+  <h1>Esta página ya no existe</h1>
+  <p>Puede que el enlace sea antiguo o esté roto. Pero tu joya perfecta sigue esperándote ✨</p>
+  <div class="btns">
+    <a class="btn primary" href="/ui_kits/store/">Ir a la tienda</a>
+    <a class="btn secondary" href="/">Página principal</a>
+  </div>
+  <div class="hint">Te llevaremos a la tienda automáticamente…</div>
+  <script>
+    // Redirige a humanos a la tienda tras unos segundos (el estado HTTP sigue siendo 404 para los buscadores).
+    setTimeout(function(){ window.location.replace('/ui_kits/store/'); }, 5000);
+  </script>
+</body>
+</html>
