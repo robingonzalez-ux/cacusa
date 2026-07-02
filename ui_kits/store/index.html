@@ -2257,12 +2257,14 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
-    pago:      'Zelle/Transferencia',
+    pago:      'Zelle',
     estado:    'Nuevo',
     notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined
   });
 
   redeemGiftCard(zelleGcDiscount);
+  const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
+  if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -2353,9 +2355,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
       },
       productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
       total:     parseFloat((_sqBase - _sqGcDiscount - _sqCpDiscount).toFixed(2)),
-      pago:      'Square',
+      pago:      'Tarjeta',
       estado:    'Nuevo',
-      notas:     [customer.notes, _sqGcDiscount>0?`GC:${_gcCode}(-$${_sqGcDiscount})`:'', _sqCpDiscount>0?`CP:${_cpCode}(-$${_sqCpDiscount})`:''].filter(Boolean).join(' | ') || undefined
+      notas:     [customer.notes, _sqGcDiscount>0?`GC:${_gcCode}(-$${_sqGcDiscount})`:'', _sqCpDiscount>0?`CP:${_cpCode}(-$${_sqCpDiscount})`:''].filter(Boolean).join(' | ') || undefined,
+      // Cupón pendiente de quemar cuando el pago se confirme (?paid=1); el worker ignora campos extra
+      _cp: _cpCode ? { code: _cpCode, phone: customer.phone, email: (document.getElementById('coEmail').value || '').trim() } : undefined
     };
     sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
     _gcCode=null; _gcBalance=0; _gcApplied=0;
@@ -2397,8 +2401,24 @@ function buildWhatsAppUrl() {
   // Use base price for Zelle (no surcharge), full price for Square
   const total    = cart.reduce((s, i) => s + (isZelle && i.hasSurcharge ? i.basePrice : i.price), 0);
   const free     = total >= SHIPPING.freeThreshold;
-  const envio    = free ? 'Gratis' : '$' + SHIPPING.cost.toFixed(2);
-  const totalFinal = free ? total : total + SHIPPING.cost;
+  const envio    = free ? (_waEN ? 'Free' : 'Gratis') : '$' + SHIPPING.cost.toFixed(2);
+  const _waShip  = free ? 0 : SHIPPING.cost;
+  // Impuesto — misma lógica que renderCheckoutSummary para que el mensaje cuadre con el resumen
+  const _waPais   = (document.getElementById('coPais').value || '').toUpperCase();
+  const _waEstado = (document.getElementById('coEstado').value || '').toUpperCase();
+  const _waZip    = (document.getElementById('coZip').value || '').trim();
+  let _waTax = 0, _waTaxLabel = '';
+  if (_waPais === 'EC') {
+    _waTax = (total + _waShip) * 0.15;
+    _waTaxLabel = 'IVA Ecuador (15%)';
+  } else if (_waPais === 'US' && _waEstado) {
+    const _waRate = getTaxRate(_waEstado, _waZip);
+    if (_waRate) {
+      _waTax = (total + _waShip) * _waRate;
+      _waTaxLabel = 'Sales Tax ' + _waEstado + ' (' + (_waRate * 100).toFixed(2).replace(/\.?0+$/, '') + '%)';
+    }
+  }
+  const totalFinal = total + _waShip + _waTax;
 
   let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n';
   if (_currentOrderNum) msg += (_waEN ? '🔖 *Order #:* ' : '🔖 *Pedido #:* ') + _currentOrderNum + '\n';
@@ -2420,10 +2440,21 @@ function buildWhatsAppUrl() {
   });
   msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total.toFixed(2);
   msg += (_waEN ? '\n🚚 *Shipping:* ' : '\n🚚 *Envío:* ') + envio;
-  if (_gcApplied > 0) {
-    msg += (_waEN ? '\n🎁 *Gift card (' + _gcCode + '):* -$' : '\n🎁 *Tarjeta de regalo (' + _gcCode + '):* -$') + _gcApplied.toFixed(2);
+  if (_waTax > 0) {
+    msg += '\n🧾 *' + _waTaxLabel + ':* $' + _waTax.toFixed(2);
   }
-  const _waTotalFinal = parseFloat((totalFinal - _gcApplied).toFixed(2));
+  const _waGc = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
+  if (_waGc > 0) {
+    msg += (_waEN ? '\n🎁 *Gift card (' + _gcCode + '):* -$' : '\n🎁 *Tarjeta de regalo (' + _gcCode + '):* -$') + _waGc.toFixed(2);
+  }
+  const _waAfterGc = totalFinal - _waGc;
+  const _waCp = (_cpCode && _cpType)
+    ? parseFloat((_cpType === 'percent' ? _waAfterGc * _cpAmount / 100 : Math.min(_cpAmount, _waAfterGc)).toFixed(2))
+    : 0;
+  if (_waCp > 0) {
+    msg += (_waEN ? '\n🏷️ *Coupon (' + _cpCode + '):* -$' : '\n🏷️ *Cupón (' + _cpCode + '):* -$') + _waCp.toFixed(2);
+  }
+  const _waTotalFinal = parseFloat((_waAfterGc - _waCp).toFixed(2));
   msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + _waTotalFinal.toFixed(2);
   if (isZelle) {
     msg += _waEN
@@ -2465,7 +2496,18 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const notas      = document.getElementById('coNotas').value.trim();
   const total      = cart.reduce((s, i) => s + i.price, 0);
   const free       = total >= SHIPPING.freeThreshold;
-  const totalFinal = free ? total : total + SHIPPING.cost;
+  const waShip     = free ? 0 : SHIPPING.cost;
+  // Impuesto — misma lógica que renderCheckoutSummary (el total registrado debe cuadrar con lo que vio el cliente)
+  const waEstadoV  = (document.getElementById('coEstado').value || '').toUpperCase();
+  const waZipV     = (document.getElementById('coZip').value || '').trim();
+  let waTax = 0;
+  if ((pais || '').toUpperCase() === 'EC') {
+    waTax = (total + waShip) * 0.15;
+  } else if ((pais || '').toUpperCase() === 'US' && waEstadoV) {
+    const waRate = getTaxRate(waEstadoV, waZipV);
+    if (waRate) waTax = (total + waShip) * waRate;
+  }
+  const totalFinal = total + waShip + waTax;
   const waGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
   const afterWaGc = totalFinal - waGcDiscount;
   const waCpDiscount = (_cpCode && _cpType)
@@ -2521,7 +2563,12 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
   history.replaceState({}, '', window.location.pathname);
   const pending = sessionStorage.getItem('cacusa_order_pending');
   if (pending) {
-    try { submitOrder(JSON.parse(pending)); } catch (_) {}
+    try {
+      const _po = JSON.parse(pending);
+      submitOrder(_po);
+      // El pago se confirmó: quemar el cupón usado (Square solo lo descuenta, no lo marca usado)
+      if (_po._cp && _po._cp.code) burnCoupon(_po._cp.code, _po._cp.phone, _po._cp.email);
+    } catch (_) {}
     sessionStorage.removeItem('cacusa_order_pending');
   }
   showSuccess();
@@ -2815,26 +2862,33 @@ async function loadProductReviews(productId) {
 
 async function submitReview() {
   if (!currentProduct) return;
-  const name = document.getElementById('revName').value.trim();
-  const comment = document.getElementById('revComment').value.trim();
-  if (!name || !comment || _revRating < 1) {
+  const name = document.getElementById('revName').value.trim().slice(0, 60);
+  const comment = document.getElementById('revComment').value.trim().slice(0, 600);
+  const rating = Math.min(5, Math.max(1, Math.round(Number(_revRating) || 0)));
+  if (!name || !comment || rating < 1) {
     showToast(__LANG==='en'?'Please fill all fields and pick a rating ★':'Completa nombre, comentario y calificación ★'); return;
+  }
+  // Anti-spam básico: 1 reseña cada 30s desde este navegador (Firebase es abierto; esto frena envíos accidentales/repetidos)
+  const _lastRev = parseInt(localStorage.getItem('cacusa-last-review') || '0', 10);
+  if (Date.now() - _lastRev < 30000) {
+    showToast(__LANG==='en'?'Please wait a moment before submitting again.':'Espera un momento antes de enviar otra reseña.'); return;
   }
   const btn = document.getElementById('revSubmitBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    const res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${currentProduct.id}.json`), {
+    const res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${encodeURIComponent(currentProduct.id)}.json`), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, rating: _revRating, comment, date: new Date().toISOString().slice(0,10) })
+      body: JSON.stringify({ name, rating, comment, date: new Date().toISOString().slice(0,10) })
     });
     if (!res.ok) throw new Error();
+    localStorage.setItem('cacusa-last-review', String(Date.now()));
     document.getElementById('revName').value = '';
     document.getElementById('revComment').value = '';
     setRevRating(5);
     showToast(__LANG==='en'?'✓ Review submitted! Thank you.':'✓ ¡Reseña enviada! Gracias.');
     const prev = _reviewSummaries[currentProduct.id] || { avg: 0, count: 0 };
     const nc = prev.count + 1;
-    _reviewSummaries[currentProduct.id] = { avg: Math.round(((prev.avg * prev.count + _revRating) / nc)*10)/10, count: nc };
+    _reviewSummaries[currentProduct.id] = { avg: Math.round(((prev.avg * prev.count + rating) / nc)*10)/10, count: nc };
     await loadProductReviews(currentProduct.id);
     renderProducts();
   } catch(_) {
