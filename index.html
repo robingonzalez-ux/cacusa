@@ -1137,21 +1137,26 @@ if(igG && BEHOLD_FEED_ID){
       const posts=Array.isArray(data.posts)?data.posts.slice(0,12):[];
       if(!posts.length) throw new Error('sin posts');
       igG.innerHTML='';
+      // Datos de un servicio externo (Behold): validar que las URLs sean https y escapar
+      // comillas antes de meterlas en atributos, por si el feed viniera manipulado.
+      const safeUrl=u=>{u=String(u||'');return /^https:\/\//i.test(u)?u.replace(/"/g,'%22'):'';};
       posts.forEach(p=>{
         const sz=(p.sizes&&(p.sizes.medium||p.sizes.large||p.sizes.small))||{};
-        const src=sz.mediaUrl||p.thumbnailUrl||p.mediaUrl||'';
+        const src=safeUrl(sz.mediaUrl||p.thumbnailUrl||p.mediaUrl||'');
+        if(!src) return;
+        const href=safeUrl(p.permalink)||'https://www.instagram.com/cacusabytaitus/';
         const isVid=p.mediaType==='VIDEO'||p.isReel;
         const item=document.createElement('div');
         item.className='ig-item';
         item.innerHTML=`
-          <a href="${p.permalink||'https://www.instagram.com/cacusabytaitus/'}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;cursor:none">
+          <a href="${href}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;cursor:none">
             <img class="ig-bg" src="${src}" alt="Joyería artesanal personalizada CACUSA en Instagram" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
             <div class="ig-hover"><div class="ig-icon">${isVid?'▶':'♡'}</div></div>
           </a>`;
         igG.appendChild(item);
       });
       // Rellena los recuadros 2 y 3 de "Artesanos del corazón" con fotos recientes del feed
-      const pic = p => { const s=(p&&p.sizes&&(p.sizes.medium||p.sizes.large||p.sizes.small))||{}; return s.mediaUrl||(p&&p.thumbnailUrl)||''; };
+      const pic = p => { const s=(p&&p.sizes&&(p.sizes.medium||p.sizes.large||p.sizes.small))||{}; return safeUrl(s.mediaUrl||(p&&p.thumbnailUrl)||''); };
       [['storyImg2', posts[1]||posts[0]], ['storyImg3', posts[2]||posts[1]]].forEach(([id, post]) => {
         const el = document.getElementById(id); const src = pic(post);
         if (el && src) { el.style.backgroundImage = 'url("' + src + '")'; el.className = ''; }
