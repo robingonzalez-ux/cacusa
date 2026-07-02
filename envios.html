@@ -179,14 +179,12 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 </footer>
 
 <script>
-(function(){
+(async function(){
   var _L=localStorage.getItem('cacusa-lang')||'es';
   try{
-    const req=new XMLHttpRequest();
-    req.open('GET','./data/products.json?v='+Date.now(),false);
-    req.send(null);
-    if(req.status>=200&&req.status<300){
-      const data=JSON.parse(req.responseText);
+    const res=await fetch('./data/products.json?v='+Date.now());
+    if(res.ok){
+      const data=await res.json();
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
