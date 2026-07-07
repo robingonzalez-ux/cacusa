@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-06-24T14:06:00.675Z",
+  "lastUpdated": "2026-07-07T16:05:59.310Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1539,6 +1539,28 @@
         "label": "Oferta",
         "endsAt": "2026-06-26"
       }
+    },
+    {
+      "name": "Pulsera triple 💛💙❤️",
+      "category": "Pulseras",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783440310487_img_4354_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "name_en": "Triple bracelet 💛💙❤️",
+      "description_en": "",
+      "id": 1783440355036,
+      "promo": null
     }
   ],
   "combos": []
