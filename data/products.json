@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-07T16:05:59.310Z",
-  "updatedBy": "tita.jaramillo",
+  "lastUpdated": "2026-07-11T22:34:21.836Z",
+  "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -592,7 +592,7 @@
     },
     {
       "name": "Cadena con ángel de la guarda circular ",
-      "name_en": "Round Guardian Angel Chain",
+      "name_en": "Chain with circular guardian angel",
       "category": "Cadenas",
       "price": 35,
       "oldPrice": 38,
@@ -600,19 +600,23 @@
       "color": "rose",
       "tag": null,
       "description": "Delicada cadena con medallón circular del ángel de la guarda en acero inoxidable. Una pieza de fe y protección para llevar siempre contigo.",
-      "description_en": "Delicate chain with a circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.",
+      "description_en": "Delicate chain with circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473494467_img_3351_jpeg.jpg",
-      "focalX": 41.353924786280444,
-      "focalY": 73.48639140899833,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808826925_425297e7_9af6_4923_b998_3efb150ea65c_jpe.jpg",
+      "focalX": 42.19628339037191,
+      "focalY": 71.21366413627126,
       "zoom": 1.15,
       "material": "Acero inoxidable",
-      "id": 1781473526943
+      "id": 1781473526943,
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808852028_8952299c_b5a5_49a7_a4c4_e15919538bad_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa ",
-      "name_en": "Chain with Moon & Turquoise Heart",
+      "name_en": "Chain with Moon charm and turquoise heart",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -620,15 +624,19 @@
       "color": "rose",
       "tag": "Nuevo",
       "description": "Cadena veneciana con Dije de Luna y corazón con microcircones turquesas ",
-      "description_en": "Venetian chain with moon charm and turquoise micro zirconia heart",
+      "description_en": "Venetian chain with moon charm and heart with turquoise microcircles",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473555514_img_3350_jpeg.jpg",
-      "focalX": 46.65313217533437,
-      "focalY": 74.4152317472073,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808270536_8414d254_3ba1_4f91_8a97_1b22ac832210_jpe.jpg",
+      "focalX": 49.42088187449201,
+      "focalY": 75.62735295932845,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781473627668
+      "id": 1781473627668,
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808318000_2de17e75_6ff9_416b_9b56_e491315b8092_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Collar de perla ",
@@ -642,13 +650,17 @@
       "description_en": "Baroque pearl charm ruffled necklace",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781875284644_img_0917_jpeg.jpg",
-      "focalX": 47.452229299363054,
-      "focalY": 36.81818181818182,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808717462_d6b22fce_7f02_4e5e_a4e9_7486c416d8b9_jpe.jpg",
+      "focalX": 46.73020763871325,
+      "focalY": 44.696969696968324,
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781875334358,
-      "name_en": "Pearl Necklace"
+      "name_en": "Pearl Necklace",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808742395_56f41b89_b379_4cc0_8cbb_1bb25653e388_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena clip con dije de árbol de vida ",
@@ -659,16 +671,20 @@
       "color": "rose",
       "tag": null,
       "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
-      "description_en": "Comes as a set with tree of life earrings. Elegant carved clip chain with a special clasp and an 18k gold-plated micro zirconia tree of life charm.",
+      "description_en": "It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877139549_img_0914_jpeg.jpg",
-      "focalX": 50,
-      "focalY": 50,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808978000_134185ba_5433_47d1_a796_ef0f9d2cdac0_jpe.jpg",
+      "focalX": 47.593261131167225,
+      "focalY": 46.21212121212053,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877227517,
-      "name_en": "Chain clip with tree of life charm"
+      "name_en": "Chain clip with tree of life charm",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783809008800_646b8602_4550_4ef1_a5ca_bea66271a26f_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena con dije de gato y panza de corazón con circones ",
