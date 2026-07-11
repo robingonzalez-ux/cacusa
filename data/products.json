@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:19:05.473Z",
+  "lastUpdated": "2026-07-11T22:25:53.115Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -646,13 +646,17 @@
       "description_en": "Baroque pearl charm ruffled necklace",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781875284644_img_0917_jpeg.jpg",
-      "focalX": 47.452229299363054,
-      "focalY": 36.81818181818182,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808717462_d6b22fce_7f02_4e5e_a4e9_7486c416d8b9_jpe.jpg",
+      "focalX": 47.33189235592142,
+      "focalY": 35.90909090909009,
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781875334358,
-      "name_en": "Pearl Necklace"
+      "name_en": "Pearl Necklace",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808742395_56f41b89_b379_4cc0_8cbb_1bb25653e388_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena clip con dije de árbol de vida ",
