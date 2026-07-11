@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:34:21.836Z",
+  "lastUpdated": "2026-07-11T22:47:44.451Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -695,16 +695,18 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones ",
-      "description_en": "Classic style chain with a special kitten charm featuring a zirconia heart belly. Adorable and feminine.",
+      "description_en": "Classic style chain with a special zircon heart belly kitten charm",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877299384_img_0912_jpeg.jpg",
-      "focalX": 1.5804653616476587,
-      "focalY": 40.1808307103623,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783810044332_d7937929_3126_482a_9ffd_4ec460781147_jpe.jpg",
+      "focalX": 0,
+      "focalY": 47.756588286120014,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877358815,
-      "name_en": "Cat Charm Chain with Zirconia Heart Belly"
+      "name_en": "Cat charm chain and heart belly with zircons",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Cadena de balines con dije de corazón con circones ",
