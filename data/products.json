@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:47:44.451Z",
+  "lastUpdated": "2026-07-11T22:48:25.170Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -705,7 +705,9 @@
       "material": "Baño de oro 18k",
       "id": 1781877358815,
       "name_en": "Cat charm chain and heart belly with zircons",
-      "images": [],
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783810093094_3afcd0b9_6234_421a_994c_a91bee4d4be2_jpe.jpg"
+      ],
       "promo": null
     },
     {
