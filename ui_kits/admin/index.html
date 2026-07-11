@@ -1074,6 +1074,12 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
         <div>
           <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118' }}>{(order.cliente && order.cliente.nombre) || 'Cliente'}</div>
           <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>{order.cliente && order.cliente.telefono} · {order.cliente && order.cliente.ciudad}</div>
+          {(order.cliente?.direccion || order.cliente?.estado || order.cliente?.zip) && (
+            <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>
+              📍 {[order.cliente?.direccion, order.cliente?.estado, order.cliente?.zip, order.cliente?.pais].filter(Boolean).join(', ')}
+            </div>
+          )}
+          {order.cliente?.email && <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>✉️ {order.cliente.email}</div>}
         </div>
         <span style={{ background: STATE_COLORS[estado] || '#E8508A', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 }}>{estado}</span>
       </div>
