@@ -1162,6 +1162,7 @@ const __EN_T = {
   "store.emptyCategory":"No products in this category yet.","store.cartEmpty":"Your cart is empty",
   "store.shippingFree":"Free shipping unlocked!","store.coFree":"Free",
   "store.coError1":"Please enter your name and mobile number.","store.coError2":"Please select your state.","store.coError3":"Please enter a valid phone number.",
+  "store.coErrorZip":"Please enter a valid ZIP code (5 digits).",
   "store.mktLocal":"Local product","store.mktImport":"Imported from the US","store.mktEcOnly":"Shipped from Ecuador",
   "tag.nuevo":"New","tag.bestseller":"Bestseller",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
@@ -2231,6 +2232,14 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const paisVal   = document.getElementById('coPais').value;
   const estadoVal = (document.getElementById('coEstado').value || '').toUpperCase();
   const zipVal    = (document.getElementById('coZip').value || '').trim();
+  if (paisVal === 'US' && !estadoVal) {
+    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    return;
+  }
+  if (paisVal === 'US' && !/^\d{5}$/.test(zipVal)) {
+    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
+    return;
+  }
   const direccion = document.getElementById('coDireccion').value.trim();
   const apto      = document.getElementById('coApto').value.trim();
   const notas     = document.getElementById('coNotas').value.trim();
@@ -2302,6 +2311,10 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const estadoVal = document.getElementById('coEstado').value;
   if (paisVal === 'US' && !estadoVal) {
     errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    return;
+  }
+  if (paisVal === 'US' && !/^\d{5}$/.test((document.getElementById('coZip').value || '').trim())) {
+    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
     return;
   }
 
@@ -2502,6 +2515,14 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const apellido   = document.getElementById('coApellido').value.trim();
   const ciudad     = document.getElementById('coCiudad').value.trim();
   const pais       = document.getElementById('coPais').value;
+  if (pais === 'US' && !(document.getElementById('coEstado').value || '')) {
+    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    return;
+  }
+  if (pais === 'US' && !/^\d{5}$/.test((document.getElementById('coZip').value || '').trim())) {
+    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
+    return;
+  }
   const direccion  = document.getElementById('coDireccion').value.trim();
   const apto       = document.getElementById('coApto').value.trim();
   const notas      = document.getElementById('coNotas').value.trim();
