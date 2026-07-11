@@ -2448,8 +2448,9 @@ function buildWhatsAppUrl() {
   msg += '\n';
   msg += (_waEN ? '👤 *Customer:* ' : '👤 *Cliente:* ') + nombre + (apellido ? ' ' + apellido : '') + '\n';
   msg += '📱 *WhatsApp:* ' + tel + '\n';
-  if (ciudad) msg += (_waEN ? '📍 *City:* ' : '📍 *Ciudad:* ') + ciudad + ' (' + pais + ')\n';
-  if (direccion) msg += (_waEN ? '🏠 *Address:* ' : '🏠 *Dirección:* ') + direccion + '\n';
+  if (ciudad) msg += (_waEN ? '📍 *City:* ' : '📍 *Ciudad:* ') + ciudad + (_waEstado ? ', ' + _waEstado : '') + (_waZip ? ' ' + _waZip : '') + ' (' + pais + ')\n';
+  const _waApto = document.getElementById('coApto').value.trim();
+  if (direccion) msg += (_waEN ? '🏠 *Address:* ' : '🏠 *Dirección:* ') + direccion + (_waApto ? ', ' + _waApto : '') + '\n';
   if (notas) msg += (_waEN ? '📝 *Notes:* ' : '📝 *Notas:* ') + notas + '\n';
   msg += _waEN ? '\n🛍️ *Products:*\n' : '\n🛍️ *Productos:*\n';
   cart.forEach(item => {

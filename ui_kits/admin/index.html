@@ -2961,6 +2961,7 @@ function App() {
                                 <OrderCard key={o.id} order={o}
                                   onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
                                   onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
+                                  onTrackingChange={(ord, tracking) => { const u = orders.map(x => x.id === ord.id ? { ...x, tracking } : x); setOrders(u); saveOrdersNow(u); }}
                                   onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
                                   onClienteUpdate={(ord, updates) => { const u = orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x); setOrders(u); saveOrdersNow(u); }}
                                 />
