@@ -987,7 +987,7 @@ function loadQuagga() {
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
-function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrierChange }) {
+function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate }) {
   const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
   const estado = order.estado || 'Nuevo';
   const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
@@ -1002,6 +1002,31 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
 
   const handleTrackChange   = v => { setTrackVal(v);   onTrackingChange && onTrackingChange(order, v); };
   const handleCarrierChange = v => { setCarrierVal(v); onCarrierChange  && onCarrierChange(order, v); };
+
+  // ── Estimar código postal a partir de dirección + estado (cuando falta) ──
+  const [zipBusy, setZipBusy]   = React.useState(false);
+  const [zipFound, setZipFound] = React.useState(null);
+  const [zipErr, setZipErr]     = React.useState('');
+  const buscarZip = async () => {
+    setZipBusy(true); setZipErr(''); setZipFound(null);
+    try {
+      const c = order.cliente || {};
+      const q = [c.direccion, c.ciudad, c.estado, 'USA'].filter(Boolean).join(', ');
+      const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=1&lang=en');
+      const data = await res.json();
+      const props = data.features && data.features[0] && data.features[0].properties;
+      if (props && props.postcode) setZipFound(String(props.postcode).slice(0, 5));
+      else setZipErr('No se encontró un código postal para esa dirección — verifícalo a mano.');
+    } catch (e) {
+      setZipErr('No se pudo consultar el servicio de direcciones. Intenta de nuevo.');
+    }
+    setZipBusy(false);
+  };
+  const guardarZip = () => {
+    if (!zipFound) return;
+    onClienteUpdate && onClienteUpdate(order, { zip: zipFound });
+    setZipFound(null);
+  };
 
   const handleScanFile = async e => {
     const file = e.target.files[0];
@@ -1076,10 +1101,34 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
           <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>{order.cliente && order.cliente.telefono} · {order.cliente && order.cliente.ciudad}</div>
           {(order.cliente?.direccion || order.cliente?.estado || order.cliente?.zip) && (
             <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>
-              📍 {[order.cliente?.direccion, order.cliente?.estado, order.cliente?.zip, order.cliente?.pais].filter(Boolean).join(', ')}
+              📍 {[order.cliente?.direccion, order.cliente?.apto, order.cliente?.estado, order.cliente?.zip, order.cliente?.pais].filter(Boolean).join(', ')}
             </div>
           )}
           {order.cliente?.email && <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>✉️ {order.cliente.email}</div>}
+          {!order.cliente?.zip && order.cliente?.direccion && (
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {!zipFound && (
+                <button onClick={buscarZip} disabled={zipBusy}
+                  style={{ fontSize: 11, fontWeight: 700, color: '#7A5F8A', background: '#F3EFF5', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: zipBusy ? 'default' : 'pointer' }}>
+                  {zipBusy ? 'Buscando…' : '🔍 Falta ZIP — estimar'}
+                </button>
+              )}
+              {zipFound && (
+                <>
+                  <span style={{ fontSize: 12, color: '#1A1118' }}>ZIP estimado: <strong>{zipFound}</strong></span>
+                  <button onClick={guardarZip}
+                    style={{ fontSize: 11, fontWeight: 700, color: 'white', background: '#22C55E', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                    ✓ Guardar
+                  </button>
+                  <button onClick={() => setZipFound(null)}
+                    style={{ fontSize: 11, color: '#A89AAF', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Descartar
+                  </button>
+                </>
+              )}
+              {zipErr && <span style={{ fontSize: 11, color: '#DC2626' }}>{zipErr}</span>}
+            </div>
+          )}
         </div>
         <span style={{ background: STATE_COLORS[estado] || '#E8508A', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 }}>{estado}</span>
       </div>
@@ -2841,6 +2890,7 @@ function App() {
                                 onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
                                 onTrackingChange={(ord, tracking) => { const u = orders.map(x => x.id === ord.id ? { ...x, tracking } : x); setOrders(u); saveOrdersNow(u); }}
                                 onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
+                                onClienteUpdate={(ord, updates) => { const u = orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x); setOrders(u); saveOrdersNow(u); }}
                               />
                             ))}
                           </div>
@@ -2912,6 +2962,7 @@ function App() {
                                   onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
                                   onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
                                   onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
+                                  onClienteUpdate={(ord, updates) => { const u = orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x); setOrders(u); saveOrdersNow(u); }}
                                 />
                               ))}
                             </div>

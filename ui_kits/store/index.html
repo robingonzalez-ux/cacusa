@@ -949,9 +949,13 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
         <div class="co-field">
           <label class="co-label"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label>
           <div class="addr-wrap">
-            <input class="co-input" placeholder="123 Main St, Apt 4B…" id="coDireccion" autocomplete="off" maxlength="120">
+            <input class="co-input" placeholder="123 Main St…" id="coDireccion" autocomplete="off" maxlength="120">
             <div id="addrSuggestions" class="addr-suggestions"></div>
           </div>
+        </div>
+        <div class="co-field">
+          <label class="co-label"><span class="t-es">Apto / Unidad (opcional)</span><span class="t-en">Apt / Unit (optional)</span></label>
+          <input class="co-input" placeholder="Apt 4B, Suite 200…" id="coApto" maxlength="40">
         </div>
         <div class="co-field">
           <label class="co-label"><span class="t-es">País</span><span class="t-en">Country</span></label>
@@ -2228,6 +2232,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const estadoVal = (document.getElementById('coEstado').value || '').toUpperCase();
   const zipVal    = (document.getElementById('coZip').value || '').trim();
   const direccion = document.getElementById('coDireccion').value.trim();
+  const apto      = document.getElementById('coApto').value.trim();
   const notas     = document.getElementById('coNotas').value.trim();
   const zelleSubtotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price), 0);
   const free          = zelleSubtotal >= SHIPPING.freeThreshold;
@@ -2254,7 +2259,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   ].filter(Boolean).join(' | ');
   submitOrder({
     numero:    _currentOrderNum,
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, estado: estadoVal, zip: zipVal, email: (document.getElementById('coEmail').value || '').trim() },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: (document.getElementById('coEmail').value || '').trim() },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     pago:      'Zelle',
@@ -2313,6 +2318,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     zip:      document.getElementById('coZip').value.trim() || undefined,
     city:     document.getElementById('coCiudad').value.trim(),
     address:  document.getElementById('coDireccion').value.trim(),
+    apto:     document.getElementById('coApto').value.trim(),
     notes:    document.getElementById('coNotas').value.trim()
   };
 
@@ -2352,6 +2358,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         ciudad:   (customer.city || '') + (customer.country ? ', ' + customer.country : ''),
         pais:     customer.country,
         direccion: customer.address,
+        apto:     customer.apto,
         estado:   customer.state,
         zip:      customer.zip,
         email:    (document.getElementById('coEmail').value || '').trim(),
@@ -2496,6 +2503,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const ciudad     = document.getElementById('coCiudad').value.trim();
   const pais       = document.getElementById('coPais').value;
   const direccion  = document.getElementById('coDireccion').value.trim();
+  const apto       = document.getElementById('coApto').value.trim();
   const notas      = document.getElementById('coNotas').value.trim();
   const total      = cart.reduce((s, i) => s + i.price, 0);
   const free       = total >= SHIPPING.freeThreshold;
@@ -2524,7 +2532,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   ].filter(Boolean).join(' | ');
   submitOrder({
     numero:  _currentOrderNum,
-    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, estado: waEstadoV, zip: waZipV, email: (document.getElementById('coEmail').value || '').trim() },
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: (document.getElementById('coEmail').value || '').trim() },
     productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     pago:   'WhatsApp',
