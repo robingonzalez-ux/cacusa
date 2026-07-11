@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:26:25.276Z",
+  "lastUpdated": "2026-07-11T22:27:52.085Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -592,7 +592,7 @@
     },
     {
       "name": "Cadena con ángel de la guarda circular ",
-      "name_en": "Round Guardian Angel Chain",
+      "name_en": "Chain with circular guardian angel",
       "category": "Cadenas",
       "price": 35,
       "oldPrice": 38,
@@ -600,15 +600,19 @@
       "color": "rose",
       "tag": null,
       "description": "Delicada cadena con medallón circular del ángel de la guarda en acero inoxidable. Una pieza de fe y protección para llevar siempre contigo.",
-      "description_en": "Delicate chain with a circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.",
+      "description_en": "Delicate chain with circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473494467_img_3351_jpeg.jpg",
-      "focalX": 41.353924786280444,
-      "focalY": 73.48639140899833,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808826925_425297e7_9af6_4923_b998_3efb150ea65c_jpe.jpg",
+      "focalX": 42.19628339037191,
+      "focalY": 71.21366413627126,
       "zoom": 1.15,
       "material": "Acero inoxidable",
-      "id": 1781473526943
+      "id": 1781473526943,
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808852028_8952299c_b5a5_49a7_a4c4_e15919538bad_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa ",
