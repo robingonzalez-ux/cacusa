@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-07T16:05:59.310Z",
-  "updatedBy": "tita.jaramillo",
+  "lastUpdated": "2026-07-11T22:19:05.473Z",
+  "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -612,7 +612,7 @@
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa ",
-      "name_en": "Chain with Moon & Turquoise Heart",
+      "name_en": "Chain with Moon charm and turquoise heart",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -620,15 +620,19 @@
       "color": "rose",
       "tag": "Nuevo",
       "description": "Cadena veneciana con Dije de Luna y corazón con microcircones turquesas ",
-      "description_en": "Venetian chain with moon charm and turquoise micro zirconia heart",
+      "description_en": "Venetian chain with moon charm and heart with turquoise microcircles",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781473555514_img_3350_jpeg.jpg",
-      "focalX": 46.65313217533437,
-      "focalY": 74.4152317472073,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808270536_8414d254_3ba1_4f91_8a97_1b22ac832210_jpe.jpg",
+      "focalX": 49.42088187449201,
+      "focalY": 75.62735295932845,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781473627668
+      "id": 1781473627668,
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808318000_2de17e75_6ff9_416b_9b56_e491315b8092_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Collar de perla ",
