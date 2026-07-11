@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:27:52.085Z",
+  "lastUpdated": "2026-07-11T22:30:44.123Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -671,16 +671,20 @@
       "color": "rose",
       "tag": null,
       "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
-      "description_en": "Comes as a set with tree of life earrings. Elegant carved clip chain with a special clasp and an 18k gold-plated micro zirconia tree of life charm.",
+      "description_en": "It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877139549_img_0914_jpeg.jpg",
-      "focalX": 50,
-      "focalY": 50,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808978000_134185ba_5433_47d1_a796_ef0f9d2cdac0_jpe.jpg",
+      "focalX": 47.593261131167225,
+      "focalY": 46.21212121212053,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877227517,
-      "name_en": "Chain clip with tree of life charm"
+      "name_en": "Chain clip with tree of life charm",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783809008800_646b8602_4550_4ef1_a5ca_bea66271a26f_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena con dije de gato y panza de corazón con circones ",
