@@ -2254,7 +2254,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   ].filter(Boolean).join(' | ');
   submitOrder({
     numero:    _currentOrderNum,
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, estado: estadoVal, zip: zipVal, email: (document.getElementById('coEmail').value || '').trim() },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     pago:      'Zelle',
@@ -2352,6 +2352,9 @@ document.getElementById('payBtn').addEventListener('click', async () => {
         ciudad:   (customer.city || '') + (customer.country ? ', ' + customer.country : ''),
         pais:     customer.country,
         direccion: customer.address,
+        estado:   customer.state,
+        zip:      customer.zip,
+        email:    (document.getElementById('coEmail').value || '').trim(),
       },
       productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
       total:     parseFloat((_sqBase - _sqGcDiscount - _sqCpDiscount).toFixed(2)),
@@ -2521,7 +2524,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   ].filter(Boolean).join(' | ');
   submitOrder({
     numero:  _currentOrderNum,
-    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion },
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, estado: waEstadoV, zip: waZipV, email: (document.getElementById('coEmail').value || '').trim() },
     productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     pago:   'WhatsApp',
