@@ -283,8 +283,6 @@ async function translatePagesBlock(pages) {
   }
   return out;
 }
-// Guarda suscripción push en el backend
-const apiSubscribe = (token, subscription) => apiCall('subscribe', { token, subscription });
 
 // ── Notificaciones ntfy ────────────────────────────────────────────────────
 async function fetchNtfyInfo(token) {
