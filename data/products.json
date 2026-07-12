@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-12T00:17:48.227Z",
+  "lastUpdated": "2026-07-12T00:19:32.519Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -941,16 +941,18 @@
       "color": "rose",
       "tag": null,
       "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
-      "description_en": "Adjustable. Ring featuring a circle of micro zirconia over a mother-of-pearl background with a central stone. Artisanal elegance in every detail.",
+      "description_en": "Adjustable ring with a circle of microcircles on a mother-of-pearl background and central stone. Elegance and handcrafted detail in each finish.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879077458_image_jpg.jpg",
-      "focalX": 49.256251594518744,
-      "focalY": 57.69610565944576,
-      "zoom": 1.45,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815544186_be2921ad_a5b6_47d3_aed0_440f77267397_jpe.jpg",
+      "focalX": 34.45480755119743,
+      "focalY": 46.78701475035486,
+      "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781879127320,
-      "name_en": "Adjustable Micro Zirconia Circle Ring with Mother-of-Pearl"
+      "name_en": "Micro-circle with a mother-of-pearl background and a central micro-circle",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Ajustable. Anillo chuncky con circones verdes ",
