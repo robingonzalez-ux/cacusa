@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:51:51.611Z",
+  "lastUpdated": "2026-07-12T00:17:48.227Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -719,16 +719,18 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
-      "description_en": "Gold-plated ball chain with a heart charm filled with 18k gold-plated micro zirconia. Elegance and sparkle in one piece.",
+      "description_en": "Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877512539_img_0944_jpeg.jpg",
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815452136_d9924ab9_c9f7_487d_9fe7_b8415255d7ee_jpe.jpg",
       "focalX": 39.12267956983668,
       "focalY": 41.90581990989327,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374,
-      "name_en": "Ball Chain with Zirconia Heart Charm"
+      "name_en": "Heart charm pellet chain with zircons",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo ajustable color plateado ",
