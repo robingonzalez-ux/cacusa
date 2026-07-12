@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-11T22:34:21.836Z",
+  "lastUpdated": "2026-07-12T14:36:15.404Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -695,16 +695,20 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones ",
-      "description_en": "Classic style chain with a special kitten charm featuring a zirconia heart belly. Adorable and feminine.",
+      "description_en": "Classic style chain with a special zircon heart belly kitten charm",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877299384_img_0912_jpeg.jpg",
-      "focalX": 1.5804653616476587,
-      "focalY": 40.1808307103623,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783810044332_d7937929_3126_482a_9ffd_4ec460781147_jpe.jpg",
+      "focalX": 0,
+      "focalY": 47.756588286120014,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877358815,
-      "name_en": "Cat Charm Chain with Zirconia Heart Belly"
+      "name_en": "Cat charm chain and heart belly with zircons",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783810093094_3afcd0b9_6234_421a_994c_a91bee4d4be2_jpe.jpg"
+      ],
+      "promo": null
     },
     {
       "name": "Cadena de balines con dije de corazón con circones ",
@@ -715,16 +719,18 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
-      "description_en": "Gold-plated ball chain with a heart charm filled with 18k gold-plated micro zirconia. Elegance and sparkle in one piece.",
+      "description_en": "Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877512539_img_0944_jpeg.jpg",
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815452136_d9924ab9_c9f7_487d_9fe7_b8415255d7ee_jpe.jpg",
       "focalX": 39.12267956983668,
       "focalY": 41.90581990989327,
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374,
-      "name_en": "Ball Chain with Zirconia Heart Charm"
+      "name_en": "Heart charm pellet chain with zircons",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo ajustable color plateado ",
@@ -935,16 +941,18 @@
       "color": "rose",
       "tag": null,
       "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
-      "description_en": "Adjustable. Ring featuring a circle of micro zirconia over a mother-of-pearl background with a central stone. Artisanal elegance in every detail.",
+      "description_en": "Adjustable ring with a circle of microcircles on a mother-of-pearl background and central stone. Elegance and handcrafted detail in each finish.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879077458_image_jpg.jpg",
-      "focalX": 49.256251594518744,
-      "focalY": 57.69610565944576,
-      "zoom": 1.45,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815544186_be2921ad_a5b6_47d3_aed0_440f77267397_jpe.jpg",
+      "focalX": 34.45480755119743,
+      "focalY": 46.78701475035486,
+      "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781879127320,
-      "name_en": "Adjustable Micro Zirconia Circle Ring with Mother-of-Pearl"
+      "name_en": "Micro-circle with a mother-of-pearl background and a central micro-circle",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Ajustable. Anillo chuncky con circones verdes ",
@@ -1135,16 +1143,18 @@
       "color": "rose",
       "tag": null,
       "description": "El acero inoxidable tiene a su vez un baño de oro. ",
-      "description_en": "Stainless steel with a gold plating. Adjustable ring with a black clover detail for a bold and unique look.",
+      "description_en": "Stainless steel has a gold plating.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880290838_image_jpg.jpg",
-      "focalX": 42.56251594518749,
-      "focalY": 44.95772387829416,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783866959002_79418ad4_51ec_4de5_916e_f48ac3f097d5_jpe.jpg",
+      "focalX": 43.404874549278965,
+      "focalY": 45.71529963586964,
       "zoom": 1.3,
       "material": "Acero inoxidable",
       "id": 1781880340918,
-      "name_en": "Black Clover Adjustable Ring"
+      "name_en": "Black Clover Adjustable Rings",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo dorado ajustable ",
