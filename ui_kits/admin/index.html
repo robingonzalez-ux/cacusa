@@ -979,9 +979,9 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={confirmClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={save} disabled={!form.name || !form.price || translating}
-            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating) ? .5 : 1, cursor: translating ? 'wait' : 'pointer', border: 'none' }}>
-            {translating ? '🌐 Traduciendo al inglés…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
+          <button onClick={save} disabled={!form.name || !form.price || translating || uploading || galleryUploading}
+            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating || uploading || galleryUploading) ? .5 : 1, cursor: (translating || uploading || galleryUploading) ? 'wait' : 'pointer', border: 'none' }}>
+            {translating ? '🌐 Traduciendo al inglés…' : (uploading || galleryUploading) ? '⏳ Espera a que suba la foto…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
           </button>
         </div>
       </div>
