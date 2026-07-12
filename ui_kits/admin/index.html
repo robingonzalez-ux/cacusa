@@ -609,6 +609,20 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     ? { ...product, images: product.images || [], tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec', promoEnabled: !!(product.promo && product.promo.price), promoPrice: (product.promo && product.promo.price) || '', promoLabel: (product.promo && product.promo.label) || 'Oferta', promoEndsAt: (product.promo && product.promo.endsAt) || '' }
     : blank);
   const [imgPrev, setImgPrev] = useState(product?.imageUrl || '');
+  // Subir una foto NO guarda el producto — hay que pulsar "Guardar Cambios".
+  // Si se cierra el modal despues de subir sin guardar, la foto queda huerfana
+  // en el repo y el producto sigue con la foto vieja. Avisar antes de cerrar.
+  const _origImageUrl = useRef(product?.imageUrl || '');
+  const _origImages   = useRef(JSON.stringify(product?.images || []));
+  const confirmClose = () => {
+    const fotoNueva    = form.imageUrl !== _origImageUrl.current;
+    const galeriaNueva = JSON.stringify(form.images || []) !== _origImages.current;
+    if ((fotoNueva || galeriaNueva) &&
+        !confirm('Subiste una foto nueva pero no guardaste el producto (💾 Guardar Cambios).\n\nSi cierras ahora, el producto se queda con la foto anterior.\n\n¿Cerrar sin guardar?')) {
+      return;
+    }
+    onClose();
+  };
   const [uploading, setUploading] = useState(false);
   const [uploadMsg, setUploadMsg] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -728,11 +742,11 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px', overflowY: 'auto' }}
-      onClick={e => e.target === e.currentTarget && onClose()}>
+      onClick={e => e.target === e.currentTarget && confirmClose()}>
       <div style={{ background: 'white', borderRadius: 24, padding: '32px 28px', width: '100%', maxWidth: 540, boxShadow: '0 24px 80px rgba(0,0,0,.35)', marginTop: 20, animation: 'fadeIn .3s ease' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a' }}>{isNew ? '➕ Nuevo Producto' : '✏️ Editar Producto'}</h2>
-          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f0', color: '#666', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
+          <button onClick={confirmClose} style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f0', color: '#666', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* Image upload */}
@@ -964,7 +978,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
         )}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
+          <button onClick={confirmClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
           <button onClick={save} disabled={!form.name || !form.price || translating}
             style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating) ? .5 : 1, cursor: translating ? 'wait' : 'pointer', border: 'none' }}>
             {translating ? '🌐 Traduciendo al inglés…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
