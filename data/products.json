@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-31T03:40:05.423Z",
+  "lastUpdated": "2026-07-31T03:46:52.697Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1634,6 +1634,30 @@
       "name_en": "Bangel Evil eye",
       "description_en": "Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection",
       "id": 1785469196142,
+      "promo": null
+    },
+    {
+      "name": "Bangle Greek Eye ",
+      "category": "Pulseras",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Acero quirúrgico con baño de oro de 18 kilates. El detalle del ojo ovalado de nácar más mis dos ojos azules con el borde de circones se ven súper elegantes. El diseño hueco la hace liviana para uso diario pero con mucho statement.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469392616_img_5261_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469402185_img_5262_jpeg.jpg"
+      ],
+      "name_en": "Greek Eye Bangle",
+      "description_en": "Surgical steel with 18-karat gold plating. The detail of the mother-of-pearl oval eye plus my two blue eyes with the edge of zircons look super elegant. The hollow design makes it lightweight for everyday use but with a lot of statement.",
+      "id": 1785469598547,
       "promo": null
     }
   ],
