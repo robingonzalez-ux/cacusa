@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-31T03:46:52.697Z",
+  "lastUpdated": "2026-07-31T03:58:00.679Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1658,6 +1658,30 @@
       "name_en": "Greek Eye Bangle",
       "description_en": "Surgical steel with 18-karat gold plating. The detail of the mother-of-pearl oval eye plus my two blue eyes with the edge of zircons look super elegant. The hollow design makes it lightweight for everyday use but with a lot of statement.",
       "id": 1785469598547,
+      "promo": null
+    },
+    {
+      "name": "Anillo vintage aventurine ",
+      "category": "Anillos",
+      "price": 20,
+      "oldPrice": 25,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo Vintage Aventurine - Baño 18K\n\nAnillo doble capa estilo vintage con acabado en oro 18K sobre acero inoxidable. \nDiseño con aro trenzado y detalle de bolitas, centro con piedra natural verde aventurina ovalada. \nPieza ajustable, liviana y resistente al agua. \n\nDetalles:\n- Estilo: Vintage / Boho Chic\n- Ajustable: Se adapta a todos los tallajes\n\nSimboliza abundancia, suerte y prosperidad. Perfecto para usar solo o en stacking con otros anillos dorados.\n",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469932212_img_5265_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469948567_img_5266_jpeg.jpg"
+      ],
+      "name_en": "Vintage aventurine ring",
+      "description_en": "Vintage Aventurine Ring - 18K BATHROOM\n\nVintage style double layer ring with 18K gold finish on stainless steel. \nDesign with braided ring and bead detail, center with oval adventurine green natural stone. \nAdjustable, lightweight and water-resistant piece. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect for use alone or stacking with other gold rings.",
+      "id": 1785470275920,
       "promo": null
     }
   ],
