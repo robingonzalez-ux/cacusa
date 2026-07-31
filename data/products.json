@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-31T03:58:00.679Z",
+  "lastUpdated": "2026-07-31T04:05:30.701Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1682,6 +1682,30 @@
       "name_en": "Vintage aventurine ring",
       "description_en": "Vintage Aventurine Ring - 18K BATHROOM\n\nVintage style double layer ring with 18K gold finish on stainless steel. \nDesign with braided ring and bead detail, center with oval adventurine green natural stone. \nAdjustable, lightweight and water-resistant piece. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect for use alone or stacking with other gold rings.",
       "id": 1785470275920,
+      "promo": null
+    },
+    {
+      "name": "Anillo Pulpo Glossy",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo Pulpo Glossy - Baño Oro 18K\n\nEleva tu estilo con nuestro anillo statement de pulpo. Una pieza audaz, con diseño 3D y acabado brillante en oro 18K que rinde homenaje al océano y a la personalidad única.\n\nHecho en acero inoxidable de alta calidad, es resistente al agua, al deslustre y perfecto para el uso diario. Su aro ajustable se adapta a todos los tallajes, y el diseño ergonómico hace que se vea siempre recto y alineado en el dedo.\n\nCaracterísticas:\n- Material: Acero inoxidable premium con baño de oro 18K\n- Diseño: Pulpo 3D con tentáculos y detalle de ventosas\n- Acabado: Glossy brillante anti-deslustre\n- Talla: Ajustable - se adapta a tu dedo\n- Estilo: Statement / Marítimo / Boho Chic\n\n¿Por qué te encantará?\nEl pulpo simboliza inteligencia, adaptabilidad y misterio. Este anillo es perfecto para quienes buscan joyería con personalidad que no pase desapercibida. Úsalo solo como pieza protagonista o combínalo con anillos minimalistas para un stacking moderno.\n\nIdeal para regalar o para darle un toque único a tus outfits de verano, playa y ciudad.\n",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785470541371_img_5268_jpeg.jpg",
+      "focalX": 43.21329579998356,
+      "focalY": 56.501882367462805,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785470568631_img_5269_jpeg.jpg"
+      ],
+      "name_en": "Glossy Octopus Ring",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1785470725921,
       "promo": null
     }
   ],
