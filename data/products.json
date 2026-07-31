@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-31T03:34:47.724Z",
+  "lastUpdated": "2026-07-31T03:40:05.423Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1610,6 +1610,30 @@
       "name_en": "Cross chain with zircons",
       "description_en": "It is stainless steel with an 18k gold plating, waterproof and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
       "id": 1785466095890,
+      "promo": null
+    },
+    {
+      "name": "Bangel Evil eye ",
+      "category": "Pulseras",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Acero quirúrgico con baño de oro de 18k. Estilo cable trenzado, esta pieza de uso diario es ideal para protección",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469053038_img_5258_jpeg.jpg",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469064780_img_5259_jpeg.jpg"
+      ],
+      "name_en": "Bangel Evil eye",
+      "description_en": "Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection",
+      "id": 1785469196142,
       "promo": null
     }
   ],
