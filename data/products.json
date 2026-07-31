@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-12T14:36:15.404Z",
-  "updatedBy": "robin.gonzalez",
+  "lastUpdated": "2026-07-31T02:48:22.995Z",
+  "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -1586,6 +1586,30 @@
       "name_en": "Triple bracelet 💛💙❤️",
       "description_en": "",
       "id": 1783440355036,
+      "promo": null
+    },
+    {
+      "name": "Cadena de cruz con circones ",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Es acero inoxidable con un baño de oro de 18k, waterproof e hipoalergénico. La cruz llena de circon le da ese toque Glam pero sigue siendo minimalista. Se ve elegante y con buen brillo. El tamaño de la cruz (1,74 cm) es perfecto para que se destaque sin verse exagerada. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785465810720_img_5246_jpeg.jpg",
+      "focalX": 65.24684231236567,
+      "focalY": 83.57094365241004,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785465854435_img_5247_jpeg.jpg"
+      ],
+      "name_en": "Cross chain with zircons",
+      "description_en": "It is stainless steel with an 18k gold plating, waterproof and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
+      "id": 1785466095890,
       "promo": null
     }
   ],
