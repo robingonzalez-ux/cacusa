@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-09T19:17:19.876Z",
+  "lastUpdated": "2026-08-09T20:49:55.431Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1728,6 +1728,28 @@
       "name_en": "Hand-woven pearl earrings",
       "description_en": "Pearl Flower Stud Earrings - Delicate 🤍\nThe timeless classic, now in a smaller size \n18K Gold Plated + White Pearls | Center of 6 pearls \nLightweight + Hypoallergenic + Water Resistant \nPerfect for everyday elegance",
       "id": 1786303032752,
+      "promo": null
+    },
+    {
+      "name": "FE Red String Bracelet",
+      "category": "Pulseras",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Bestseller",
+      "description": "Wear your faith every day \nRed adjustable string + 18K Goldfilled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift \n",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786308384856_img_5620_jpeg.jpg",
+      "focalX": 30.99787685774946,
+      "focalY": 66.66666666666664,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "name_en": "FE Red String Bracelet",
+      "description_en": "Wear your faith every day \nAdjustable net string + 18K goldfilled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
+      "id": 1786308585824,
       "promo": null
     }
   ],
