@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-07-31T04:05:30.701Z",
+  "lastUpdated": "2026-08-09T19:17:19.876Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1706,6 +1706,28 @@
       "name_en": "Glossy Octopus Ring",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1785470725921,
+      "promo": null
+    },
+    {
+      "name": "Aretes de perla tejidos a mano ",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Pearl Flower Stud Earrings - Delicate 🤍\nThe timeless classic, now in a smaller size \n18K Gold Plated + White Pearls | Center of 6 pearls \nLightweight + Hypoallergenic + Water Resistant \nPerfect for everyday elegance ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786302607718_img_5614_jpeg.jpg",
+      "focalX": 29.617834394904456,
+      "focalY": 51.2121212121212,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "name_en": "Hand-woven pearl earrings",
+      "description_en": "Pearl Flower Stud Earrings - Delicate 🤍\nThe timeless classic, now in a smaller size \n18K Gold Plated + White Pearls | Center of 6 pearls \nLightweight + Hypoallergenic + Water Resistant \nPerfect for everyday elegance",
+      "id": 1786303032752,
       "promo": null
     }
   ],
