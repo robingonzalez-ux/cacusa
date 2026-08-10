@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-10T02:41:07.293Z",
+  "lastUpdated": "2026-08-10T02:52:30.716Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1842,6 +1842,28 @@
       "name_en": "Minimalist Gold Letter Earrings",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1786329660348,
+      "promo": null
+    },
+    {
+      "name": "Heart Chinoiserie Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Aros dorados con corazón de porcelana blanca y flores azules. \nRománticos, únicos y con mucho estilo.\nDelicados y con mucha personalidad. \nAros dorados con corazón colgante de porcelana blanca y flores azules estilo chinoiserie. El contraste entre el oro cálido y el azul clásico los hace únicos. Livianos y con movimiento, ideales para darle un toque romántico a tu look.\n\nHechos en acero inoxidable 316L, resistentes al agua, al deslustre y hipoalergénicos.\n\nMedidas: Largo total 3.68cm | Ancho corazón 1.41cm\n- Peso: 5.9g el par\n- Cierre: Aro click\n- Estilo: Romántico / Chinoiserie / Statement",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786330053111_img_5406_jpeg.jpg",
+      "focalX": 50.18593710137031,
+      "focalY": 63.93260507313461,
+      "zoom": 0.85,
+      "material": "Acero inoxidable",
+      "images": [],
+      "name_en": "Heart Chinoiserie Earrings",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1786330341098,
       "promo": null
     }
   ],
