@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-09T22:46:49.289Z",
+  "lastUpdated": "2026-08-10T02:19:48.847Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1772,6 +1772,30 @@
       "name_en": "BLUE TURKISH EYE BRACELET + MEDAL + PEARL",
       "description_en": "Blue Evil Eye Bracelet🤍 \nFaith, protection & elegance in one \nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl \nProtection, faith & good vibes \nMinimalist design | Unisex \n18K Goldfilled | Hypoallergenic \nThe perfect spiritual gift",
       "id": 1786315591380,
+      "promo": null
+    },
+    {
+      "name": "Pulsera de ojo turco rojo",
+      "category": "Pulseras",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Menos es más. \nEsta versión minimalista de nuestra pulsera de hilo rojo resalta lo esencial: el ojo turco rojo como símbolo de protección. Perfecta si buscas un diseño delicado, discreto y con mucho significado. Personalízala con balines o sin balines ",
+      "personalized": true,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786328331861_img_5627_jpeg.jpg",
+      "focalX": 0,
+      "focalY": 46.25995186076652,
+      "zoom": 1.15,
+      "material": "Gold filled",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786328362026_img_5628_jpeg.jpg"
+      ],
+      "name_en": "Red Turkish Eye Bracelet",
+      "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without pellets",
+      "id": 1786328384393,
       "promo": null
     }
   ],
