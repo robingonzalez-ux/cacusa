@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-10T02:19:48.847Z",
+  "lastUpdated": "2026-08-10T02:32:57.269Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1796,6 +1796,30 @@
       "name_en": "Red Turkish Eye Bracelet",
       "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without pellets",
       "id": 1786328384393,
+      "promo": null
+    },
+    {
+      "name": "Collar Lazo Dorado con Zirconias",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Bow Zirconia Necklace 🎀 \nCadena dorada 18K + Dije lazo con zirconias brillantes. \nDelicado, femenino y perfecto para el día a día.\n\nEl detalle que eleva cualquier look. \nEste collar minimalista de cadena dorada con dije en forma de lazo y zirconias brillantes es la pieza perfecta para regalar o usar todos los días. Ligero, elegante y con mucho brillo.\n\nCaracterísticas:\n- Material: Cadena de goldfilled 18K + Zirconias de alta calidad\n- Diseño: Dije lazo/moño minimalista\n- Largo: 40cm + 5cm extensible | Ajustable\n- Cuidado: No exponer a químicos como perfumes, cremas | Hipoalergénico | \n- Ideal para: Regalo | Uso diario | Layering | Detalle femenino\n",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786328646793_img_5638_jpeg.jpg",
+      "focalX": 37.35627710681871,
+      "focalY": 72.69024254767635,
+      "zoom": 1.3,
+      "material": "Gold filled",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786328685830_2547aa2e_eca5_4076_854c_ae4370c1f43c_jpe.jpg"
+      ],
+      "name_en": "Gold Zirconia Bow Necklace",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1786329172109,
       "promo": null
     }
   ],
