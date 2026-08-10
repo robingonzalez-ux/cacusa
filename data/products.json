@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-10T02:32:57.269Z",
+  "lastUpdated": "2026-08-10T02:41:07.293Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1820,6 +1820,28 @@
       "name_en": "Gold Zirconia Bow Necklace",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1786329172109,
+      "promo": null
+    },
+    {
+      "name": "Aretes letra dorados minimalistas ",
+      "category": "Aretes",
+      "price": 22,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Tu inicial, tu estilo. \nEstos aretes en forma de letra Z ( consulta las iniciales disponibles) son el detalle minimalista que estabas buscando. Bañados en oro 18K, son ligeros, hipoalergénicos y combinan con todo. Ideales para usar solos o en layering con otros aretes.\n\nCaracterísticas:\n- Material: Baño oro 18K | Hipoalergénicos\n- Diseño: Letra minimalista | Tamaño pequeño\n- Cierre: Post de presión\n- Cuidado: Evitar contacto con químicos como perfumes, cloro de piscina o cremas. \n- Ideal para: Regalo personalizado | Uso diario | Inicial\n\nCACUSA by Taitus - Joyería con significado",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786329335550_img_5639_jpeg.jpg",
+      "focalX": 95.74052693709703,
+      "focalY": 40.84428809479722,
+      "zoom": 1.15,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "name_en": "Minimalist Gold Letter Earrings",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1786329660348,
       "promo": null
     }
   ],
