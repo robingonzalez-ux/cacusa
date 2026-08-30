@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-10T02:52:30.716Z",
+  "lastUpdated": "2026-08-30T16:27:25.310Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1864,6 +1864,34 @@
       "name_en": "Heart Chinoiserie Earrings",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1786330341098,
+      "promo": null
+    },
+    {
+      "name": "Set aretes y cadena ",
+      "category": "Juegos",
+      "price": 55,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Hermosos sets de 18K goldplated stainless steel.\nUna Joya para que luzcas mas bella de lo que ya eres ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107083226_img_6856_jpeg.jpg",
+      "focalX": 53.6008230452675,
+      "focalY": 34.24242424242426,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107105663_img_6857_png.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107113727_img_6855_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107119881_img_6854_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107128572_img_6853_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107137224_img_6856_jpeg.jpg"
+      ],
+      "name_en": "Earring & Chain Set",
+      "description_en": "Beautiful sets of 18K goldplated stainless steel.\nA Jewel to make you look more beautiful than you already are",
+      "id": 1788107242835,
       "promo": null
     }
   ],
