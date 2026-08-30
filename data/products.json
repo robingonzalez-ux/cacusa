@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-30T16:28:48.296Z",
+  "lastUpdated": "2026-08-30T16:30:57.143Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1893,6 +1893,31 @@
       "name_en": "Earring & Chain Set",
       "description_en": "Beautiful sets of 18K goldplated stainless steel.\nA Jewel to make you look more beautiful than you already are",
       "id": 1788107242835,
+      "promo": null
+    },
+    {
+      "name": "Hand chain ",
+      "category": "Hand chain",
+      "price": 28,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "18K GOLD PLATED Stainless Steel \nPreciosas, hacen que tu mano luzca femenina y delicada ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107362157_img_6846_jpeg.jpg",
+      "focalX": 48.650074859485066,
+      "focalY": 66.03711066931747,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107375752_img_6845_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788107383280_img_6846_jpeg.jpg"
+      ],
+      "name_en": "Hand chain",
+      "description_en": "18K GOLD PLATED Stainless Steel \nPrecious, they make your hand look feminine and delicate",
+      "id": 1788107453046,
       "promo": null
     }
   ],
