@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-08-30T16:30:57.143Z",
+  "lastUpdated": "2026-09-03T15:37:34.179Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1918,6 +1918,28 @@
       "name_en": "Hand chain",
       "description_en": "18K GOLD PLATED Stainless Steel \nPrecious, they make your hand look feminine and delicate",
       "id": 1788107453046,
+      "promo": null
+    },
+    {
+      "name": "Pulseras hechas a mano 🙌🏽 ",
+      "category": "Pulseras",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Hermosas pulseras ajustables confeccionadas con manos ecuatorianas, con estilo, combinaciones de cristales y dijes con baño de oro de 18K ",
+      "personalized": true,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788449735419_21081b6e_11c2_47fd_9e6f_39d50b50cd1f_jpe.jpg",
+      "focalX": 27.11508725425225,
+      "focalY": 19.469546358214473,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "name_en": "Handmade bracelets 🙌🏽",
+      "description_en": "Beautiful adjustable bracelets made with Ecuadorian hands, with style, crystal combinations and 18K gold plated charms",
+      "id": 1788449850640,
       "promo": null
     }
   ],
