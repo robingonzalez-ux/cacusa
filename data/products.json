@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-03T16:10:44.642Z",
+  "lastUpdated": "2026-09-04T16:47:43.464Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1940,6 +1940,39 @@
       "name_en": "Handmade bracelets 🙌🏽",
       "description_en": "Beautiful adjustable bracelets made with Ecuadorian hands, with style, crystal combinations and 18K gold plated charms",
       "id": 1788449850640,
+      "promo": null
+    },
+    {
+      "name": "Hand chain ",
+      "category": "Pulseras",
+      "price": 28,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Hermosas hand chains 18 K Goldplated Stainless steel únicas para lucir tu mano mas bella y femenina. ",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539739688_img_7225_jpeg.jpg",
+      "focalX": 47.0164609053498,
+      "focalY": 70.60606060606062,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539847626_img_7223_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539854070_img_7220_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539864520_img_7220_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539873991_img_7215_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539879977_img_7213_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539886250_img_7209_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539894088_img_7207_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539899687_img_7206_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539905527_img_7205_jpeg.jpg",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788539911809_img_7204_jpeg.jpg"
+      ],
+      "name_en": "Hand chain",
+      "description_en": "Beautiful 18K Goldplated Stainless Steel hand chains to show off your most beautiful and feminine hand.",
+      "id": 1788540460219,
       "promo": null
     }
   ],
