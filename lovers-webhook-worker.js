@@ -74,15 +74,20 @@ async function updateSubscriber(key, estadoPago, extras, dbUrl, token) {
   });
 }
 
-// ── Get customer email from Square ───────────────────────────────────────────
-async function getSquareCustomerEmail(customerId, squareToken) {
+// ── Get customer from Square ──────────────────────────────────────────────────
+async function getSquareCustomer(customerId, squareToken) {
   if (!customerId) return null;
   const r = await fetch(`${SQUARE_API}/customers/${customerId}`, {
     headers: { 'Authorization': `Bearer ${squareToken}`, 'Square-Version': '2024-11-20' }
   });
   if (!r.ok) return null;
   const d = await r.json();
-  return d.customer?.email_address || null;
+  return d.customer || null;
+}
+
+async function getSquareCustomerEmail(customerId, squareToken) {
+  const c = await getSquareCustomer(customerId, squareToken);
+  return c?.email_address || null;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -123,15 +128,23 @@ export default {
       if (type === 'invoice.payment_made') {
         const invoice = data?.invoice;
         const customerId = invoice?.primary_recipient?.customer_id;
+        const customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
         const email = invoice?.primary_recipient?.email_address
-          || (customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null);
+          || customer?.email_address
+          || null;
 
         if (email) {
+          const today = new Date().toISOString().slice(0, 10);
+          const nameFields = {
+            nombre:   customer?.given_name  || '',
+            apellido: customer?.family_name || '',
+          };
           const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
           if (key) {
             await updateSubscriber(key, 'activo', {
-              ultimo_pago: new Date().toISOString().slice(0, 10),
+              ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
+              ...nameFields,
             }, dbUrl, fbToken);
             console.log('Marked activo:', email);
           } else {
@@ -141,11 +154,12 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 email: email.toLowerCase(),
+                ...nameFields,
                 plan: 'Cacusa Lovers',
                 monto: '$20/mes',
-                fecha: new Date().toISOString().slice(0, 10),
+                fecha: today,
                 estado_pago: 'activo',
-                ultimo_pago: new Date().toISOString().slice(0, 10),
+                ultimo_pago: today,
                 square_invoice_id: invoice?.id || '',
               }),
             });
