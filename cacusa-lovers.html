@@ -224,7 +224,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
 .sub-addr-wrap{position:relative}
-.sub-addr-sugg{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:#fff;border:1.5px solid var(--ink-light);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;display:none}
+.sub-addr-sugg{position:fixed;z-index:1000;background:#fff;border:1.5px solid var(--ink-light);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;display:none}
 .sub-addr-sugg.open{display:block}
 .sub-addr-item{padding:10px 13px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
 .sub-addr-item:last-child{border-bottom:none}
@@ -824,6 +824,13 @@ function handlePaisChange(){
     return '';
   }
 
+  function positionList() {
+    const r = inp.getBoundingClientRect();
+    list.style.top   = (r.bottom + 4) + 'px';
+    list.style.left  = r.left + 'px';
+    list.style.width = r.width + 'px';
+  }
+
   function closeList() { list.classList.remove('open'); list.innerHTML=''; _items=[]; }
 
   function fillFromFeature(f) {
@@ -863,10 +870,14 @@ function handlePaisChange(){
                + (sub?'<div class="sub-addr-sub">'+esc(sub)+'</div>':'')
                + '</div>';
         }).join('');
+        positionList();
         list.classList.add('open');
       } catch(e) { closeList(); }
     }, 380);
   });
+
+  const overlay = document.getElementById('sub-overlay');
+  if (overlay) overlay.addEventListener('scroll', () => { if (list.classList.contains('open')) positionList(); });
 
   list.addEventListener('click', function(e) {
     const item = e.target.closest('.sub-addr-item');
