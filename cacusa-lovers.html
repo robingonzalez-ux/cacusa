@@ -1015,29 +1015,19 @@ async function submitSubscription(){
     estado_pago: 'pendiente',
   };
 
+  // Guardar datos en Firebase (best-effort — no bloquea el pago si falla)
   try {
-    // Guardar datos de suscriptora en Firebase (mismo DB que la tienda)
     if(!_fbIdToken) await _fbSignIn();
-    const fbResp = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`), {
+    await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`), {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(subscriber),
     });
-    if(!fbResp.ok) throw new Error('No se pudo guardar los datos. Intenta de nuevo.');
+  } catch(e){ console.warn('[fb-save]', e); }
 
-    // Redirigir a Square para el pago recurrente
-    const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
-    if(link === 'PENDING'){
-      err.textContent = '⚠️ El plan anual estará disponible muy pronto. Por ahora selecciona el plan mensual.';
-      btn.disabled = false; btn.classList.remove('loading'); return;
-    }
-    window.location.href = link;
-
-  } catch(e){
-    err.textContent = '⚠️ ' + e.message;
-    btn.disabled = false;
-    btn.classList.remove('loading');
-  }
+  // Redirigir a Square para el pago recurrente
+  const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
+  window.location.href = link;
 }
 
 // ── DETECT RETURN FROM SQUARE (?subscribed=1 o ?paid=1) ─────
