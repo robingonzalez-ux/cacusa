@@ -816,6 +816,9 @@ function handlePaisChange(){
   let _t = null, _items = [];
   const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+  // Move to body so position:fixed is relative to viewport, not .sub-box transform
+  document.body.appendChild(list);
+
   function matchState(name) {
     const s = (name||'').toLowerCase();
     for (const o of document.getElementById('sEstado').options) {
@@ -858,7 +861,12 @@ function handlePaisChange(){
       try {
         const res  = await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=6&lang=en');
         const data = await res.json();
-        const feats = (data.features||[]).filter(f => f.properties && (f.properties.name || f.properties.street || f.properties.housenumber));
+        const selectedCC = (document.getElementById('sPais').value || '').toLowerCase();
+        const feats = (data.features||[]).filter(f => {
+          if (!f.properties || (!f.properties.name && !f.properties.street && !f.properties.housenumber)) return false;
+          if (selectedCC && f.properties.countrycode && f.properties.countrycode.toLowerCase() !== selectedCC) return false;
+          return true;
+        });
         if (!feats.length) { closeList(); return; }
         _items = feats;
         list.innerHTML = feats.map((f,i) => {
