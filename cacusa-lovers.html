@@ -105,7 +105,14 @@ section{padding:96px 0}
 /* ── PLAN ── */
 #plan{background:var(--lilac-pale)}
 .plan-center{text-align:center;margin-bottom:56px}
-.plan-card{max-width:560px;margin:0 auto;background:white;border-radius:28px;overflow:hidden;box-shadow:0 16px 60px rgba(238,111,168,.18)}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:900px;margin:0 auto;align-items:start}
+.plan-card{background:white;border-radius:28px;overflow:visible;box-shadow:0 16px 60px rgba(238,111,168,.18);position:relative}
+.plan-card--annual{box-shadow:0 20px 70px rgba(155,93,229,.28);border:2px solid rgba(155,93,229,.25)}
+.plan-badge-annual{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#9B5DE5,#E8508A);color:white;font-family:var(--fu);font-weight:800;font-size:11px;letter-spacing:.12em;padding:6px 18px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(155,93,229,.45);z-index:2}
+.plan-card--annual .plan-header{background:linear-gradient(135deg,#7C3ADE,#9B5DE5,#C86DD4)}
+.plan-cents{font-family:var(--fd);font-weight:900;font-size:36px;color:white;align-self:flex-end;padding-bottom:10px}
+.btn-join--annual{background:linear-gradient(135deg,#7C3ADE,#9B5DE5)!important;box-shadow:0 6px 28px rgba(155,93,229,.45)!important}
+.btn-join--annual:hover{box-shadow:0 10px 36px rgba(155,93,229,.6)!important}
 .plan-header{background:var(--grad-full);padding:44px 40px 36px;text-align:center;position:relative}
 .plan-tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:999px;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:white;padding:5px 16px;margin-bottom:18px}
 .plan-price-wrap{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin-bottom:8px}
@@ -250,6 +257,8 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
   .what-grid{grid-template-columns:1fr;gap:40px}
   .steps-grid{grid-template-columns:1fr;gap:20px}
   .step-connector{display:none}
+  .plans-grid{grid-template-columns:1fr}
+  .plan-card--annual{margin-top:20px}
   .plan-header{padding:32px 24px 28px}
   .plan-body{padding:28px 24px}
   .what-card:first-child{height:180px}
@@ -337,13 +346,13 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       </div>
       <!-- STEP 2: Confirm & pay -->
       <div class="sub-step" id="sub-step2">
-        <div class="sub-summary-box">
-          <div class="sub-sum-row"><span>Plan</span><span>Cacusa Lovers</span></div>
-          <div class="sub-sum-feature">2 joyas artesanales cada mes</div>
+        <div class="sub-summary-box" id="sub-summary-box">
+          <div class="sub-sum-row"><span>Plan</span><span id="sum-plan-name">Cacusa Lovers</span></div>
+          <div class="sub-sum-feature">2 joyas en acero inoxidable cada mes</div>
           <div class="sub-sum-feature">Envío a domicilio incluido</div>
           <div class="sub-sum-feature">Envíos gratis en todas tus compras</div>
           <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
-          <div class="sub-sum-row"><span>Total mensual</span><span>$20.00</span></div>
+          <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$20.00</span></div>
         </div>
         <div class="sub-error" id="sErr2"></div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
@@ -428,31 +437,62 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
   <div class="container">
     <div class="plan-center">
       <div class="reveal"><div class="section-label" style="text-align:center">La membresía</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Un plan,<br><em>todo incluido</em></h2></div>
-      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Sin niveles confusos. Sin sorpresas en el precio.</p></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Elige tu<br><em>plan</em></h2></div>
+      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Todo incluido. Sin sorpresas en el precio.</p></div>
     </div>
-    <div class="plan-card reveal-scale" data-delay="2">
-      <div class="plan-header">
-        <div class="plan-tag">Cacusa Lovers ♡</div>
-        <div class="plan-price-wrap">
-          <span class="plan-currency">$</span>
-          <span class="plan-amount">20</span>
+
+    <div class="plans-grid">
+
+      <!-- PLAN MENSUAL -->
+      <div class="plan-card reveal-scale" data-delay="1">
+        <div class="plan-header">
+          <div class="plan-tag">Mensual</div>
+          <div class="plan-price-wrap">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">20</span>
+          </div>
+          <div class="plan-subtitle">al mes</div>
         </div>
-        <div class="plan-subtitle">al mes</div>
+        <div class="plan-body">
+          <ul class="plan-features">
+            <li><strong>2 joyas en acero inoxidable</strong> seleccionadas a mano</li>
+            <li><strong>Envío a domicilio</strong> incluido — Ecuador y USA</li>
+            <li><strong>Envíos gratis</strong> en todas tus compras en tienda</li>
+            <li><strong>Cupones de descuento</strong> exclusivos</li>
+            <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
+            <li><strong>Cancela cuando quieras</strong></li>
+          </ul>
+          <a href="#" class="btn-join" onclick="joinNow('mensual');return false;">♡ Suscribirme mensual →</a>
+          <p class="plan-note">Cobro automático cada mes · Cancela con 5 días de anticipación</p>
+        </div>
       </div>
-      <div class="plan-body">
-        <ul class="plan-features">
-          <li><strong>2 joyas en acero inoxidable</strong> cada mes seleccionadas a mano</li>
-          <li><strong>Envío a domicilio</strong> incluido mensualmente — Ecuador y USA</li>
-          <li><strong>Envíos gratis en todas tus compras</strong> adicionales en tienda</li>
-          <li><strong>Cupones de descuento</strong> exclusivos para compras en tienda</li>
-          <li><strong>Acceso anticipado</strong> a nuevas colecciones antes de la venta general</li>
-          <li>Piezas <strong>exclusivas para suscriptoras</strong>, no disponibles en tienda</li>
-          <li><strong>Cancela cuando quieras</strong> — sin permanencia mínima</li>
-        </ul>
-        <a href="#" class="btn-join" onclick="joinNow();return false;">♡ Unirme a Cacusa Lovers →</a>
-        <p class="plan-note">Sin contratos · Sin permanencia · Cancela en cualquier momento</p>
+
+      <!-- PLAN ANUAL -->
+      <div class="plan-card plan-card--annual reveal-scale" data-delay="2">
+        <div class="plan-badge-annual">🎁 1 MES GRATIS</div>
+        <div class="plan-header">
+          <div class="plan-tag">Anual</div>
+          <div class="plan-price-wrap">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">219</span>
+            <span class="plan-cents">.89</span>
+          </div>
+          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mes · ahorras $20</span></div>
+        </div>
+        <div class="plan-body">
+          <ul class="plan-features">
+            <li><strong>2 joyas en acero inoxidable</strong> seleccionadas a mano</li>
+            <li><strong>Envío a domicilio</strong> incluido — Ecuador y USA</li>
+            <li><strong>Envíos gratis</strong> en todas tus compras en tienda</li>
+            <li><strong>Cupones de descuento</strong> exclusivos</li>
+            <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
+            <li><strong>12 meses de joyas</strong> pagando solo 11 ✨</li>
+          </ul>
+          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual');return false;">♡ Suscribirme anual →</a>
+          <p class="plan-note">Un solo pago · Máximo ahorro · Renueva automáticamente</p>
+        </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -651,8 +691,9 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-// Pega aquí la URL del payment link de Square (menú ··· → Share payment link)
-const SQUARE_PAYMENT_LINK = 'https://square.link/u/hkC8r6ZB';
+const SQUARE_PAYMENT_LINK         = 'https://square.link/u/hkC8r6ZB';  // mensual $20
+const SQUARE_PAYMENT_LINK_ANNUAL  = 'PENDING';  // ← pega aquí el link del plan anual cuando lo tengas
+let _selectedPlan = 'mensual';
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -672,7 +713,7 @@ function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; 
 _fbSignIn(); // sign-in anónimo al cargar la página
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
-function joinNow(){ openSub(); }
+function joinNow(plan){ _selectedPlan = plan || 'mensual'; openSub(); }
 
 function openSub(){
   document.getElementById('sub-overlay').classList.add('open');
@@ -705,6 +746,19 @@ function goStep2(){
   if(!dir){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
   err.textContent='';
 
+  // Actualizar resumen según plan
+  const isAnual = _selectedPlan === 'anual';
+  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers Mensual';
+  document.getElementById('sum-period-label').textContent = isAnual ? 'Total anual' : 'Total mensual';
+  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$20.00';
+  if(isAnual){
+    document.getElementById('sum-plan-name').style.color = '#9B5DE5';
+    document.getElementById('sum-price').style.color = '#9B5DE5';
+  } else {
+    document.getElementById('sum-plan-name').style.color = '';
+    document.getElementById('sum-price').style.color = '';
+  }
+
   document.getElementById('sub-step1').classList.remove('active');
   document.getElementById('sub-step2').classList.add('active');
   document.getElementById('dot1').classList.remove('act');
@@ -735,8 +789,8 @@ async function submitSubscription(){
     estado:    document.getElementById('sEstado').value.trim() || null,
     direccion: document.getElementById('sDireccion').value.trim(),
     apto:      document.getElementById('sApto').value.trim() || null,
-    plan:      'Cacusa Lovers',
-    monto:     '$20/mes',
+    plan:      _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+    monto:     _selectedPlan === 'anual' ? '$219.89/año' : '$20/mes',
     fecha:     new Date().toISOString().slice(0, 10),
     estado_pago: 'pendiente',
   };
@@ -752,7 +806,12 @@ async function submitSubscription(){
     if(!fbResp.ok) throw new Error('No se pudo guardar los datos. Intenta de nuevo.');
 
     // Redirigir a Square para el pago recurrente
-    window.location.href = SQUARE_PAYMENT_LINK;
+    const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
+    if(link === 'PENDING'){
+      err.textContent = '⚠️ El plan anual estará disponible muy pronto. Por ahora selecciona el plan mensual.';
+      btn.disabled = false; btn.classList.remove('loading'); return;
+    }
+    window.location.href = link;
 
   } catch(e){
     err.textContent = '⚠️ ' + e.message;
