@@ -283,6 +283,10 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
   .sub-dots{margin-bottom:16px}
   .sub-row-2{grid-template-columns:1fr}
   .btn-join,.btn-join--annual,.sub-btn,.sub-head-close,.sub-back{cursor:pointer}
+  /* Reveal animations off on mobile — show everything immediately */
+  .reveal,.reveal-left,.reveal-scale{opacity:1!important;transform:none!important;transition:none!important}
+  /* Cursor pointer for all interactive elements on touch screens */
+  .btn-primary,.btn-ghost,.nav-cta{cursor:pointer}
 }
 </style>
 </head>
