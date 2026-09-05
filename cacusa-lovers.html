@@ -618,7 +618,25 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-const SUBSCRIBE_WORKER_URL = 'https://cacusa-subscribe.facturacioncacusa.workers.dev';
+// Pega aquí la URL del payment link de Square (menú ··· → Share payment link)
+const SQUARE_PAYMENT_LINK = 'SQUARE_LINK_AQUI';
+
+// ── FIREBASE (mismo proyecto que la tienda) ──────────────────
+const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
+const _FB_DB      = 'https://cacusa-pos-default-rtdb.firebaseio.com';
+let _fbIdToken = null;
+async function _fbSignIn(){
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${_FB_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({returnSecureToken:true}) }
+    );
+    if(r.ok){ const d=await r.json(); _fbIdToken=d.idToken||null; }
+  } catch(_){}
+}
+function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
+_fbSignIn(); // sign-in anónimo al cargar la página
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
 function joinNow(){ openSub(); }
@@ -674,32 +692,34 @@ async function submitSubscription(){
   btn.classList.add('loading');
   err.textContent = '';
 
-  const payload = {
-    name:     document.getElementById('sNombre').value.trim(),
-    lastname: document.getElementById('sApellido').value.trim(),
-    email:    document.getElementById('sEmail').value.trim(),
-    phone:    document.getElementById('sTel').value.trim(),
-    country:  document.getElementById('sPais').value,
-    city:     document.getElementById('sCiudad').value.trim(),
-    state:    document.getElementById('sEstado').value.trim() || undefined,
-    address:  document.getElementById('sDireccion').value.trim(),
-    apto:     document.getElementById('sApto').value.trim() || undefined,
+  const subscriber = {
+    nombre:    document.getElementById('sNombre').value.trim(),
+    apellido:  document.getElementById('sApellido').value.trim(),
+    email:     document.getElementById('sEmail').value.trim(),
+    telefono:  document.getElementById('sTel').value.trim(),
+    pais:      document.getElementById('sPais').value,
+    ciudad:    document.getElementById('sCiudad').value.trim(),
+    estado:    document.getElementById('sEstado').value.trim() || null,
+    direccion: document.getElementById('sDireccion').value.trim(),
+    apto:      document.getElementById('sApto').value.trim() || null,
+    plan:      'Cacusa Lovers',
+    monto:     '$20/mes',
+    fecha:     new Date().toISOString().slice(0, 10),
+    estado_pago: 'pendiente',
   };
 
   try {
-    const resp = await fetch(SUBSCRIBE_WORKER_URL, {
-      method: 'POST',
+    // Guardar datos de suscriptora en Firebase (mismo DB que la tienda)
+    if(!_fbIdToken) await _fbSignIn();
+    const fbResp = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`), {
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body:    JSON.stringify(subscriber),
     });
-    const data = await resp.json();
+    if(!fbResp.ok) throw new Error('No se pudo guardar los datos. Intenta de nuevo.');
 
-    if(!resp.ok || !data.checkoutUrl){
-      throw new Error(data.error || 'No se pudo crear el pago. Intenta de nuevo.');
-    }
-    // Save subscriber info locally before redirect
-    sessionStorage.setItem('cacusa_sub_pending', JSON.stringify(payload));
-    window.location.href = data.checkoutUrl;
+    // Redirigir a Square para el pago recurrente
+    window.location.href = SQUARE_PAYMENT_LINK;
 
   } catch(e){
     err.textContent = '⚠️ ' + e.message;
@@ -708,7 +728,7 @@ async function submitSubscription(){
   }
 }
 
-// ── DETECT RETURN FROM SQUARE (?subscribed=1) ───────────────
+// ── DETECT RETURN FROM SQUARE (?subscribed=1 o ?paid=1) ─────
 (function checkReturn(){
   const params = new URLSearchParams(location.search);
   if(params.get('subscribed') === '1' || params.get('paid') === '1'){
