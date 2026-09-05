@@ -1765,6 +1765,100 @@ function LeadsTab({ token }) {
   );
 }
 
+// ── Cacusa Lovers Tab ────────────────────────────────────────────────────────
+function LoversTab() {
+  const [subs, setSubs] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState({});
+
+  const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      if (!_fbIdToken) await _fbSignIn();
+      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`));
+      if (r.ok) {
+        const data = await r.json();
+        if (data) {
+          const arr = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+          arr.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+          setSubs(arr);
+        } else {
+          setSubs([]);
+        }
+      } else {
+        setSubs([]);
+      }
+    } catch (_) { setSubs([]); }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const updateEstado = async (sub, nuevoEstado) => {
+    setUpdating(u => ({ ...u, [sub.id]: true }));
+    try {
+      if (!_fbIdToken) await _fbSignIn();
+      await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${sub.id}.json`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado_pago: nuevoEstado }),
+      });
+      setSubs(prev => prev.map(s => s.id === sub.id ? { ...s, estado_pago: nuevoEstado } : s));
+    } catch (_) {}
+    setUpdating(u => { const n = { ...u }; delete n[sub.id]; return n; });
+  };
+
+  const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444' }[e] || '#A89AAF');
+  const fmt = iso => { try { return new Date(iso).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }); } catch { return iso || '—'; } };
+
+  return (
+    <div>
+      <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Cacusa Lovers ♡</div>
+      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Suscriptoras del club mensual $20/mes. Datos guardados al momento de procesar el pago.</div>
+
+      {loading && <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
+      {!loading && subs && subs.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>No hay suscriptoras aún.</div>
+      )}
+      {!loading && subs && subs.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 12 }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {subs.map(s => (
+              <div key={s.id} style={{ background: 'white', borderRadius: 14, border: '1px solid #EDE8EA', padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118', marginBottom: 2 }}>{s.nombre} {s.apellido}</div>
+                  <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>{s.email} · {s.telefono}</div>
+                  <div style={{ fontSize: 12, color: '#888', lineHeight: 1.6 }}>
+                    📍 {[s.direccion, s.apto, s.ciudad, s.estado, s.pais].filter(Boolean).join(', ')}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#A89AAF', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                  <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    {s.estado_pago || 'pendiente'}
+                  </span>
+                  <select
+                    disabled={!!updating[s.id]}
+                    value={s.estado_pago || 'pendiente'}
+                    onChange={e => updateEstado(s, e.target.value)}
+                    style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: '1px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', color: '#555', background: 'white' }}>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="activo">Activo</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Coupons Tab ─────────────────────────────────────────────────────────────
 function CouponsTab({ token }) {
   const [coupons, setCoupons]   = useState(null);
@@ -2436,6 +2530,7 @@ function App() {
   const [showPwd, setShowPwd]         = useState(false);
   const [showMenu, setShowMenu]       = useState(false);
   const [activeTab, setActiveTab]     = useState('products');
+  const [loversCount, setLoversCount] = useState(0);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [ordersView, setOrdersView]         = useState('active');
   const [histSearch, setHistSearch]         = useState('');
@@ -2459,6 +2554,12 @@ function App() {
         ]);
         if (sr.surcharges && typeof sr.surcharges === 'object') setFbSurcharges(sr.surcharges);
         if (mk.markets   && typeof mk.markets   === 'object') setFbMarkets(mk.markets);
+      } catch (_) {}
+      // Load lovers count badge
+      try {
+        if (!_fbIdToken) await _fbSignIn();
+        const r = await fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_lovers.json?shallow=true'));
+        if (r.ok) { const d = await r.json(); setLoversCount(d ? Object.keys(d).length : 0); }
       } catch (_) {}
     })();
   }, []);
@@ -2762,6 +2863,7 @@ function App() {
             ['giftcards',  '🎁 Gift Cards',  0],
             ['cupones',    '🏷️ Cupones',    0],
             ['leads',      '📋 Leads 10%',  0],
+            ['lovers',     '🌸 Cacusa Lovers', loversCount],
             ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -3026,6 +3128,9 @@ function App() {
 
         {/* ── Leads 10% tab ── */}
         {activeTab === 'leads' && <LeadsTab token={session.token} />}
+
+        {/* ── Cacusa Lovers tab ── */}
+        {activeTab === 'lovers' && <LoversTab />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (
