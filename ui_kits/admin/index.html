@@ -1770,6 +1770,9 @@ function LoversTab() {
   const [subs, setSubs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
+  const [photos, setPhotos] = useState({ card1: { url: '', label: 'Collar del mes' }, card2: { url: '', label: 'Anillo sorpresa' }, card3: { url: '', label: 'Pulsera exclusiva' } });
+  const [savingPhotos, setSavingPhotos] = useState(false);
+  const [photoMsg, setPhotoMsg] = useState('');
 
   const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
@@ -1777,21 +1780,40 @@ function LoversTab() {
     setLoading(true);
     try {
       if (!_fbIdToken) await _fbSignIn();
-      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`));
+      const [r, rp] = await Promise.all([
+        fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`)),
+        fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`)),
+      ]);
       if (r.ok) {
         const data = await r.json();
         if (data) {
           const arr = Object.entries(data).map(([id, v]) => ({ id, ...v }));
           arr.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
           setSubs(arr);
-        } else {
-          setSubs([]);
-        }
-      } else {
-        setSubs([]);
+        } else { setSubs([]); }
+      } else { setSubs([]); }
+      if (rp.ok) {
+        const pd = await rp.json();
+        if (pd) setPhotos(prev => ({ ...prev, ...pd }));
       }
     } catch (_) { setSubs([]); }
     setLoading(false);
+  };
+
+  const savePhotos = async () => {
+    setSavingPhotos(true);
+    setPhotoMsg('');
+    try {
+      if (!_fbIdToken) await _fbSignIn();
+      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(photos),
+      });
+      setPhotoMsg(r.ok ? '✓ Fotos guardadas' : '⚠ Error al guardar');
+    } catch (_) { setPhotoMsg('⚠ Error al guardar'); }
+    setSavingPhotos(false);
+    setTimeout(() => setPhotoMsg(''), 3000);
   };
 
   useEffect(() => { load(); }, []);
@@ -1818,6 +1840,43 @@ function LoversTab() {
     <div>
       <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Cacusa Lovers ♡</div>
       <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Suscriptoras del club mensual $20/mes. Datos guardados al momento de procesar el pago.</div>
+
+      {/* ── Photo management ── */}
+      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>📷 Fotos de la página web</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Pega la URL de la imagen para cada tarjeta (se actualiza en la web de Cacusa Lovers automáticamente).</div>
+        {['card1','card2','card3'].map((key, i) => {
+          const labels = ['Collar del mes', 'Anillo sorpresa', 'Pulsera exclusiva'];
+          return (
+            <div key={key} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 5 }}>{labels[i]}</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                {photos[key]?.url && (
+                  <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0, border: '1px solid #eee' }}>
+                    <img src={photos[key].url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+                  </div>
+                )}
+                <input
+                  type="url"
+                  placeholder="https://…"
+                  value={photos[key]?.url || ''}
+                  onChange={e => setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: e.target.value } }))}
+                  style={{ flex: 1, border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, color: '#1A1118', outline: 'none' }}
+                />
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4 }}>
+          <button
+            onClick={savePhotos}
+            disabled={savingPhotos}
+            style={{ background: 'linear-gradient(135deg,#EE6FA8,#C4A0EC)', color: 'white', border: 'none', borderRadius: 999, padding: '9px 22px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: savingPhotos ? 'not-allowed' : 'pointer', opacity: savingPhotos ? .6 : 1 }}>
+            {savingPhotos ? 'Guardando…' : 'Guardar fotos'}
+          </button>
+          {photoMsg && <span style={{ fontSize: 12, color: photoMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>{photoMsg}</span>}
+        </div>
+      </div>
 
       {loading && <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
       {!loading && subs && subs.length === 0 && (

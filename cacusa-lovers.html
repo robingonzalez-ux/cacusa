@@ -223,6 +223,14 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
+.sub-addr-wrap{position:relative}
+.sub-addr-sugg{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:300;background:#fff;border:1.5px solid var(--ink-light);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;display:none}
+.sub-addr-sugg.open{display:block}
+.sub-addr-item{padding:10px 13px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
+.sub-addr-item:last-child{border-bottom:none}
+.sub-addr-item:hover,.sub-addr-item.focused{background:#fdf0f7}
+.sub-addr-main{font-weight:500}
+.sub-addr-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
 .sub-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
 .sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
@@ -323,23 +331,61 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             <option value="">Seleccionar país</option>
             <option value="EC">Ecuador</option>
             <option value="US">Estados Unidos</option>
+            <option value="CO">Colombia</option>
+            <option value="PE">Perú</option>
+            <option value="MX">México</option>
           </select>
         </div>
         <div class="sub-field">
-          <div class="sub-field-label">Ciudad *</div>
-          <input class="sub-input" id="sCiudad" type="text" placeholder="Quito" autocomplete="address-level2">
-        </div>
-        <div class="sub-field" id="sEstadoField" style="display:none">
-          <div class="sub-field-label">Estado *</div>
-          <input class="sub-input" id="sEstado" type="text" placeholder="Florida" autocomplete="address-level1">
-        </div>
-        <div class="sub-field">
           <div class="sub-field-label">Dirección de envío *</div>
-          <input class="sub-input" id="sDireccion" type="text" placeholder="Av. Ejemplo 123" autocomplete="street-address">
+          <div class="sub-addr-wrap">
+            <input class="sub-input" id="sDireccion" type="text" placeholder="123 Main St…" autocomplete="off" maxlength="120">
+            <div id="sAddrSugg" class="sub-addr-sugg"></div>
+          </div>
         </div>
         <div class="sub-field">
           <div class="sub-field-label">Apto / Casa / Referencia</div>
-          <input class="sub-input" id="sApto" type="text" placeholder="Apto 4B (opcional)">
+          <input class="sub-input" id="sApto" type="text" placeholder="Apto 4B (opcional)" maxlength="40">
+        </div>
+        <div class="sub-field" id="sEstadoField" style="display:none">
+          <div class="sub-field-label">Estado *</div>
+          <select class="sub-input" id="sEstado">
+            <option value="">-- Selecciona tu estado --</option>
+            <option value="AL">Alabama</option><option value="AK">Alaska</option>
+            <option value="AZ">Arizona</option><option value="AR">Arkansas</option>
+            <option value="CA">California</option><option value="CO">Colorado</option>
+            <option value="CT">Connecticut</option><option value="DE">Delaware</option>
+            <option value="FL">Florida</option><option value="GA">Georgia</option>
+            <option value="HI">Hawaii</option><option value="ID">Idaho</option>
+            <option value="IL">Illinois</option><option value="IN">Indiana</option>
+            <option value="IA">Iowa</option><option value="KS">Kansas</option>
+            <option value="KY">Kentucky</option><option value="LA">Louisiana</option>
+            <option value="ME">Maine</option><option value="MD">Maryland</option>
+            <option value="MA">Massachusetts</option><option value="MI">Michigan</option>
+            <option value="MN">Minnesota</option><option value="MS">Mississippi</option>
+            <option value="MO">Missouri</option><option value="MT">Montana</option>
+            <option value="NE">Nebraska</option><option value="NV">Nevada</option>
+            <option value="NH">New Hampshire</option><option value="NJ">New Jersey</option>
+            <option value="NM">New Mexico</option><option value="NY">New York</option>
+            <option value="NC">North Carolina</option><option value="ND">North Dakota</option>
+            <option value="OH">Ohio</option><option value="OK">Oklahoma</option>
+            <option value="OR">Oregon</option><option value="PA">Pennsylvania</option>
+            <option value="RI">Rhode Island</option><option value="SC">South Carolina</option>
+            <option value="SD">South Dakota</option><option value="TN">Tennessee</option>
+            <option value="TX">Texas</option><option value="UT">Utah</option>
+            <option value="VT">Vermont</option><option value="VA">Virginia</option>
+            <option value="WA">Washington</option><option value="WV">West Virginia</option>
+            <option value="WI">Wisconsin</option><option value="WY">Wyoming</option>
+            <option value="DC">Washington D.C.</option>
+          </select>
+        </div>
+        <div class="sub-field" id="sZipField" style="display:none">
+          <div class="sub-field-label">Código ZIP *</div>
+          <input class="sub-input" id="sZip" maxlength="5" inputmode="numeric" placeholder="33101">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Ciudad *</div>
+          <input class="sub-input" id="sCiudad" type="text" placeholder="Miami" autocomplete="address-level2" maxlength="50">
         </div>
         <div class="sub-error" id="sErr1"></div>
         <button class="sub-btn" onclick="goStep2()">Continuar →</button>
@@ -424,9 +470,9 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         </div>
       </div>
       <div class="what-visual reveal-left" data-delay="2">
-        <div class="what-card"><div class="gfill gA" style="height:100%"></div><div class="wc-label">Collar del mes</div></div>
-        <div class="what-card"><div class="gfill gB" style="height:100%"></div><div class="wc-label">Anillo sorpresa</div></div>
-        <div class="what-card"><div class="gfill gE" style="height:100%"></div><div class="wc-label">Pulsera exclusiva</div></div>
+        <div class="what-card" id="wcard1"><div class="gfill gA" id="wfill1" style="height:100%"></div><div class="wc-label">Collar del mes</div></div>
+        <div class="what-card" id="wcard2"><div class="gfill gB" id="wfill2" style="height:100%"></div><div class="wc-label">Anillo sorpresa</div></div>
+        <div class="what-card" id="wcard3"><div class="gfill gE" id="wfill3" style="height:100%"></div><div class="wc-label">Pulsera exclusiva</div></div>
       </div>
     </div>
   </div>
@@ -469,7 +515,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 
       <!-- PLAN ANUAL -->
       <div class="plan-card plan-card--annual reveal-scale" data-delay="2">
-        <div class="plan-badge-annual">🎁 1 MES GRATIS</div>
+        <div class="plan-badge-annual">AHORRA 8%</div>
         <div class="plan-header">
           <div class="plan-tag">Anual</div>
           <div class="plan-price-wrap">
@@ -710,7 +756,23 @@ async function _fbSignIn(){
   } catch(_){}
 }
 function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
-_fbSignIn(); // sign-in anónimo al cargar la página
+// ── Load what-card photos from Firebase ─────────────────────────────────────
+(async function loadLoversPhotos() {
+  try {
+    await _fbSignIn();
+    const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`));
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data) return;
+    [['card1','wfill1'],['card2','wfill2'],['card3','wfill3']].forEach(([key, fillId]) => {
+      const url = data[key]?.url;
+      if (url) {
+        const el = document.getElementById(fillId);
+        if (el) { el.style.backgroundImage = `url('${url}')`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundRepeat='no-repeat'; el.classList.remove('gA','gB','gC','gD','gE'); }
+      }
+    });
+  } catch(_) {}
+})();
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
 function joinNow(plan){ _selectedPlan = plan || 'mensual'; openSub(); }
@@ -725,8 +787,106 @@ function closeSub(){
 }
 function handlePaisChange(){
   const pais = document.getElementById('sPais').value;
-  document.getElementById('sEstadoField').style.display = pais==='US' ? '' : 'none';
+  const isUS = pais === 'US';
+  document.getElementById('sEstadoField').style.display = isUS ? '' : 'none';
+  document.getElementById('sZipField').style.display    = isUS ? '' : 'none';
+  if (!isUS) {
+    document.getElementById('sEstado').value = '';
+    document.getElementById('sZip').value    = '';
+  }
 }
+
+// ── Address autocomplete (Photon / OpenStreetMap) ─────────────────────────
+(function initSubAddrAC() {
+  const inp  = document.getElementById('sDireccion');
+  const list = document.getElementById('sAddrSugg');
+  if (!inp || !list) return;
+  let _t = null, _items = [];
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function matchState(name) {
+    const s = (name||'').toLowerCase();
+    for (const o of document.getElementById('sEstado').options) {
+      if (o.value && o.text.toLowerCase().startsWith(s)) return o.value;
+    }
+    return '';
+  }
+
+  function closeList() { list.classList.remove('open'); list.innerHTML=''; _items=[]; }
+
+  function fillFromFeature(f) {
+    const p = f.properties;
+    const num = p.housenumber || '';
+    const st  = p.street || '';
+    inp.value = st ? (num ? num+' ' : '')+st : (p.name || '');
+    if (p.city) document.getElementById('sCiudad').value = p.city;
+    const cc = (p.countrycode || '').toUpperCase();
+    const paisSel = document.getElementById('sPais');
+    if (['US','EC','CO','PE','MX'].includes(cc)) paisSel.value = cc;
+    const isUS = paisSel.value === 'US';
+    document.getElementById('sEstadoField').style.display = isUS ? '' : 'none';
+    document.getElementById('sZipField').style.display    = isUS ? '' : 'none';
+    if (isUS && p.state) { const a = matchState(p.state); if (a) document.getElementById('sEstado').value = a; }
+    if (isUS && p.postcode) document.getElementById('sZip').value = p.postcode.substring(0,5);
+    closeList();
+  }
+
+  inp.addEventListener('input', function() {
+    clearTimeout(_t);
+    const q = this.value.trim();
+    if (q.length < 3) { closeList(); return; }
+    _t = setTimeout(async () => {
+      try {
+        const res  = await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=6&lang=es');
+        const data = await res.json();
+        const feats = (data.features||[]).filter(f => { const p=f.properties; return p&&(p.street||p.housenumber||(p.city&&p.name)); });
+        if (!feats.length) { closeList(); return; }
+        _items = feats;
+        list.innerHTML = feats.map((f,i) => {
+          const p=f.properties, num=p.housenumber||'', st=p.street||'';
+          const main = st?(num?num+' ':'')+st:(p.name||'');
+          const sub  = [p.city,p.state,p.country].filter(Boolean).join(', ');
+          return '<div class="sub-addr-item" data-idx="'+i+'">'
+               + '<div class="sub-addr-main">'+esc(main)+'</div>'
+               + (sub?'<div class="sub-addr-sub">'+esc(sub)+'</div>':'')
+               + '</div>';
+        }).join('');
+        list.classList.add('open');
+      } catch(e) { closeList(); }
+    }, 380);
+  });
+
+  list.addEventListener('click', function(e) {
+    const item = e.target.closest('.sub-addr-item');
+    if (item) fillFromFeature(_items[+item.dataset.idx]);
+  });
+
+  inp.addEventListener('keydown', function(e) {
+    const items = list.querySelectorAll('.sub-addr-item');
+    if (!items.length) return;
+    const focused = list.querySelector('.focused');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? (focused.nextElementSibling || items[0]) : items[0];
+      if (focused) focused.classList.remove('focused');
+      next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? (focused.previousElementSibling || items[items.length-1]) : items[items.length-1];
+      if (focused) focused.classList.remove('focused');
+      prev.classList.add('focused');
+    } else if (e.key === 'Enter') {
+      const foc = list.querySelector('.focused');
+      if (foc) { e.preventDefault(); fillFromFeature(_items[+foc.dataset.idx]); }
+    } else if (e.key === 'Escape') {
+      closeList();
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!inp.contains(e.target) && !list.contains(e.target)) closeList();
+  });
+})();
 function goStep2(){
   const err = document.getElementById('sErr1');
   const nombre = document.getElementById('sNombre').value.trim();
@@ -735,15 +895,17 @@ function goStep2(){
   const pais   = document.getElementById('sPais').value;
   const ciudad = document.getElementById('sCiudad').value.trim();
   const dir    = document.getElementById('sDireccion').value.trim();
-  const estado = document.getElementById('sEstado').value.trim();
+  const estado = document.getElementById('sEstado').value;
+  const zip    = document.getElementById('sZip').value.trim();
 
   if(!nombre){ err.textContent='Por favor ingresa tu nombre.'; return; }
   if(!email || !email.includes('@')){ err.textContent='Por favor ingresa un email válido.'; return; }
   if(!tel){ err.textContent='Por favor ingresa tu número de teléfono.'; return; }
   if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
-  if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
-  if(pais==='US' && !estado){ err.textContent='Por favor ingresa tu estado.'; return; }
   if(!dir){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
+  if(pais==='US' && !estado){ err.textContent='Por favor selecciona tu estado.'; return; }
+  if(pais==='US' && !/^\d{5}$/.test(zip)){ err.textContent='Por favor ingresa un código ZIP válido (5 dígitos).'; return; }
+  if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
   err.textContent='';
 
   // Actualizar resumen según plan
@@ -786,7 +948,8 @@ async function submitSubscription(){
     telefono:  document.getElementById('sTel').value.trim(),
     pais:      document.getElementById('sPais').value,
     ciudad:    document.getElementById('sCiudad').value.trim(),
-    estado:    document.getElementById('sEstado').value.trim() || null,
+    estado:    document.getElementById('sEstado').value || null,
+    zip:       document.getElementById('sZip').value.trim() || null,
     direccion: document.getElementById('sDireccion').value.trim(),
     apto:      document.getElementById('sApto').value.trim() || null,
     plan:      _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
