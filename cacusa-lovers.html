@@ -254,6 +254,12 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-plan-opt-price{font-family:var(--fu);font-size:16px;font-weight:700;color:var(--pink)}
 .sub-plan-opt--anual .sub-plan-opt-price{color:var(--lilac)}
 .sub-plan-opt-badge{display:inline-block;background:var(--lilac);color:white;font-family:var(--fu);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:100px;margin-bottom:4px}
+.sub-pay-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.sub-pay-opt{border:2px solid rgba(139,42,90,.18);border-radius:14px;padding:13px 10px;cursor:pointer;text-align:center;transition:all .2s;background:white}
+.sub-pay-opt.selected{border-color:var(--pink);background:#fdf0f7}
+.sub-pay-opt--transfer.selected{border-color:#25D366;background:#f0fdf4}
+.sub-pay-opt-icon{font-size:22px;margin-bottom:4px}
+.sub-pay-opt-name{font-family:var(--fu);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink)}
 /* ── SUCCESS SCREEN ── */
 #sub-success{display:none;position:fixed;inset:0;background:var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
 #sub-success.show{display:flex}
@@ -360,12 +366,23 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
           <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$20.00</span></div>
         </div>
+        <div class="sub-field-label" style="margin-bottom:8px">Método de pago</div>
+        <div class="sub-pay-toggle">
+          <div class="sub-pay-opt selected" id="payOptSquare" onclick="selectPayment('square')">
+            <div class="sub-pay-opt-icon">💳</div>
+            <div class="sub-pay-opt-name">Tarjeta en línea</div>
+          </div>
+          <div class="sub-pay-opt sub-pay-opt--transfer" id="payOptTransfer" onclick="selectPayment('transfer')">
+            <div class="sub-pay-opt-icon">💬</div>
+            <div class="sub-pay-opt-name">Transferencia</div>
+          </div>
+        </div>
         <div class="sub-error" id="sErr2"></div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
           💳 Suscribirme y pagar $20/mes <span class="spin"></span>
         </button>
         <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
-        <p class="sub-legal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra $20 automáticamente cada mes. Cancela cuando quieras escribiéndonos por WhatsApp.</p>
+        <p class="sub-legal" id="subLegal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra automáticamente cada mes. Cancela cuando quieras escribiéndonos por WhatsApp.</p>
       </div>
     </div>
   </div>
@@ -699,7 +716,9 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 // ── CONFIG ──────────────────────────────────────────────────
 const SQUARE_PAYMENT_LINK         = 'https://square.link/u/hkC8r6ZB';  // mensual $20
 const SQUARE_PAYMENT_LINK_ANNUAL  = 'https://square.link/u/uoTACYnV';  // anual $219.89
-let _selectedPlan = 'mensual';
+const WHATSAPP_NUMBER             = '17867375336';
+let _selectedPlan    = 'mensual';
+let _selectedPayment = 'square';
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -776,14 +795,33 @@ function selectPlan(plan){
   document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$20.00';
   document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
   document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
-  const btn = document.getElementById('sPayBtn');
-  btn.innerHTML = isAnual
-    ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
-    : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>';
+  if (_selectedPayment !== 'transfer') {
+    const btn = document.getElementById('sPayBtn');
+    btn.innerHTML = isAnual
+      ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
+      : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>';
+  }
   const hp = document.getElementById('subHeadPrice');
   if (hp) hp.textContent = isAnual ? '$219.89/año · 2 joyas artesanales · envío incluido' : '$20/mes · 2 joyas artesanales · envío incluido';
   document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
   document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
+}
+function selectPayment(method){
+  _selectedPayment = method;
+  const isTransfer = method === 'transfer';
+  document.getElementById('payOptSquare').classList.toggle('selected', !isTransfer);
+  document.getElementById('payOptTransfer').classList.toggle('selected', isTransfer);
+  const btn = document.getElementById('sPayBtn');
+  const isAnual = _selectedPlan === 'anual';
+  btn.innerHTML = isTransfer
+    ? '💬 Coordinar transferencia por WhatsApp <span class="spin"></span>'
+    : (isAnual
+        ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
+        : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>');
+  const legal = document.getElementById('subLegal');
+  if (legal) legal.textContent = isTransfer
+    ? 'Te redirigiremos a WhatsApp para coordinar tu transferencia bancaria. Una vez confirmado el pago activamos tu suscripción.'
+    : 'Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra automáticamente cada mes. Cancela cuando quieras escribiéndonos por WhatsApp.';
 }
 
 async function submitSubscription(){
@@ -793,13 +831,15 @@ async function submitSubscription(){
   btn.classList.add('loading');
   err.textContent = '';
 
+  const isTransfer = _selectedPayment === 'transfer';
   const subscriber = {
-    email:    document.getElementById('sEmail').value.trim(),
-    telefono: document.getElementById('sTel').value.trim(),
-    plan:     _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-    monto:    _selectedPlan === 'anual' ? '$219.89/año' : '$20/mes',
-    fecha:    new Date().toISOString().slice(0, 10),
-    estado_pago: 'pendiente',
+    email:       document.getElementById('sEmail').value.trim(),
+    telefono:    document.getElementById('sTel').value.trim(),
+    plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+    monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$20/mes',
+    fecha:       new Date().toISOString().slice(0, 10),
+    metodo_pago: isTransfer ? 'transferencia' : 'square',
+    estado_pago: isTransfer ? 'pendiente_transferencia' : 'pendiente',
   };
 
   // Guardar datos en Firebase (best-effort — no bloquea el pago si falla)
@@ -812,9 +852,16 @@ async function submitSubscription(){
     });
   } catch(e){ console.warn('[fb-save]', e); }
 
-  // Redirigir a Square para el pago recurrente
-  const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
-  window.location.href = link;
+  if (isTransfer) {
+    const planLabel = _selectedPlan === 'anual' ? 'Anual ($219.89/año)' : 'Mensual ($20/mes)';
+    const msg = `Hola! Me quiero suscribir a Cacusa Lovers ${planLabel}. ¿Cómo hago la transferencia? Mi email: ${subscriber.email}`;
+    window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  } else {
+    const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
+    window.location.href = link;
+  }
 }
 
 // ── DETECT RETURN FROM SQUARE (?subscribed=1 o ?paid=1) ─────
