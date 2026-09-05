@@ -195,6 +195,52 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .gD{background:linear-gradient(135deg,#88C8F0,#DCF0FC)}
 .gE{background:linear-gradient(135deg,#F5A0C8,#C4A0EC)}
 
+/* ── SUBSCRIPTION MODAL ── */
+#sub-overlay{position:fixed;inset:0;background:rgba(139,42,90,.38);backdrop-filter:blur(12px);z-index:900;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;display:flex;align-items:center;justify-content:center;padding:16px}
+#sub-overlay.open{opacity:1;visibility:visible}
+.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:94vh;overflow-y:auto;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
+#sub-overlay.open .sub-box{transform:scale(1)}
+.sub-head{background:var(--grad-full);padding:30px 32px 22px;border-radius:28px 28px 0 0;position:relative;text-align:center}
+.sub-head-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.sub-head-close:hover{background:rgba(255,255,255,.4)}
+.sub-head-tag{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:6px}
+.sub-head-title{font-family:var(--fd);font-weight:900;font-size:24px;color:white;line-height:1.1}
+.sub-head-price{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8);margin-top:5px}
+.sub-body{padding:28px 32px}
+.sub-step{display:none}
+.sub-step.active{display:block}
+.sub-dots{display:flex;gap:6px;justify-content:center;margin-bottom:22px}
+.sub-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-light);transition:all .3s}
+.sub-dot.act{background:var(--pink);transform:scale(1.2)}
+.sub-field{margin-bottom:14px}
+.sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
+.sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
+.sub-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
+.sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
+.sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
+.sub-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.sub-btn .spin{display:none;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:subSpin .65s linear infinite;margin-left:10px;vertical-align:middle}
+.sub-btn.loading .spin{display:inline-block}
+@keyframes subSpin{to{transform:rotate(360deg)}}
+.sub-back{display:block;text-align:center;margin-top:12px;font-family:var(--fu);font-size:12px;color:var(--ink-muted);cursor:pointer;background:none;border:none;width:100%;text-decoration:underline}
+.sub-summary-box{background:var(--pink-pale);border-radius:16px;padding:18px 20px;margin-bottom:20px;border:1.5px solid rgba(238,111,168,.15)}
+.sub-sum-row{display:flex;justify-content:space-between;align-items:center;font-family:var(--fu);font-size:13px;color:var(--ink);margin-bottom:6px}
+.sub-sum-row:last-child{margin-bottom:0;font-weight:700;font-size:15px;color:var(--pink);padding-top:10px;border-top:1px solid rgba(238,111,168,.2)}
+.sub-sum-feature{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);margin-bottom:4px;padding-left:4px}
+.sub-sum-feature::before{content:'♡ ';color:var(--pink)}
+.sub-legal{font-family:var(--fe);font-size:11px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px;line-height:1.65}
+/* ── SUCCESS SCREEN ── */
+#sub-success{display:none;position:fixed;inset:0;background:var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+#sub-success.show{display:flex}
+.ss-icon{font-size:72px;margin-bottom:20px;animation:ssIn .6s cubic-bezier(.34,1.56,.64,1)}
+.ss-title{font-family:var(--fd);font-weight:900;font-size:clamp(32px,5vw,52px);color:white;margin-bottom:12px}
+.ss-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:rgba(255,255,255,.85);max-width:460px;line-height:1.7;margin-bottom:32px}
+.ss-btn{background:white;color:var(--pink);font-family:var(--fu);font-weight:700;font-size:14px;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,.15);transition:transform .3s}
+.ss-btn:hover{transform:scale(1.04)}
+@keyframes ssIn{from{transform:scale(0) rotate(-15deg)}to{transform:scale(1) rotate(0)}}
+
 /* ── RESPONSIVE ── */
 @media(max-width:768px){
   nav{padding:0 20px}
@@ -208,6 +254,10 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
   .plan-body{padding:28px 24px}
   .what-card:first-child{height:180px}
   #hero{padding-top:100px}
+  .sub-box{border-radius:20px}
+  .sub-head{border-radius:20px 20px 0 0;padding:22px 20px 18px}
+  .sub-body{padding:22px 20px}
+  .sub-row-2{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -215,6 +265,96 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
+
+<!-- SUCCESS SCREEN -->
+<div id="sub-success">
+  <div class="ss-icon">🌸</div>
+  <h1 class="ss-title">¡Bienvenida al club!</h1>
+  <p class="ss-sub">Tu suscripción <strong>Cacusa Lovers</strong> está activa. Recibirás un email de confirmación de Square y tu primera caja llegará en los próximos días. ♡</p>
+  <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+</div>
+
+<!-- SUBSCRIPTION MODAL -->
+<div id="sub-overlay" onclick="if(event.target===this)closeSub()">
+  <div class="sub-box">
+    <div class="sub-head">
+      <button class="sub-head-close" onclick="closeSub()">✕</button>
+      <div class="sub-head-tag">✦ Club de suscripción mensual</div>
+      <div class="sub-head-title">Cacusa <em>Lovers</em></div>
+      <div class="sub-head-price">$20/mes · 2 joyas artesanales · envío incluido</div>
+    </div>
+    <div class="sub-body">
+      <div class="sub-dots">
+        <div class="sub-dot act" id="dot1"></div>
+        <div class="sub-dot" id="dot2"></div>
+      </div>
+      <!-- STEP 1: Personal & shipping info -->
+      <div class="sub-step active" id="sub-step1">
+        <div class="sub-row-2">
+          <div class="sub-field">
+            <div class="sub-field-label">Nombre *</div>
+            <input class="sub-input" id="sNombre" type="text" placeholder="María" autocomplete="given-name">
+          </div>
+          <div class="sub-field">
+            <div class="sub-field-label">Apellido</div>
+            <input class="sub-input" id="sApellido" type="text" placeholder="González" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Email *</div>
+          <input class="sub-input" id="sEmail" type="email" placeholder="maria@ejemplo.com" autocomplete="email">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Teléfono / WhatsApp *</div>
+          <input class="sub-input" id="sTel" type="tel" placeholder="+593 99 999 9999" autocomplete="tel">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">País *</div>
+          <select class="sub-input" id="sPais" onchange="handlePaisChange()">
+            <option value="">Seleccionar país</option>
+            <option value="EC">Ecuador</option>
+            <option value="US">Estados Unidos</option>
+          </select>
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Ciudad *</div>
+          <input class="sub-input" id="sCiudad" type="text" placeholder="Quito" autocomplete="address-level2">
+        </div>
+        <div class="sub-field" id="sEstadoField" style="display:none">
+          <div class="sub-field-label">Estado *</div>
+          <input class="sub-input" id="sEstado" type="text" placeholder="Florida" autocomplete="address-level1">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Dirección de envío *</div>
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Av. Ejemplo 123" autocomplete="street-address">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Apto / Casa / Referencia</div>
+          <input class="sub-input" id="sApto" type="text" placeholder="Apto 4B (opcional)">
+        </div>
+        <div class="sub-error" id="sErr1"></div>
+        <button class="sub-btn" onclick="goStep2()">Continuar →</button>
+      </div>
+      <!-- STEP 2: Confirm & pay -->
+      <div class="sub-step" id="sub-step2">
+        <div class="sub-summary-box">
+          <div class="sub-sum-row"><span>Plan</span><span>Cacusa Lovers</span></div>
+          <div class="sub-sum-feature">2 joyas artesanales cada mes</div>
+          <div class="sub-sum-feature">Envío a domicilio incluido</div>
+          <div class="sub-sum-feature">Envíos gratis en todas tus compras</div>
+          <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
+          <div class="sub-sum-row"><span>Total mensual</span><span>$20.00</span></div>
+        </div>
+        <div class="sub-error" id="sErr2"></div>
+        <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
+          💳 Suscribirme y pagar $20/mes <span class="spin"></span>
+        </button>
+        <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
+        <p class="sub-legal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra $20 automáticamente cada mes. Cancela cuando quieras escribiéndonos por WhatsApp.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- NAV -->
 <nav>
@@ -477,11 +617,105 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 </footer>
 
 <script>
-// ── WHATSAPP CTA ────────────────────────────────────────────
-function joinNow(){
-  const msg = '🌸 *Quiero ser Cacusa Lover* ♡\n*CACUSA by Taitus*\n\nHola! Vi la membresía de suscripción mensual y quiero unirme.\n\n💍 *Plan:* Cacusa Lovers — $20/mes · 2 joyas mensuales\n\n¿Me pueden dar más información sobre cómo funciona y cuándo recibiría mi primera caja? ✨';
-  window.open('https://wa.me/17867375336?text=' + encodeURIComponent(msg), '_blank');
+// ── CONFIG ──────────────────────────────────────────────────
+const SUBSCRIBE_WORKER_URL = 'https://cacusa-subscribe.facturacioncacusa.workers.dev';
+
+// ── SUBSCRIPTION MODAL ──────────────────────────────────────
+function joinNow(){ openSub(); }
+
+function openSub(){
+  document.getElementById('sub-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
 }
+function closeSub(){
+  document.getElementById('sub-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function handlePaisChange(){
+  const pais = document.getElementById('sPais').value;
+  document.getElementById('sEstadoField').style.display = pais==='US' ? '' : 'none';
+}
+function goStep2(){
+  const err = document.getElementById('sErr1');
+  const nombre = document.getElementById('sNombre').value.trim();
+  const email  = document.getElementById('sEmail').value.trim();
+  const tel    = document.getElementById('sTel').value.trim();
+  const pais   = document.getElementById('sPais').value;
+  const ciudad = document.getElementById('sCiudad').value.trim();
+  const dir    = document.getElementById('sDireccion').value.trim();
+  const estado = document.getElementById('sEstado').value.trim();
+
+  if(!nombre){ err.textContent='Por favor ingresa tu nombre.'; return; }
+  if(!email || !email.includes('@')){ err.textContent='Por favor ingresa un email válido.'; return; }
+  if(!tel){ err.textContent='Por favor ingresa tu número de teléfono.'; return; }
+  if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
+  if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
+  if(pais==='US' && !estado){ err.textContent='Por favor ingresa tu estado.'; return; }
+  if(!dir){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
+  err.textContent='';
+
+  document.getElementById('sub-step1').classList.remove('active');
+  document.getElementById('sub-step2').classList.add('active');
+  document.getElementById('dot1').classList.remove('act');
+  document.getElementById('dot2').classList.add('act');
+}
+function goStep1(){
+  document.getElementById('sub-step2').classList.remove('active');
+  document.getElementById('sub-step1').classList.add('active');
+  document.getElementById('dot2').classList.remove('act');
+  document.getElementById('dot1').classList.add('act');
+  document.getElementById('sErr2').textContent='';
+}
+
+async function submitSubscription(){
+  const btn = document.getElementById('sPayBtn');
+  const err = document.getElementById('sErr2');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  err.textContent = '';
+
+  const payload = {
+    name:     document.getElementById('sNombre').value.trim(),
+    lastname: document.getElementById('sApellido').value.trim(),
+    email:    document.getElementById('sEmail').value.trim(),
+    phone:    document.getElementById('sTel').value.trim(),
+    country:  document.getElementById('sPais').value,
+    city:     document.getElementById('sCiudad').value.trim(),
+    state:    document.getElementById('sEstado').value.trim() || undefined,
+    address:  document.getElementById('sDireccion').value.trim(),
+    apto:     document.getElementById('sApto').value.trim() || undefined,
+  };
+
+  try {
+    const resp = await fetch(SUBSCRIBE_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+
+    if(!resp.ok || !data.checkoutUrl){
+      throw new Error(data.error || 'No se pudo crear el pago. Intenta de nuevo.');
+    }
+    // Save subscriber info locally before redirect
+    sessionStorage.setItem('cacusa_sub_pending', JSON.stringify(payload));
+    window.location.href = data.checkoutUrl;
+
+  } catch(e){
+    err.textContent = '⚠️ ' + e.message;
+    btn.disabled = false;
+    btn.classList.remove('loading');
+  }
+}
+
+// ── DETECT RETURN FROM SQUARE (?subscribed=1) ───────────────
+(function checkReturn(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('subscribed') === '1' || params.get('paid') === '1'){
+    document.getElementById('sub-success').classList.add('show');
+    history.replaceState({}, '', location.pathname);
+  }
+})();
 
 // ── CURSOR ──────────────────────────────────────────────────
 const cur = document.getElementById('cursor');
