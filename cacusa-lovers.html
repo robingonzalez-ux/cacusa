@@ -246,6 +246,14 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-sum-feature{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);margin-bottom:4px;padding-left:4px}
 .sub-sum-feature::before{content:'♡ ';color:var(--pink)}
 .sub-legal{font-family:var(--fe);font-size:11px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px;line-height:1.65}
+.sub-plan-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.sub-plan-opt{border:2px solid rgba(139,42,90,.18);border-radius:14px;padding:13px 10px;cursor:pointer;text-align:center;transition:all .2s;position:relative;background:white}
+.sub-plan-opt.selected{border-color:var(--pink);background:#fdf0f7}
+.sub-plan-opt--anual.selected{border-color:var(--lilac);background:#f5eeff}
+.sub-plan-opt-name{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.sub-plan-opt-price{font-family:var(--fu);font-size:16px;font-weight:700;color:var(--pink)}
+.sub-plan-opt--anual .sub-plan-opt-price{color:var(--lilac)}
+.sub-plan-opt-badge{display:inline-block;background:var(--lilac);color:white;font-family:var(--fu);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:100px;margin-bottom:4px}
 /* ── SUCCESS SCREEN ── */
 #sub-success{display:none;position:fixed;inset:0;background:var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
 #sub-success.show{display:flex}
@@ -310,7 +318,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       <button class="sub-head-close" onclick="closeSub()">✕</button>
       <div class="sub-head-tag">✦ Club de suscripción mensual</div>
       <div class="sub-head-title">Cacusa <em>Lovers</em></div>
-      <div class="sub-head-price">$20/mes · 2 joyas artesanales · envío incluido</div>
+      <div class="sub-head-price" id="subHeadPrice">$20/mes · 2 joyas artesanales · envío incluido</div>
     </div>
     <div class="sub-body">
       <div class="sub-dots">
@@ -404,6 +412,18 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       </div>
       <!-- STEP 2: Confirm & pay -->
       <div class="sub-step" id="sub-step2">
+        <!-- Plan selector -->
+        <div class="sub-plan-toggle">
+          <div class="sub-plan-opt selected" id="planOptMensual" onclick="selectPlan('mensual')">
+            <div class="sub-plan-opt-name">Mensual</div>
+            <div class="sub-plan-opt-price">$20/mes</div>
+          </div>
+          <div class="sub-plan-opt sub-plan-opt--anual" id="planOptAnual" onclick="selectPlan('anual')">
+            <div class="sub-plan-opt-badge">AHORRA 8%</div>
+            <div class="sub-plan-opt-name">Anual</div>
+            <div class="sub-plan-opt-price">$219.89/año</div>
+          </div>
+        </div>
         <div class="sub-summary-box" id="sub-summary-box">
           <div class="sub-sum-row"><span>Plan</span><span id="sum-plan-name">Cacusa Lovers</span></div>
           <div class="sub-sum-feature">2 joyas en acero inoxidable cada mes</div>
@@ -939,18 +959,7 @@ function goStep2(){
   if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
   err.textContent='';
 
-  // Actualizar resumen según plan
-  const isAnual = _selectedPlan === 'anual';
-  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers Mensual';
-  document.getElementById('sum-period-label').textContent = isAnual ? 'Total anual' : 'Total mensual';
-  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$20.00';
-  if(isAnual){
-    document.getElementById('sum-plan-name').style.color = '#9B5DE5';
-    document.getElementById('sum-price').style.color = '#9B5DE5';
-  } else {
-    document.getElementById('sum-plan-name').style.color = '';
-    document.getElementById('sum-price').style.color = '';
-  }
+  selectPlan(_selectedPlan);
 
   document.getElementById('sub-step1').classList.remove('active');
   document.getElementById('sub-step2').classList.add('active');
@@ -963,6 +972,23 @@ function goStep1(){
   document.getElementById('dot2').classList.remove('act');
   document.getElementById('dot1').classList.add('act');
   document.getElementById('sErr2').textContent='';
+}
+function selectPlan(plan){
+  _selectedPlan = plan;
+  const isAnual = plan === 'anual';
+  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers Mensual';
+  document.getElementById('sum-period-label').textContent = isAnual ? 'Total anual' : 'Total mensual';
+  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$20.00';
+  document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
+  document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
+  const btn = document.getElementById('sPayBtn');
+  btn.innerHTML = isAnual
+    ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
+    : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>';
+  const hp = document.getElementById('subHeadPrice');
+  if (hp) hp.textContent = isAnual ? '$219.89/año · 2 joyas artesanales · envío incluido' : '$20/mes · 2 joyas artesanales · envío incluido';
+  document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
+  document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
 }
 
 async function submitSubscription(){
