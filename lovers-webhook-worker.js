@@ -135,16 +135,23 @@ export default {
 
         if (email) {
           const today = new Date().toISOString().slice(0, 10);
-          const nameFields = {
-            nombre:   customer?.given_name  || '',
-            apellido: customer?.family_name || '',
+          const addr = customer?.address || {};
+          const customerFields = {
+            nombre:    customer?.given_name  || '',
+            apellido:  customer?.family_name || '',
+            direccion: addr.address_line_1   || '',
+            apto:      addr.address_line_2   || '',
+            ciudad:    addr.locality         || '',
+            estado:    addr.administrative_district_level_1 || '',
+            zip:       addr.postal_code      || '',
+            pais:      addr.country          || '',
           };
           const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
           if (key) {
             await updateSubscriber(key, 'activo', {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
-              ...nameFields,
+              ...customerFields,
             }, dbUrl, fbToken);
             console.log('Marked activo:', email);
           } else {
@@ -154,7 +161,7 @@ export default {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 email: email.toLowerCase(),
-                ...nameFields,
+                ...customerFields,
                 plan: 'Cacusa Lovers',
                 monto: '$20/mes',
                 fecha: today,
