@@ -205,7 +205,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 /* ── SUBSCRIPTION MODAL ── */
 #sub-overlay{position:fixed;inset:0;background:rgba(139,42,90,.38);backdrop-filter:blur(12px);z-index:900;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;display:flex;align-items:center;justify-content:center;padding:16px}
 #sub-overlay.open{opacity:1;visibility:visible}
-.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:94vh;overflow-y:auto;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
+.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:94vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
 #sub-overlay.open .sub-box{transform:scale(1)}
 .sub-head{background:var(--grad-full);padding:30px 32px 22px;border-radius:28px 28px 0 0;position:relative;text-align:center}
 .sub-head-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
@@ -271,10 +271,18 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
   .plan-body{padding:28px 24px}
   .what-card:first-child{height:180px}
   #hero{padding-top:100px}
-  .sub-box{border-radius:20px}
-  .sub-head{border-radius:20px 20px 0 0;padding:22px 20px 18px}
-  .sub-body{padding:22px 20px}
+  /* ── Modal fix for mobile (iOS scroll + Android keyboard) ── */
+  #sub-overlay{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:68px 12px 24px}
+  .sub-box{border-radius:20px;max-height:none;overflow-y:visible}
+  .sub-head{border-radius:20px 20px 0 0;padding:18px 18px 14px}
+  .sub-head-title{font-size:20px}
+  .sub-head-price{font-size:12px}
+  .sub-body{padding:18px 16px}
+  .sub-field{margin-bottom:10px}
+  .sub-input{padding:8px 11px;font-size:14px}
+  .sub-dots{margin-bottom:16px}
   .sub-row-2{grid-template-columns:1fr}
+  .btn-join,.btn-join--annual,.sub-btn,.sub-head-close,.sub-back{cursor:pointer}
 }
 </style>
 </head>
