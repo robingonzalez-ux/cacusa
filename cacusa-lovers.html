@@ -856,15 +856,15 @@ function handlePaisChange(){
     if (q.length < 3) { closeList(); return; }
     _t = setTimeout(async () => {
       try {
-        const res  = await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=6&lang=es');
+        const res  = await fetch('https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=6&lang=en');
         const data = await res.json();
-        const feats = (data.features||[]).filter(f => { const p=f.properties; return p&&(p.street||p.housenumber||(p.city&&p.name)); });
+        const feats = (data.features||[]).filter(f => f.properties && (f.properties.name || f.properties.street || f.properties.housenumber));
         if (!feats.length) { closeList(); return; }
         _items = feats;
         list.innerHTML = feats.map((f,i) => {
           const p=f.properties, num=p.housenumber||'', st=p.street||'';
-          const main = st?(num?num+' ':'')+st:(p.name||'');
-          const sub  = [p.city,p.state,p.country].filter(Boolean).join(', ');
+          const main = st ? (num ? num+' ' : '')+st : (p.name||'');
+          const sub  = [p.city||p.county, p.state, p.country].filter(Boolean).join(', ');
           return '<div class="sub-addr-item" data-idx="'+i+'">'
                + '<div class="sub-addr-main">'+esc(main)+'</div>'
                + (sub?'<div class="sub-addr-sub">'+esc(sub)+'</div>':'')
@@ -872,7 +872,7 @@ function handlePaisChange(){
         }).join('');
         positionList();
         list.classList.add('open');
-      } catch(e) { closeList(); }
+      } catch(e) { console.warn('[addr-ac]', e); closeList(); }
     }, 380);
   });
 
