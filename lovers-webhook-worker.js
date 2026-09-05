@@ -1,0 +1,198 @@
+/**
+ * Cacusa Lovers — Square Webhook Worker
+ * Deploy to Cloudflare Workers as: cacusa-lovers-webhook.facturacioncacusa.workers.dev
+ *
+ * Environment variables (Secrets in CF Dashboard):
+ *   SQUARE_WEBHOOK_SIGNATURE_KEY  — from Square Dashboard → Webhooks → signature key
+ *   FB_API_KEY                    — AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM
+ *   FB_DB_URL                     — https://cacusa-pos-default-rtdb.firebaseio.com
+ *
+ * Square events subscribed (in Square Dashboard → Webhooks):
+ *   invoice.payment_made          → marca suscriptora como "activo"
+ *   invoice.payment_failed        → marca suscriptora como "pago_fallido"
+ *   subscription.updated          → si status=CANCELED, marca "cancelado"
+ *
+ * Setup:
+ *   1. Deploy this worker (wrangler deploy)
+ *   2. Set the 3 secrets above
+ *   3. Square Dashboard → Developers → Webhooks → Add endpoint
+ *      URL: https://cacusa-lovers-webhook.facturacioncacusa.workers.dev/webhook
+ *      Events: invoice.payment_made, invoice.payment_failed, subscription.updated
+ *   4. Copy the "Signature key" from the webhook detail page → set as SQUARE_WEBHOOK_SIGNATURE_KEY
+ */
+
+const SQUARE_API = 'https://connect.squareup.com/v2';
+
+// ── Verify Square webhook signature ──────────────────────────────────────────
+async function verifySignature(request, body, sigKey) {
+  const sigHeader = request.headers.get('x-square-hmacsha256-signature');
+  if (!sigHeader || !sigKey) return false;
+  const url = new URL(request.url).href;
+  const payload = url + body;
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(sigKey),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
+  const expected = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  return expected === sigHeader;
+}
+
+// ── Firebase anonymous auth ───────────────────────────────────────────────────
+async function fbSignIn(apiKey) {
+  const r = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnSecureToken: true }) }
+  );
+  if (!r.ok) return null;
+  const d = await r.json();
+  return d.idToken || null;
+}
+
+// ── Find Firebase subscriber key by email ────────────────────────────────────
+async function findSubscriberByEmail(email, dbUrl, token) {
+  const url = `${dbUrl}/cacusa_lovers.json?auth=${token}&orderBy="email"&equalTo="${encodeURIComponent(email)}"`;
+  const r = await fetch(url);
+  if (!r.ok) return null;
+  const data = await r.json();
+  if (!data) return null;
+  const keys = Object.keys(data);
+  return keys.length > 0 ? keys[0] : null;
+}
+
+// ── Update subscriber estado_pago in Firebase ─────────────────────────────────
+async function updateSubscriber(key, estadoPago, extras, dbUrl, token) {
+  const url = `${dbUrl}/cacusa_lovers/${key}.json?auth=${token}`;
+  await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado_pago: estadoPago, ...extras }),
+  });
+}
+
+// ── Get customer email from Square ───────────────────────────────────────────
+async function getSquareCustomerEmail(customerId, squareToken) {
+  if (!customerId) return null;
+  const r = await fetch(`${SQUARE_API}/customers/${customerId}`, {
+    headers: { 'Authorization': `Bearer ${squareToken}`, 'Square-Version': '2024-11-20' }
+  });
+  if (!r.ok) return null;
+  const d = await r.json();
+  return d.customer?.email_address || null;
+}
+
+// ── Main handler ──────────────────────────────────────────────────────────────
+export default {
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('OK', { status: 200 });
+    }
+
+    const body = await request.text();
+
+    // Verify Square signature
+    const valid = await verifySignature(request, body, env.SQUARE_WEBHOOK_SIGNATURE_KEY);
+    if (!valid) {
+      console.warn('Invalid Square signature');
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    let event;
+    try { event = JSON.parse(body); } catch { return new Response('Bad Request', { status: 400 }); }
+
+    const type = event.type;
+    const data = event.data?.object;
+
+    console.log('Square event:', type);
+
+    // Authenticate with Firebase
+    const fbToken = await fbSignIn(env.FB_API_KEY);
+    if (!fbToken) {
+      console.error('Firebase auth failed');
+      return new Response('Internal Error', { status: 500 });
+    }
+
+    const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+
+    try {
+      // ── invoice.payment_made → activo ──────────────────────────────────────
+      if (type === 'invoice.payment_made') {
+        const invoice = data?.invoice;
+        const customerId = invoice?.primary_recipient?.customer_id;
+        const email = invoice?.primary_recipient?.email_address
+          || (customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null);
+
+        if (email) {
+          const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
+          if (key) {
+            await updateSubscriber(key, 'activo', {
+              ultimo_pago: new Date().toISOString().slice(0, 10),
+              square_invoice_id: invoice?.id || '',
+            }, dbUrl, fbToken);
+            console.log('Marked activo:', email);
+          } else {
+            // Subscriber not in Firebase yet — create minimal record
+            await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbToken}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: email.toLowerCase(),
+                plan: 'Cacusa Lovers',
+                monto: '$20/mes',
+                fecha: new Date().toISOString().slice(0, 10),
+                estado_pago: 'activo',
+                ultimo_pago: new Date().toISOString().slice(0, 10),
+                square_invoice_id: invoice?.id || '',
+              }),
+            });
+            console.log('Created activo record for:', email);
+          }
+        }
+      }
+
+      // ── invoice.payment_failed → pago_fallido ──────────────────────────────
+      else if (type === 'invoice.payment_failed') {
+        const invoice = data?.invoice;
+        const customerId = invoice?.primary_recipient?.customer_id;
+        const email = invoice?.primary_recipient?.email_address
+          || (customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null);
+
+        if (email) {
+          const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
+          if (key) {
+            await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbToken);
+            console.log('Marked pago_fallido:', email);
+          }
+        }
+      }
+
+      // ── subscription.updated → cancelado si status=CANCELED ───────────────
+      else if (type === 'subscription.updated') {
+        const sub = data?.subscription;
+        if (sub?.status === 'CANCELED') {
+          const customerId = sub?.customer_id;
+          const email = customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null;
+          if (email) {
+            const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
+            if (key) {
+              await updateSubscriber(key, 'cancelado', {
+                fecha_cancelacion: new Date().toISOString().slice(0, 10),
+              }, dbUrl, fbToken);
+              console.log('Marked cancelado:', email);
+            }
+          }
+        }
+      }
+
+    } catch (err) {
+      console.error('Handler error:', err.message);
+    }
+
+    // Always return 200 to Square (prevents retries)
+    return new Response('OK', { status: 200 });
+  },
+};

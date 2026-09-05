@@ -1810,7 +1810,8 @@ function LoversTab() {
     setUpdating(u => { const n = { ...u }; delete n[sub.id]; return n; });
   };
 
-  const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444' }[e] || '#A89AAF');
+  const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
+  const estadoLabel = e => ({ 'activo': 'Activo ✓', 'pendiente': 'Pendiente', 'cancelado': 'Cancelado', 'pago_fallido': 'Pago fallido ⚠️' }[e] || e || 'Pendiente');
   const fmt = iso => { try { return new Date(iso).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }); } catch { return iso || '—'; } };
 
   return (
@@ -1837,9 +1838,11 @@ function LoversTab() {
                   <div style={{ fontSize: 12, color: '#A89AAF', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                  <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                    {s.estado_pago || 'pendiente'}
+                  <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em' }}>
+                    {estadoLabel(s.estado_pago)}
                   </span>
+                  {s.ultimo_pago && <div style={{ fontSize: 11, color: '#A89AAF', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
+                  {s.fecha_cancelacion && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'right' }}>Canceló: {fmt(s.fecha_cancelacion)}</div>}
                   <select
                     disabled={!!updating[s.id]}
                     value={s.estado_pago || 'pendiente'}
@@ -1847,6 +1850,7 @@ function LoversTab() {
                     style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: '1px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', color: '#555', background: 'white' }}>
                     <option value="pendiente">Pendiente</option>
                     <option value="activo">Activo</option>
+                    <option value="pago_fallido">Pago fallido</option>
                     <option value="cancelado">Cancelado</option>
                   </select>
                 </div>
