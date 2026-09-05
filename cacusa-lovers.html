@@ -327,16 +327,6 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       </div>
       <!-- STEP 1: Personal & shipping info -->
       <div class="sub-step active" id="sub-step1">
-        <div class="sub-row-2">
-          <div class="sub-field">
-            <div class="sub-field-label">Nombre *</div>
-            <input class="sub-input" id="sNombre" type="text" placeholder="Nombre" autocomplete="given-name">
-          </div>
-          <div class="sub-field">
-            <div class="sub-field-label">Apellido</div>
-            <input class="sub-input" id="sApellido" type="text" placeholder="Apellido" autocomplete="family-name">
-          </div>
-        </div>
         <div class="sub-field">
           <div class="sub-field-label">Email *</div>
           <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email">
@@ -940,7 +930,6 @@ function handlePaisChange(){
 })();
 function goStep2(){
   const err = document.getElementById('sErr1');
-  const nombre = document.getElementById('sNombre').value.trim();
   const email  = document.getElementById('sEmail').value.trim();
   const tel    = document.getElementById('sTel').value.trim();
   const pais   = document.getElementById('sPais').value;
@@ -949,7 +938,6 @@ function goStep2(){
   const estado = document.getElementById('sEstado').value;
   const zip    = document.getElementById('sZip').value.trim();
 
-  if(!nombre){ err.textContent='Por favor ingresa tu nombre.'; return; }
   if(!email || !email.includes('@')){ err.textContent='Por favor ingresa un email válido.'; return; }
   if(!tel){ err.textContent='Por favor ingresa tu número de teléfono.'; return; }
   if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
@@ -999,8 +987,6 @@ async function submitSubscription(){
   err.textContent = '';
 
   const subscriber = {
-    nombre:    document.getElementById('sNombre').value.trim(),
-    apellido:  document.getElementById('sApellido').value.trim(),
     email:     document.getElementById('sEmail').value.trim(),
     telefono:  document.getElementById('sTel').value.trim(),
     pais:      document.getElementById('sPais').value,
