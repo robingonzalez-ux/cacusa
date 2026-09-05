@@ -203,9 +203,9 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .gE{background:linear-gradient(135deg,#F5A0C8,#C4A0EC)}
 
 /* ── SUBSCRIPTION MODAL ── */
-#sub-overlay{position:fixed;inset:0;background:rgba(139,42,90,.38);backdrop-filter:blur(12px);z-index:900;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;display:flex;align-items:center;justify-content:center;padding:16px}
+#sub-overlay{position:fixed;inset:0;background:rgba(139,42,90,.38);backdrop-filter:blur(12px);z-index:900;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #sub-overlay.open{opacity:1;visibility:visible}
-.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:94vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
+.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:none;overflow-y:visible;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
 #sub-overlay.open .sub-box{transform:scale(1)}
 .sub-head{background:var(--grad-full);padding:30px 32px 22px;border-radius:28px 28px 0 0;position:relative;text-align:center}
 .sub-head-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
@@ -335,7 +335,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         </div>
         <div class="sub-field">
           <div class="sub-field-label">Teléfono / WhatsApp *</div>
-          <input class="sub-input" id="sTel" type="tel" placeholder="+593 99 999 0000" autocomplete="tel">
+          <input class="sub-input" id="sTel" type="tel" placeholder="" autocomplete="tel">
         </div>
         <div class="sub-field">
           <div class="sub-field-label">País *</div>
