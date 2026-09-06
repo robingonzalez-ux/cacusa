@@ -2362,29 +2362,9 @@ document.getElementById('payBtn').addEventListener('click', async () => {
       throw new Error(data.error || 'No se pudo crear el pago');
     }
 
-    // Guardar datos del pedido antes de salir a Square
-    const _pending = {
-      numero:  generateOrderNum(),
-      cliente: {
-        nombre:   (customer.name + ' ' + (customer.lastname || '')).trim(),
-        telefono: customer.phone,
-        ciudad:   (customer.city || '') + (customer.country ? ', ' + customer.country : ''),
-        pais:     customer.country,
-        direccion: customer.address,
-        apto:     customer.apto,
-        estado:   customer.state,
-        zip:      customer.zip,
-        email:    (document.getElementById('coEmail').value || '').trim(),
-      },
-      productos: cart.map(i => ({ name: i.name, price: i.price, personalization: i.personalization || undefined, material: i.material || undefined })),
-      total:     parseFloat((_sqBase - _sqGcDiscount - _sqCpDiscount).toFixed(2)),
-      pago:      'Tarjeta',
-      estado:    'Nuevo',
-      notas:     [customer.notes, _sqGcDiscount>0?`GC:${_gcCode}(-$${_sqGcDiscount})`:'', _sqCpDiscount>0?`CP:${_cpCode}(-$${_sqCpDiscount})`:''].filter(Boolean).join(' | ') || undefined,
-      // Cupón pendiente de quemar cuando el pago se confirme (?paid=1); el worker ignora campos extra
-      _cp: _cpCode ? { code: _cpCode, phone: customer.phone, email: (document.getElementById('coEmail').value || '').trim() } : undefined
-    };
-    sessionStorage.setItem('cacusa_order_pending', JSON.stringify(_pending));
+    // El pedido ya no se arma ni se guarda acá — cacusa-square lo registra del lado del
+    // servidor (con los mismos datos que ya le mandamos en este POST) recién cuando su
+    // webhook confirma que Square procesó el pago de verdad.
     _gcCode=null; _gcBalance=0; _gcApplied=0;
     _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
     cart = []; saveCart(); updateCartUI();
@@ -2591,19 +2571,14 @@ window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.relo
 updateCartUI();
 refreshCursorTargets();
 
-// Detectar regreso desde Square (?paid=1) → guardar pedido + mostrar success
+// Detectar regreso desde Square (?paid=1) → solo mostrar success.
+// El pedido, el cupón y la tarjeta de regalo ya NO se registran acá: este parámetro en la URL
+// no prueba que el pago se haya completado (cualquiera puede escribir esta misma URL sin pagar).
+// cacusa-square registra el pedido de verdad cuando su webhook recibe la confirmación real de
+// Square — este código solo limpia el estado local y saluda a la clienta.
 if (new URLSearchParams(window.location.search).get('paid') === '1') {
   history.replaceState({}, '', window.location.pathname);
-  const pending = sessionStorage.getItem('cacusa_order_pending');
-  if (pending) {
-    try {
-      const _po = JSON.parse(pending);
-      submitOrder(_po);
-      // El pago se confirmó: quemar el cupón usado (Square solo lo descuenta, no lo marca usado)
-      if (_po._cp && _po._cp.code) burnCoupon(_po._cp.code, _po._cp.phone, _po._cp.email);
-    } catch (_) {}
-    sessionStorage.removeItem('cacusa_order_pending');
-  }
+  sessionStorage.removeItem('cacusa_order_pending');
   showSuccess();
 }
 
