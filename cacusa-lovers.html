@@ -1143,7 +1143,7 @@ async function submitSubscription(){
   const subscriber = {
     nombre:      _subNombre,
     apellido:    _subApellido,
-    email:       document.getElementById('sEmail').value.trim(),
+    email:       document.getElementById('sEmail').value.trim().toLowerCase(),
     telefono:    document.getElementById('sTel').value.trim(),
     direccion:   _subDireccion,
     apto:        _subApto,
