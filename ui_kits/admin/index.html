@@ -1822,10 +1822,15 @@ function LoversTab({ products = [] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(photos),
       });
-      setPhotoMsg(r.ok ? '✓ Fotos guardadas' : '⚠ Error al guardar');
-    } catch (_) { setPhotoMsg('⚠ Error al guardar'); }
+      if (r.ok) {
+        setPhotoMsg('✓ Fotos guardadas — recarga la página de Cacusa Lovers para verlas');
+      } else {
+        const errBody = await r.text().catch(() => String(r.status));
+        setPhotoMsg(`⚠ Error al guardar: ${errBody}`);
+      }
+    } catch (err) { setPhotoMsg(`⚠ Error: ${err.message}`); }
     setSavingPhotos(false);
-    setTimeout(() => setPhotoMsg(''), 3000);
+    setTimeout(() => setPhotoMsg(''), 6000);
   };
 
   useEffect(() => { load(); }, []);

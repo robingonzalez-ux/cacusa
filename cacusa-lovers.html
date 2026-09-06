@@ -728,7 +728,7 @@ async function _fbSignIn(){
 }
 function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
 // ── Load what-card photos from Firebase ─────────────────────────────────────
-(async function loadLoversPhotos() {
+async function loadLoversPhotos() {
   try {
     await _fbSignIn();
     const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`));
@@ -743,7 +743,11 @@ function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; 
       }
     });
   } catch(_) {}
-})();
+}
+loadLoversPhotos();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') loadLoversPhotos();
+});
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
 function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
