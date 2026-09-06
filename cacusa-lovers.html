@@ -944,13 +944,15 @@ let _acSeq = 0;
       const mySeq = ++_acSeq;
       showAcMsg('Buscando\u2026');
       try {
-        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=es');
+        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
+        if (!res.ok) throw new Error('photon ' + res.status);
         const data = await res.json();
+        if (!data || !Array.isArray(data.features)) throw new Error('respuesta inesperada');
         if (mySeq !== _acSeq) return;   // llego tarde: ya hay una busqueda mas nueva
         // Si ya eligió país, filtrar las sugerencias a ese país
         const selPais = document.getElementById('sPais').value;
         const want = selPais === 'Ecuador' ? 'EC' : selPais === 'USA' ? 'US' : null;
-        const features = (data.features || []).filter(f => {
+        const features = data.features.filter(f => {
           const p = f.properties;
           if (!p || !(p.name || p.street)) return false;
           return !want || (p.countrycode || '').toUpperCase() === want;
