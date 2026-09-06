@@ -356,6 +356,10 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120">
           <div class="sub-ac-list" id="sAcList"></div>
         </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Apto / Suite / Piso (opcional)</div>
+          <input class="sub-input" id="sApto" type="text" placeholder="Apt 4B, Suite 200, Piso 3…" maxlength="60">
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
             <div class="sub-field-label">Ciudad *</div>
@@ -806,7 +810,7 @@ const WHATSAPP_NUMBER             = '17867375336';
 let _selectedPlan    = 'mensual';
 let _selectedPayment = 'square';
 let _fromPlanCard    = false;
-let _subNombre = '', _subApellido = '', _subDireccion = '', _subCiudad = '', _subPais = '', _subEstado = '', _subZip = '';
+let _subNombre = '', _subApellido = '', _subDireccion = '', _subApto = '', _subCiudad = '', _subPais = '', _subEstado = '', _subZip = '';
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -1026,7 +1030,7 @@ function closeSub(){
   document.getElementById('dot1').classList.add('act');
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
-  _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
+  _subNombre=''; _subApellido=''; _subDireccion=''; _subApto=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
   document.getElementById('sPais').value = '';
   onPaisChange();
   closeAcList();
@@ -1070,6 +1074,7 @@ function goStep2(){
   _subNombre    = nombre;
   _subApellido  = document.getElementById('sApellido').value.trim();
   _subDireccion = direccion;
+  _subApto      = document.getElementById('sApto').value.trim();
   _subCiudad    = ciudad;
   _subPais      = pais;
   _subEstado    = estado;
@@ -1141,6 +1146,7 @@ async function submitSubscription(){
     email:       document.getElementById('sEmail').value.trim(),
     telefono:    document.getElementById('sTel').value.trim(),
     direccion:   _subDireccion,
+    apto:        _subApto,
     ciudad:      _subCiudad,
     estado:      _subEstado,
     zip:         _subZip,
