@@ -353,12 +353,68 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           </div>
           <div class="sub-field">
             <div class="sub-field-label">País *</div>
-            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer">
+            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()">
               <option value="">Seleccionar…</option>
               <option value="Ecuador">Ecuador</option>
               <option value="USA">USA</option>
               <option value="Otro">Otro</option>
             </select>
+          </div>
+        </div>
+        <!-- Campos dinámicos por país -->
+        <div id="sFieldsEC" hidden>
+          <div class="sub-field">
+            <div class="sub-field-label">Provincia *</div>
+            <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer">
+              <option value="">Seleccionar provincia…</option>
+              <option>Azuay</option><option>Bolívar</option><option>Cañar</option>
+              <option>Carchi</option><option>Chimborazo</option><option>Cotopaxi</option>
+              <option>El Oro</option><option>Esmeraldas</option><option>Galápagos</option>
+              <option>Guayas</option><option>Imbabura</option><option>Loja</option>
+              <option>Los Ríos</option><option>Manabí</option><option>Morona Santiago</option>
+              <option>Napo</option><option>Orellana</option><option>Pastaza</option>
+              <option>Pichincha</option><option>Santa Elena</option><option>Santo Domingo</option>
+              <option>Sucumbíos</option><option>Tungurahua</option><option>Zamora Chinchipe</option>
+            </select>
+          </div>
+        </div>
+        <div id="sFieldsUSA" hidden>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="sub-field">
+              <div class="sub-field-label">Estado *</div>
+              <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer">
+                <option value="">Seleccionar…</option>
+                <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+                <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+                <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+                <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+                <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+                <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+                <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+                <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+                <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+                <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+                <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+                <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+                <option>Wisconsin</option><option>Wyoming</option>
+              </select>
+            </div>
+            <div class="sub-field">
+              <div class="sub-field-label">ZIP Code *</div>
+              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" autocomplete="postal-code" maxlength="10">
+            </div>
+          </div>
+        </div>
+        <div id="sFieldsOtro" hidden>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="sub-field">
+              <div class="sub-field-label">Estado / Provincia</div>
+              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="Estado o provincia" autocomplete="address-level1">
+            </div>
+            <div class="sub-field">
+              <div class="sub-field-label">Código postal</div>
+              <input class="sub-input" id="sZipOtro" type="text" placeholder="Código postal" autocomplete="postal-code">
+            </div>
           </div>
         </div>
         <div class="sub-error" id="sErr1"></div>
@@ -740,7 +796,7 @@ const WHATSAPP_NUMBER             = '17867375336';
 let _selectedPlan    = 'mensual';
 let _selectedPayment = 'square';
 let _fromPlanCard    = false;
-let _subNombre = '', _subApellido = '', _subDireccion = '', _subCiudad = '', _subPais = '';
+let _subNombre = '', _subApellido = '', _subDireccion = '', _subCiudad = '', _subPais = '', _subEstado = '', _subZip = '';
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -780,6 +836,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
+function onPaisChange(){
+  const pais = document.getElementById('sPais').value;
+  document.getElementById('sFieldsEC').hidden   = pais !== 'Ecuador';
+  document.getElementById('sFieldsUSA').hidden  = pais !== 'USA';
+  document.getElementById('sFieldsOtro').hidden = pais !== 'Otro';
+}
 function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
 
 function openSub(){
@@ -796,7 +858,8 @@ function closeSub(){
   document.getElementById('dot1').classList.add('act');
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
-  _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais='';
+  _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
+  onPaisChange();
   const btn = document.getElementById('sPayBtn');
   btn.disabled = false;
   btn.classList.remove('loading');
@@ -818,6 +881,20 @@ function goStep2(){
   if(!direccion){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
   if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
   if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
+
+  let estado = '', zip = '';
+  if(pais === 'Ecuador'){
+    estado = document.getElementById('sProvincia').value;
+    if(!estado){ err.textContent='Por favor selecciona tu provincia.'; return; }
+  } else if(pais === 'USA'){
+    estado = document.getElementById('sEstadoUSA').value;
+    zip    = document.getElementById('sZipUSA').value.trim();
+    if(!estado){ err.textContent='Por favor selecciona tu estado.'; return; }
+    if(!zip){ err.textContent='Por favor ingresa tu ZIP Code.'; return; }
+  } else if(pais === 'Otro'){
+    estado = document.getElementById('sEstadoOtro').value.trim();
+    zip    = document.getElementById('sZipOtro').value.trim();
+  }
   err.textContent='';
 
   _subNombre    = nombre;
@@ -825,6 +902,8 @@ function goStep2(){
   _subDireccion = direccion;
   _subCiudad    = ciudad;
   _subPais      = pais;
+  _subEstado    = estado;
+  _subZip       = zip;
 
   selectPlan(_selectedPlan);
   document.querySelector('.sub-plan-toggle').style.display = _fromPlanCard ? 'none' : 'grid';
@@ -893,6 +972,8 @@ async function submitSubscription(){
     telefono:    document.getElementById('sTel').value.trim(),
     direccion:   _subDireccion,
     ciudad:      _subCiudad,
+    estado:      _subEstado,
+    zip:         _subZip,
     pais:        _subPais,
     plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
     monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$19.99/mes',
