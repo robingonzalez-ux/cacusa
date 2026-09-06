@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#EE6FA8">
-<meta name="description" content="Cacusa Lovers — Suscripción mensual de joyería artesanal. Recibe 2 piezas únicas cada mes directamente en tu puerta. Solo $20/mes.">
+<meta name="description" content="Cacusa Lovers — Suscripción mensual de joyería artesanal. Recibe 2 piezas únicas cada mes directamente en tu puerta. Solo $19.99/mes.">
 <meta property="og:title" content="Cacusa Lovers — Tu club de joyería mensual">
 <meta property="og:description" content="Suscríbete y recibe 2 joyas artesanales únicas cada mes. Ecuador y USA.">
 <meta property="og:url" content="https://cacusabytaitus.com/cacusa-lovers.html">
@@ -59,7 +59,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;d
 .hero-script{font-family:var(--fs);font-size:clamp(28px,4vw,48px);color:rgba(255,255,255,.75);margin-bottom:22px}
 .hero-desc{font-family:var(--fe);font-size:clamp(17px,2.2vw,21px);font-style:italic;color:rgba(255,255,255,.85);line-height:1.7;max-width:520px;margin:0 auto 36px}
 .hero-price{display:inline-flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.15);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.35);border-radius:24px;padding:20px 40px;margin-bottom:36px}
-.hero-price .amount{font-family:var(--fd);font-weight:900;font-size:64px;color:white;line-height:1}
+.hero-price .amount{font-family:var(--fd);font-weight:900;font-size:52px;color:white;line-height:1}
 .hero-price .per{font-family:var(--fu);font-size:14px;color:rgba(255,255,255,.7);letter-spacing:.08em;margin-top:4px}
 .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 .btn-primary{background:white;color:var(--pink);font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:16px 38px;cursor:none;transition:all .3s;box-shadow:0 4px 24px rgba(255,255,255,.35)}
@@ -315,7 +315,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       <button class="sub-head-close" onclick="closeSub()">✕</button>
       <div class="sub-head-tag">✦ Club de suscripción mensual</div>
       <div class="sub-head-title">Cacusa <em>Lovers</em></div>
-      <div class="sub-head-price" id="subHeadPrice">$20/mes · 2 joyas artesanales · envío incluido</div>
+      <div class="sub-head-price" id="subHeadPrice">$19.99/mes · 2 joyas artesanales · envío incluido</div>
     </div>
     <div class="sub-body">
       <div class="sub-dots">
@@ -341,7 +341,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         <div class="sub-plan-toggle">
           <div class="sub-plan-opt selected" id="planOptMensual" onclick="selectPlan('mensual')">
             <div class="sub-plan-opt-name">Mensual</div>
-            <div class="sub-plan-opt-price">$20/mes</div>
+            <div class="sub-plan-opt-price">$19.99/mes</div>
           </div>
           <div class="sub-plan-opt sub-plan-opt--anual" id="planOptAnual" onclick="selectPlan('anual')">
             <div class="sub-plan-opt-badge">AHORRA 8%</div>
@@ -355,7 +355,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <div class="sub-sum-feature">Envío a domicilio incluido</div>
           <div class="sub-sum-feature">Envíos gratis en todas tus compras</div>
           <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
-          <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$20.00</span></div>
+          <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$19.99</span></div>
         </div>
         <div class="sub-field-label" style="margin-bottom:8px">Método de pago</div>
         <div class="sub-pay-toggle">
@@ -370,7 +370,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         </div>
         <div class="sub-error" id="sErr2"></div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
-          💳 Suscribirme y pagar $20/mes <span class="spin"></span>
+          💳 Suscribirme y pagar $19.99/mes <span class="spin"></span>
         </button>
         <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
         <p class="sub-legal" id="subLegal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra automáticamente cada mes. Cancela cuando quieras escribiéndonos por WhatsApp.</p>
@@ -403,8 +403,9 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
     <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas seleccionadas a mano directamente a tu puerta — un outfit siempre renovado a un precio accesible.</p>
     <div class="hero-price reveal-scale" data-delay="3">
-      <div class="amount">$20</div>
+      <div class="amount">$19.99</div>
       <div class="per">al mes · sin compromisos</div>
+      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(255,255,255,.65);letter-spacing:.05em">o <strong style="color:white">$219.89/año</strong> · ahorra 8%</div>
     </div>
     <div class="hero-btns reveal" data-delay="4">
       <button class="btn-primary" onclick="joinNow()">♡ Quiero ser Cacusa Lover</button>
@@ -476,7 +477,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
             <li><strong>Cancela cuando quieras</strong></li>
           </ul>
-          <a href="#" class="btn-join" onclick="joinNow('mensual');return false;">♡ Suscribirme mensual →</a>
+          <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Suscribirme mensual →</a>
           <p class="plan-note">Cobro automático cada mes · Cancela con 5 días de anticipación</p>
         </div>
       </div>
@@ -491,7 +492,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             <span class="plan-amount">219</span>
             <span class="plan-cents">.89</span>
           </div>
-          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mes · ahorras $20</span></div>
+          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mes · ahorras $19.99</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features">
@@ -502,7 +503,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
             <li><strong>12 meses de joyas</strong> pagando solo 11 ✨</li>
           </ul>
-          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual');return false;">♡ Suscribirme anual →</a>
+          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Suscribirme anual →</a>
           <p class="plan-note">Un solo pago · Máximo ahorro · Renueva automáticamente</p>
         </div>
       </div>
@@ -611,7 +612,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         <div class="cond-icon">🔄</div>
         <div class="cond-text">
           <div class="cond-title">Pago recurrente mensual</div>
-          <div class="cond-desc">El cobro de $20 se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.</div>
+          <div class="cond-desc">El cobro de $19.99 se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
@@ -705,11 +706,12 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-const SQUARE_PAYMENT_LINK         = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/6JKDMFNS3AMD55HRRD7ZQVBW';  // mensual $20
+const SQUARE_PAYMENT_LINK         = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/6JKDMFNS3AMD55HRRD7ZQVBW';  // mensual $19.99
 const SQUARE_PAYMENT_LINK_ANNUAL  = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/RJD6DHOGFOTPKVWHC6OXN3VS';  // anual $219.89
 const WHATSAPP_NUMBER             = '17867375336';
 let _selectedPlan    = 'mensual';
 let _selectedPayment = 'square';
+let _fromPlanCard    = false;
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -745,7 +747,7 @@ function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; 
 })();
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
-function joinNow(plan){ _selectedPlan = plan || 'mensual'; openSub(); }
+function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
 
 function openSub(){
   document.getElementById('sub-overlay').classList.add('open');
@@ -764,6 +766,8 @@ function closeSub(){
   const btn = document.getElementById('sPayBtn');
   btn.disabled = false;
   btn.classList.remove('loading');
+  _fromPlanCard = false;
+  document.querySelector('.sub-plan-toggle').style.display = 'grid';
 }
 function goStep2(){
   const err   = document.getElementById('sErr1');
@@ -775,6 +779,7 @@ function goStep2(){
   err.textContent='';
 
   selectPlan(_selectedPlan);
+  document.querySelector('.sub-plan-toggle').style.display = _fromPlanCard ? 'none' : 'grid';
 
   document.getElementById('sub-step1').classList.remove('active');
   document.getElementById('sub-step2').classList.add('active');
@@ -793,17 +798,17 @@ function selectPlan(plan){
   const isAnual = plan === 'anual';
   document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers Mensual';
   document.getElementById('sum-period-label').textContent = isAnual ? 'Total anual' : 'Total mensual';
-  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$20.00';
+  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$19.99';
   document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
   document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
   if (_selectedPayment !== 'transfer') {
     const btn = document.getElementById('sPayBtn');
     btn.innerHTML = isAnual
       ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
-      : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>';
+      : '💳 Suscribirme y pagar $19.99/mes <span class="spin"></span>';
   }
   const hp = document.getElementById('subHeadPrice');
-  if (hp) hp.textContent = isAnual ? '$219.89/año · 2 joyas artesanales · envío incluido' : '$20/mes · 2 joyas artesanales · envío incluido';
+  if (hp) hp.textContent = isAnual ? '$219.89/año · 2 joyas artesanales · envío incluido' : '$19.99/mes · 2 joyas artesanales · envío incluido';
   document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
   document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
 }
@@ -818,7 +823,7 @@ function selectPayment(method){
     ? '💬 Coordinar transferencia por WhatsApp <span class="spin"></span>'
     : (isAnual
         ? '💳 Suscribirme y pagar $219.89/año <span class="spin"></span>'
-        : '💳 Suscribirme y pagar $20/mes <span class="spin"></span>');
+        : '💳 Suscribirme y pagar $19.99/mes <span class="spin"></span>');
   const legal = document.getElementById('subLegal');
   if (legal) legal.textContent = isTransfer
     ? 'Te redirigiremos a WhatsApp para coordinar tu transferencia bancaria. Una vez confirmado el pago activamos tu suscripción.'
@@ -837,7 +842,7 @@ async function submitSubscription(){
     email:       document.getElementById('sEmail').value.trim(),
     telefono:    document.getElementById('sTel').value.trim(),
     plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-    monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$20/mes',
+    monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$19.99/mes',
     fecha:       new Date().toISOString().slice(0, 10),
     metodo_pago: isTransfer ? 'transferencia' : 'square',
     estado_pago: isTransfer ? 'pendiente_transferencia' : 'pendiente',
@@ -854,7 +859,7 @@ async function submitSubscription(){
   } catch(e){ console.warn('[fb-save]', e); }
 
   if (isTransfer) {
-    const planLabel = _selectedPlan === 'anual' ? 'Anual ($219.89/año)' : 'Mensual ($20/mes)';
+    const planLabel = _selectedPlan === 'anual' ? 'Anual ($219.89/año)' : 'Mensual ($19.99/mes)';
     const msg = `Hola! Me quiero suscribir a Cacusa Lovers ${planLabel}. ¿Cómo hago la transferencia? Mi email: ${subscriber.email}`;
     window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
     closeSub();
