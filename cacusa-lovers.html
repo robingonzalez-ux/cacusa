@@ -324,13 +324,42 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       </div>
       <!-- STEP 1: Personal & shipping info -->
       <div class="sub-step active" id="sub-step1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="sub-field">
+            <div class="sub-field-label">Nombre *</div>
+            <input class="sub-input" id="sNombre" type="text" placeholder="Tu nombre" autocomplete="given-name">
+          </div>
+          <div class="sub-field">
+            <div class="sub-field-label">Apellido</div>
+            <input class="sub-input" id="sApellido" type="text" placeholder="Tu apellido" autocomplete="family-name">
+          </div>
+        </div>
         <div class="sub-field">
           <div class="sub-field-label">Email *</div>
           <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email">
         </div>
         <div class="sub-field">
           <div class="sub-field-label">Teléfono / WhatsApp *</div>
-          <input class="sub-input" id="sTel" type="tel" placeholder="" autocomplete="tel">
+          <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
+        </div>
+        <div class="sub-field">
+          <div class="sub-field-label">Dirección de envío *</div>
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Calle, número, apto…" autocomplete="street-address">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="sub-field">
+            <div class="sub-field-label">Ciudad *</div>
+            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad" autocomplete="address-level2">
+          </div>
+          <div class="sub-field">
+            <div class="sub-field-label">País *</div>
+            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer">
+              <option value="">Seleccionar…</option>
+              <option value="Ecuador">Ecuador</option>
+              <option value="USA">USA</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
         </div>
         <div class="sub-error" id="sErr1"></div>
         <button class="sub-btn" onclick="goStep2()">Continuar →</button>
@@ -711,6 +740,7 @@ const WHATSAPP_NUMBER             = '17867375336';
 let _selectedPlan    = 'mensual';
 let _selectedPayment = 'square';
 let _fromPlanCard    = false;
+let _subNombre = '', _subApellido = '', _subDireccion = '', _subCiudad = '', _subPais = '';
 
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
@@ -766,6 +796,7 @@ function closeSub(){
   document.getElementById('dot1').classList.add('act');
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
+  _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais='';
   const btn = document.getElementById('sPayBtn');
   btn.disabled = false;
   btn.classList.remove('loading');
@@ -773,13 +804,27 @@ function closeSub(){
   document.querySelector('.sub-plan-toggle').style.display = 'grid';
 }
 function goStep2(){
-  const err   = document.getElementById('sErr1');
-  const email = document.getElementById('sEmail').value.trim();
-  const tel   = document.getElementById('sTel').value.trim();
+  const err      = document.getElementById('sErr1');
+  const nombre   = document.getElementById('sNombre').value.trim();
+  const email    = document.getElementById('sEmail').value.trim();
+  const tel      = document.getElementById('sTel').value.trim();
+  const direccion= document.getElementById('sDireccion').value.trim();
+  const ciudad   = document.getElementById('sCiudad').value.trim();
+  const pais     = document.getElementById('sPais').value;
 
+  if(!nombre){ err.textContent='Por favor ingresa tu nombre.'; return; }
   if(!email || !email.includes('@')){ err.textContent='Por favor ingresa un email válido.'; return; }
   if(!tel){ err.textContent='Por favor ingresa tu número de teléfono.'; return; }
+  if(!direccion){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
+  if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
+  if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
   err.textContent='';
+
+  _subNombre    = nombre;
+  _subApellido  = document.getElementById('sApellido').value.trim();
+  _subDireccion = direccion;
+  _subCiudad    = ciudad;
+  _subPais      = pais;
 
   selectPlan(_selectedPlan);
   document.querySelector('.sub-plan-toggle').style.display = _fromPlanCard ? 'none' : 'grid';
@@ -842,8 +887,13 @@ async function submitSubscription(){
 
   const isTransfer = _selectedPayment === 'transfer';
   const subscriber = {
+    nombre:      _subNombre,
+    apellido:    _subApellido,
     email:       document.getElementById('sEmail').value.trim(),
     telefono:    document.getElementById('sTel').value.trim(),
+    direccion:   _subDireccion,
+    ciudad:      _subCiudad,
+    pais:        _subPais,
     plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
     monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$19.99/mes',
     fecha:       new Date().toISOString().slice(0, 10),
@@ -863,7 +913,7 @@ async function submitSubscription(){
 
   if (isTransfer) {
     const planLabel = _selectedPlan === 'anual' ? 'Anual ($219.89/año)' : 'Mensual ($19.99/mes)';
-    const msg = `Hola! Me quiero suscribir a Cacusa Lovers ${planLabel}. ¿Cómo hago la transferencia? Mi email: ${subscriber.email}`;
+    const msg = `Hola! Soy ${subscriber.nombre}${subscriber.apellido ? ' ' + subscriber.apellido : ''} y me quiero suscribir a Cacusa Lovers ${planLabel}. ¿Cómo hago la transferencia? Mi email: ${subscriber.email}`;
     window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
     closeSub();
   } else {
