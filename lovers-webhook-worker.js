@@ -9,7 +9,7 @@
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
  *   invoice.payment_made          → marca suscriptora como "activo"
- *   invoice.payment_failed        → marca suscriptora como "pago_fallido"
+ *   invoice.scheduled_charge_failed → marca suscriptora como "pago_fallido"
  *   subscription.updated          → si status=CANCELED, marca "cancelado"
  *
  * Setup:
@@ -182,8 +182,8 @@ export default {
         }
       }
 
-      // ── invoice.payment_failed → pago_fallido ──────────────────────────────
-      else if (type === 'invoice.payment_failed') {
+      // ── invoice.scheduled_charge_failed → pago_fallido ────────────────────
+      else if (type === 'invoice.scheduled_charge_failed' || type === 'invoice.payment_failed') {
         const invoice = data?.invoice;
         const customerId = invoice?.primary_recipient?.customer_id;
         const email = invoice?.primary_recipient?.email_address
