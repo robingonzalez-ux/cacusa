@@ -268,22 +268,27 @@ async function forwardOrderToAdmin(order, env) {
   if (!r.ok) throw new Error('admin /order respondió ' + r.status);
 }
 
+// Nota: estas dos NO se tragan el error — si fallan, el webhook debe devolver 500 para que
+// Square reintente (ver handleWebhook). Un fallo silencioso acá dejaría el cupón/tarjeta de
+// regalo sin quemarse aunque el pedido ya se haya creado.
 async function burnCouponViaAdmin(code, phone, email, env) {
   if (!code) return;
-  await fetch(`${ADMIN_WORKER_URL}/coupon/burn`, {
+  const r = await fetch(`${ADMIN_WORKER_URL}/coupon/burn`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     body: JSON.stringify({ code, phone, email })
-  }).catch(e => console.error('coupon/burn failed:', e.message));
+  });
+  if (!r.ok) throw new Error('admin /coupon/burn respondió ' + r.status);
 }
 
 async function redeemGiftCardViaAdmin(code, amountCents, env) {
   if (!code || !(amountCents > 0)) return;
-  await fetch(`${ADMIN_WORKER_URL}/giftcard/redeem`, {
+  const r = await fetch(`${ADMIN_WORKER_URL}/giftcard/redeem`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     body: JSON.stringify({ code, amount: amountCents / 100 })
-  }).catch(e => console.error('giftcard/redeem failed:', e.message));
+  });
+  if (!r.ok) throw new Error('admin /giftcard/redeem respondió ' + r.status);
 }
 
 // ── Webhook: Square confirma que el pago se completó ─────────────────────────
@@ -329,7 +334,14 @@ async function handleWebhook(request, env) {
       return new Response('OK', { status: 200 }); // ya procesado — reintento de Square, ignorar
     }
 
-    await forwardOrderToAdmin(pending.order, env);
+    // El pedido se reenvía una sola vez (orderForwarded evita duplicarlo si Square reintenta
+    // el webhook porque el paso del cupón/tarjeta de regalo falló después). Esos dos pasos sí
+    // se reintentan hasta que funcionen — nunca deben quedar "olvidados" en silencio.
+    if (!pending.orderForwarded) {
+      await forwardOrderToAdmin(pending.order, env);
+      pending.orderForwarded = true;
+      await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
+    }
     if (pending.coupon) await burnCouponViaAdmin(pending.coupon.code, pending.coupon.phone, pending.coupon.email, env);
     if (pending.giftCard) await redeemGiftCardViaAdmin(pending.giftCard.code, pending.giftCard.amountCents, env);
 
