@@ -7,29 +7,53 @@ Disallow: /data/products.json
 # Google
 User-agent: Googlebot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 # Bing
 User-agent: bingbot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 # ChatGPT / OpenAI
 User-agent: GPTBot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 User-agent: OAI-SearchBot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 # Perplexity
 User-agent: PerplexityBot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 # Anthropic (Claude)
 User-agent: ClaudeBot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 User-agent: anthropic-ai
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 # Meta (para futuro Meta AI)
 User-agent: FacebookBot
 Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /data/products.json
 
 Sitemap: https://cacusabytaitus.com/sitemap.xml
