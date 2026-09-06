@@ -1792,29 +1792,26 @@ function LoversTab({ products = [] }) {
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
+  const [busyId, setBusyId] = useState(null); // fila con una accion destructiva en curso (cancelar o eliminar)
 
-  const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  // Todas las lecturas/escrituras de suscriptoras pasan por el worker, que usa el
+  // secret de Firebase — el navegador ya no habla directo con cacusa_lovers.
+  const loversApi = (path, opts) => fetch(`${LOVERS_WEBHOOK_URL}${path}`, {
+    ...opts,
+    headers: { 'X-Admin-Key': ADMIN_ACTION_KEY, ...(opts?.headers || {}) },
+  });
 
   const load = async () => {
     setLoading(true);
     try {
-      if (!_fbIdToken) await _fbSignIn();
-      const [r, rp] = await Promise.all([
-        fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`)),
-        fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`)),
-      ]);
+      const r = await loversApi('/admin/lovers');
       if (r.ok) {
-        const data = await r.json();
-        if (data) {
-          const arr = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-          arr.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
-          setSubs(arr);
-        } else { setSubs([]); }
+        const { subscribers, photos: ph } = await r.json();
+        const arr = Object.entries(subscribers || {}).map(([id, v]) => ({ id, ...v }));
+        arr.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+        setSubs(arr);
+        if (ph) setPhotos(prev => ({ ...prev, ...ph }));
       } else { setSubs([]); }
-      if (rp.ok) {
-        const pd = await rp.json();
-        if (pd) setPhotos(prev => ({ ...prev, ...pd }));
-      }
     } catch (_) { setSubs([]); }
     setLoading(false);
   };
@@ -1823,8 +1820,7 @@ function LoversTab({ products = [] }) {
     setSavingPhotos(true);
     setPhotoMsg('');
     try {
-      if (!_fbIdToken) await _fbSignIn();
-      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`), {
+      const r = await loversApi('/admin/lovers-photos', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(photos),
@@ -1832,8 +1828,8 @@ function LoversTab({ products = [] }) {
       if (r.ok) {
         setPhotoMsg('✓ Fotos guardadas — recarga la página de Cacusa Lovers para verlas');
       } else {
-        const errBody = await r.text().catch(() => String(r.status));
-        setPhotoMsg(`⚠ Error al guardar: ${errBody}`);
+        const data = await r.json().catch(() => ({}));
+        setPhotoMsg(`⚠ Error al guardar: ${data.error || r.status}`);
       }
     } catch (err) { setPhotoMsg(`⚠ Error: ${err.message}`); }
     setSavingPhotos(false);
@@ -1845,14 +1841,17 @@ function LoversTab({ products = [] }) {
   const updateEstado = async (sub, nuevoEstado) => {
     setUpdating(u => ({ ...u, [sub.id]: true }));
     try {
-      if (!_fbIdToken) await _fbSignIn();
-      await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${sub.id}.json`), {
+      const r = await loversApi(`/admin/lovers/${sub.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estado_pago: nuevoEstado }),
       });
-      setSubs(prev => prev.map(s => s.id === sub.id ? { ...s, estado_pago: nuevoEstado } : s));
-    } catch (_) {}
+      if (r.ok) {
+        setSubs(prev => prev.map(s => s.id === sub.id ? { ...s, estado_pago: nuevoEstado } : s));
+      } else {
+        alert('No se pudo actualizar el estado — intenta de nuevo.');
+      }
+    } catch (_) { alert('Error de conexión al actualizar el estado.'); }
     setUpdating(u => { const n = { ...u }; delete n[sub.id]; return n; });
   };
 
@@ -1872,29 +1871,30 @@ function LoversTab({ products = [] }) {
   const saveEdit = async id => {
     setSavingEdit(true);
     try {
-      if (!_fbIdToken) await _fbSignIn();
-      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${id}.json`), {
+      const r = await loversApi(`/admin/lovers/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
       });
       if (r.ok) {
         setSubs(prev => prev.map(s => s.id === id ? { ...s, ...editForm } : s));
-        setEditingId(null);
+        if (editingId === id) setEditingId(null); // no cerrar otra fila que se haya abierto mientras tanto
+      } else {
+        alert('No se pudieron guardar los cambios — intenta de nuevo.');
       }
-    } catch (_) {}
+    } catch (_) { alert('Error de conexión al guardar.'); }
     setSavingEdit(false);
   };
 
   const ef = (k, v) => setEditForm(f => ({ ...f, [k]: v }));
 
   const deleteSubscriber = async s => {
+    if (busyId === s.id) return; // ya hay una accion (cancelar/eliminar) en curso sobre esta fila
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || 'esta suscriptora';
     if (!confirm(`¿Eliminar permanentemente a ${nombre}? Esta acción no se puede deshacer.`)) return;
-    setDeletingId(s.id);
+    setBusyId(s.id); setDeletingId(s.id);
     try {
-      if (!_fbIdToken) await _fbSignIn();
-      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${s.id}.json`), { method: 'DELETE' });
+      const r = await loversApi(`/admin/lovers/${s.id}`, { method: 'DELETE' });
       if (r.ok) {
         setSubs(prev => prev.filter(x => x.id !== s.id));
         if (editingId === s.id) setEditingId(null);
@@ -1902,21 +1902,22 @@ function LoversTab({ products = [] }) {
         alert('Error al eliminar');
       }
     } catch (_) { alert('Error al eliminar'); }
-    setDeletingId(null);
+    setDeletingId(null); setBusyId(null);
   };
 
   const cancelInSquare = async s => {
+    if (busyId === s.id) return; // ya hay una accion (cancelar/eliminar) en curso sobre esta fila
     if (!s.square_subscription_id) {
       alert('Esta suscriptora no tiene un Subscription ID guardado — no se puede cancelar automáticamente. Cancélala manualmente desde Square Dashboard → Subscriptions.');
       return;
     }
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || 'esta suscriptora';
     if (!confirm(`¿Cancelar la suscripción de ${nombre} en Square? El cobro recurrente se detiene de inmediato. Esta acción no se puede deshacer desde aquí.`)) return;
-    setCancelingId(s.id);
+    setBusyId(s.id); setCancelingId(s.id);
     try {
-      const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/cancel-subscription`, {
+      const r = await loversApi('/admin/cancel-subscription', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_ACTION_KEY },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ subscriptionId: s.square_subscription_id, firebaseKey: s.id }),
       });
       const data = await r.json().catch(() => ({}));
@@ -1928,6 +1929,7 @@ function LoversTab({ products = [] }) {
         alert(`No se pudo cancelar en Square: ${data.error || r.status}`);
       }
     } catch (e) { alert(`Error al cancelar: ${e.message}`); }
+    setBusyId(null);
     setCancelingId(null);
   };
 
@@ -2054,16 +2056,16 @@ function LoversTab({ products = [] }) {
                     {s.estado_pago !== 'cancelado' && (
                       <button
                         onClick={() => cancelInSquare(s)}
-                        disabled={cancelingId === s.id}
+                        disabled={busyId === s.id}
                         title={s.square_subscription_id ? '' : 'Sin Subscription ID guardado — cancela manualmente en Square'}
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FBBF24', background: 'white', color: '#B45309', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: cancelingId === s.id ? .5 : 1 }}>
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FBBF24', background: 'white', color: '#B45309', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: busyId === s.id ? .5 : 1 }}>
                         {cancelingId === s.id ? 'Cancelando…' : 'Cancelar en Square'}
                       </button>
                     )}
                     <button
                       onClick={() => deleteSubscriber(s)}
-                      disabled={deletingId === s.id}
-                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: 'white', color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: deletingId === s.id ? .5 : 1 }}>
+                      disabled={busyId === s.id}
+                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: 'white', color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: busyId === s.id ? .5 : 1 }}>
                       {deletingId === s.id ? 'Eliminando…' : 'Eliminar'}
                     </button>
                   </div>
@@ -2849,9 +2851,8 @@ function App() {
       } catch (_) {}
       // Load lovers count badge
       try {
-        if (!_fbIdToken) await _fbSignIn();
-        const r = await fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_lovers.json?shallow=true'));
-        if (r.ok) { const d = await r.json(); setLoversCount(d ? Object.keys(d).length : 0); }
+        const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/lovers`, { headers: { 'X-Admin-Key': ADMIN_ACTION_KEY } });
+        if (r.ok) { const d = await r.json(); setLoversCount(d && d.subscribers ? Object.keys(d.subscribers).length : 0); }
       } catch (_) {}
     })();
   }, []);
