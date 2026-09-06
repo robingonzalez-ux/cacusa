@@ -127,6 +127,13 @@ export default {
       // ── invoice.payment_made → activo ──────────────────────────────────────
       if (type === 'invoice.payment_made') {
         const invoice = data?.invoice;
+
+        // Solo procesar facturas de suscripción recurrente; ignorar pagos únicos
+        if (!invoice?.subscription_id) {
+          console.log('Ignoring non-subscription invoice:', invoice?.id);
+          return new Response('OK', { status: 200 });
+        }
+
         const customerId = invoice?.primary_recipient?.customer_id;
         const customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
         const email = invoice?.primary_recipient?.email_address
