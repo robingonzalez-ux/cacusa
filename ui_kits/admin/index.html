@@ -1785,6 +1785,9 @@ function LoversTab({ products = [] }) {
   const [photoMsg, setPhotoMsg] = useState('');
   const [openPicker, setOpenPicker] = useState(null);
   const [pickerQ, setPickerQ] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
@@ -1848,6 +1851,36 @@ function LoversTab({ products = [] }) {
     } catch (_) {}
     setUpdating(u => { const n = { ...u }; delete n[sub.id]; return n; });
   };
+
+  const startEdit = s => {
+    setEditingId(s.id);
+    setEditForm({
+      nombre: s.nombre || '', apellido: s.apellido || '',
+      email: s.email || '', telefono: s.telefono || '',
+      direccion: s.direccion || '', ciudad: s.ciudad || '',
+      estado: s.estado || '', zip: s.zip || '', pais: s.pais || '',
+      notas: s.notas || '',
+    });
+  };
+
+  const saveEdit = async id => {
+    setSavingEdit(true);
+    try {
+      if (!_fbIdToken) await _fbSignIn();
+      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${id}.json`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      if (r.ok) {
+        setSubs(prev => prev.map(s => s.id === id ? { ...s, ...editForm } : s));
+        setEditingId(null);
+      }
+    } catch (_) {}
+    setSavingEdit(false);
+  };
+
+  const ef = (k, v) => setEditForm(f => ({ ...f, [k]: v }));
 
   const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
   const estadoLabel = e => ({ 'activo': 'Activo ✓', 'pendiente': 'Pendiente', 'cancelado': 'Cancelado', 'pago_fallido': 'Pago fallido ⚠️' }[e] || e || 'Pendiente');
@@ -1936,32 +1969,95 @@ function LoversTab({ products = [] }) {
           <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 12 }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {subs.map(s => (
-              <div key={s.id} style={{ background: 'white', borderRadius: 14, border: '1px solid #EDE8EA', padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118', marginBottom: 2 }}>{s.nombre} {s.apellido}</div>
-                  <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>{s.email} · {s.telefono}</div>
-                  <div style={{ fontSize: 12, color: '#888', lineHeight: 1.6 }}>
-                    📍 {[s.direccion, s.apto, s.ciudad, s.estado, s.pais].filter(Boolean).join(', ')}
+              <div key={s.id} style={{ background: 'white', borderRadius: 14, border: editingId === s.id ? '1.5px solid #E85D8A' : '1px solid #EDE8EA', overflow: 'hidden' }}>
+                {/* ── Fila principal ── */}
+                <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118', marginBottom: 2 }}>{s.nombre} {s.apellido}</div>
+                    <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>{s.email} · {s.telefono}</div>
+                    <div style={{ fontSize: 12, color: '#888', lineHeight: 1.6 }}>
+                      📍 {[s.direccion, s.ciudad, s.estado, s.zip, s.pais].filter(Boolean).join(', ') || '—'}
+                    </div>
+                    {s.notas && <div style={{ fontSize: 12, color: '#9B5DE5', marginTop: 4, fontStyle: 'italic' }}>Nota: {s.notas}</div>}
+                    <div style={{ fontSize: 12, color: '#A89AAF', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
                   </div>
-                  <div style={{ fontSize: 12, color: '#A89AAF', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                    <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em' }}>
+                      {estadoLabel(s.estado_pago)}
+                    </span>
+                    {s.ultimo_pago && <div style={{ fontSize: 11, color: '#A89AAF', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
+                    {s.fecha_cancelacion && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'right' }}>Canceló: {fmt(s.fecha_cancelacion)}</div>}
+                    <select
+                      disabled={!!updating[s.id]}
+                      value={s.estado_pago || 'pendiente'}
+                      onChange={e => updateEstado(s, e.target.value)}
+                      style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: '1px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', color: '#555', background: 'white' }}>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="activo">Activo</option>
+                      <option value="pago_fallido">Pago fallido</option>
+                      <option value="cancelado">Cancelado</option>
+                    </select>
+                    <button
+                      onClick={() => editingId === s.id ? setEditingId(null) : startEdit(s)}
+                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', background: editingId === s.id ? '#FFF0F6' : 'white', color: editingId === s.id ? '#E85D8A' : '#7A6880', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                      {editingId === s.id ? 'Cancelar' : 'Editar datos'}
+                    </button>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                  <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em' }}>
-                    {estadoLabel(s.estado_pago)}
-                  </span>
-                  {s.ultimo_pago && <div style={{ fontSize: 11, color: '#A89AAF', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
-                  {s.fecha_cancelacion && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'right' }}>Canceló: {fmt(s.fecha_cancelacion)}</div>}
-                  <select
-                    disabled={!!updating[s.id]}
-                    value={s.estado_pago || 'pendiente'}
-                    onChange={e => updateEstado(s, e.target.value)}
-                    style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: '1px solid #e0e0e0', cursor: 'pointer', fontFamily: 'inherit', color: '#555', background: 'white' }}>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="activo">Activo</option>
-                    <option value="pago_fallido">Pago fallido</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-                </div>
+                {/* ── Formulario de edición inline ── */}
+                {editingId === s.id && (
+                  <div style={{ borderTop: '1px solid #F5EFF8', background: '#FAF7FB', padding: '16px 20px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>Editar datos de {s.nombre || 'suscriptora'}</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      {[['Nombre', 'nombre'], ['Apellido', 'apellido']].map(([lbl, key]) => (
+                        <div key={key}>
+                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
+                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      {[['Email', 'email'], ['Teléfono', 'telefono']].map(([lbl, key]) => (
+                        <div key={key}>
+                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
+                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Dirección</div>
+                      <input value={editForm.direccion} onChange={e => ef('direccion', e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+                      {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
+                        <div key={key}>
+                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
+                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
+                      <input value={editForm.notas} onChange={e => ef('notas', e.target.value)}
+                        placeholder="Ej: llamar para confirmar dirección, cliente VIP…"
+                        style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => saveEdit(s.id)} disabled={savingEdit}
+                        style={{ background: '#E85D8A', color: 'white', border: 'none', borderRadius: 10, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: savingEdit ? .6 : 1 }}>
+                        {savingEdit ? 'Guardando…' : 'Guardar cambios'}
+                      </button>
+                      <button onClick={() => setEditingId(null)}
+                        style={{ background: 'white', color: '#A89AAF', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
