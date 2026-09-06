@@ -9,6 +9,14 @@
 <meta property="og:description" content="Suscríbete y recibe 2 joyas artesanales únicas cada mes. Ecuador y USA.">
 <meta property="og:url" content="https://cacusabytaitus.com/cacusa-lovers.html">
 <meta property="og:type" content="website">
+<meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cacusa Lovers — Tu club de joyería mensual">
+<meta name="twitter:description" content="Suscríbete y recibe 2 joyas artesanales únicas cada mes. Ecuador y USA.">
+<meta name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
+<link rel="canonical" href="https://cacusabytaitus.com/cacusa-lovers.html">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
@@ -48,6 +56,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;d
 .nav-lovers-badge{color:var(--ink)!important;background:var(--pink-pale);border-radius:999px;padding:6px 14px;border:1px solid var(--pink)}
 .nav-cta{background:var(--pink-deep);color:white;font-family:var(--fu);font-weight:600;font-size:12px;letter-spacing:.06em;border:none;border-radius:999px;padding:10px 22px;cursor:none;transition:all .25s;box-shadow:0 2px 16px rgba(238,111,168,.35)}
 .nav-cta:hover{transform:scale(1.04)}
+#navMenuBtn{display:none}
+#navDrawer{display:none}
 
 /* ── HERO ── */
 #hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding-top:68px}
@@ -220,7 +230,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .sub-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-light);transition:all .3s}
 .sub-dot.act{background:var(--pink);transform:scale(1.2)}
 .sub-field{margin-bottom:14px}
-.sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.sub-field-label{display:block;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
 .sub-field--ac{position:relative}
@@ -274,6 +284,17 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 @media(max-width:768px){
   nav{padding:0 20px}
   .nav-links{display:none}
+  #navMenuBtn{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px;z-index:510;position:relative}
+  #navMenuBtn span{display:block;width:24px;height:2px;background:var(--ink);border-radius:2px;transition:transform .3s,opacity .3s}
+  #navMenuBtn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  #navMenuBtn.open span:nth-child(2){opacity:0}
+  #navMenuBtn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  #navDrawer{display:none;position:fixed;inset:0;z-index:600;background:linear-gradient(160deg,var(--pink) 0%,var(--lilac) 100%);flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  #navDrawer.open{display:flex}
+  #navDrawerClose{position:absolute;top:24px;right:24px;background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1}
+  .drawer-nav{display:flex;flex-direction:column;align-items:center;gap:28px}
+  .drawer-link{font-family:var(--fu);font-size:22px;color:white;text-decoration:none;letter-spacing:.04em;opacity:.92}
+  .drawer-link--lovers{background:white;color:var(--ink);padding:10px 28px;border-radius:100px;opacity:1;font-weight:600}
   .container{padding:0 20px}
   section{padding:64px 0}
   .what-grid{grid-template-columns:1fr;gap:40px}
@@ -318,7 +339,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 </div>
 
 <!-- SUBSCRIPTION MODAL -->
-<div id="sub-overlay" onclick="if(event.target===this)closeSub()">
+<div id="sub-overlay" role="dialog" aria-modal="true" aria-label="Suscripción Cacusa Lovers" onclick="if(event.target===this)closeSub()">
   <div class="sub-box">
     <div class="sub-head">
       <button class="sub-head-close" onclick="closeSub()">✕</button>
@@ -335,38 +356,38 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <div class="sub-step active" id="sub-step1">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
-            <div class="sub-field-label">Nombre *</div>
+            <label class="sub-field-label" for="sNombre">Nombre *</label>
             <input class="sub-input" id="sNombre" type="text" placeholder="Tu nombre" autocomplete="given-name">
           </div>
           <div class="sub-field">
-            <div class="sub-field-label">Apellido</div>
+            <label class="sub-field-label" for="sApellido">Apellido</label>
             <input class="sub-input" id="sApellido" type="text" placeholder="Tu apellido" autocomplete="family-name">
           </div>
         </div>
         <div class="sub-field">
-          <div class="sub-field-label">Email *</div>
+          <label class="sub-field-label" for="sEmail">Email *</label>
           <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email">
         </div>
         <div class="sub-field">
-          <div class="sub-field-label">Teléfono / WhatsApp *</div>
+          <label class="sub-field-label" for="sTel">Teléfono / WhatsApp *</label>
           <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
         </div>
         <div class="sub-field sub-field--ac">
-          <div class="sub-field-label">Dirección de envío *</div>
+          <label class="sub-field-label" for="sDireccion">Dirección de envío *</label>
           <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120">
           <div class="sub-ac-list" id="sAcList"></div>
         </div>
         <div class="sub-field">
-          <div class="sub-field-label">Apto / Suite / Piso (opcional)</div>
+          <label class="sub-field-label" for="sApto">Apto / Suite / Piso (opcional)</label>
           <input class="sub-input" id="sApto" type="text" placeholder="Apt 4B, Suite 200, Piso 3…" maxlength="60">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
-            <div class="sub-field-label">Ciudad *</div>
+            <label class="sub-field-label" for="sCiudad">Ciudad *</label>
             <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad">
           </div>
           <div class="sub-field">
-            <div class="sub-field-label">País *</div>
+            <label class="sub-field-label" for="sPais">País *</label>
             <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()">
               <option value="">Seleccionar…</option>
               <option value="Ecuador">Ecuador</option>
@@ -378,7 +399,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <!-- Campos dinámicos por país -->
         <div id="sFieldsEC" hidden>
           <div class="sub-field">
-            <div class="sub-field-label">Provincia *</div>
+            <label class="sub-field-label" for="sProvincia">Provincia *</label>
             <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer">
               <option value="">Seleccionar provincia…</option>
               <option>Azuay</option><option>Bolívar</option><option>Cañar</option>
@@ -395,7 +416,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div id="sFieldsUSA" hidden>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
-              <div class="sub-field-label">Estado *</div>
+              <label class="sub-field-label" for="sEstadoUSA">Estado *</label>
               <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer">
                 <option value="">Seleccionar…</option>
                 <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
@@ -414,7 +435,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
               </select>
             </div>
             <div class="sub-field">
-              <div class="sub-field-label">ZIP Code *</div>
+              <label class="sub-field-label" for="sZipUSA">ZIP Code *</label>
               <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" inputmode="numeric" maxlength="10">
             </div>
           </div>
@@ -422,11 +443,11 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div id="sFieldsOtro" hidden>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
-              <div class="sub-field-label">Estado / Provincia</div>
+              <label class="sub-field-label" for="sEstadoOtro">Estado / Provincia</label>
               <input class="sub-input" id="sEstadoOtro" type="text" placeholder="Estado o provincia">
             </div>
             <div class="sub-field">
-              <div class="sub-field-label">Código postal</div>
+              <label class="sub-field-label" for="sZipOtro">Código postal</label>
               <input class="sub-input" id="sZipOtro" type="text" placeholder="Código postal">
             </div>
           </div>
@@ -477,7 +498,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 </div>
 
 <!-- NAV -->
-<nav>
+<nav id="nav">
   <a class="nav-logo" href="./index.html">
     <span class="w">CACUSA</span>
     <span class="s">by Taitus</span>
@@ -488,8 +509,22 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./cacusa-lovers.html" class="nav-lovers-badge">Cacusa Lovers ♡</a>
     <a href="./index.html#personalize">Personaliza</a>
   </div>
-  <button class="nav-cta" onclick="joinNow()">Unirme ahora →</button>
+  <div style="display:flex;align-items:center;gap:14px">
+    <button class="nav-cta" onclick="joinNow()">Unirme ahora →</button>
+    <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
 </nav>
+
+<!-- Mobile nav drawer -->
+<div id="navDrawer" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+  <button id="navDrawerClose" aria-label="Cerrar menú">✕</button>
+  <nav class="drawer-nav">
+    <a href="./index.html" class="drawer-link">Inicio</a>
+    <a href="./ui_kits/store/" class="drawer-link">Tienda</a>
+    <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="./index.html#personalize" class="drawer-link">Personaliza</a>
+  </nav>
+</div>
 
 <!-- HERO -->
 <section id="hero">
@@ -498,7 +533,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <div class="hero-badge reveal">✦ Club de suscripción exclusivo</div>
     <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
-    <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas seleccionadas a mano directamente a tu puerta — un outfit siempre renovado a un precio accesible.</p>
+    <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas seleccionadas a mano directamente a tu puerta — piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.</p>
     <div class="hero-price reveal-scale" data-delay="3">
       <div class="amount">$19.99</div>
       <div class="per">al mes · sin compromisos</div>
@@ -683,6 +718,15 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
   </div>
 </section>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"¿Cuándo recibiré mi primera caja?","acceptedAnswer":{"@type":"Answer","text":"Tu primera caja se envía dentro de los primeros 5 días hábiles después de tu suscripción. A partir del segundo mes, los envíos salen durante la tercera semana del mes, junto con todas las suscripciones."}},
+{"@type":"Question","name":"¿Puedo elegir las joyas que recibo?","acceptedAnswer":{"@type":"Answer","text":"Al suscribirte nos cuentas tus preferencias (tipo de pieza, metal, estilo). Hacemos la selección basándonos en ellas, pero el resultado final es una sorpresa diseñada para ti."}},
+{"@type":"Question","name":"¿Envían a toda la República del Ecuador y USA?","acceptedAnswer":{"@type":"Answer","text":"Sí. El envío está incluido en el precio de la membresía tanto para Ecuador como para Estados Unidos, sin costo adicional."}},
+{"@type":"Question","name":"¿Cómo cancelo mi suscripción?","acceptedAnswer":{"@type":"Answer","text":"Puedes cancelar cuando quieras tú misma desde el enlace \"Manage subscription\" que Square te envía por correo — sin preguntas, sin cargos adicionales. La cancelación aplica en el siguiente ciclo: si ya se procesó tu cobro de este período, recibirás igual esa caja y no hacemos reembolsos de cobros ya procesados. Hazlo con al menos 5 días de anticipación a tu fecha de renovación para que aplique antes del próximo cobro. Si prefieres, también puedes escribirnos por WhatsApp y cancelamos por ti."}},
+{"@type":"Question","name":"¿Cómo es el pago mensual?","acceptedAnswer":{"@type":"Answer","text":"El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro. Si prefieres pagar por transferencia bancaria, selecciona esa opción al suscribirte y coordinaremos el pago por WhatsApp."}}
+]}
+</script>
 
 <!-- CTA FINAL -->
 <section id="cta-final">
@@ -726,7 +770,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div class="cond-icon">✕</div>
         <div class="cond-text">
           <div class="cond-title">Sin devoluciones</div>
-          <div class="cond-desc">No se aceptan devoluciones ni reembolsos en esta modalidad de suscripción. Cada pieza es seleccionada y enviada especialmente para ti con dedicación.</div>
+          <div class="cond-desc">No se aceptan devoluciones ni reembolsos en esta modalidad de suscripción. Cada pieza es seleccionada y enviada especialmente para ti con dedicación. Excepción: si tu pieza llega con un defecto de fabricación, repórtalo con fotos dentro de las primeras 48 horas y te la reponemos sin costo.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="1">
@@ -1018,13 +1062,39 @@ let _acSeq = 0;
 
 function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
 
+// Cicla el Tab dentro de modalEl y cierra con Escape. Devuelve una función para liberar los listeners.
+function trapFocus(modalEl, onClose){
+  const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  const _prevFocused = document.activeElement;
+  function getFocusable(){ return Array.from(modalEl.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null); }
+  function onKeydown(e){
+    if (e.key === 'Escape'){ onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const items = getFocusable();
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+  document.addEventListener('keydown', onKeydown);
+  const items = getFocusable();
+  if (items.length) items[0].focus();
+  return function release(){
+    document.removeEventListener('keydown', onKeydown);
+    if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
+  };
+}
+let _subReleaseTrap = null;
+
 function openSub(){
   document.getElementById('sub-overlay').classList.add('open');
   document.body.style.overflow='hidden';
+  _subReleaseTrap = trapFocus(document.getElementById('sub-overlay'), closeSub);
 }
 function closeSub(){
   document.getElementById('sub-overlay').classList.remove('open');
   document.body.style.overflow='';
+  if (_subReleaseTrap){ _subReleaseTrap(); _subReleaseTrap = null; }
   // Reset to step 1
   document.getElementById('sub-step2').classList.remove('active');
   document.getElementById('sub-step1').classList.add('active');
@@ -1223,6 +1293,7 @@ function initCanvas(){
     a:.28+Math.random()*.22,phase:Math.random()*Math.PI*2,speed:.0025+Math.random()*.003
   }));
 }
+let _canvasRunning=false, _canvasRAF=null;
 function drawCanvas(){
   ctx.clearRect(0,0,W,H);
   const bg=ctx.createLinearGradient(0,0,W,H);
@@ -1238,11 +1309,36 @@ function drawCanvas(){
     g.addColorStop(1,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
     ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,b.r*pulse,0,Math.PI*2);ctx.fill();
   });
-  requestAnimationFrame(drawCanvas);
+  if(_canvasRunning) _canvasRAF=requestAnimationFrame(drawCanvas);
+}
+function startCanvasAnim(){
+  if(_canvasRunning) return;
+  _canvasRunning=true;
+  _canvasRAF=requestAnimationFrame(drawCanvas);
+}
+function stopCanvasAnim(){
+  _canvasRunning=false;
+  if(_canvasRAF) cancelAnimationFrame(_canvasRAF);
+  _canvasRAF=null;
 }
 initCanvas();
 window.addEventListener('resize',initCanvas);
-requestAnimationFrame(drawCanvas);
+
+const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (_reduceMotion) {
+  drawCanvas();
+} else {
+  let _canvasInView = true;
+  const _canvasObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { _canvasInView = e.isIntersecting; });
+    _canvasInView && document.visibilityState==='visible' ? startCanvasAnim() : stopCanvasAnim();
+  }, {threshold:0});
+  _canvasObs.observe(canvas);
+  document.addEventListener('visibilitychange', () => {
+    _canvasInView && document.visibilityState==='visible' ? startCanvasAnim() : stopCanvasAnim();
+  });
+  startCanvasAnim();
+}
 
 // ── SCROLL REVEAL ───────────────────────────────────────────
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});},{threshold:.1});
@@ -1271,6 +1367,31 @@ function toggleFaq(el){
   document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
   if(!isOpen)item.classList.add('open');
 }
+
+// ── Mobile nav drawer ─────────────────────────────────────────
+(function(){
+  const btn   = document.getElementById('navMenuBtn');
+  const drawer= document.getElementById('navDrawer');
+  const close = document.getElementById('navDrawerClose');
+  if (!btn || !drawer) return;
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+    document.body.style.overflow='';
+  }
+
+  btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
+  if (close) close.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
+})();
 </script>
 </body>
 </html>
