@@ -700,9 +700,8 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     if (!product?.id) return;
     setRevLoading(true);
     try {
-      await _fbSignIn();
-      const url = _fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}.json`);
-      const res = await fetch(url);
+      // cacusa_reviews es de lectura pública — no hace falta autenticarse para leerlas
+      const res = await fetch(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}.json`);
       if (!res.ok) { setReviews([]); setRevLoading(false); return; }
       const data = await res.json();
       setReviews(data && typeof data === 'object' && !data.error ? Object.entries(data).map(([key, val]) => ({ key, ...val })) : []);
@@ -712,9 +711,13 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 
   const deleteReview = async key => {
     try {
-      await _fbSignIn();
-      await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${product.id}/${key}.json`), { method: 'DELETE' });
-      setReviews(r => r.filter(x => x.key !== key));
+      // Borrar una reseña requiere el secret de Firebase — pasa por el worker, igual que Lovers
+      const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/reviews/${encodeURIComponent(product.id)}/${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+        headers: { 'X-Admin-Key': ADMIN_ACTION_KEY },
+      });
+      if (!r.ok) { alert('Error al eliminar la reseña'); return; }
+      setReviews(r2 => r2.filter(x => x.key !== key));
     } catch(_) { alert('Error al eliminar la reseña'); }
   };
 

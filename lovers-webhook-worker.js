@@ -29,13 +29,15 @@
  *   PATCH  /admin/lovers/{id}           → actualiza campos de una suscriptora
  *   DELETE /admin/lovers/{id}           → elimina una suscriptora
  *   PUT    /admin/lovers-photos         → guarda las fotos destacadas de la página pública
+ *   DELETE /admin/reviews/{productId}/{reviewId} → elimina una reseña de producto
  *   Todas las rutas /admin/* se autentican con el header X-Admin-Key (no con la firma de Square).
  *
  * Por qué existe este worker en el medio (en vez de que el admin hable directo con Firebase):
- *   Las reglas de Firebase para cacusa_lovers / cacusa_lovers_photos solo permiten CREAR un
- *   registro nuevo con auth anónimo (lo que necesita el formulario público de suscripción) —
- *   leer, editar o borrar un registro existente requiere el FB_DB_SECRET, que nunca se expone
- *   al navegador. El admin panel pasa esas acciones por acá.
+ *   Las reglas de Firebase para cacusa_lovers / cacusa_lovers_photos / cacusa_reviews solo
+ *   permiten CREAR un registro nuevo con auth anónimo (lo que necesitan el formulario público
+ *   de suscripción y el formulario público de reseñas) — leer/editar/borrar un registro
+ *   existente requiere el FB_DB_SECRET, que nunca se expone al navegador. El admin panel pasa
+ *   esas acciones por acá.
  *
  * Setup:
  *   1. Deploy this worker (pegar en Cloudflare Dashboard → Edit code → Save and deploy)
@@ -163,7 +165,8 @@ export default {
 
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
-        url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/')) {
+        url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
+        url.pathname.startsWith('/admin/reviews/')) {
 
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: ADMIN_CORS });
@@ -269,6 +272,20 @@ export default {
         }
 
         return adminJson({ error: 'Method not allowed' }, 405);
+      }
+
+      // DELETE /admin/reviews/{productId}/{reviewId} — moderar una reseña
+      const revMatch = url.pathname.match(/^\/admin\/reviews\/([^/]+)\/([^/]+)$/);
+      if (revMatch) {
+        if (request.method !== 'DELETE') return adminJson({ error: 'Method not allowed' }, 405);
+        const productId = decodeURIComponent(revMatch[1]);
+        const reviewId = decodeURIComponent(revMatch[2]);
+        const r = await fetch(`${dbUrl}/cacusa_reviews/${productId}/${reviewId}.json?auth=${fbAuth}`, { method: 'DELETE' });
+        if (!r.ok) {
+          const errText = await r.text().catch(() => r.status);
+          return adminJson({ error: 'No se pudo eliminar la reseña', detail: errText }, 502);
+        }
+        return adminJson({ ok: true }, 200);
       }
 
       return adminJson({ error: 'Not found' }, 404);
