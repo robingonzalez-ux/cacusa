@@ -9,6 +9,7 @@
  *   FB_DB_URL                     — https://cacusa-pos-default-rtdb.firebaseio.com
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
+ *   subscription.created            → crea registro en Firebase cuando nace la suscripción
  *   invoice.payment_made            → marca suscriptora como "activo"
  *   invoice.scheduled_charge_failed → marca suscriptora como "pago_fallido"
  *   subscription.updated            → si status=CANCELED, marca "cancelado"
@@ -68,11 +69,32 @@ async function findSubscriberByEmail(email, dbUrl, token) {
 // ── Update subscriber estado_pago in Firebase ─────────────────────────────────
 async function updateSubscriber(key, estadoPago, extras, dbUrl, token) {
   const url = `${dbUrl}/cacusa_lovers/${key}.json?auth=${token}`;
-  await fetch(url, {
+  const r = await fetch(url, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ estado_pago: estadoPago, ...extras }),
   });
+  if (!r.ok) {
+    const errText = await r.text().catch(() => r.status);
+    console.error(`Firebase PATCH failed (${r.status}):`, errText);
+  }
+}
+
+// ── Create new subscriber record in Firebase ───────────────────────────────────
+async function createSubscriber(data, dbUrl, token) {
+  const url = `${dbUrl}/cacusa_lovers.json?auth=${token}`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!r.ok) {
+    const errText = await r.text().catch(() => r.status);
+    console.error(`Firebase POST failed (${r.status}):`, errText);
+    return null;
+  }
+  const d = await r.json();
+  return d?.name || null; // Firebase returns { name: "<key>" }
 }
 
 // ── Get customer from Square ──────────────────────────────────────────────────
@@ -125,8 +147,47 @@ export default {
     const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
     try {
+      // ── subscription.created → crear registro inmediatamente ───────────────
+      if (type === 'subscription.created') {
+        const sub = data?.subscription;
+        if (!sub) return new Response('OK', { status: 200 });
+
+        const customerId = sub.customer_id;
+        const customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
+        const email = customer?.email_address || null;
+
+        if (email) {
+          const today = new Date().toISOString().slice(0, 10);
+          const addr = customer?.address || {};
+          // Detect annual: monthly price ~$19.99 = ~2000 cents; annual ~$219.89 = ~21989 cents
+          const isAnnual = (sub.price_money?.amount || 0) > 5000;
+          const existingKey = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
+          if (!existingKey) {
+            const newKey = await createSubscriber({
+              email: email.toLowerCase(),
+              nombre:    customer?.given_name  || '',
+              apellido:  customer?.family_name || '',
+              direccion: addr.address_line_1   || '',
+              apto:      addr.address_line_2   || '',
+              ciudad:    addr.locality         || '',
+              estado:    addr.administrative_district_level_1 || '',
+              zip:       addr.postal_code      || '',
+              pais:      addr.country          || '',
+              plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+              monto: isAnnual ? '$219.89/año' : '$19.99/mes',
+              fecha: today,
+              estado_pago: 'pendiente',
+              square_subscription_id: sub.id || '',
+            }, dbUrl, fbToken);
+            console.log('Created subscriber record (subscription.created):', email, '→', newKey);
+          } else {
+            console.log('Subscriber already exists (subscription.created):', email);
+          }
+        }
+      }
+
       // ── invoice.payment_made → activo ──────────────────────────────────────
-      if (type === 'invoice.payment_made') {
+      else if (type === 'invoice.payment_made') {
         const invoice = data?.invoice;
 
         // Solo procesar facturas de suscripción recurrente; ignorar pagos únicos
@@ -167,21 +228,17 @@ export default {
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
             const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
             const isAnnual = amountCents > 5000;
-            await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbToken}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: email.toLowerCase(),
-                ...customerFields,
-                plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-                monto: isAnnual ? '$219.89/año' : '$20/mes',
-                fecha: today,
-                estado_pago: 'activo',
-                ultimo_pago: today,
-                square_invoice_id: invoice?.id || '',
-              }),
-            });
-            console.log('Created activo record for:', email);
+            const newKey = await createSubscriber({
+              email: email.toLowerCase(),
+              ...customerFields,
+              plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+              monto: isAnnual ? '$219.89/año' : '$19.99/mes',
+              fecha: today,
+              estado_pago: 'activo',
+              ultimo_pago: today,
+              square_invoice_id: invoice?.id || '',
+            }, dbUrl, fbToken);
+            console.log('Created activo record for:', email, '→', newKey);
           }
         }
       }
