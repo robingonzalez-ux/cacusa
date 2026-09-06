@@ -217,10 +217,11 @@ export default {
           };
           const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbToken);
           if (key) {
+            // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
+            // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
             await updateSubscriber(key, 'activo', {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
-              ...customerFields,
             }, dbUrl, fbToken);
             console.log('Marked activo:', email);
           } else {
