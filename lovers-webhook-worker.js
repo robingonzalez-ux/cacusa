@@ -66,13 +66,15 @@ async function findSubscriberByEmail(email, dbUrl, token) {
   return keys.length > 0 ? keys[0] : null;
 }
 
-// ── Update subscriber estado_pago in Firebase ─────────────────────────────────
+// ── Update subscriber in Firebase. estadoPago=null deja el estado como está ──
 async function updateSubscriber(key, estadoPago, extras, dbUrl, token) {
   const url = `${dbUrl}/cacusa_lovers/${key}.json?auth=${token}`;
+  const body = { ...extras };
+  if (estadoPago != null) body.estado_pago = estadoPago;
   const r = await fetch(url, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ estado_pago: estadoPago, ...extras }),
+    body: JSON.stringify(body),
   });
   if (!r.ok) {
     const errText = await r.text().catch(() => r.status);
@@ -181,7 +183,12 @@ export default {
             }, dbUrl, fbToken);
             console.log('Created subscriber record (subscription.created):', email, '→', newKey);
           } else {
-            console.log('Subscriber already exists (subscription.created):', email);
+            // Ya existe (vino del formulario): solo adjuntar la referencia de Square,
+            // sin tocar sus datos ni su estado_pago actual.
+            await updateSubscriber(existingKey, null, {
+              square_subscription_id: sub.id || '',
+            }, dbUrl, fbToken);
+            console.log('Attached square_subscription_id to existing record (subscription.created):', email);
           }
         }
       }
