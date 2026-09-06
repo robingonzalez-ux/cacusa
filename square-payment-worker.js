@@ -245,6 +245,13 @@ async function verifySquareSignature(request, rawBody, sigKey) {
   );
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
   const expected = btoa(String.fromCharCode(...new Uint8Array(sig)));
+  // DEBUG TEMPORAL — quitar después de diagnosticar el 401
+  if (expected !== sigHeader) {
+    console.warn('DEBUG firma — url usada:', url);
+    console.warn('DEBUG firma — recibida de Square:', sigHeader);
+    console.warn('DEBUG firma — calculada por el worker:', expected);
+    console.warn('DEBUG firma — largo del secret configurado:', (sigKey || '').length);
+  }
   return expected === sigHeader;
 }
 
