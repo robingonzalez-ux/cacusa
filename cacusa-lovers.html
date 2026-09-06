@@ -223,15 +223,6 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
-.sub-addr-wrap{position:relative}
-.sub-addr-sugg{position:fixed;z-index:1000;background:#fff;border:1.5px solid var(--ink-light);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;display:none}
-.sub-addr-sugg.open{display:block}
-.sub-addr-item{padding:10px 13px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
-.sub-addr-item:last-child{border-bottom:none}
-.sub-addr-item:hover,.sub-addr-item.focused{background:#fdf0f7}
-.sub-addr-main{font-weight:500}
-.sub-addr-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
-.sub-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
 .sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
 .sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
@@ -586,7 +577,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
       </div>
       <div class="faq-item reveal" data-delay="4">
         <div class="faq-q" onclick="toggleFaq(this)"><span>¿Cómo es el pago mensual?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>El pago se coordina directamente con nosotros por WhatsApp. Aceptamos transferencia, efectivo y métodos de pago locales. Te avisamos cada mes antes del cobro.</p></div>
+        <div class="faq-a"><p>El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro. Si prefieres pagar por transferencia bancaria, selecciona esa opción al suscribirte y coordinaremos el pago por WhatsApp.</p></div>
       </div>
     </div>
   </div>
@@ -662,7 +653,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         <div class="cond-icon">❌</div>
         <div class="cond-text">
           <div class="cond-title">Política de cancelación</div>
-          <div class="cond-desc">Puedes cancelar tu suscripción a partir del segundo mes. La cancelación debe realizarse con al menos 5 días de anticipación a tu fecha de renovación. El primer mes no es reembolsable. Para cancelar, contáctanos a cacusabytaitus@gmail.com.</div>
+          <div class="cond-desc">Puedes cancelar tu suscripción a partir del segundo mes. La cancelación debe realizarse con al menos 5 días de anticipación a tu fecha de renovación. El primer mes no es reembolsable. Para cancelar, escríbenos por WhatsApp o a cacusabytaitus@gmail.com.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
@@ -763,6 +754,16 @@ function openSub(){
 function closeSub(){
   document.getElementById('sub-overlay').classList.remove('open');
   document.body.style.overflow='';
+  // Reset to step 1
+  document.getElementById('sub-step2').classList.remove('active');
+  document.getElementById('sub-step1').classList.add('active');
+  document.getElementById('dot2').classList.remove('act');
+  document.getElementById('dot1').classList.add('act');
+  document.getElementById('sErr1').textContent='';
+  document.getElementById('sErr2').textContent='';
+  const btn = document.getElementById('sPayBtn');
+  btn.disabled = false;
+  btn.classList.remove('loading');
 }
 function goStep2(){
   const err   = document.getElementById('sErr1');
@@ -856,8 +857,7 @@ async function submitSubscription(){
     const planLabel = _selectedPlan === 'anual' ? 'Anual ($219.89/año)' : 'Mensual ($20/mes)';
     const msg = `Hola! Me quiero suscribir a Cacusa Lovers ${planLabel}. ¿Cómo hago la transferencia? Mi email: ${subscriber.email}`;
     window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
-    btn.disabled = false;
-    btn.classList.remove('loading');
+    closeSub();
   } else {
     const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
     window.location.href = link;

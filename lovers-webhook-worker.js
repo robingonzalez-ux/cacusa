@@ -4,20 +4,21 @@
  *
  * Environment variables (Secrets in CF Dashboard):
  *   SQUARE_WEBHOOK_SIGNATURE_KEY  — from Square Dashboard → Webhooks → signature key
+ *   SQUARE_ACCESS_TOKEN           — Square API access token (from Square Developer Dashboard)
  *   FB_API_KEY                    — AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM
  *   FB_DB_URL                     — https://cacusa-pos-default-rtdb.firebaseio.com
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
- *   invoice.payment_made          → marca suscriptora como "activo"
+ *   invoice.payment_made            → marca suscriptora como "activo"
  *   invoice.scheduled_charge_failed → marca suscriptora como "pago_fallido"
- *   subscription.updated          → si status=CANCELED, marca "cancelado"
+ *   subscription.updated            → si status=CANCELED, marca "cancelado"
  *
  * Setup:
  *   1. Deploy this worker (wrangler deploy)
- *   2. Set the 3 secrets above
+ *   2. Set the 4 secrets above
  *   3. Square Dashboard → Developers → Webhooks → Add endpoint
  *      URL: https://cacusa-lovers-webhook.facturacioncacusa.workers.dev/webhook
- *      Events: invoice.payment_made, invoice.payment_failed, subscription.updated
+ *      Events: invoice.payment_made, invoice.scheduled_charge_failed, subscription.updated
  *   4. Copy the "Signature key" from the webhook detail page → set as SQUARE_WEBHOOK_SIGNATURE_KEY
  */
 
@@ -163,14 +164,17 @@ export default {
             console.log('Marked activo:', email);
           } else {
             // Subscriber not in Firebase yet — create minimal record
+            // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
+            const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
+            const isAnnual = amountCents > 5000;
             await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbToken}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 email: email.toLowerCase(),
                 ...customerFields,
-                plan: 'Cacusa Lovers',
-                monto: '$20/mes',
+                plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+                monto: isAnnual ? '$219.89/año' : '$20/mes',
                 fecha: today,
                 estado_pago: 'activo',
                 ultimo_pago: today,
