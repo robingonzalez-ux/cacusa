@@ -7,6 +7,8 @@
  *   SQUARE_ACCESS_TOKEN           — Square API access token (from Square Developer Dashboard)
  *   FB_API_KEY                    — AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM
  *   FB_DB_URL                     — https://cacusa-pos-default-rtdb.firebaseio.com
+ *   ADMIN_ACTION_KEY              — clave compartida con el admin para poder cancelar
+ *                                   suscripciones desde el panel (ver POST /admin/cancel-subscription)
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
  *   subscription.created            → crea registro en Firebase cuando nace la suscripción
@@ -14,9 +16,15 @@
  *   invoice.scheduled_charge_failed → marca suscriptora como "pago_fallido"
  *   subscription.updated            → si status=CANCELED, marca "cancelado"
  *
+ * Rutas:
+ *   POST /webhook                    → recibe webhooks de Square (firmados)
+ *   POST /admin/cancel-subscription  → llamado por el admin panel para cancelar una
+ *                                       suscripción en Square (autenticado con ADMIN_ACTION_KEY,
+ *                                       no con la firma de Square)
+ *
  * Setup:
  *   1. Deploy this worker (wrangler deploy)
- *   2. Set the 4 secrets above
+ *   2. Set the 5 secrets above
  *   3. Square Dashboard → Developers → Webhooks → Add endpoint
  *      URL: https://cacusa-lovers-webhook.facturacioncacusa.workers.dev/webhook
  *      Events: invoice.payment_made, invoice.scheduled_charge_failed, subscription.updated
@@ -24,6 +32,18 @@
  */
 
 const SQUARE_API = 'https://connect.squareup.com/v2';
+const ADMIN_ORIGIN = 'https://cacusabytaitus.com';
+const ADMIN_CORS = {
+  'Access-Control-Allow-Origin': ADMIN_ORIGIN,
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
+};
+function adminJson(data, status, extraHeaders) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...ADMIN_CORS, ...(extraHeaders || {}) },
+  });
+}
 
 // ── Verify Square webhook signature ──────────────────────────────────────────
 async function verifySignature(request, body, sigKey) {
@@ -115,9 +135,61 @@ async function getSquareCustomerEmail(customerId, squareToken) {
   return c?.email_address || null;
 }
 
+// ── Cancel a subscription in Square (llamado desde el admin panel) ───────────
+async function cancelSquareSubscription(subscriptionId, squareToken) {
+  const r = await fetch(`${SQUARE_API}/subscriptions/${subscriptionId}/cancel`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${squareToken}`, 'Square-Version': '2024-11-20' },
+  });
+  const d = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, body: d };
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // ── Acción de admin: cancelar una suscripción directo desde el panel ──────
+    if (url.pathname === '/admin/cancel-subscription') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: ADMIN_CORS });
+      }
+      if (request.method !== 'POST') {
+        return adminJson({ error: 'Method not allowed' }, 405);
+      }
+      if (!env.ADMIN_ACTION_KEY || request.headers.get('x-admin-key') !== env.ADMIN_ACTION_KEY) {
+        return adminJson({ error: 'Unauthorized' }, 401);
+      }
+
+      let payload;
+      try { payload = await request.json(); } catch { return adminJson({ error: 'Invalid JSON' }, 400); }
+      const { subscriptionId, firebaseKey } = payload || {};
+      if (!subscriptionId || !firebaseKey) {
+        return adminJson({ error: 'Falta subscriptionId o firebaseKey' }, 400);
+      }
+
+      const result = await cancelSquareSubscription(subscriptionId, env.SQUARE_ACCESS_TOKEN);
+      if (!result.ok) {
+        console.error('Admin cancel failed:', result.status, JSON.stringify(result.body));
+        return adminJson({ error: 'Square rechazó la cancelación', detail: result.body }, 502);
+      }
+
+      // Reflejar la cancelación en Firebase de inmediato — el webhook subscription.updated
+      // de Square también la marcará al llegar, esto solo evita la espera en el admin.
+      try {
+        const fbToken = await fbSignIn(env.FB_API_KEY);
+        const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+        if (fbToken) {
+          await updateSubscriber(firebaseKey, 'cancelado', {
+            fecha_cancelacion: new Date().toISOString().slice(0, 10),
+          }, dbUrl, fbToken);
+        }
+      } catch (e) { console.error('Firebase update after cancel failed:', e.message); }
+
+      return adminJson({ ok: true }, 200);
+    }
+
     if (request.method !== 'POST') {
       return new Response('OK', { status: 200 });
     }

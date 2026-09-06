@@ -47,6 +47,8 @@ const ADMIN_API      = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 const PRODUCTS_PATH  = 'data/products.json';
 const ORDERS_PATH    = 'data/orders.json';
 const IMAGES_PATH    = 'ui_kits/store/images';
+const LOVERS_WEBHOOK_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
+const ADMIN_ACTION_KEY   = 'SBxAvquZ71E6nuo0ti9sxvziQghd5ypz8hAP5Xg0zto';
 const STORE_URL      = 'https://cacusabytaitus.com/';
 const VAPID_PUB_KEY  = 'BDj3vzNjIprLSnAzuBzZHBjC0Zoa9033J2Ye7el8Zd0PTat1YFlMEDZbjeVo1zuzI6xRG9QJEtyfRehwYVMo1v8';
 
@@ -1789,6 +1791,7 @@ function LoversTab({ products = [] }) {
   const [editForm, setEditForm] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [cancelingId, setCancelingId] = useState(null);
 
   const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
@@ -1900,6 +1903,32 @@ function LoversTab({ products = [] }) {
       }
     } catch (_) { alert('Error al eliminar'); }
     setDeletingId(null);
+  };
+
+  const cancelInSquare = async s => {
+    if (!s.square_subscription_id) {
+      alert('Esta suscriptora no tiene un Subscription ID guardado — no se puede cancelar automáticamente. Cancélala manualmente desde Square Dashboard → Subscriptions.');
+      return;
+    }
+    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || 'esta suscriptora';
+    if (!confirm(`¿Cancelar la suscripción de ${nombre} en Square? El cobro recurrente se detiene de inmediato. Esta acción no se puede deshacer desde aquí.`)) return;
+    setCancelingId(s.id);
+    try {
+      const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/cancel-subscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': ADMIN_ACTION_KEY },
+        body: JSON.stringify({ subscriptionId: s.square_subscription_id, firebaseKey: s.id }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data.ok) {
+        setSubs(prev => prev.map(x => x.id === s.id
+          ? { ...x, estado_pago: 'cancelado', fecha_cancelacion: new Date().toISOString().slice(0, 10) }
+          : x));
+      } else {
+        alert(`No se pudo cancelar en Square: ${data.error || r.status}`);
+      }
+    } catch (e) { alert(`Error al cancelar: ${e.message}`); }
+    setCancelingId(null);
   };
 
   const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
@@ -2022,6 +2051,15 @@ function LoversTab({ products = [] }) {
                       style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', background: editingId === s.id ? '#FFF0F6' : 'white', color: editingId === s.id ? '#E85D8A' : '#7A6880', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                       {editingId === s.id ? 'Cancelar' : 'Editar datos'}
                     </button>
+                    {s.estado_pago !== 'cancelado' && (
+                      <button
+                        onClick={() => cancelInSquare(s)}
+                        disabled={cancelingId === s.id}
+                        title={s.square_subscription_id ? '' : 'Sin Subscription ID guardado — cancela manualmente en Square'}
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FBBF24', background: 'white', color: '#B45309', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: cancelingId === s.id ? .5 : 1 }}>
+                        {cancelingId === s.id ? 'Cancelando…' : 'Cancelar en Square'}
+                      </button>
+                    )}
                     <button
                       onClick={() => deleteSubscriber(s)}
                       disabled={deletingId === s.id}
