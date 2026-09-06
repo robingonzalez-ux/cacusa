@@ -442,8 +442,9 @@ function LoginScreen({ onLogin }) {
       if (restore) localStorage.setItem(`cacusa_wa:${username}`, '1');
       onLogin({ username, name: USERS[username].name, token: data.token });
     } catch (e) {
-      if (e.name === 'NotAllowedError') setError('Autenticación cancelada.');
-      else setError(e.message || 'Error de autenticación biométrica. Ingresa con contraseña para re-activar Face ID.');
+      localStorage.removeItem(`cacusa_wa:${username}`);
+      if (e.name === 'NotAllowedError') setError('Face ID cancelado. Ingresa con contraseña para re-activar.');
+      else setError('No se encontró el acceso biométrico. Ingresa con contraseña — la app te pedirá activar Face ID de nuevo.');
     } finally { setLoading(false); }
   };
 
