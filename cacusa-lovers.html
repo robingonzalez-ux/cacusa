@@ -223,6 +223,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
+.sub-input::-webkit-search-cancel-button,.sub-input::-webkit-search-decoration,.sub-input::-webkit-search-results-button{-webkit-appearance:none;display:none}
 .sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
 .sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
 .sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
@@ -344,12 +345,12 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
         </div>
         <div class="sub-field">
           <div class="sub-field-label">Dirección de envío *</div>
-          <input class="sub-input" id="sDireccion" type="text" placeholder="Calle, número, apto…" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly')" onblur="if(!this.value)this.setAttribute('readonly','')">
+          <input class="sub-input" id="sDireccion" type="search" placeholder="Calle, número, apto…" autocomplete="nope" name="cx-line1" enterkeyhint="next" results="0">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
             <div class="sub-field-label">Ciudad *</div>
-            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly')" onblur="if(!this.value)this.setAttribute('readonly','')">
+            <input class="sub-input" id="sCiudad" type="search" placeholder="Ciudad" autocomplete="nope" name="cx-loc" enterkeyhint="next" results="0">
           </div>
           <div class="sub-field">
             <div class="sub-field-label">País *</div>
@@ -401,7 +402,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             </div>
             <div class="sub-field">
               <div class="sub-field-label">ZIP Code *</div>
-              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly')" onblur="if(!this.value)this.setAttribute('readonly','')" maxlength="10">
+              <input class="sub-input" id="sZipUSA" type="search" placeholder="12345" autocomplete="nope" name="cx-pc1" inputmode="numeric" enterkeyhint="done" results="0" maxlength="10">
             </div>
           </div>
         </div>
@@ -409,11 +410,11 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
               <div class="sub-field-label">Estado / Provincia</div>
-              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="Estado o provincia" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly')" onblur="if(!this.value)this.setAttribute('readonly','')">
+              <input class="sub-input" id="sEstadoOtro" type="search" placeholder="Estado o provincia" autocomplete="nope" name="cx-reg" enterkeyhint="next" results="0">
             </div>
             <div class="sub-field">
               <div class="sub-field-label">Código postal</div>
-              <input class="sub-input" id="sZipOtro" type="text" placeholder="Código postal" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly')" onblur="if(!this.value)this.setAttribute('readonly','')">
+              <input class="sub-input" id="sZipOtro" type="search" placeholder="Código postal" autocomplete="nope" name="cx-pc2" enterkeyhint="done" results="0">
             </div>
           </div>
         </div>
