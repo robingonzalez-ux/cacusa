@@ -859,6 +859,7 @@ function closeSub(){
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
   _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
+  document.getElementById('sPais').value = '';
   onPaisChange();
   const btn = document.getElementById('sPayBtn');
   btn.disabled = false;
