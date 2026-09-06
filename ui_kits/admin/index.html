@@ -1860,6 +1860,8 @@ function LoversTab({ products = [] }) {
       email: s.email || '', telefono: s.telefono || '',
       direccion: s.direccion || '', apto: s.apto || '', ciudad: s.ciudad || '',
       estado: s.estado || '', zip: s.zip || '', pais: s.pais || '',
+      ultimo_pago: s.ultimo_pago || '', square_invoice_id: s.square_invoice_id || '',
+      square_subscription_id: s.square_subscription_id || '',
       notas: s.notas || '',
     });
   };
@@ -2071,6 +2073,18 @@ function LoversTab({ products = [] }) {
                             style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                         </div>
                       ))}
+                    </div>
+                    <div style={{ background: '#FFF8FA', border: '1px dashed #F0C9D9', borderRadius: 10, padding: 12, marginBottom: 14 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: '#E85D8A', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>Confirmación de pago (Square)</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                        {[['Último pago', 'ultimo_pago'], ['Invoice ID', 'square_invoice_id'], ['Subscription ID', 'square_subscription_id']].map(([lbl, key]) => (
+                          <div key={key}>
+                            <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                            <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
+                              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div style={{ marginBottom: 14 }}>
                       <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
