@@ -223,7 +223,14 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-field-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
-.sub-input::-webkit-search-cancel-button,.sub-input::-webkit-search-decoration,.sub-input::-webkit-search-results-button{-webkit-appearance:none;display:none}
+.sub-field--ac{position:relative}
+.sub-ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--ink-light);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
+.sub-ac-list.open{display:block}
+.sub-ac-item{padding:10px 14px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
+.sub-ac-item:last-child{border-bottom:none}
+.sub-ac-item:hover,.sub-ac-item.focused{background:#fdf0f7}
+.sub-ac-main{font-weight:500}
+.sub-ac-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
 .sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
 .sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
 .sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
@@ -343,14 +350,15 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <div class="sub-field-label">Teléfono / WhatsApp *</div>
           <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
         </div>
-        <div class="sub-field">
+        <div class="sub-field sub-field--ac">
           <div class="sub-field-label">Dirección de envío *</div>
-          <input class="sub-input" id="sDireccion" type="search" placeholder="Calle, número, apto…" autocomplete="nope" name="cx-line1" enterkeyhint="next" results="0">
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120">
+          <div class="sub-ac-list" id="sAcList"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
             <div class="sub-field-label">Ciudad *</div>
-            <input class="sub-input" id="sCiudad" type="search" placeholder="Ciudad" autocomplete="nope" name="cx-loc" enterkeyhint="next" results="0">
+            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad">
           </div>
           <div class="sub-field">
             <div class="sub-field-label">País *</div>
@@ -402,7 +410,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
             </div>
             <div class="sub-field">
               <div class="sub-field-label">ZIP Code *</div>
-              <input class="sub-input" id="sZipUSA" type="search" placeholder="12345" autocomplete="nope" name="cx-pc1" inputmode="numeric" enterkeyhint="done" results="0" maxlength="10">
+              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" inputmode="numeric" maxlength="10">
             </div>
           </div>
         </div>
@@ -410,11 +418,11 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
               <div class="sub-field-label">Estado / Provincia</div>
-              <input class="sub-input" id="sEstadoOtro" type="search" placeholder="Estado o provincia" autocomplete="nope" name="cx-reg" enterkeyhint="next" results="0">
+              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="Estado o provincia">
             </div>
             <div class="sub-field">
               <div class="sub-field-label">Código postal</div>
-              <input class="sub-input" id="sZipOtro" type="search" placeholder="Código postal" autocomplete="nope" name="cx-pc2" enterkeyhint="done" results="0">
+              <input class="sub-input" id="sZipOtro" type="text" placeholder="Código postal">
             </div>
           </div>
         </div>
@@ -843,6 +851,133 @@ function onPaisChange(){
   document.getElementById('sFieldsUSA').hidden  = pais !== 'USA';
   document.getElementById('sFieldsOtro').hidden = pais !== 'Otro';
 }
+// ─── AUTOCOMPLETE DIRECCIÓN (Photon / OpenStreetMap) ────────
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Normaliza para comparar sin tildes: "Sucumbíos" → "sucumbios"
+function _norm(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+// Selecciona la <option> de un select cuyo texto coincida con txt
+function _setSelectByText(selectId, txt){
+  if (!txt) return;
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const t = _norm(txt);
+  for (const opt of sel.options){
+    if (!opt.value) continue;
+    const o = _norm(opt.text);
+    if (o === t || o.startsWith(t) || t.startsWith(o)) { sel.value = opt.value; return; }
+  }
+}
+
+function closeAcList(){
+  const list = document.getElementById('sAcList');
+  if (list) { list.classList.remove('open'); list.innerHTML = ''; }
+  _acItems = [];
+}
+
+let _acItems = [];
+
+(function initAddrAutocomplete(){
+  const inp  = document.getElementById('sDireccion');
+  const list = document.getElementById('sAcList');
+  if (!inp || !list) return;
+  let _timer = null;
+
+  function fillFromFeature(f){
+    const p = f.properties;
+    const num    = p.housenumber || '';
+    const street = p.street || '';
+    inp.value = street ? (num ? num + ' ' : '') + street : (p.name || '');
+    const ciudad = p.city || p.town || p.village || p.county || '';
+    if (ciudad) document.getElementById('sCiudad').value = ciudad;
+
+    // País: la tienda usa códigos, acá usamos etiquetas
+    const cc = (p.countrycode || '').toUpperCase();
+    const pais = cc === 'EC' ? 'Ecuador' : cc === 'US' ? 'USA' : 'Otro';
+    document.getElementById('sPais').value = pais;
+    onPaisChange();
+
+    // Estado/provincia + ZIP según el país
+    if (pais === 'Ecuador') {
+      _setSelectByText('sProvincia', p.state);
+    } else if (pais === 'USA') {
+      _setSelectByText('sEstadoUSA', p.state);
+      if (p.postcode) document.getElementById('sZipUSA').value = p.postcode.substring(0, 5);
+    } else {
+      document.getElementById('sEstadoOtro').value = p.state || '';
+      document.getElementById('sZipOtro').value    = p.postcode || '';
+    }
+    closeAcList();
+  }
+
+  inp.addEventListener('input', function(){
+    clearTimeout(_timer);
+    const q = this.value.trim();
+    if (q.length < 3) { closeAcList(); return; }
+    _timer = setTimeout(async () => {
+      try {
+        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=es');
+        const data = await res.json();
+        // Si ya eligió país, filtrar las sugerencias a ese país
+        const selPais = document.getElementById('sPais').value;
+        const want = selPais === 'Ecuador' ? 'EC' : selPais === 'USA' ? 'US' : null;
+        const features = (data.features || []).filter(f => {
+          const p = f.properties;
+          if (!p || !(p.street || p.housenumber || (p.city && p.name))) return false;
+          return !want || (p.countrycode || '').toUpperCase() === want;
+        });
+        if (!features.length) { closeAcList(); return; }
+        _acItems = features;
+        list.innerHTML = features.map((f, i) => {
+          const p = f.properties;
+          const num    = p.housenumber || '';
+          const street = p.street || '';
+          const main   = street ? (num ? num + ' ' : '') + street : (p.name || '');
+          const sub    = [p.city || p.town || p.village, p.state, p.country].filter(Boolean).join(', ');
+          return '<div class="sub-ac-item" data-idx="' + i + '">'
+               + '<div class="sub-ac-main">' + esc(main) + '</div>'
+               + (sub ? '<div class="sub-ac-sub">' + esc(sub) + '</div>' : '')
+               + '</div>';
+        }).join('');
+        list.classList.add('open');
+      } catch(e) { closeAcList(); }
+    }, 380);
+  });
+
+  list.addEventListener('click', function(e){
+    const item = e.target.closest('.sub-ac-item');
+    if (!item) return;
+    fillFromFeature(_acItems[+item.dataset.idx]);
+  });
+
+  inp.addEventListener('keydown', function(e){
+    const items = list.querySelectorAll('.sub-ac-item');
+    if (!items.length) return;
+    const focused = list.querySelector('.focused');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? (focused.nextElementSibling || items[0]) : items[0];
+      if (focused) focused.classList.remove('focused');
+      next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? (focused.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+      if (focused) focused.classList.remove('focused');
+      prev.classList.add('focused');
+    } else if (e.key === 'Enter' && focused) {
+      e.preventDefault();
+      fillFromFeature(_acItems[+focused.dataset.idx]);
+    } else if (e.key === 'Escape') {
+      closeAcList();
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if (!inp.contains(e.target) && !list.contains(e.target)) closeAcList();
+  });
+})();
+
 function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
 
 function openSub(){
@@ -862,6 +997,7 @@ function closeSub(){
   _subNombre=''; _subApellido=''; _subDireccion=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
   document.getElementById('sPais').value = '';
   onPaisChange();
+  closeAcList();
   const btn = document.getElementById('sPayBtn');
   btn.disabled = false;
   btn.classList.remove('loading');
