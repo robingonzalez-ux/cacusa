@@ -435,14 +435,15 @@ function LoginScreen({ onLogin }) {
     } finally { setLoading(false); }
   };
 
-  const loginFaceId = async () => {
+  const loginFaceId = async (restore = false) => {
     setLoading(true); setError('');
     try {
       const data = await _waLogin(username);
+      if (restore) localStorage.setItem(`cacusa_wa:${username}`, '1');
       onLogin({ username, name: USERS[username].name, token: data.token });
     } catch (e) {
       if (e.name === 'NotAllowedError') setError('Autenticación cancelada.');
-      else setError(e.message || 'Error de autenticación biométrica.');
+      else setError(e.message || 'Error de autenticación biométrica. Ingresa con contraseña para re-activar Face ID.');
     } finally { setLoading(false); }
   };
 
@@ -501,10 +502,18 @@ function LoginScreen({ onLogin }) {
           </button>
         </form>
         {waAvail && (
-          <button onClick={loginFaceId} disabled={loading}
+          <button onClick={() => loginFaceId(false)} disabled={loading}
             style={{ width:'100%', padding:13, marginTop:12, background:'#F8F8FF', border:'1.5px solid #e8e0ff', borderRadius:99, fontWeight:600, fontSize:14, color:'#5a3fa0', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
             <span style={{ fontSize:20 }}>🔐</span> Ingresar con Face ID
           </button>
+        )}
+        {!waAvail && _waSupported() && username && (
+          <div style={{ textAlign:'center', marginTop:14 }}>
+            <button onClick={() => loginFaceId(true)} disabled={loading}
+              style={{ background:'none', border:'none', cursor:'pointer', fontSize:12, color:'#9B5DE5', textDecoration:'underline', fontFamily:'inherit', opacity: loading ? .5 : 1 }}>
+              Recuperar acceso con Face ID
+            </button>
+          </div>
         )}
       </div>
     </div>
