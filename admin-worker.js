@@ -292,6 +292,7 @@ async function handleOrder(body, env, origin, ctx, request) {
     subtotal:  num(order.subtotal),
     envio:     num(order.envio),
     impuesto:  num(order.impuesto),
+    notas:     str(order.notas, 500) || undefined,
     cliente: {
       nombre:    str(cliente.nombre,   100),
       apellido:  str(cliente.apellido, 100),

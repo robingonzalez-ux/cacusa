@@ -473,8 +473,20 @@ async function handleCreatePaymentLink(body, env, allowed) {
   // ── Guardar el pedido pendiente en KV — el webhook lo usa cuando Square confirme el pago ──
   const grossCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
   const netCents    = Math.max(0, grossCents - gcDiscountCents - cpDiscountCents);
+  // Mismo formato que generateOrderNum() en la tienda, para que se vea igual que los pedidos
+  // por WhatsApp/Zelle en el admin (ej. CA-260906-1234).
+  const orderNum = 'CA-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
+    + String(1000 + Math.floor(Math.random() * 9000));
+  // Igual que hace la tienda para WhatsApp/Zelle: las notas del cliente + qué cupón/tarjeta de
+  // regalo se usó van al campo `notas` del pedido, que es lo que el admin muestra en la tarjeta.
+  const orderNotesParts = [
+    customer?.notes || '',
+    gcDiscountCents > 0 ? `GC:${gcCode}(-$${(gcDiscountCents / 100).toFixed(2)})` : '',
+    cpDiscountCents > 0 ? `CP:${cpCode}(-$${(cpDiscountCents / 100).toFixed(2)})` : '',
+  ].filter(Boolean);
   const pendingOrder = {
     order: {
+      numero: orderNum,
       cliente: {
         nombre:    customer?.name || '',
         apellido:  customer?.lastname || '',
@@ -494,6 +506,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
       total: +(netCents / 100).toFixed(2),
       pago:  'Tarjeta',
       estado: 'Nuevo',
+      notas: orderNotesParts.join(' | ') || undefined,
     },
     giftCard: gcDiscountCents > 0 ? { code: gcCode, amountCents: gcDiscountCents } : null,
     coupon:   cpDiscountCents > 0 ? { code: cpCode, amountCents: cpDiscountCents, phone: customer?.phone || '', email: customer?.email || '' } : null,
