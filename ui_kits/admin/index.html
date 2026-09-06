@@ -1788,6 +1788,7 @@ function LoversTab({ products = [] }) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
@@ -1881,6 +1882,23 @@ function LoversTab({ products = [] }) {
   };
 
   const ef = (k, v) => setEditForm(f => ({ ...f, [k]: v }));
+
+  const deleteSubscriber = async s => {
+    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || 'esta suscriptora';
+    if (!confirm(`¿Eliminar permanentemente a ${nombre}? Esta acción no se puede deshacer.`)) return;
+    setDeletingId(s.id);
+    try {
+      if (!_fbIdToken) await _fbSignIn();
+      const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${s.id}.json`), { method: 'DELETE' });
+      if (r.ok) {
+        setSubs(prev => prev.filter(x => x.id !== s.id));
+        if (editingId === s.id) setEditingId(null);
+      } else {
+        alert('Error al eliminar');
+      }
+    } catch (_) { alert('Error al eliminar'); }
+    setDeletingId(null);
+  };
 
   const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
   const estadoLabel = e => ({ 'activo': 'Activo ✓', 'pendiente': 'Pendiente', 'cancelado': 'Cancelado', 'pago_fallido': 'Pago fallido ⚠️' }[e] || e || 'Pendiente');
@@ -2001,6 +2019,12 @@ function LoversTab({ products = [] }) {
                       onClick={() => editingId === s.id ? setEditingId(null) : startEdit(s)}
                       style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', background: editingId === s.id ? '#FFF0F6' : 'white', color: editingId === s.id ? '#E85D8A' : '#7A6880', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                       {editingId === s.id ? 'Cancelar' : 'Editar datos'}
+                    </button>
+                    <button
+                      onClick={() => deleteSubscriber(s)}
+                      disabled={deletingId === s.id}
+                      style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FCA5A5', background: 'white', color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: deletingId === s.id ? .5 : 1 }}>
+                      {deletingId === s.id ? 'Eliminando…' : 'Eliminar'}
                     </button>
                   </div>
                 </div>
