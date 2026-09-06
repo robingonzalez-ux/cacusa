@@ -1766,13 +1766,15 @@ function LeadsTab({ token }) {
 }
 
 // ── Cacusa Lovers Tab ────────────────────────────────────────────────────────
-function LoversTab() {
+function LoversTab({ products = [] }) {
   const [subs, setSubs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
   const [photos, setPhotos] = useState({ card1: { url: '', label: 'Collar del mes' }, card2: { url: '', label: 'Anillo sorpresa' }, card3: { url: '', label: 'Pulsera exclusiva' } });
   const [savingPhotos, setSavingPhotos] = useState(false);
   const [photoMsg, setPhotoMsg] = useState('');
+  const [openPicker, setOpenPicker] = useState(null);
+  const [pickerQ, setPickerQ] = useState('');
 
   const _FB_DB = 'https://cacusa-pos-default-rtdb.firebaseio.com';
 
@@ -1843,27 +1845,59 @@ function LoversTab() {
 
       {/* ── Photo management ── */}
       <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
-        <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>📷 Fotos de la página web</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Pega la URL de la imagen para cada tarjeta (se actualiza en la web de Cacusa Lovers automáticamente).</div>
+        <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>Productos destacados en la página</div>
+        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Selecciona un producto de la tienda para cada tarjeta — la imagen se toma automáticamente.</div>
         {['card1','card2','card3'].map((key, i) => {
-          const labels = ['Collar del mes', 'Anillo sorpresa', 'Pulsera exclusiva'];
+          const slotLabels = ['Collar del mes', 'Anillo sorpresa', 'Pulsera exclusiva'];
+          const chosen = photos[key];
+          const filtered = products.filter(p => p.available !== false && (p.name||'').toLowerCase().includes(pickerQ.toLowerCase()));
           return (
-            <div key={key} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 5 }}>{labels[i]}</div>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                {photos[key]?.url && (
-                  <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0, border: '1px solid #eee' }}>
-                    <img src={photos[key].url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+            <div key={key} style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>{slotLabels[i]}</div>
+              {/* Selected product preview */}
+              {chosen?.url ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, border: '1.5px solid #E85D8A', background: '#FFF0F6' }}>
+                  <img src={chosen.url} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                  <div style={{ flex: 1, fontWeight: 600, fontSize: 13, color: '#1A1118' }}>{chosen.label}</div>
+                  <button onClick={() => { setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: '', label: slotLabels[i] } })); setOpenPicker(null); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#A89AAF', padding: '2px 6px' }}>✕</button>
+                  <button onClick={() => { setOpenPicker(openPicker === key ? null : key); setPickerQ(''); }}
+                    style={{ background: 'none', border: '1.5px solid #EDE8EA', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#7A6880', padding: '4px 10px' }}>Cambiar</button>
+                </div>
+              ) : (
+                <button onClick={() => { setOpenPicker(openPicker === key ? null : key); setPickerQ(''); }}
+                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: '1.5px dashed #D4C8DC', borderRadius: 12, background: 'white', cursor: 'pointer', fontSize: 13, color: '#A89AAF', fontFamily: 'inherit' }}>
+                  + Elegir producto de la tienda
+                </button>
+              )}
+              {/* Inline picker */}
+              {openPicker === key && (
+                <div style={{ border: '1.5px solid #EDE8EA', borderRadius: 12, background: '#FAF7FB', padding: 12, marginTop: 8 }}>
+                  <input placeholder="Buscar producto…" value={pickerQ} onChange={e => setPickerQ(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontFamily: 'inherit', fontSize: 13, color: '#1A1118', outline: 'none', marginBottom: 8 }} />
+                  <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                    {filtered.length === 0 && <div style={{ fontSize: 12, color: '#A89AAF', padding: '8px 4px' }}>Sin resultados</div>}
+                    {filtered.map(p => (
+                      <div key={p.id} onClick={() => { setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: p.imageUrl || '', label: p.name } })); setOpenPicker(null); setPickerQ(''); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10, cursor: 'pointer', marginBottom: 4,
+                          background: chosen?.label === p.name ? '#FFF0F6' : 'white',
+                          border: `1.5px solid ${chosen?.label === p.name ? '#E85D8A' : '#eee'}` }}>
+                        {p.imageUrl
+                          ? <img src={p.imageUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                          : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1118', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                          <div style={{ fontSize: 11, color: '#A89AAF' }}>{p.category} · ${p.price}</div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-                <input
-                  type="url"
-                  placeholder="https://…"
-                  value={photos[key]?.url || ''}
-                  onChange={e => setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: e.target.value } }))}
-                  style={{ flex: 1, border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 12px', fontFamily: 'inherit', fontSize: 13, color: '#1A1118', outline: 'none' }}
-                />
-              </div>
+                  <button onClick={() => { setOpenPicker(null); setPickerQ(''); }}
+                    style={{ marginTop: 8, fontSize: 12, color: '#A89AAF', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Cancelar
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
@@ -3193,7 +3227,7 @@ function App() {
         {activeTab === 'leads' && <LeadsTab token={session.token} />}
 
         {/* ── Cacusa Lovers tab ── */}
-        {activeTab === 'lovers' && <LoversTab />}
+        {activeTab === 'lovers' && <LoversTab products={products} />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (
