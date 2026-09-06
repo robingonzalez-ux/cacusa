@@ -231,6 +231,7 @@ footer{background:var(--grad-full);padding:48px 0 28px;text-align:center}
 .sub-ac-item:hover,.sub-ac-item.focused{background:#fdf0f7}
 .sub-ac-main{font-weight:500}
 .sub-ac-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
+.sub-ac-msg{padding:10px 14px;font-family:var(--fu);font-size:12.5px;color:var(--ink-muted)}
 .sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
 .sub-btn{width:100%;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
 .sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
@@ -876,7 +877,17 @@ function closeAcList(){
   _acItems = [];
 }
 
+// Muestra un mensaje en lugar de sugerencias (buscando / sin resultados / error)
+function showAcMsg(txt){
+  const list = document.getElementById('sAcList');
+  if (!list) return;
+  list.innerHTML = '<div class="sub-ac-msg">' + esc(txt) + '</div>';
+  list.classList.add('open');
+  _acItems = [];
+}
+
 let _acItems = [];
+let _acSeq = 0;
 
 (function initAddrAutocomplete(){
   const inp  = document.getElementById('sDireccion');
@@ -884,12 +895,26 @@ let _acItems = [];
   if (!inp || !list) return;
   let _timer = null;
 
+  // Tipos de resultado que son un lugar (ciudad/pueblo/etc), no una direccion
+  const CITY_KINDS = ['city','town','village','hamlet','municipality','district','suburb','state','county'];
+
   function fillFromFeature(f){
     const p = f.properties;
-    const num    = p.housenumber || '';
-    const street = p.street || '';
-    inp.value = street ? (num ? num + ' ' : '') + street : (p.name || '');
-    const ciudad = p.city || p.town || p.village || p.county || '';
+    const esLugar = CITY_KINDS.includes(p.osm_value) || CITY_KINDS.includes(p.type);
+    let ciudad = '';
+
+    if (p.street || p.housenumber) {
+      // Direccion exacta -> llena la linea de direccion
+      inp.value = ((p.housenumber ? p.housenumber + ' ' : '') + (p.street || '')).trim();
+      ciudad = p.city || p.town || p.village || p.county || '';
+    } else if (esLugar) {
+      // Resultado de ciudad -> NO tocar la direccion, solo la ciudad
+      ciudad = p.name || '';
+    } else {
+      // POI o edificio con nombre
+      inp.value = p.name || '';
+      ciudad = p.city || p.town || p.village || p.county || '';
+    }
     if (ciudad) document.getElementById('sCiudad').value = ciudad;
 
     // País: la tienda usa códigos, acá usamos etiquetas
@@ -916,24 +941,27 @@ let _acItems = [];
     const q = this.value.trim();
     if (q.length < 3) { closeAcList(); return; }
     _timer = setTimeout(async () => {
+      const mySeq = ++_acSeq;
+      showAcMsg('Buscando\u2026');
       try {
         const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=es');
         const data = await res.json();
+        if (mySeq !== _acSeq) return;   // llego tarde: ya hay una busqueda mas nueva
         // Si ya eligió país, filtrar las sugerencias a ese país
         const selPais = document.getElementById('sPais').value;
         const want = selPais === 'Ecuador' ? 'EC' : selPais === 'USA' ? 'US' : null;
         const features = (data.features || []).filter(f => {
           const p = f.properties;
-          if (!p || !(p.street || p.housenumber || (p.city && p.name))) return false;
+          if (!p || !(p.name || p.street)) return false;
           return !want || (p.countrycode || '').toUpperCase() === want;
         });
-        if (!features.length) { closeAcList(); return; }
+        if (!features.length) { showAcMsg('Sin sugerencias \u2014 puedes escribir la direcci\u00f3n a mano'); return; }
         _acItems = features;
         list.innerHTML = features.map((f, i) => {
           const p = f.properties;
-          const num    = p.housenumber || '';
-          const street = p.street || '';
-          const main   = street ? (num ? num + ' ' : '') + street : (p.name || '');
+          const main   = (p.street || p.housenumber)
+            ? ((p.housenumber ? p.housenumber + ' ' : '') + (p.street || '')).trim()
+            : (p.name || '');
           const sub    = [p.city || p.town || p.village, p.state, p.country].filter(Boolean).join(', ');
           return '<div class="sub-ac-item" data-idx="' + i + '">'
                + '<div class="sub-ac-main">' + esc(main) + '</div>'
@@ -941,7 +969,9 @@ let _acItems = [];
                + '</div>';
         }).join('');
         list.classList.add('open');
-      } catch(e) { closeAcList(); }
+      } catch(e) {
+        if (mySeq === _acSeq) showAcMsg('No se pudo conectar al buscador de direcciones');
+      }
     }, 380);
   });
 
