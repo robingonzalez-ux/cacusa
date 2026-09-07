@@ -2270,6 +2270,11 @@ function LoversTab({ products = [], token }) {
   const [deletingId, setDeletingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
   const [busyId, setBusyId] = useState(null); // fila con una accion destructiva en curso (cancelar o eliminar)
+  const NEW_SUB_BLANK = { nombre: '', apellido: '', email: '', telefono: '', direccion: '', apto: '', ciudad: '', estado: '', zip: '', pais: '', plan: 'mensual', notas: '' };
+  const [showNewForm, setShowNewForm] = useState(false);
+  const [newForm, setNewForm] = useState(NEW_SUB_BLANK);
+  const [savingNew, setSavingNew] = useState(false);
+  const [newFormError, setNewFormError] = useState('');
 
   // Todas las lecturas/escrituras de suscriptoras pasan por el worker, que usa el
   // secret de Firebase — el navegador ya no habla directo con cacusa_lovers.
@@ -2364,6 +2369,32 @@ function LoversTab({ products = [], token }) {
   };
 
   const ef = (k, v) => setEditForm(f => ({ ...f, [k]: v }));
+  const nf = (k, v) => setNewForm(f => ({ ...f, [k]: v }));
+
+  const createManual = async () => {
+    setNewFormError('');
+    if (!newForm.nombre.trim() || !newForm.email.trim()) {
+      setNewFormError('Nombre y email son obligatorios.');
+      return;
+    }
+    setSavingNew(true);
+    try {
+      const r = await loversApi('/admin/lovers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newForm),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data.ok) {
+        setSubs(prev => [{ id: data.id, ...data.subscriber }, ...(prev || [])]);
+        setNewForm(NEW_SUB_BLANK);
+        setShowNewForm(false);
+      } else {
+        setNewFormError(data.error || 'No se pudo crear la suscripción — intenta de nuevo.');
+      }
+    } catch (e) { setNewFormError(`Error de conexión: ${e.message}`); }
+    setSavingNew(false);
+  };
 
   const deleteSubscriber = async s => {
     if (busyId === s.id) return; // ya hay una accion (cancelar/eliminar) en curso sobre esta fila
@@ -2418,6 +2449,90 @@ function LoversTab({ products = [], token }) {
     <div>
       <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Cacusa Lovers ♡</div>
       <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Suscriptoras del club mensual $19.99/mes. Datos guardados al momento de procesar el pago.</div>
+
+      {/* ── Alta manual (clientas que pagan por transferencia, sin suscripción recurrente en Square) ── */}
+      <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>Suscripción manual</div>
+            <div style={{ fontSize: 12, color: '#A89AAF' }}>Para clientas que pagan por transferencia bancaria, sin cobro recurrente en Square.</div>
+          </div>
+          <button
+            onClick={() => { setShowNewForm(v => !v); setNewFormError(''); }}
+            style={{ background: showNewForm ? 'white' : 'linear-gradient(135deg,#EE6FA8,#C4A0EC)', color: showNewForm ? '#7A6880' : 'white', border: showNewForm ? '1.5px solid #EDE8EA' : 'none', borderRadius: 999, padding: '9px 20px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            {showNewForm ? 'Cancelar' : '+ Agregar suscriptora'}
+          </button>
+        </div>
+        {showNewForm && (
+          <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #F5EFF8' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              {[['Nombre *', 'nombre'], ['Apellido', 'apellido']].map(([lbl, key]) => (
+                <div key={key}>
+                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              {[['Email *', 'email'], ['Teléfono', 'telefono']].map(([lbl, key]) => (
+                <div key={key}>
+                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Dirección</div>
+                <input value={newForm.direccion} onChange={e => nf('direccion', e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Apto / Suite</div>
+                <input value={newForm.apto} onChange={e => nf('apto', e.target.value)}
+                  placeholder="Apt 4B"
+                  style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
+              {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
+                <div key={key}>
+                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Plan</div>
+              <select value={newForm.plan} onChange={e => nf('plan', e.target.value)}
+                style={{ fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', fontFamily: 'inherit', color: '#1A1118', background: 'white' }}>
+                <option value="mensual">Mensual — $19.99/mes</option>
+                <option value="anual">Anual — $219.89/año</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
+              <input value={newForm.notas} onChange={e => nf('notas', e.target.value)}
+                placeholder="Ej: pagó por transferencia el 5/sep, confirmar con Robin…"
+                style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+            </div>
+            {newFormError && <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 12 }}>{newFormError}</div>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={createManual} disabled={savingNew}
+                style={{ background: '#E85D8A', color: 'white', border: 'none', borderRadius: 10, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: savingNew ? .6 : 1 }}>
+                {savingNew ? 'Creando…' : 'Crear suscripción'}
+              </button>
+              <button onClick={() => { setShowNewForm(false); setNewForm(NEW_SUB_BLANK); setNewFormError(''); }}
+                style={{ background: 'white', color: '#A89AAF', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ── Photo management ── */}
       <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
@@ -2501,7 +2616,12 @@ function LoversTab({ products = [], token }) {
                 {/* ── Fila principal ── */}
                 <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118', marginBottom: 2 }}>{s.nombre} {s.apellido}</div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: '#1A1118', marginBottom: 2 }}>
+                      {s.nombre} {s.apellido}
+                      {s.metodo_pago === 'manual' && (
+                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: '#9B5DE5', background: '#F1E9FA', borderRadius: 99, padding: '2px 8px', verticalAlign: 'middle' }}>Manual</span>
+                      )}
+                    </div>
                     <div style={{ fontSize: 13, color: '#555', marginBottom: 6 }}>{s.email} · {s.telefono}</div>
                     <div style={{ fontSize: 12, color: '#888', lineHeight: 1.6 }}>
                       📍 {[s.direccion, s.apto, s.ciudad, s.estado, s.zip, s.pais].filter(Boolean).join(', ') || '—'}
