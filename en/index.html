@@ -313,6 +313,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .vig-off{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:white}
 .vig-script{font-family:var(--fs);font-size:26px;color:white;margin-top:8px}
 .vig-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;font-size:13px;cursor:none;display:flex;align-items:center;justify-content:center}
+.vig-close::before{content:'';position:absolute;inset:-8px}
 .vig-body{padding:40px 34px;display:flex;flex-direction:column;justify-content:center}
 .vig-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin-bottom:10px}
 .vig-title{font-family:var(--fd);font-weight:900;font-size:26px;color:var(--ink);line-height:1.1;margin-bottom:10px}
@@ -356,6 +357,7 @@ html,body{overflow-x:hidden}
   #navDrawer{display:none;position:fixed;inset:0;z-index:600;background:linear-gradient(160deg,var(--pink) 0%,var(--lilac) 100%);flex-direction:column;align-items:center;justify-content:center;gap:8px}
   #navDrawer.open{display:flex}
   #navDrawerClose{position:absolute;top:24px;right:24px;background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1}
+  #navDrawerClose::before{content:'';position:absolute;inset:-10px}
   .drawer-nav{display:flex;flex-direction:column;align-items:center;gap:28px}
   .drawer-link{font-family:var(--fu);font-size:22px;color:white;text-decoration:none;letter-spacing:.04em;opacity:.92}
   .drawer-link--lovers{background:white;color:var(--ink);padding:10px 28px;border-radius:100px;opacity:1;font-weight:600}
@@ -895,27 +897,37 @@ loadHomeContent();
   const btn = document.getElementById('pfSendBtn');
   if (!btn) return;
   const val = id => (document.getElementById(id)?.value || '').trim();
+  ['pfName', 'pfWhats'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { el.style.borderColor = ''; });
+  });
   btn.addEventListener('click', () => {
     const errEl = document.getElementById('pfError');
+    const nombreEl = document.getElementById('pfName');
+    const whatsEl  = document.getElementById('pfWhats');
     const nombre = val('pfName');
     const whats  = val('pfWhats');
     if (!nombre || !whats) {
       if (errEl) errEl.textContent = localStorage.getItem('cacusa-lang') === 'en'
         ? 'Please enter your name and WhatsApp number.'
         : 'Por favor escribe tu nombre y tu WhatsApp.';
+      const badEl = !nombre ? nombreEl : whatsEl;
+      if (badEl) { badEl.style.borderColor = '#C0336E'; badEl.focus(); }
       return;
     }
+    if (nombreEl) nombreEl.style.borderColor = '';
+    if (whatsEl) whatsEl.style.borderColor = '';
     if (errEl) errEl.textContent = '';
     const tipo   = val('pfType');
     const mat    = val('pfMaterial');
     const detail = val('pfDetail');
 
-    let msg = '🌸 *New custom piece request*\n*CACUSA by Taitus*\n\n';
-    msg += '👤 *Name:* ' + nombre + '\n';
-    msg += '📱 *WhatsApp:* ' + whats + '\n';
-    if (tipo)   msg += '💍 *Jewelry type:* ' + tipo + '\n';
-    if (mat)    msg += '✨ *Material:* ' + mat + '\n';
-    if (detail) msg += '📝 *Personalization:* ' + detail + '\n';
+    let msg = '✦ *New custom piece request*\n*CACUSA by Taitus*\n\n';
+    msg += '*Name:* ' + nombre + '\n';
+    msg += '*WhatsApp:* ' + whats + '\n';
+    if (tipo)   msg += '*Jewelry type:* ' + tipo + '\n';
+    if (mat)    msg += '*Material:* ' + mat + '\n';
+    if (detail) msg += '*Personalization:* ' + detail + '\n';
 
     const num = (CACUSA_WHATSAPP || '').replace(/\D/g, '');
     const url = (num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);
@@ -1114,7 +1126,7 @@ function renderFeaturedProducts(){
     const oldP  = p.oldPrice ? `<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>` : '';
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50, z = p.zoom ?? 1;
     const img = p.imageUrl
-      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
+      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;
     const badge = p.tag ? `<div class="prod-badge">${esc(p.tag)}</div>` : '';
     const card = document.createElement('div');
@@ -1289,8 +1301,8 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
   const email=(emailEl?emailEl.value:'').trim();
   const _vigL = localStorage.getItem('cacusa-lang') === 'en';
   if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder=_vigL?'Enter your email first':'Escribe tu correo primero'; emailEl.focus();} return; }
-  let msg=_vigL?'🌸 *I want my 10% discount*\n*CACUSA by Taitus*\n\n':'🌸 *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
-  msg+=_vigL?'📧 *Email:* '+email+'\n\nHi, I saw the 10% offer on my first purchase and would love to use it. ✨':'📧 *Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
+  let msg=_vigL?'✦ *I want my 10% discount*\n*CACUSA by Taitus*\n\n':'✦ *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
+  msg+=_vigL?'*Email:* '+email+'\n\nHi, I saw the 10% offer on my first purchase and would love to use it.':'*Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla.';
   const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
   window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
   fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es'})}).catch(()=>{});

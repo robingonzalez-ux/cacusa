@@ -1168,6 +1168,7 @@ Precious, they make your hand look feminine and delicate</li>
             <small><span class="t-es">-4% descuento</span><span class="t-en">-4% discount</span></small>
           </div>
         </div>
+        <div class="co-wa-note" id="zelleTrustNote" style="display:none"><span class="t-es">Zelle es tan seguro y trazable como pagar con tarjeta — solo cambia el método de cobro, seguimos confirmando tu pedido igual.</span><span class="t-en">Zelle is just as secure and trackable as paying by card — only the payment method changes, we confirm your order the same way.</span></div>
 
         <div class="gc-wrap">
           <div style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span></div>
@@ -2020,8 +2021,8 @@ function shareWishlistWA() {
   if (!_wish.size) return;
   const url = location.origin + location.pathname + '?wishlist=' + [..._wish].join(',');
   const msg = __LANG==='en'
-    ? `🎁 Here's my CACUSA jewelry wishlist!\n${url}`
-    : `🎁 ¡Esta es mi lista de deseos de CACUSA! Si quieres regalarme algo especial:\n${url}`;
+    ? `✦ Here's my CACUSA jewelry wishlist!\n${url}`
+    : `✦ ¡Esta es mi lista de deseos de CACUSA! Si quieres regalarme algo especial:\n${url}`;
   window.open('https://wa.me/?text=' + encodeURIComponent(msg));
 }
 document.getElementById('wishBtn').addEventListener('click', () => openWishlist());
@@ -2428,6 +2429,8 @@ function selectPayMethod(el) {
   document.getElementById('zelleBtn').classList.toggle('show', isZelle);
   const sqNote = document.getElementById('squareNote');
   if (sqNote) sqNote.style.display = isZelle ? 'none' : '';
+  const zelleTrustNote = document.getElementById('zelleTrustNote');
+  if (zelleTrustNote) zelleTrustNote.style.display = isZelle ? '' : 'none';
   renderCheckoutSummary();
 }
 
@@ -2658,16 +2661,16 @@ function buildWhatsAppUrl() {
   }
   const totalFinal = total + _waShip + _waTax;
 
-  let msg = _waEN ? '🌸 *New order CACUSA by Taitus*\n' : '🌸 *Nuevo pedido CACUSA by Taitus*\n';
-  if (_currentOrderNum) msg += (_waEN ? '🔖 *Order #:* ' : '🔖 *Pedido #:* ') + _currentOrderNum + '\n';
+  let msg = _waEN ? '✦ *New order CACUSA by Taitus*\n' : '✦ *Nuevo pedido CACUSA by Taitus*\n';
+  if (_currentOrderNum) msg += (_waEN ? '*Order #:* ' : '*Pedido #:* ') + _currentOrderNum + '\n';
   msg += '\n';
-  msg += (_waEN ? '👤 *Customer:* ' : '👤 *Cliente:* ') + nombre + (apellido ? ' ' + apellido : '') + '\n';
-  msg += '📱 *WhatsApp:* ' + tel + '\n';
-  if (ciudad) msg += (_waEN ? '📍 *City:* ' : '📍 *Ciudad:* ') + ciudad + (_waEstado ? ', ' + _waEstado : '') + (_waZip ? ' ' + _waZip : '') + ' (' + pais + ')\n';
+  msg += (_waEN ? '*Customer:* ' : '*Cliente:* ') + nombre + (apellido ? ' ' + apellido : '') + '\n';
+  msg += '*WhatsApp:* ' + tel + '\n';
+  if (ciudad) msg += (_waEN ? '*City:* ' : '*Ciudad:* ') + ciudad + (_waEstado ? ', ' + _waEstado : '') + (_waZip ? ' ' + _waZip : '') + ' (' + pais + ')\n';
   const _waApto = document.getElementById('coApto').value.trim();
-  if (direccion) msg += (_waEN ? '🏠 *Address:* ' : '🏠 *Dirección:* ') + direccion + (_waApto ? ', ' + _waApto : '') + '\n';
-  if (notas) msg += (_waEN ? '📝 *Notes:* ' : '📝 *Notas:* ') + notas + '\n';
-  msg += _waEN ? '\n🛍️ *Products:*\n' : '\n🛍️ *Productos:*\n';
+  if (direccion) msg += (_waEN ? '*Address:* ' : '*Dirección:* ') + direccion + (_waApto ? ', ' + _waApto : '') + '\n';
+  if (notas) msg += (_waEN ? '*Notes:* ' : '*Notas:* ') + notas + '\n';
+  msg += _waEN ? '\n*Products:*\n' : '\n*Productos:*\n';
   cart.forEach(item => {
     const _iName  = _waEN && item.name_en ? item.name_en : item.name;
     const _iMat   = item.material ? (_waEN ? (_waMat[item.material] || item.material) : item.material) : null;
@@ -2677,28 +2680,28 @@ function buildWhatsAppUrl() {
     if (item.personalization) msg += ' — "' + item.personalization + '"';
     msg += '\n';
   });
-  msg += (_waEN ? '\n💰 *Subtotal:* $' : '\n💰 *Subtotal:* $') + total.toFixed(2);
-  msg += (_waEN ? '\n🚚 *Shipping:* ' : '\n🚚 *Envío:* ') + envio;
+  msg += (_waEN ? '\n*Subtotal:* $' : '\n*Subtotal:* $') + total.toFixed(2);
+  msg += (_waEN ? '\n*Shipping:* ' : '\n*Envío:* ') + envio;
   if (_waTax > 0) {
-    msg += '\n🧾 *' + _waTaxLabel + ':* $' + _waTax.toFixed(2);
+    msg += '\n*' + _waTaxLabel + ':* $' + _waTax.toFixed(2);
   }
   const _waGc = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
   if (_waGc > 0) {
-    msg += (_waEN ? '\n🎁 *Gift card (' + _gcCode + '):* -$' : '\n🎁 *Tarjeta de regalo (' + _gcCode + '):* -$') + _waGc.toFixed(2);
+    msg += (_waEN ? '\n*Gift card (' + _gcCode + '):* -$' : '\n*Tarjeta de regalo (' + _gcCode + '):* -$') + _waGc.toFixed(2);
   }
   const _waAfterGc = totalFinal - _waGc;
   const _waCp = (_cpCode && _cpType)
     ? parseFloat((_cpType === 'percent' ? _waAfterGc * _cpAmount / 100 : Math.min(_cpAmount, _waAfterGc)).toFixed(2))
     : 0;
   if (_waCp > 0) {
-    msg += (_waEN ? '\n🏷️ *Coupon (' + _cpCode + '):* -$' : '\n🏷️ *Cupón (' + _cpCode + '):* -$') + _waCp.toFixed(2);
+    msg += (_waEN ? '\n*Coupon (' + _cpCode + '):* -$' : '\n*Cupón (' + _cpCode + '):* -$') + _waCp.toFixed(2);
   }
   const _waTotalFinal = parseFloat((_waAfterGc - _waCp).toFixed(2));
-  msg += (_waEN ? '\n✨ *Total:* $' : '\n✨ *Total:* $') + _waTotalFinal.toFixed(2);
+  msg += (_waEN ? '\n*Total:* $' : '\n*Total:* $') + _waTotalFinal.toFixed(2);
   if (isZelle) {
     msg += _waEN
-      ? '\n\n💸 *Payment:* Zelle / Bank Transfer\n📧 Zelle: facturacioncacusa@gmail.com'
-      : '\n\n💸 *Pago:* Zelle / Transferencia bancaria\n📧 Zelle: facturacioncacusa@gmail.com';
+      ? '\n\n*Payment:* Zelle / Bank Transfer\nZelle: facturacioncacusa@gmail.com'
+      : '\n\n*Pago:* Zelle / Transferencia bancaria\nZelle: facturacioncacusa@gmail.com';
   }
 
   const waNumber = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
@@ -3318,8 +3321,8 @@ function registerLead(email, source, cartData, total) {
     const emailEl = document.getElementById('vigEmail');
     const email = (emailEl ? emailEl.value : '').trim();
     if (!email) { if (emailEl) { emailEl.style.borderColor = '#C0336E'; emailEl.placeholder = __LANG === 'en' ? 'Enter your email first' : 'Escribe tu correo primero'; emailEl.focus(); } return; }
-    let msg = __LANG === 'en' ? '🌸 *I want my 10% discount*\n*CACUSA by Taitus*\n\n' : '🌸 *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
-    msg += __LANG === 'en' ? '📧 *Email:* ' + email + '\n\nHi, I saw the 10% offer on my first purchase and would love to use it. ✨' : '📧 *Email:* ' + email + '\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla. ✨';
+    let msg = __LANG === 'en' ? '✦ *I want my 10% discount*\n*CACUSA by Taitus*\n\n' : '✦ *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
+    msg += __LANG === 'en' ? '*Email:* ' + email + '\n\nHi, I saw the 10% offer on my first purchase and would love to use it.' : '*Email:* ' + email + '\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla.';
     const num = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
     window.open((num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
     registerLead(email, 'vignette');
