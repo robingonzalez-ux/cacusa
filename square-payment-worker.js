@@ -172,9 +172,30 @@ async function fetchCatalog() {
   return { products, shipping, combos };
 }
 
+// data/products.json solo trae el precio base — el recargo del 4% (que la tienda le resta
+// de vuelta a quien paga por Zelle/transferencia) se aplica en el navegador leyendo esta
+// misma ruta (ver ui_kits/store/index.html). Hay que replicarlo acá con la fórmula idéntica:
+// si no, Square cobra el precio base mientras el checkout con tarjeta mostró el precio con
+// recargo, y el total no coincide con lo que la clienta vio.
+async function fetchSurcharges(env) {
+  try {
+    const r = await fetch(`${ADMIN_WORKER_URL}/pub/surcharges`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Origin': 'https://cacusabytaitus.com' },
+      body: '{}'
+    });
+    if (!r.ok) return {};
+    const data = await r.json();
+    return (data && typeof data.surcharges === 'object' && data.surcharges) || {};
+  } catch (e) {
+    console.error('No se pudieron obtener los recargos:', e.message);
+    return {};
+  }
+}
+
 // Validates and returns the canonical price for each cart item.
 // Returns { validatedItems, serverShipping } or throws on invalid items.
-function validateItems(items, products, combos, shipping) {
+function validateItems(items, products, combos, shipping, surcharges = {}) {
   const productMap = new Map(products.map(p => [String(p.id), p]));
   const comboMap   = new Map(combos.map(c => [String(c.id), c]));
 
@@ -196,8 +217,12 @@ function validateItems(items, products, combos, shipping) {
     if (prod.available === false) {
       throw new Error(`Producto no disponible: ${prod.name || item.id}`);
     }
-    // Always use the catalog price (with surcharge included in prod.price)
-    return { ...item, price: prod.price };
+    // Mismo cálculo que aplica la tienda en el navegador cuando el producto tiene recargo
+    // (pago con tarjeta = precio con recargo; el descuento de Zelle no aplica en este flujo).
+    const price = surcharges[String(prod.id)] === true
+      ? Math.round(prod.price * 1.04 * 100) / 100
+      : prod.price;
+    return { ...item, price };
   });
 
   // Recalculate shipping from canonical subtotal — ignore client-sent value
@@ -371,8 +396,11 @@ async function handleCreatePaymentLink(body, env, allowed) {
   // ── Server-side price validation ────────────────────────────────────────
   let validatedItems, serverShipping;
   try {
-    const { products, shipping, combos } = await fetchCatalog();
-    ({ validatedItems, serverShipping } = validateItems(items, products, combos, shipping));
+    const [{ products, shipping, combos }, surcharges] = await Promise.all([
+      fetchCatalog(),
+      fetchSurcharges(env),
+    ]);
+    ({ validatedItems, serverShipping } = validateItems(items, products, combos, shipping, surcharges));
   } catch (e) {
     console.error('Catalog/validation error:', e.message);
     return jsonError('No se pudo validar el carrito: ' + e.message, 400, allowed);
