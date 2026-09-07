@@ -15,6 +15,12 @@
  *                                   (no confundir con FB_DB_SECRET: esta autentica al admin
  *                                   contra ESTE worker; FB_DB_SECRET autentica a ESTE worker
  *                                   contra Firebase)
+ *   ORDER_INGEST_KEY              — MISMO valor que el secret ORDER_INGEST_KEY del Worker
+ *                                   cacusa-admin. Se usa para avisarle a cacusa-admin (vía
+ *                                   POST /push/notify) que nació una suscriptora nueva, para
+ *                                   que mande la notificación push a los celulares de Tita y
+ *                                   Robin — sin este secret, la notificación simplemente no
+ *                                   se envía (el resto del webhook sigue funcionando igual).
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
  *   subscription.created            → crea registro en Firebase cuando nace la suscripción
@@ -41,7 +47,7 @@
  *
  * Setup:
  *   1. Deploy this worker (pegar en Cloudflare Dashboard → Edit code → Save and deploy)
- *   2. Set the 4 secrets above
+ *   2. Set the secrets above (5, incluyendo ORDER_INGEST_KEY)
  *   3. Square Dashboard → Developers → Webhooks → Add endpoint
  *      URL: https://cacusa-lovers-webhook.facturacioncacusa.workers.dev/webhook
  *      Events: subscription.created, invoice.payment_made, invoice.scheduled_charge_failed, subscription.updated
@@ -50,6 +56,23 @@
 
 const SQUARE_API = 'https://connect.squareup.com/v2';
 const ADMIN_ORIGIN = 'https://cacusabytaitus.com';
+const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
+
+// ── Avisa a cacusa-admin para que mande la notificación push (best-effort — nunca
+// bloquea ni rompe el procesamiento del webhook de Square si falla) ──────────────
+async function notifyAdminPush(title, body, env) {
+  if (!env.ORDER_INGEST_KEY) return;
+  try {
+    const r = await fetch(`${ADMIN_WORKER_URL}/push/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/' }),
+    });
+    if (!r.ok) console.error('push/notify failed:', r.status, await r.text().catch(() => ''));
+  } catch (e) {
+    console.error('push/notify error:', e.message);
+  }
+}
 const ADMIN_CORS = {
   'Access-Control-Allow-Origin': ADMIN_ORIGIN,
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
@@ -352,6 +375,12 @@ export default {
               square_subscription_id: sub.id || '',
             }, dbUrl, fbAuth);
             console.log('Created subscriber record (subscription.created):', email, '→', newKey);
+            const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
+            await notifyAdminPush(
+              'CACUSA · Nueva suscriptora Lovers',
+              `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+              env
+            );
           } else {
             // Ya existe (vino del formulario): solo adjuntar la referencia de Square,
             // sin tocar sus datos ni su estado_pago actual.
@@ -417,6 +446,12 @@ export default {
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
             console.log('Created activo record for:', email, '→', newKey);
+            const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
+            await notifyAdminPush(
+              'CACUSA · Nueva suscriptora Lovers',
+              `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+              env
+            );
           }
         }
       }

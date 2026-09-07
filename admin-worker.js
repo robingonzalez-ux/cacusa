@@ -9,11 +9,13 @@
  *   PASS_ROBIN       (secret)  contraseña de robin.gonzalez
  *   SESSION_SECRET   (secret)  cadena aleatoria larga para firmar sesiones
  *   NTFY_TOPIC       (secret)  nombre del canal ntfy, ej: cacusa-pedidos-k4r9mx
- *   ORDER_INGEST_KEY (secret)  clave compartida con cacusa-square: le prueba a este Worker
- *                              que un pedido/cupón/gift-card viene de un pago YA confirmado
- *                              por el webhook de Square, no de una petición directa del
- *                              navegador — deja pasar /order, /coupon/burn y /giftcard/redeem
- *                              sin exigir el Origin del navegador cuando viaja este header.
+ *   ORDER_INGEST_KEY (secret)  clave compartida con OTROS Workers de confianza (hoy:
+ *                              cacusa-square y cacusa-lovers-webhook) para probarle a este
+ *                              Worker que la llamada viene de un evento ya confirmado del
+ *                              lado del servidor, no de una petición directa del navegador —
+ *                              deja pasar /order, /coupon/burn, /giftcard/redeem y
+ *                              /push/notify sin exigir el Origin del navegador cuando viaja
+ *                              este header. Debe tener EL MISMO valor en los 3 Workers.
  *   ALLOWED_ORIGIN   (text)    https://cacusabytaitus.com  (opcional)
  *   VAPID_PUBLIC_KEY      (text)    llave pública VAPID (mismo valor que VAPID_PUB_KEY
  *                                   en ui_kits/admin/index.html) — Web Push nativo de Safari
@@ -114,6 +116,19 @@ export default {
         return await handleCouponBurnPublic(body, env, allowOrigin);
       }
 
+      // Notificación push disparada desde OTRO Worker (hoy: cacusa-lovers-webhook, cuando
+      // nace una suscriptora nueva) — autenticada con el mismo ORDER_INGEST_KEY compartido,
+      // no con un token de sesión de admin (este Worker no tiene sesión iniciada).
+      if (path.endsWith('/push/notify')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
+        const title = (body.title || 'CACUSA').toString().slice(0, 100);
+        const text  = (body.body  || '').toString().slice(0, 200);
+        const url   = (body.url   || 'https://cacusabytaitus.com/ui_kits/admin/').toString().slice(0, 300);
+        const stats = await sendWebPushAll(env, { title, body: text, url });
+        return ok({ ok: true, ...stats }, allowOrigin);
+      }
+
       // Rutas protegidas con token de sesión
       const session = await verifyToken(body.token, env);
       if (!session) return err('Sesión inválida o expirada. Inicia sesión de nuevo.', 401, allowOrigin);
@@ -155,7 +170,11 @@ export default {
       if (path.endsWith('/push/unsubscribe')) return await handlePushUnsubscribe(body, env, allowOrigin, session);
       if (path.endsWith('/push/test')) {
         if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
-        const stats = await sendWebPushAll(env);
+        const stats = await sendWebPushAll(env, {
+          title: 'CACUSA · Notificación de prueba',
+          body:  'Si ves esto, las notificaciones están funcionando ✅',
+          url:   'https://cacusabytaitus.com/ui_kits/admin/',
+        });
         return ok({ ok: true, ...stats }, allowOrigin);
       }
       return err('Ruta no encontrada', 404, allowOrigin);
@@ -342,7 +361,12 @@ async function handleOrder(body, env, origin, ctx, request) {
     await sendNtfy(newOrder, env);
   }
   if (env.VAPID_PRIVATE_KEY_JWK) {
-    await sendWebPushAll(env);
+    const icon = newOrder.pago === 'WhatsApp' ? '📱' : '💳';
+    await sendWebPushAll(env, {
+      title: 'CACUSA · Nuevo pedido',
+      body:  `${icon} ${newOrder.pago} · ${newOrder.cliente?.nombre || 'Cliente'} · $${newOrder.total}`,
+      url:   'https://cacusabytaitus.com/ui_kits/admin/',
+    });
   }
 
   return ok({ ok: true, id: newOrder.id }, origin);
@@ -758,22 +782,87 @@ async function vapidAuthHeader(endpoint, env) {
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
   return `vapid t=${unsigned}.${b64url(new Uint8Array(sig))}, k=${env.VAPID_PUBLIC_KEY}`;
 }
-async function sendWebPushOne(sub, env) {
-  return fetch(sub.endpoint, {
-    method:  'POST',
-    headers: { TTL: '86400', 'Content-Length': '0', Authorization: await vapidAuthHeader(sub.endpoint, env) }
-  });
+// ── Cifrado del contenido (RFC 8291 aes128gcm) ─────────────────────────────────
+// Sin esto, el navegador recibe el push "vacío" y el service worker solo puede
+// mostrar el texto genérico por defecto. Con esto viaja el título/cuerpo reales
+// (nombre del cliente, monto, etc.), cifrados de punta a punta con la llave
+// pública que el propio navegador entregó al suscribirse — ni Apple ni nadie en
+// el camino puede leer el contenido, solo el dispositivo dueño de la suscripción.
+function concatBytes(...arrs) {
+  const total = arrs.reduce((s, a) => s + a.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const a of arrs) { out.set(a, off); off += a.length; }
+  return out;
+}
+async function hkdfExtract(salt, ikm) {
+  const key = await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, ikm));
+}
+async function hkdfExpand(prk, info, length) {
+  // length <= 32 (un solo bloque de HMAC-SHA256) — suficiente para todo lo que se deriva acá.
+  const key = await crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const data = concatBytes(info, new Uint8Array([1]));
+  const sig = await crypto.subtle.sign('HMAC', key, data);
+  return new Uint8Array(sig).slice(0, length);
+}
+async function encryptPushPayload(payloadBytes, p256dhB64, authB64) {
+  const uaPublic    = b64urlDecode(p256dhB64); // 65 bytes, punto EC sin comprimir del navegador
+  const authSecret  = b64urlDecode(authB64);   // 16 bytes
+
+  const asKeyPair   = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const asPublicRaw = new Uint8Array(await crypto.subtle.exportKey('raw', asKeyPair.publicKey));
+  const uaPublicKey = await crypto.subtle.importKey('raw', uaPublic, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const ecdhSecret  = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: uaPublicKey }, asKeyPair.privateKey, 256));
+
+  const prkKey = await hkdfExtract(authSecret, ecdhSecret);
+  const keyInfo = concatBytes(new TextEncoder().encode('WebPush: info'), new Uint8Array([0]), uaPublic, asPublicRaw);
+  const ikm = await hkdfExpand(prkKey, keyInfo, 32);
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const prk  = await hkdfExtract(salt, ikm);
+
+  const cek = await hkdfExpand(prk, concatBytes(new TextEncoder().encode('Content-Encoding: aes128gcm'), new Uint8Array([0])), 16);
+  const nonce = await hkdfExpand(prk, concatBytes(new TextEncoder().encode('Content-Encoding: nonce'), new Uint8Array([0])), 12);
+
+  const cekKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  // 0x02 = delimitador de "último registro" (RFC 8188) — el mensaje entero cabe en un solo registro.
+  const plaintextWithDelim = concatBytes(payloadBytes, new Uint8Array([2]));
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, cekKey, plaintextWithDelim));
+
+  // Header aes128gcm: salt(16) + record-size(4, big-endian) + keyid-len(1) + keyid(=asPublicRaw)
+  const header = new Uint8Array(16 + 4 + 1 + asPublicRaw.length);
+  header.set(salt, 0);
+  new DataView(header.buffer).setUint32(16, 4096, false);
+  header[20] = asPublicRaw.length;
+  header.set(asPublicRaw, 21);
+
+  return concatBytes(header, ciphertext);
+}
+
+async function sendWebPushOne(sub, env, payload) {
+  const headers = { TTL: '86400', Authorization: await vapidAuthHeader(sub.endpoint, env) };
+  let body;
+  if (payload) {
+    body = await encryptPushPayload(new TextEncoder().encode(JSON.stringify(payload)), sub.keys.p256dh, sub.keys.auth);
+    headers['Content-Type']     = 'application/octet-stream';
+    headers['Content-Encoding'] = 'aes128gcm';
+    headers['Content-Length']   = String(body.length);
+  } else {
+    headers['Content-Length'] = '0';
+  }
+  return fetch(sub.endpoint, { method: 'POST', headers, body });
 }
 // Devuelve estadísticas del envío — sirve para que /push/test le diga al usuario si
 // realmente hay suscripciones guardadas en vez de reportar éxito a ciegas.
-async function sendWebPushAll(env) {
+async function sendWebPushAll(env, payload) {
   const list = await env.CACUSA_KV.list({ prefix: 'push:' });
   const stats = { total: list.keys.length, sent: 0, failed: 0, cleaned: 0 };
   for (const k of list.keys) {
     const raw = await env.CACUSA_KV.get(k.name);
     if (!raw) continue;
     try {
-      const resp = await sendWebPushOne(JSON.parse(raw), env);
+      const resp = await sendWebPushOne(JSON.parse(raw), env, payload);
       // 404/410 = la suscripción fue revocada o expiró del lado del navegador/Apple — limpiar.
       if (resp.status === 404 || resp.status === 410) { await env.CACUSA_KV.delete(k.name); stats.cleaned++; }
       else if (!resp.ok) { stats.failed++; console.error('webpush fail', k.name, resp.status, await resp.text().catch(() => '')); }
