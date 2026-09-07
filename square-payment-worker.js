@@ -187,7 +187,13 @@ async function fetchSurcharges(env) {
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: '{}'
     });
-    if (!r.ok) return {};
+    if (!r.ok) {
+      // Antes esto se tragaba en silencio — sin este log, un 403/500 de cacusa-admin era
+      // indistinguible de "no hay recargos configurados". Con esto queda visible en
+      // Cloudflare → cacusa-square → Logs (Begin log stream) en el momento del checkout.
+      console.error('pub/surcharges respondió', r.status, await r.text().catch(() => ''));
+      return {};
+    }
     const data = await r.json();
     return (data && typeof data.surcharges === 'object' && data.surcharges) || {};
   } catch (e) {
