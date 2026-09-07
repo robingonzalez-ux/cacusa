@@ -76,7 +76,7 @@ export default {
       },
       checkout_options: {
         redirect_url:             RETURN_URL,
-        merchant_support_email:   'cacusabytaitus@gmail.com',
+        merchant_support_email:   'facturacioncacusa@gmail.com',
         allow_tipping:            false,
       },
     };
