@@ -806,8 +806,8 @@ function renderHomeItemListLd(products){
     "itemListElement": top.map((p, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": "https://cacusabytaitus.com/ui_kits/store/?p=" + encodeURIComponent(p.id),
-      "name": p.name
+      "url": "https://cacusabytaitus.com/en/ui_kits/store/?p=" + encodeURIComponent(p.id),
+      "name": p.name_en || p.name
     }))
   });
 }
