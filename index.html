@@ -818,6 +818,7 @@ function loadHomeContent(){
       window._cacusaProds    = Array.isArray(data.products) ? data.products : [];
       window._cacusaFeatured = cfg.home && Array.isArray(cfg.home.featuredProductIds) ? cfg.home.featuredProductIds : null;
       window._cacusaHeroIds  = cfg.home && Array.isArray(cfg.home.heroProductIds)     ? cfg.home.heroProductIds     : null;
+      window._cacusaCollectionPhotos = (cfg.home && cfg.home.collectionPhotoIds && typeof cfg.home.collectionPhotoIds === 'object') ? cfg.home.collectionPhotoIds : null;
       const home = cfg.home;
       if (home) {
         CACUSA_HOME = home;
@@ -1043,10 +1044,12 @@ revEls.forEach(el=>obs.observe(el));
 
 // ── COLECCIONES — primera foto de cada categoría ────────────
 function fillCollectionCards(){
-  const all = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  const all   = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  const picks = window._cacusaCollectionPhotos || {};
   document.querySelectorAll('.col-bg[data-cat]').forEach(el => {
     const cat = el.getAttribute('data-cat');
-    const p = all.find(x => x.category === cat);
+    const pickedId = picks[cat];
+    const p = (pickedId && all.find(x => x.id === pickedId)) || all.find(x => x.category === cat);
     if (!p) return; // sin producto con foto → mantiene el degradado
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
     el.style.backgroundImage = 'url("' + p.imageUrl + '")';
