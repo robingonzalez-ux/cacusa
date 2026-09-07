@@ -48,7 +48,6 @@ const PRODUCTS_PATH  = 'data/products.json';
 const ORDERS_PATH    = 'data/orders.json';
 const IMAGES_PATH    = 'ui_kits/store/images';
 const LOVERS_WEBHOOK_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
-const ADMIN_ACTION_KEY   = 'SBxAvquZ71E6nuo0ti9sxvziQghd5ypz8hAP5Xg0zto';
 const STORE_URL      = 'https://cacusabytaitus.com/';
 const VAPID_PUB_KEY  = 'BLLRPGO7zFrAiyfZ1KzNlaysb9wUVJnZeog3Z4sVJRqSFXiodQ9g8PALWr2uYT7sRuZ6W2V0iaDRQ-5XUcQif9U';
 
@@ -905,7 +904,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
       // Borrar una reseña requiere el secret de Firebase — pasa por el worker, igual que Lovers
       const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/reviews/${encodeURIComponent(product.id)}/${encodeURIComponent(key)}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Key': ADMIN_ACTION_KEY },
+        headers: { 'X-Admin-Key': token },
       });
       if (!r.ok) { alert('Error al eliminar la reseña'); return; }
       setReviews(r2 => r2.filter(x => x.key !== key));
@@ -2256,7 +2255,7 @@ function LeadsTab({ token }) {
 }
 
 // ── Cacusa Lovers Tab ────────────────────────────────────────────────────────
-function LoversTab({ products = [] }) {
+function LoversTab({ products = [], token }) {
   const [subs, setSubs] = useState(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState({});
@@ -2276,7 +2275,7 @@ function LoversTab({ products = [] }) {
   // secret de Firebase — el navegador ya no habla directo con cacusa_lovers.
   const loversApi = (path, opts) => fetch(`${LOVERS_WEBHOOK_URL}${path}`, {
     ...opts,
-    headers: { 'X-Admin-Key': ADMIN_ACTION_KEY, ...(opts?.headers || {}) },
+    headers: { 'X-Admin-Key': token, ...(opts?.headers || {}) },
   });
 
   const load = async () => {
@@ -3328,11 +3327,6 @@ function App() {
         if (sr.surcharges && typeof sr.surcharges === 'object') setFbSurcharges(sr.surcharges);
         if (mk.markets   && typeof mk.markets   === 'object') setFbMarkets(mk.markets);
       } catch (_) {}
-      // Load lovers count badge
-      try {
-        const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/lovers`, { headers: { 'X-Admin-Key': ADMIN_ACTION_KEY } });
-        if (r.ok) { const d = await r.json(); setLoversCount(d && d.subscribers ? Object.keys(d.subscribers).length : 0); }
-      } catch (_) {}
     })();
   }, []);
 
@@ -3340,6 +3334,14 @@ function App() {
     if (session) {
       try { sessionStorage.setItem('cacusa_session', JSON.stringify(session)); } catch (_) {}
       loadData();
+      // Badge de suscriptoras de Lovers — requiere el token de sesión real, así que se
+      // carga recién acá (post-login), no en el useEffect de montaje.
+      (async () => {
+        try {
+          const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/lovers`, { headers: { 'X-Admin-Key': session.token } });
+          if (r.ok) { const d = await r.json(); setLoversCount(d && d.subscribers ? Object.keys(d.subscribers).length : 0); }
+        } catch (_) {}
+      })();
     }
   }, [session]);
 
@@ -3925,7 +3927,7 @@ function App() {
         {activeTab === 'leads' && <LeadsTab token={session.token} />}
 
         {/* ── Cacusa Lovers tab ── */}
-        {activeTab === 'lovers' && <LoversTab products={products} />}
+        {activeTab === 'lovers' && <LoversTab products={products} token={session.token} />}
 
         {/* ── Settings tab ── */}
         {activeTab === 'settings' && (

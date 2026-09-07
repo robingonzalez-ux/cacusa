@@ -11,10 +11,12 @@
  *                                   de datos, ignorando las reglas de seguridad — por eso vive
  *                                   SOLO acá como secret de Cloudflare, nunca en el frontend.
  *   FB_DB_URL                     — https://cacusa-pos-default-rtdb.firebaseio.com
- *   ADMIN_ACTION_KEY              — clave compartida con el admin panel para las rutas /admin/*
- *                                   (no confundir con FB_DB_SECRET: esta autentica al admin
- *                                   contra ESTE worker; FB_DB_SECRET autentica a ESTE worker
- *                                   contra Firebase)
+ *   SESSION_SECRET                — MISMO valor que el secret SESSION_SECRET del Worker
+ *                                   cacusa-admin. Las rutas /admin/* de este worker validan el
+ *                                   token de sesión que emite el login de cacusa-admin (HMAC +
+ *                                   expiración) en vez de una clave fija — así el panel admin
+ *                                   ya no necesita ningún secreto embebido en el HTML público
+ *                                   para administrar suscriptoras o borrar reseñas.
  *   ORDER_INGEST_KEY              — MISMO valor que el secret ORDER_INGEST_KEY del Worker
  *                                   cacusa-admin. Se usa para avisarle a cacusa-admin (vía
  *                                   POST /push/notify) que nació una suscriptora nueva, para
@@ -36,7 +38,8 @@
  *   DELETE /admin/lovers/{id}           → elimina una suscriptora
  *   PUT    /admin/lovers-photos         → guarda las fotos destacadas de la página pública
  *   DELETE /admin/reviews/{productId}/{reviewId} → elimina una reseña de producto
- *   Todas las rutas /admin/* se autentican con el header X-Admin-Key (no con la firma de Square).
+ *   Todas las rutas /admin/* se autentican con el header X-Admin-Key, que lleva el token de
+ *   sesión del panel admin (no la firma de Square, y ya no una clave fija).
  *
  * Por qué existe este worker en el medio (en vez de que el admin hable directo con Firebase):
  *   Las reglas de Firebase para cacusa_lovers / cacusa_lovers_photos / cacusa_reviews solo
@@ -174,9 +177,52 @@ async function cancelSquareSubscription(subscriptionId, squareToken) {
   return { ok: r.ok, status: r.status, body: d };
 }
 
+// ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
+// Valida el mismo token HMAC-SHA256 firmado que emite el login de cacusa-admin, usando el
+// secret compartido SESSION_SECRET. Este worker nunca EMITE tokens (no hay login acá), solo
+// los valida.
+async function hmac(data, secret) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig  = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return b64url(new Uint8Array(sig));
+}
+function safeEqual(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+function b64url(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function verifyToken(token, env) {
+  if (!token || typeof token !== 'string' || token.indexOf('.') < 0) return null;
+  const [p, sig] = token.split('.');
+  const expected = await hmac(p, env.SESSION_SECRET);
+  if (!safeEqual(sig, expected)) return null;
+  let payload;
+  try { payload = JSON.parse(new TextDecoder().decode(b64urlDecode(p))); } catch { return null; }
+  if (!payload.exp || Date.now() > payload.exp) return null;
+  return payload;
+}
+
 // ── Autenticación de las rutas /admin/* ───────────────────────────────────────
-function isAuthorizedAdmin(request, env) {
-  return !!env.ADMIN_ACTION_KEY && request.headers.get('x-admin-key') === env.ADMIN_ACTION_KEY;
+async function isAuthorizedAdmin(request, env) {
+  const token = request.headers.get('x-admin-key');
+  if (!token || !env.SESSION_SECRET) return false;
+  const session = await verifyToken(token, env);
+  return !!session;
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────────
@@ -194,7 +240,7 @@ export default {
       if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: ADMIN_CORS });
       }
-      if (!isAuthorizedAdmin(request, env)) {
+      if (!(await isAuthorizedAdmin(request, env))) {
         return adminJson({ error: 'Unauthorized' }, 401);
       }
       if (!fbAuth) {

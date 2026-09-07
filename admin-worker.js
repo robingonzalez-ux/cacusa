@@ -73,8 +73,11 @@ export default {
         return await handleGcValidate(body, env, allowOrigin, request);
       }
       if (path.endsWith('/giftcard/redeem')) {
-        // Igual que /order: también la llama cacusa-square, ya autenticada, tras confirmar el pago.
-        if (!ORIGIN_ALLOWLIST.includes(origin) && !isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        // Solo Workers internos ya autenticados (cacusa-square, tras confirmar el pago con
+        // webhook firmado). Ya NO acepta llamadas directas del navegador — redimir una gift
+        // card desde Zelle/WhatsApp ahora ocurre server-side dentro de handleOrder(), atado
+        // siempre a un pedido real, en vez de como una llamada pública sin ninguna verificación.
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         return await handleGcRedeem(body, env, allowOrigin, request);
       }
 
@@ -347,6 +350,22 @@ async function handleOrder(body, env, origin, ctx, request) {
       personalization: str(p.personalization, 300),
     })),
   };
+
+  // Redención de gift card — fusionada acá (en vez de ser una llamada pública separada a
+  // /giftcard/redeem, ver hallazgo de seguridad) para que nunca se pueda vaciar una tarjeta
+  // sin que exista un pedido real registrado. El monto nunca puede exceder ni el saldo real
+  // de la tarjeta (lo garantiza gcRedeem) ni el total de ESTE pedido (lo garantizamos acá).
+  const gcCodeReq   = str(order.giftcard && order.giftcard.code, 40);
+  const gcAmountReq = num(order.giftcard && order.giftcard.amount);
+  if (gcCodeReq && gcAmountReq > 0 && env.CACUSA_KV) {
+    const cappedAmount = Math.min(gcAmountReq, newOrder.total);
+    if (cappedAmount > 0) {
+      const giftcardResult = await gcRedeem(env, gcCodeReq, cappedAmount);
+      if (giftcardResult.applied > 0) {
+        newOrder.giftcard = { code: gcCodeReq, applied: giftcardResult.applied };
+      }
+    }
+  }
 
   // Leer pedidos actuales desde KV
   let data = { version: '1.0', orders: [] };

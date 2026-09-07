@@ -2632,10 +2632,9 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     total:     totalConGC,
     pago:      'Zelle',
     estado:    'Nuevo',
-    notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined
+    notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined,
+    giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined
   });
-
-  redeemGiftCard(zelleGcDiscount);
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
   if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal);
   window.open(buildWhatsAppUrl(), '_blank');
@@ -2899,10 +2898,9 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
     total:  totalConGC,
     pago:   'WhatsApp',
     estado: 'Nuevo',
-    notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined
+    notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined,
+    giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined
   });
-
-  redeemGiftCard(waGcDiscount);
   const emailVal = (document.getElementById('coEmail').value || '').trim();
   if (_cpCode) burnCoupon(_cpCode, tel, emailVal);
   window.open(buildWhatsAppUrl(), '_blank');
@@ -3373,17 +3371,6 @@ function burnCoupon(code, phone, email) {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, phone: phone || '', email: email || '' })
   }).catch(() => {});
-}
-
-// Redención server-side (Zelle / WhatsApp). Square redime dentro de su propio worker.
-async function redeemGiftCard(amountUsed) {
-  if (!_gcCode || amountUsed<=0) return;
-  try {
-    await fetch(ADMIN_WORKER_URL + '/giftcard/redeem', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ code: _gcCode, amount: amountUsed })
-    });
-  } catch(_) {}
 }
 
 // PWA: registrar service worker + botón de instalación
