@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 <meta name="theme-color" content="#EE6FA8">
+<!-- Esta es la copia en inglés (/en/): fija el idioma leído por TODO el código de abajo (que
+     originalmente lee localStorage.getItem('cacusa-lang')) a 'en', sin escribir en el
+     localStorage real — así una visita a /en/ no cambia el idioma que ve un visitante que
+     luego navegue a la versión en español (/). -->
+<script>(function(){var g=Storage.prototype.getItem;Storage.prototype.getItem=function(k){return k==='cacusa-lang'?'en':g.call(this,k);};})();</script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
 <script>
@@ -15,28 +20,28 @@
 </script>
 <meta name="google-site-verification" content="L64KDbnGjyZSO_UYRj1ldEWyAF47fG4NrkZ9fdu7tDg">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-<meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
-<meta property="og:title" content="CACUSA by Taitus — Joyería Personalizada">
-<meta property="og:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
+<meta name="description" content="CACUSA by Taitus — Handmade artisanal personalized jewelry in Ecuador and the USA.">
+<meta property="og:title" content="CACUSA by Taitus — Personalized Jewelry">
+<meta property="og:description" content="Unique artisanal jewelry, designed with love in Ecuador. Every piece carries your story.">
 <meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://cacusabytaitus.com/">
+<meta property="og:url" content="https://cacusabytaitus.com/en/">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="es_EC">
-<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="es_EC">
 <meta property="og:site_name" content="CACUSA by Taitus">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CACUSA by Taitus — Joyería Personalizada">
-<meta name="twitter:description" content="Joyería artesanal única, diseñada con amor en Ecuador. Cada pieza lleva tu historia.">
+<meta name="twitter:title" content="CACUSA by Taitus — Personalized Jewelry">
+<meta name="twitter:description" content="Unique artisanal jewelry, designed with love in Ecuador. Every piece carries your story.">
 <meta name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
-<link rel="canonical" href="https://cacusabytaitus.com/">
+<link rel="canonical" href="https://cacusabytaitus.com/en/">
 <link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/">
 <link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/">
 <link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[
-{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg","width":512,"height":512},"description":"Joyería artesanal personalizada hecha a mano en Ecuador y USA.","sameAs":["https://www.instagram.com/cacusabytaitus/","https://www.tiktok.com/@cacusabytaitus"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["Spanish","English"]}},
-{"@type":"WebSite","@id":"https://cacusabytaitus.com/#website","url":"https://cacusabytaitus.com","name":"CACUSA by Taitus","publisher":{"@id":"https://cacusabytaitus.com/#organization"},"inLanguage":["es","en"],"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cacusabytaitus.com/ui_kits/store/?q={search_term_string}"},"query-input":"required name=search_term_string"}}
+{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg","width":512,"height":512},"description":"Handmade artisanal personalized jewelry in Ecuador and the USA.","sameAs":["https://www.instagram.com/cacusabytaitus/","https://www.tiktok.com/@cacusabytaitus"],"contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["Spanish","English"]}},
+{"@type":"WebSite","@id":"https://cacusabytaitus.com/en/#website","url":"https://cacusabytaitus.com/en/","name":"CACUSA by Taitus","publisher":{"@id":"https://cacusabytaitus.com/#organization"},"inLanguage":["es","en"],"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://cacusabytaitus.com/en/ui_kits/store/?q={search_term_string}"},"query-input":"required name=search_term_string"}}
 ]}</script>
 <!-- El ItemList de productos destacados se genera dinámicamente en renderHomeItemListLd() con datos reales de products.json -->
 <script type="application/ld+json" id="homeItemListLd"></script>
@@ -44,11 +49,11 @@
 <link rel="icon" href="/apple-touch-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
-<title>CACUSA by Taitus — Joyería Personalizada</title>
+<title>CACUSA by Taitus — Personalized Jewelry</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>(function(){var _l=(localStorage.getItem('cacusa-lang')||'es')==='en'?'en':'es';document.documentElement.className='lang-'+_l;document.documentElement.lang=_l;})();</script>
+<script>(function(){var _l='en';document.documentElement.className='lang-'+_l;document.documentElement.lang=_l;})();</script>
 <style>
 .lang-en .t-es{display:none!important}
 .lang-es .t-en{display:none!important}
@@ -446,12 +451,12 @@ html,body{overflow-x:hidden}
   <div class="nav-links">
     <a href="#collections" data-i18n="landing.navCollections">Colecciones</a>
     <a href="./ui_kits/store/" data-i18n="landing.navStore">Tienda</a>
-    <a href="./cacusa-lovers.html" class="nav-lovers">Cacusa Lovers ♡</a>
+    <a href="../cacusa-lovers.html" class="nav-lovers">Cacusa Lovers ♡</a>
     <a href="#story" data-i18n="landing.navUs">Nosotros</a>
     <a href="#personalize" data-i18n="landing.navPersonalize">Personaliza</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='./'">ES</button><button id="lEn" onclick="window.location.href='./en/'">EN</button></div>
+    <div class="lang-sw"><button id="lEs" onclick="window.location.href='../'">ES</button><button id="lEn" class="on" onclick="window.location.href='./'">EN</button></div>
     <button class="nav-cta" id="navCta" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.navCta">Ver colección →</button>
     <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
@@ -463,14 +468,14 @@ html,body{overflow-x:hidden}
   <nav class="drawer-nav">
     <a href="#collections" class="drawer-link" data-i18n="landing.navCollections">Colecciones</a>
     <a href="./ui_kits/store/" class="drawer-link" data-i18n="landing.navStore">Tienda</a>
-    <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="../cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
     <a href="#story" class="drawer-link" data-i18n="landing.navUs">Nosotros</a>
     <a href="#personalize" class="drawer-link" data-i18n="landing.navPersonalize">Personaliza</a>
   </nav>
   <div class="drawer-lang">
-    <button class="drawer-lang-btn" onclick="window.location.href='./'">ES</button>
+    <button class="drawer-lang-btn" onclick="window.location.href='../'">ES</button>
     <span style="opacity:.5">/</span>
-    <button class="drawer-lang-btn" onclick="window.location.href='./en/'">EN</button>
+    <button class="drawer-lang-btn" onclick="window.location.href='./'">EN</button>
   </div>
 </div>
 
@@ -484,7 +489,7 @@ html,body{overflow-x:hidden}
     <p class="hero-desc" data-i18n="landing.heroDesc">"creamos para que luzcas más bella de lo que ya eres"</p>
     <div class="hero-btns">
       <button class="btn-h1" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.heroBtnShop">Ver colección</button>
-      <button class="btn-h2" onclick="window.location.href='./cacusa-lovers.html'">Cacusa Lovers ♡</button>
+      <button class="btn-h2" onclick="window.location.href='../cacusa-lovers.html'">Cacusa Lovers ♡</button>
     </div>
   </div>
   <div class="hero-stage" id="heroStage">
@@ -598,7 +603,7 @@ html,body{overflow-x:hidden}
         </div>
       </div>
       <div class="story-visual">
-        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div class="s-img reveal-right" style="height:180px"><img src="../assets/story-artesanos.jpg" alt="CACUSA artisans handcrafting personalized jewelry in 925 silver and 18k gold plating" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
         <div class="s-img reveal-right" data-delay="1" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
         <div class="s-img reveal-right" data-delay="2" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
       </div>
@@ -694,7 +699,7 @@ html,body{overflow-x:hidden}
       </div>
       <div>
         <div class="ft" data-i18n="landing.footerHelpH">Ayuda</div>
-        <a class="fl" href="./envios.html" data-i18n="landing.footerShipping">Envíos</a><a class="fl" href="./devoluciones.html" data-i18n="landing.footerReturns">Devoluciones</a><a class="fl" href="./cuidados.html" data-i18n="landing.footerCare">Cuidados</a><a class="fl" id="hFooterContact" data-i18n="landing.footerContact" target="_blank" rel="noopener">Contacto</a>
+        <a class="fl" href="../envios.html" data-i18n="landing.footerShipping">Envíos</a><a class="fl" href="../devoluciones.html" data-i18n="landing.footerReturns">Devoluciones</a><a class="fl" href="../cuidados.html" data-i18n="landing.footerCare">Cuidados</a><a class="fl" id="hFooterContact" data-i18n="landing.footerContact" target="_blank" rel="noopener">Contacto</a>
       </div>
       <div>
         <div class="ft" data-i18n="landing.footerUsH">Nosotros</div>
@@ -811,7 +816,7 @@ function renderHomeItemListLd(products){
 // Ahora es fetch asíncrono: fillCollectionCards/heroSlideshow/renderFeaturedProducts/renderTestimonials
 // (declaradas más abajo) se llaman recién cuando los datos ya están disponibles, no antes.
 function loadHomeContent(){
-  fetch('./data/products.json?v=' + Date.now())
+  fetch('../data/products.json?v=' + Date.now())
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       const cfg = data.config || {};
@@ -905,12 +910,12 @@ loadHomeContent();
     const mat    = val('pfMaterial');
     const detail = val('pfDetail');
 
-    let msg = '🌸 *Nueva solicitud de pieza personalizada*\n*CACUSA by Taitus*\n\n';
-    msg += '👤 *Nombre:* ' + nombre + '\n';
+    let msg = '🌸 *New custom piece request*\n*CACUSA by Taitus*\n\n';
+    msg += '👤 *Name:* ' + nombre + '\n';
     msg += '📱 *WhatsApp:* ' + whats + '\n';
-    if (tipo)   msg += '💍 *Tipo de joya:* ' + tipo + '\n';
+    if (tipo)   msg += '💍 *Jewelry type:* ' + tipo + '\n';
     if (mat)    msg += '✨ *Material:* ' + mat + '\n';
-    if (detail) msg += '📝 *Personalización:* ' + detail + '\n';
+    if (detail) msg += '📝 *Personalization:* ' + detail + '\n';
 
     const num = (CACUSA_WHATSAPP || '').replace(/\D/g, '');
     const url = (num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg);

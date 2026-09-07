@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  <!-- Esta es la copia en inglés (/en/): fija el idioma leído por TODO el código de abajo
+       (que originalmente lee localStorage.getItem('cacusa-lang')) a 'en', sin escribir en el
+       localStorage real — así una visita a /en/ no cambia el idioma que ve un visitante que
+       luego navegue a la versión en español. -->
+  <script>(function(){var g=Storage.prototype.getItem;Storage.prototype.getItem=function(k){return k==='cacusa-lang'?'en':g.call(this,k);};})();</script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
   <script>
@@ -12,29 +17,29 @@
     gtag('js', new Date());
     gtag('config', 'G-1JPMVGERM2');
   </script>
-  <title>CACUSA by Taitus — Joyería artesanal personalizada</title>
-  <meta id="meta-desc" name="description" content="Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y oro 18k. Grabado gratis. Envíos a Ecuador y USA.">
-  <meta name="keywords" content="bisutería personalizada, joyería artesanal, joyería personalizada Ecuador, bisutería USA, plata 925, baño de oro 18k, anillos personalizados, collares artesanales, pulseras tejidas, aretes hechos a mano, CACUSA, Taitus, joyería hecha a mano, regalo personalizado">
-  <link rel="canonical" id="canonicalLink" href="https://cacusabytaitus.com/ui_kits/store/">
+  <title>CACUSA by Taitus — Handmade Artisanal Jewelry</title>
+  <meta id="meta-desc" name="description" content="Personalized handmade jewelry: rings, necklaces, bracelets and earrings in 925 silver and 18k gold. Free engraving. Shipping to the USA and Ecuador.">
+  <meta name="keywords" content="personalized jewelry, artisanal jewelry, handmade jewelry USA, custom jewelry Ecuador, 925 silver, 18k gold plating, personalized rings, artisanal necklaces, woven bracelets, handmade earrings, CACUSA, Taitus, personalized gift">
+  <link rel="canonical" id="canonicalLink" href="https://cacusabytaitus.com/en/ui_kits/store/">
   <link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/">
   <link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/ui_kits/store/">
   <link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/ui_kits/store/">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta id="og-url" property="og:url" content="https://cacusabytaitus.com/ui_kits/store/">
+  <meta id="og-url" property="og:url" content="https://cacusabytaitus.com/en/ui_kits/store/">
   <meta property="og:site_name" content="CACUSA by Taitus">
-  <meta id="og-title" property="og:title" content="CACUSA by Taitus — Joyería artesanal personalizada">
-  <meta id="og-description" property="og:description" content="Anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.">
+  <meta id="og-title" property="og:title" content="CACUSA by Taitus — Handmade Artisanal Jewelry">
+  <meta id="og-description" property="og:description" content="Rings, necklaces, bracelets and earrings handmade with 18k gold plating, 925 silver and stainless steel. Free personalization. Shipping to the USA.">
   <meta id="og-image" property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:locale" content="es_EC">
-  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="es_EC">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta id="tw-title" name="twitter:title" content="CACUSA by Taitus — Joyería artesanal personalizada">
-  <meta id="tw-description" name="twitter:description" content="Anillos, collares, pulseras y aretes hechos a mano. Personalización gratis.">
+  <meta id="tw-title" name="twitter:title" content="CACUSA by Taitus — Handmade Artisanal Jewelry">
+  <meta id="tw-description" name="twitter:description" content="Handmade rings, necklaces, bracelets and earrings. Free personalization.">
   <meta id="tw-image" name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
@@ -48,57 +53,57 @@
   <script type="application/ld+json">
   {"@context":"https://schema.org","@graph":[
     {"@type":["LocalBusiness","JewelryStore"],"@id":"https://cacusabytaitus.com/#business",
-     "name":"CACUSA by Taitus","alternateName":["Cacusa","Cacusa Taitus","bisutería personalizada Ecuador"],
-     "url":"https://cacusabytaitus.com/ui_kits/store/",
+     "name":"CACUSA by Taitus","alternateName":["Cacusa","Cacusa Taitus","personalized jewelry Ecuador"],
+     "url":"https://cacusabytaitus.com/en/ui_kits/store/",
      "image":"https://cacusabytaitus.com/assets/icon-512.jpg",
      "logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg","width":512,"height":512},
-     "description":"CACUSA by Taitus es una joyería artesanal especializada en bisutería personalizada. Fabricamos anillos, collares, pulseras y aretes hechos a mano con plata 925, baño de oro 18k y acero inoxidable. Personalización gratis. Envíos a Ecuador y Estados Unidos.",
+     "description":"CACUSA by Taitus is an artisanal jewelry brand specializing in personalized jewelry. We handcraft rings, necklaces, bracelets and earrings in 925 silver, 18k gold plating and stainless steel. Free personalization. Shipping to the USA and Ecuador.",
      "priceRange":"$$","currenciesAccepted":"USD",
      "paymentAccepted":"Credit Card, Zelle, Bank Transfer",
-     "areaServed":[{"@type":"Country","name":"Ecuador"},{"@type":"Country","name":"United States"}],
-     "knowsAbout":["joyería artesanal","bisutería personalizada","plata 925","baño de oro 18k","acero inoxidable","anillos personalizados","collares artesanales","pulseras tejidas","aretes hechos a mano","regalo personalizado"],
-     "hasOfferCatalog":{"@type":"OfferCatalog","name":"Joyería artesanal personalizada",
+     "areaServed":[{"@type":"Country","name":"United States"},{"@type":"Country","name":"Ecuador"}],
+     "knowsAbout":["artisanal jewelry","personalized jewelry","925 silver","18k gold plating","stainless steel","personalized rings","artisanal necklaces","woven bracelets","handmade earrings","personalized gift"],
+     "hasOfferCatalog":{"@type":"OfferCatalog","name":"Personalized artisanal jewelry",
        "itemListElement":[
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Anillos artesanales","description":"Anillos hechos a mano en plata 925 y baño de oro 18k con personalización de iniciales y nombres"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Collares y cadenas personalizadas","description":"Collares artesanales con dijes, cadenas de plata 925 y baño de oro 18k"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Pulseras tejidas","description":"Pulseras macramé y tejidas a mano con dijes y perlas"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Aretes artesanales","description":"Aretes hechos a mano con diseños únicos en plata 925 y baño de oro"}}
+         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Artisanal rings","description":"Handmade rings in 925 silver and 18k gold plating with initial and name personalization"}},
+         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Personalized necklaces and chains","description":"Artisanal necklaces with charms, 925 silver and 18k gold-plated chains"}},
+         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Woven bracelets","description":"Handwoven macramé bracelets with charms and pearls"}},
+         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Artisanal earrings","description":"Handmade earrings with unique designs in 925 silver and gold plating"}}
        ]},
      "contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["Spanish","English"]},
      "sameAs":["https://www.instagram.com/cacusabytaitus/","https://www.tiktok.com/@cacusabytaitus"]},
     {"@type":"Organization","@id":"https://cacusabytaitus.com/#organization",
      "name":"CACUSA by Taitus","url":"https://cacusabytaitus.com",
      "logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg","width":512,"height":512},
-     "description":"Joyería artesanal personalizada hecha a mano — anillos, collares, pulseras y aretes en plata 925 y baño de oro 18k.",
+     "description":"Handmade artisanal personalized jewelry — rings, necklaces, bracelets and earrings in 925 silver and 18k gold plating.",
      "sameAs":["https://www.instagram.com/cacusabytaitus/","https://www.tiktok.com/@cacusabytaitus"]},
-    {"@type":"WebSite","@id":"https://cacusabytaitus.com/ui_kits/store/#website",
-     "url":"https://cacusabytaitus.com/ui_kits/store/","name":"CACUSA by Taitus",
+    {"@type":"WebSite","@id":"https://cacusabytaitus.com/en/ui_kits/store/#website",
+     "url":"https://cacusabytaitus.com/en/ui_kits/store/","name":"CACUSA by Taitus",
      "publisher":{"@id":"https://cacusabytaitus.com/#organization"},"inLanguage":["es","en"]},
     {"@type":"BreadcrumbList","itemListElement":[
-      {"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com"},
-      {"@type":"ListItem","position":2,"name":"Tienda","item":"https://cacusabytaitus.com/ui_kits/store/"}]},
+      {"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/en/"},
+      {"@type":"ListItem","position":2,"name":"Store","item":"https://cacusabytaitus.com/en/ui_kits/store/"}]},
     {"@type":"FAQPage","mainEntity":[
-      {"@type":"Question","name":"¿Dónde comprar bisutería personalizada con envío a Ecuador y USA?",
-       "acceptedAnswer":{"@type":"Answer","text":"CACUSA by Taitus (cacusabytaitus.com) es una joyería artesanal especializada en bisutería personalizada con envío a Ecuador y Estados Unidos. Fabricamos anillos, collares, pulseras y aretes hechos a mano con plata 925, baño de oro 18k y acero inoxidable."}},
-      {"@type":"Question","name":"¿Hacen joyería personalizada a pedido?",
-       "acceptedAnswer":{"@type":"Answer","text":"Sí. CACUSA by Taitus acepta pedidos completamente personalizados: puedes agregar nombres, iniciales, fechas o mensajes especiales a casi cualquier pieza. Cada joya se elabora a mano especialmente para ti."}},
-      {"@type":"Question","name":"¿Qué materiales usan en sus joyas?",
-       "acceptedAnswer":{"@type":"Answer","text":"Trabajamos con plata 925 (plata de ley), baño de oro 18k y acero inoxidable. Todos los materiales son hipoalergénicos y de alta durabilidad."}},
-      {"@type":"Question","name":"¿Hacen envíos a Estados Unidos?",
-       "acceptedAnswer":{"@type":"Answer","text":"Sí. CACUSA by Taitus realiza envíos a Ecuador y Estados Unidos. El envío es gratis a partir de cierto monto. Los pagos se realizan con tarjeta de crédito, Zelle o transferencia bancaria."}},
-      {"@type":"Question","name":"¿Cuánto cuesta una bisutería personalizada en CACUSA?",
-       "acceptedAnswer":{"@type":"Answer","text":"Los precios en CACUSA by Taitus van desde aproximadamente $15 hasta $80 según la pieza y el material. La personalización con iniciales o nombres está incluida en el precio."}},
-      {"@type":"Question","name":"¿Cuánto tiempo tarda un pedido personalizado?",
-       "acceptedAnswer":{"@type":"Answer","text":"Los pedidos personalizados se elaboran a mano en 5 a 10 días hábiles, más el tiempo de envío según el destino (Ecuador o Estados Unidos)."}},
-      {"@type":"Question","name":"¿Cómo se paga en CACUSA by Taitus?",
-       "acceptedAnswer":{"@type":"Answer","text":"Aceptamos tarjeta de crédito y débito (Visa, Mastercard, Apple Pay, Google Pay) a través de Square, y también Zelle o transferencia bancaria para clientes en Estados Unidos y Ecuador."}}
+      {"@type":"Question","name":"Where can I buy personalized jewelry with shipping to the USA and Ecuador?",
+       "acceptedAnswer":{"@type":"Answer","text":"CACUSA by Taitus (cacusabytaitus.com) is an artisanal jewelry brand specializing in personalized jewelry with shipping to the USA and Ecuador. We handcraft rings, necklaces, bracelets and earrings in 925 silver, 18k gold plating and stainless steel."}},
+      {"@type":"Question","name":"Do you make custom personalized jewelry?",
+       "acceptedAnswer":{"@type":"Answer","text":"Yes. CACUSA by Taitus accepts fully personalized orders: you can add names, initials, dates or special messages to almost any piece. Each piece is handmade especially for you."}},
+      {"@type":"Question","name":"What materials do you use in your jewelry?",
+       "acceptedAnswer":{"@type":"Answer","text":"We work with 925 silver (sterling silver), 18k gold plating and stainless steel. All materials are hypoallergenic and highly durable."}},
+      {"@type":"Question","name":"Do you ship to the United States?",
+       "acceptedAnswer":{"@type":"Answer","text":"Yes. CACUSA by Taitus ships to the United States and Ecuador. Shipping is free above a certain order amount. Payments can be made by credit card, Zelle or bank transfer."}},
+      {"@type":"Question","name":"How much does personalized jewelry cost at CACUSA?",
+       "acceptedAnswer":{"@type":"Answer","text":"Prices at CACUSA by Taitus range from about $15 to $80 depending on the piece and material. Personalization with initials or names is included in the price."}},
+      {"@type":"Question","name":"How long does a personalized order take?",
+       "acceptedAnswer":{"@type":"Answer","text":"Personalized orders are handmade in 5 to 10 business days, plus shipping time depending on the destination (United States or Ecuador)."}},
+      {"@type":"Question","name":"How do you pay at CACUSA by Taitus?",
+       "acceptedAnswer":{"@type":"Answer","text":"We accept credit and debit cards (Visa, Mastercard, Apple Pay, Google Pay) through Square, as well as Zelle or bank transfer for customers in the United States and Ecuador."}}
     ]}
   ]}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script>document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';</script>
+  <script>document.documentElement.className='lang-en';</script>
   <style>
 .lang-en .t-es{display:none!important}
 .lang-es .t-en{display:none!important}
@@ -599,16 +604,16 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="/">
+  <a class="nav-logo" href="/en/">
     <span class="w">CACUSA</span>
     <span class="s">by Taitus</span>
   </a>
-  <a class="nav-back" href="/">
+  <a class="nav-back" href="/en/">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"></path></svg>
     <span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span>
   </a>
-  <a class="nav-lovers-link" href="../../cacusa-lovers.html">Cacusa Lovers ♡</a>
-  <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='./'">ES</button><button id="lEn" onclick="window.location.href='/en/ui_kits/store/'">EN</button></div>
+  <a class="nav-lovers-link" href="../../../cacusa-lovers.html">Cacusa Lovers ♡</a>
+  <div class="lang-sw"><button id="lEs" onclick="window.location.href='/ui_kits/store/'">ES</button><button id="lEn" class="on" onclick="window.location.href='/en/ui_kits/store/'">EN</button></div>
   <div class="nav-right">
     <button class="install-btn" id="installBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -632,11 +637,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <div id="navDrawer" role="dialog" aria-modal="true" aria-label="Menú de navegación">
   <button id="navDrawerClose" aria-label="Cerrar menú">✕</button>
   <nav class="drawer-nav">
-    <a href="/" class="drawer-link"><span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span></a>
-    <a href="../../cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="/en/" class="drawer-link"><span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span></a>
+    <a href="../../../cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
   </nav>
   <div class="drawer-lang">
-    <button class="drawer-lang-btn" onclick="window.location.href='./'">ES</button>
+    <button class="drawer-lang-btn" onclick="window.location.href='/ui_kits/store/'">ES</button>
     <span style="opacity:.5">/</span>
     <button class="drawer-lang-btn" onclick="window.location.href='/en/ui_kits/store/'">EN</button>
   </div>
@@ -690,189 +695,141 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
     <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
 <!--NOSCRIPT_PRODUCTS_START-->
 <noscript>
-<section aria-label="Catálogo de productos CACUSA by Taitus">
-<h2>Catálogo de joyería personalizada CACUSA by Taitus</h2>
-<p>Bisutería y joyería artesanal hecha a mano en plata 925, baño de oro 18k y acero inoxidable. Personalización con nombre, inicial, fecha o mensaje. Envíos a Ecuador y Estados Unidos.</p>
-<h3>Anillos</h3>
+<section aria-label="CACUSA by Taitus product catalog">
+<h2>CACUSA by Taitus personalized jewelry catalog</h2>
+<p>Handmade artisanal jewelry in 925 silver, 18k gold plating and stainless steel. Personalization with name, initial, date or message. Shipping to the USA and Ecuador.</p>
+<h3>Rings</h3>
 <ul>
-<li><a href="?p=1">Anillo doble GG / Double GG Ring</a> — $22. Anillo doble con labrado GG</li>
-<li><a href="?p=1781877838074">Anillo ajustable color plateado / Silver Adjustable Ring</a> — $25. Elegante anillo ajustable con baño de rodio plateado. Diseño minimalista y sofisticado que combina con cualquier look.</li>
-<li><a href="?p=1781877944864">Anillo ajustable de circones e inicial / Adjustable ring of zircons and initial</a> — $25. También disponible en dorado.</li>
-<li><a href="?p=1781878011948">Anillo dorado ajustable de hoja / Gold Leaf Adjustable Ring</a> — $20. Delicado anillo ajustable con diseño de hoja en baño de oro 18k. Perfecto para un toque natural y elegante.</li>
-<li><a href="?p=1781878104655">Anillo ajustable con microcircones en degrade / Adjustable Ring with Micro Zirconia Degradé</a> — $25. Sofisticado anillo ajustable con microcircones en degradé dorado. Un diseño que captura la luz en cada movimiento.</li>
-<li><a href="?p=1781878207350">Anillo dorado ajustable de circones fucsia / Fuchsia Zirconia Adjustable Gold Ring</a> — $20. Llamativo anillo ajustable bañado en oro con vibrantes circones color fucsia. Perfecto para dar un toque de color a tu look.</li>
-<li><a href="?p=1781878296526">Anillo talla 7 con tres microcircones de colores / Size 7 Ring with Three Colorful Micro Zirconia</a> — $25. Elegante anillo talla 7 en acero inoxidable adornado con tres microcircones de colores. Delicado, colorido y perfecto para el uso diario.</li>
-<li><a href="?p=1781878427634">Anillo TIFFY ajustable con microcircones / Adjustable TIFFY Ring with Micro Zirconia</a> — $25. Delicado anillo ajustable estilo Tiffy con brillantes microcircones en baño de oro 18k. Elegancia y brillo en su forma más pura.</li>
-<li><a href="?p=1781878646387">Entorchado dorado con piedra azul zafiro / Gold Twisted Ring with Sapphire Blue Stone</a> — $20. También lo puedes pedir con su pulsera en juego</li>
-<li><a href="?p=1781878707797">Triple línea de circones con 3 piedras / Triple Zirconia Band Ring with 3 Stones</a> — $25. Anillo de triple banda con elegantes circones y tres piedras centrales en baño de oro 18k. Diseño sofisticado y moderno.</li>
-<li><a href="?p=1781879127320">Círculo de microcircones con un fondo de nácar y un microcircones central / Micro-circle with a mother-of-pearl background and a central micro-circle</a> — $25. Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.</li>
-<li><a href="?p=1781879189744">Ajustable. Anillo chuncky con circones verdes / Adjustable Chunky Ring with Green Zirconia</a> — $25. Llamativo anillo chunky ajustable con circones verdes sobre base dorada de 18k. Audaz, moderno y lleno de personalidad.</li>
-<li><a href="?p=1781879577380">Entorchado ajustable / Adjustable Twisted Ring</a> — $20. Elegante anillo ajustable entorchado en baño de rodio plateado. Diseño clásico y refinado para el uso diario.</li>
-<li><a href="?p=1781879659210">Doble estrella de microcircon. Ajustable / Adjustable Double Star Micro Zirconia Ring</a> — $20. Romántico anillo ajustable con doble estrella de microcircones en baño de oro 18k. Captura el brillo de las estrellas en tu mano.</li>
-<li><a href="?p=1781879732319">Corazón dorado. Anillo entorchado ajustable / Golden Heart Adjustable Twisted Ring</a> — $20. Tierno anillo entorchado ajustable con corazón dorado en baño de oro 18k. Perfecto para llevar el amor en tus manos.</li>
-<li><a href="?p=1781879811459">Anillo doble línea llana con corazón plateado / Double Flat Band Ring with Silver Heart</a> — $20. Elegante anillo de doble banda lisa con un delicado corazón plateado en baño de rodio. Diseño romántico y minimalista.</li>
-<li><a href="?p=1781879917484">Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado / Size 7 Ring with Emerald Stone and Micro Zirconia</a> — $35. Espectacular anillo talla 7 en plata 925 con piedra central color esmeralda flanqueada por dos microcircones a cada lado. Elegancia clásica.</li>
-<li><a href="?p=1781880053907">Anillo ajustable con 3 circones / Adjustable Ring with 3 Zirconia</a> — $20. Clásico anillo ajustable con tres circones brillantes en baño de oro 18k. Sencillo, elegante y versátil para cualquier ocasión.</li>
-<li><a href="?p=1781880127649">Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable / Adjustable Two Fish &amp; Evil Eye Ring</a> — $20. Singular anillo ajustable con dos peces: uno liso y otro con microcircones, ambos con el ojo turco protector. Bañado en oro 18k.</li>
-<li><a href="?p=1781880268274">Anillo ajustable de circones / Adjustable Zirconia Ring</a> — $22. Delicado anillo ajustable cubierto de circones brillantes en baño de oro 18k. Elegancia y brillo que te acompaña todo el día.</li>
-<li><a href="?p=1781880340918">Anillos ajustable con trébol negro / Black Clover Adjustable Rings</a> — $20. El acero inoxidable tiene a su vez un baño de oro.</li>
-<li><a href="?p=1781880466753">Anillo dorado ajustable / Adjustable Gold Ring</a> — $20. Anillo dorado ajustable de diseño limpio y elegante en baño de oro 18k. El básico dorado que toda colección necesita.</li>
-<li><a href="?p=1781881478183">Anillo ajustable con circones blancos / Adjustable Ring with White Zirconia</a> — $20. Refinado anillo ajustable con circones blancos sobre base dorada de 18k. Brillo clásico que complementa cualquier estilo.</li>
-<li><a href="?p=1781881544132">Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón / Chunky Ring with Zirconia Circle, Mother-of-Pearl &amp; Heart Silhouette</a> — $22. Llamativo anillo chunky con círculo de circones, fondo de nácar y silueta de corazón de circones en dorado 18k. Moderno y con carácter.</li>
-<li><a href="?p=1781891993137">Anillo de doble infinito uno con microcircones y otro llano / Double Infinity Ring with Micro Zirconia and Plain Band</a> — $20. Romántico anillo con símbolo de doble infinito: uno decorado con microcircones y otro en diseño liso, en baño de oro 18k.</li>
-<li><a href="?p=1781892443591">Anillo de aquamarina / Aquamarine Ring</a> — $20. Sereno anillo ajustable con piedra de aguamarina en vibrante tono azul sobre base dorada de 18k. Frescura y elegancia en tu mano.</li>
-<li><a href="?p=1781892913830">Anillo ajustable de ojo turco / Evil Eye Adjustable Ring</a> — $20. Protector anillo ajustable con el ojo turco en base dorada de 18k. Un símbolo de protección y buena energía que luce hermoso en tu mano.</li>
-<li><a href="?p=1781893045956">Anillo / Ring</a> — $28. Anillo artesanal en baño de oro 18k. Elegante y versátil, perfecto para el uso diario o para ocasiones especiales.</li>
-<li><a href="?p=1785470275920">Anillo vintage aventurine / Vintage aventurine ring</a> — $20. Anillo Vintage Aventurine - Baño 18K
+<li><a href="?p=1">Double GG Ring</a> — $22. Double engraved GG ring</li>
+<li><a href="?p=1781877838074">Silver Adjustable Ring</a> — $25. Elegant adjustable ring with rhodium silver plating. Minimalist and sophisticated design that complements any look.</li>
+<li><a href="?p=1781877944864">Adjustable ring of zircons and initial</a> — $25. Also available in gold.</li>
+<li><a href="?p=1781878011948">Gold Leaf Adjustable Ring</a> — $20. Delicate adjustable ring with a leaf design in 18k gold plating. Perfect for a natural and elegant touch.</li>
+<li><a href="?p=1781878104655">Adjustable Ring with Micro Zirconia Degradé</a> — $25. Sophisticated adjustable ring with micro zirconia in a gold degradé setting. A design that captures light with every movement.</li>
+<li><a href="?p=1781878207350">Fuchsia Zirconia Adjustable Gold Ring</a> — $20. Eye-catching adjustable gold-plated ring with vibrant fuchsia zirconia stones. Perfect for adding a bold pop of color.</li>
+<li><a href="?p=1781878296526">Size 7 Ring with Three Colorful Micro Zirconia</a> — $25. Elegant size 7 stainless steel ring adorned with three colorful micro zirconia stones. Delicate, colorful and perfect for everyday wear.</li>
+<li><a href="?p=1781878427634">Adjustable TIFFY Ring with Micro Zirconia</a> — $25. Delicate adjustable Tiffy-style ring with sparkling micro zirconia in 18k gold plating. Elegance and brilliance in their purest form.</li>
+<li><a href="?p=1781878646387">Gold Twisted Ring with Sapphire Blue Stone</a> — $20. Also available as a matching set with its bracelet.</li>
+<li><a href="?p=1781878707797">Triple Zirconia Band Ring with 3 Stones</a> — $25. Triple band ring with elegant zirconia and three central stones in 18k gold plating. Sophisticated and modern design.</li>
+<li><a href="?p=1781879127320">Micro-circle with a mother-of-pearl background and a central micro-circle</a> — $25. Adjustable ring with a circle of microcircles on a mother-of-pearl background and central stone. Elegance and handcrafted detail in each finish.</li>
+<li><a href="?p=1781879189744">Adjustable Chunky Ring with Green Zirconia</a> — $25. Eye-catching adjustable chunky ring with green zirconia on an 18k gold base. Bold, modern and full of personality.</li>
+<li><a href="?p=1781879577380">Adjustable Twisted Ring</a> — $20. Elegant adjustable twisted ring in rhodium silver plating. Classic and refined design for everyday wear.</li>
+<li><a href="?p=1781879659210">Adjustable Double Star Micro Zirconia Ring</a> — $20. Romantic adjustable ring featuring a double star of micro zirconia in 18k gold plating. Captures the sparkle of stars on your hand.</li>
+<li><a href="?p=1781879732319">Golden Heart Adjustable Twisted Ring</a> — $20. Sweet adjustable twisted ring with a golden heart in 18k gold plating. Perfect for carrying love in your hands.</li>
+<li><a href="?p=1781879811459">Double Flat Band Ring with Silver Heart</a> — $20. Elegant double flat-band ring with a delicate silver heart in rhodium plating. Romantic and minimalist design.</li>
+<li><a href="?p=1781879917484">Size 7 Ring with Emerald Stone and Micro Zirconia</a> — $35. Spectacular size 7 ring in 925 silver with a central emerald-colored stone flanked by two micro zirconia on each side. Classic elegance.</li>
+<li><a href="?p=1781880053907">Adjustable Ring with 3 Zirconia</a> — $20. Classic adjustable ring with three sparkling zirconia stones in 18k gold plating. Simple, elegant and versatile for any occasion.</li>
+<li><a href="?p=1781880127649">Adjustable Two Fish &amp; Evil Eye Ring</a> — $20. Unique adjustable ring featuring two fish: one plain and one with micro zirconia, both with the protective evil eye. 18k gold plated.</li>
+<li><a href="?p=1781880268274">Adjustable Zirconia Ring</a> — $22. Delicate adjustable ring covered in sparkling zirconia stones in 18k gold plating. Elegance and brilliance that stays with you all day.</li>
+<li><a href="?p=1781880340918">Black Clover Adjustable Rings</a> — $20. Stainless steel has a gold plating.</li>
+<li><a href="?p=1781880466753">Adjustable Gold Ring</a> — $20. Clean and elegant adjustable gold ring in 18k gold plating. The gold essential that every collection needs.</li>
+<li><a href="?p=1781881478183">Adjustable Ring with White Zirconia</a> — $20. Refined adjustable ring with white zirconia stones on an 18k gold base. Classic sparkle that complements any style.</li>
+<li><a href="?p=1781881544132">Chunky Ring with Zirconia Circle, Mother-of-Pearl &amp; Heart Silhouette</a> — $22. Statement chunky ring with a circle of zirconia, mother-of-pearl background and a zirconia heart silhouette in 18k gold. Modern and bold.</li>
+<li><a href="?p=1781891993137">Double Infinity Ring with Micro Zirconia and Plain Band</a> — $20. Romantic ring featuring a double infinity symbol: one adorned with micro zirconia and one in a plain design, in 18k gold plating.</li>
+<li><a href="?p=1781892443591">Aquamarine Ring</a> — $20. Serene adjustable ring with an aquamarine stone in a vibrant blue tone on an 18k gold base. Freshness and elegance on your hand.</li>
+<li><a href="?p=1781892913830">Evil Eye Adjustable Ring</a> — $20. Protective adjustable ring featuring the evil eye on an 18k gold base. A symbol of protection and good energy that looks beautiful on your hand.</li>
+<li><a href="?p=1781893045956">Ring</a> — $28. Artisanal ring in 18k gold plating. Elegant and versatile, perfect for everyday wear or special occasions.</li>
+<li><a href="?p=1785470275920">Vintage aventurine ring</a> — $20. Vintage Aventurine Ring - 18K BATHROOM
 
-Anillo doble capa estilo vintage con acabado en oro 18K sobre acero inoxidable. 
-Diseño con aro trenzado y detalle de bolitas, centro con piedra natural verde aventurina ovalada. 
-Pieza ajustable, liviana y resistente al agua. 
+Vintage style double layer ring with 18K gold finish on stainless steel. 
+Design with braided ring and bead detail, center with oval adventurine green natural stone. 
+Adjustable, lightweight and water-resistant piece. 
 
-Detalles:
-- Estilo: Vintage / Boho Chic
-- Ajustable: Se adapta a todos los tallajes
+Details:
+- Style: Vintage / Boho Chic
+- Adjustable: Fits all sizes
 
-Simboliza abundancia, suerte y prosperidad. Perfecto para usar solo o en stacking con otros anillos dorados.</li>
-<li><a href="?p=1785470725921">Anillo Pulpo Glossy / Glossy Octopus Ring</a> — $25. Anillo Pulpo Glossy - Baño Oro 18K
-
-Eleva tu estilo con nuestro anillo statement de pulpo. Una pieza audaz, con diseño 3D y acabado brillante en oro 18K que rinde homenaje al océano y a la personalidad única.
-
-Hecho en acero inoxidable de alta calidad, es resistente al agua, al deslustre y perfecto para el uso diario. Su aro ajustable se adapta a todos los tallajes, y el diseño ergonómico hace que se vea siempre recto y alineado en el dedo.
-
-Características:
-- Material: Acero inoxidable premium con baño de oro 18K
-- Diseño: Pulpo 3D con tentáculos y detalle de ventosas
-- Acabado: Glossy brillante anti-deslustre
-- Talla: Ajustable - se adapta a tu dedo
-- Estilo: Statement / Marítimo / Boho Chic
-
-¿Por qué te encantará?
-El pulpo simboliza inteligencia, adaptabilidad y misterio. Este anillo es perfecto para quienes buscan joyería con personalidad que no pase desapercibida. Úsalo solo como pieza protagonista o combínalo con anillos minimalistas para un stacking moderno.
-
-Ideal para regalar o para darle un toque único a tus outfits de verano, playa y ciudad.</li>
+It symbolizes abundance, luck and prosperity. Perfect for use alone or stacking with other gold rings.</li>
+<li><a href="?p=1785470725921">Glossy Octopus Ring</a> — $25. QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS</li>
 </ul>
-<h3>Aretes</h3>
+<h3>Earrings</h3>
 <ul>
-<li><a href="?p=3">Argollas de estrella con circones / Star Hoop Earrings with Zirconia</a> — $20. Argollas de circones en forma de estrella</li>
-<li><a href="?p=1782055740145">Aretes con circones / Zircon Earrings</a> — $20. Elegante diseño de aretes con forma. Rodeado de microcircones. Ideales para elevar tu look.</li>
-<li><a href="?p=1786303032752">Aretes de perla tejidos a mano / Hand-woven pearl earrings</a> — $25. Pearl Flower Stud Earrings - Delicate 🤍
+<li><a href="?p=3">Star Hoop Earrings with Zirconia</a> — $20. Star-shaped zirconia hoop earrings</li>
+<li><a href="?p=1782055740145">Zircon Earrings</a> — $20. Elegant shaped earring design. Surrounded by micro-zircons. Ideal to elevate your look.</li>
+<li><a href="?p=1786303032752">Hand-woven pearl earrings</a> — $25. Pearl Flower Stud Earrings - Delicate 🤍
 The timeless classic, now in a smaller size 
 18K Gold Plated + White Pearls | Center of 6 pearls 
 Lightweight + Hypoallergenic + Water Resistant 
 Perfect for everyday elegance</li>
-<li><a href="?p=1786329660348">Aretes letra dorados minimalistas / Minimalist Gold Letter Earrings</a> — $22. Tu inicial, tu estilo. 
-Estos aretes en forma de letra Z ( consulta las iniciales disponibles) son el detalle minimalista que estabas buscando. Bañados en oro 18K, son ligeros, hipoalergénicos y combinan con todo. Ideales para usar solos o en layering con otros aretes.
-
-Características:
-- Material: Baño oro 18K | Hipoalergénicos
-- Diseño: Letra minimalista | Tamaño pequeño
-- Cierre: Post de presión
-- Cuidado: Evitar contacto con químicos como perfumes, cloro de piscina o cremas. 
-- Ideal para: Regalo personalizado | Uso diario | Inicial
-
-CACUSA by Taitus - Joyería con significado</li>
-<li><a href="?p=1786330341098">Heart Chinoiserie Earrings</a> — $25. Aros dorados con corazón de porcelana blanca y flores azules. 
-Románticos, únicos y con mucho estilo.
-Delicados y con mucha personalidad. 
-Aros dorados con corazón colgante de porcelana blanca y flores azules estilo chinoiserie. El contraste entre el oro cálido y el azul clásico los hace únicos. Livianos y con movimiento, ideales para darle un toque romántico a tu look.
-
-Hechos en acero inoxidable 316L, resistentes al agua, al deslustre y hipoalergénicos.
-
-Medidas: Largo total 3.68cm | Ancho corazón 1.41cm
-- Peso: 5.9g el par
-- Cierre: Aro click
-- Estilo: Romántico / Chinoiserie / Statement</li>
+<li><a href="?p=1786329660348">Minimalist Gold Letter Earrings</a> — $22. QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS</li>
+<li><a href="?p=1786330341098">Heart Chinoiserie Earrings</a> — $25. QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS</li>
 </ul>
-<h3>Pulseras</h3>
+<h3>Bracelets</h3>
 <ul>
-<li><a href="?p=1780369728627">Pulsera de mano con anillo / Hand Bracelet with Ring</a> — $35. Hermosas pulseras hechas a tu gusto</li>
-<li><a href="?p=1781400451404">Pulsera tejida macramé con dije y perlas / Macramé Bracelet with Charm &amp; Pearls</a> — $28. Pulsera tejida macramé con perlas balines con baño de oro y dije de la virgen sede Guadalupe</li>
-<li><a href="?p=1781472855605">Pulsera Tiffy / Tiffy Bracelet</a> — $35. Pulsera Tiffy con microcircones centrales. Bañada en oro de 18 k</li>
-<li><a href="?p=1781473015877">Pulsera triple con dije de corazón / Triple Crystal Bracelet with Heart Charm</a> — $25. Pulsera de cristales tricolor con dije de corazón</li>
-<li><a href="?p=1783440355036">Pulsera triple 💛💙❤️ / Triple bracelet 💛💙❤️</a> — $25</li>
-<li><a href="?p=1785469196142">Bangel Evil eye</a> — $35. Acero quirúrgico con baño de oro de 18k. Estilo cable trenzado, esta pieza de uso diario es ideal para protección</li>
-<li><a href="?p=1785469598547">Bangle Greek Eye / Greek Eye Bangle</a> — $35. Acero quirúrgico con baño de oro de 18 kilates. El detalle del ojo ovalado de nácar más mis dos ojos azules con el borde de circones se ven súper elegantes. El diseño hueco la hace liviana para uso diario pero con mucho statement.</li>
+<li><a href="?p=1780369728627">Hand Bracelet with Ring</a> — $35. Beautiful bracelets made just for you</li>
+<li><a href="?p=1781400451404">Macramé Bracelet with Charm &amp; Pearls</a> — $28. Macramé woven bracelet with gold-plated bali pearls and Virgin of Guadalupe charm</li>
+<li><a href="?p=1781472855605">Tiffy Bracelet</a> — $35. Tiffy bracelet with central micro zirconia. 18k gold plated</li>
+<li><a href="?p=1781473015877">Triple Crystal Bracelet with Heart Charm</a> — $25. Tricolor crystal bracelet with heart charm</li>
+<li><a href="?p=1783440355036">Triple bracelet 💛💙❤️</a> — $25</li>
+<li><a href="?p=1785469196142">Bangel Evil eye</a> — $35. Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection</li>
+<li><a href="?p=1785469598547">Greek Eye Bangle</a> — $35. Surgical steel with 18-karat gold plating. The detail of the mother-of-pearl oval eye plus my two blue eyes with the edge of zircons look super elegant. The hollow design makes it lightweight for everyday use but with a lot of statement.</li>
 <li><a href="?p=1786308585824">FE Red String Bracelet</a> — $20. Wear your faith every day 
-Red adjustable string + 18K Goldfilled FE charm 
+Adjustable net string + 18K goldfilled FE charm 
 Minimalist design | 2 smooth strings 
 Protection, luck &amp; positive energy 
 Unisex | Hypoallergenic 
 The perfect meaningful gift</li>
-<li><a href="?p=1786315591380">PULSERA OJO TURCO AZUL + MEDALLA + PERLA / BLUE TURKISH EYE BRACELET + MEDAL + PEARL</a> — $25. Blue Evil Eye Bracelet🤍 
+<li><a href="?p=1786315591380">BLUE TURKISH EYE BRACELET + MEDAL + PEARL</a> — $25. Blue Evil Eye Bracelet🤍 
 Faith, protection &amp; elegance in one 
-Red adjustable string + Blue Evil Eye + Saint Medallion + Pearl 
+Adjustable net string + Blue Evil Eye + Saint Medallion + Pearl 
 Protection, faith &amp; good vibes 
 Minimalist design | Unisex 
 18K Goldfilled | Hypoallergenic 
 The perfect spiritual gift</li>
-<li><a href="?p=1786328384393">Pulsera de ojo turco rojo / Red Turkish Eye Bracelet</a> — $20. Menos es más. 
-Esta versión minimalista de nuestra pulsera de hilo rojo resalta lo esencial: el ojo turco rojo como símbolo de protección. Perfecta si buscas un diseño delicado, discreto y con mucho significado. Personalízala con balines o sin balines</li>
-<li><a href="?p=1788449850640">Pulseras hechas a mano 🙌🏽 / Handmade bracelets 🙌🏽</a> — $25. Hermosas pulseras ajustables confeccionadas con manos ecuatorianas, con estilo, combinaciones de cristales y dijes con baño de oro de 18K</li>
+<li><a href="?p=1786328384393">Red Turkish Eye Bracelet</a> — $20. Less is more. 
+This minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without pellets</li>
+<li><a href="?p=1788449850640">Handmade bracelets 🙌🏽</a> — $25. Beautiful adjustable bracelets made with Ecuadorian hands, with style, crystal combinations and 18K gold plated charms</li>
 </ul>
-<h3>Hombres</h3>
+<h3>Men</h3>
 <ul>
-<li><a href="?p=1781387820250">Cadena jersey Ecuador / Ecuador Jersey Chain</a> — $28. Cadena para el mundial de futbol</li>
-<li><a href="?p=1781885393238">Cadena con placa grabada a láser / Chain with Laser Engraved Plate</a> — $55. Un grabado a láser. Puedes personalizar el labrado de la cadena. Puedes elegir entre distintas formas de placa. Rectangular, circular, en forma de corazón, dorada, plateada. 
-Si deseas personalizar con dos grabados a láser el valor es $65</li>
+<li><a href="?p=1781387820250">Ecuador Jersey Chain</a> — $28. World Cup soccer chain</li>
+<li><a href="?p=1781885393238">Chain with Laser Engraved Plate</a> — $55. One laser engraving included. Customize the chain plate in your chosen shape: rectangular, circular, heart-shaped, gold or silver. 
+For two laser engravings the price is $65.</li>
 </ul>
-<h3>Cadenas</h3>
+<h3>Chains</h3>
 <ul>
-<li><a href="?p=1781399974669">Cadena San Benito con Cruz / Saint Benedict Chain with Cross</a> — $48. Cadena de san Benito con dije de Cruz. Hermosos dijes con micro circones en baño de oro</li>
-<li><a href="?p=1781460544331">Collar negro con ojo turco / Black Necklace with Evil Eye</a> — $35. Collar de semi cuero con dije de ojo turco revertido en un baño de oro</li>
-<li><a href="?p=1781473438388">Cadena con dije de corazón y pelota / Chain with Heart &amp; Ball Charm</a> — $28. Cadena con dije de corazón llano y silueta de corazón de circon con dije de pelota</li>
-<li><a href="?p=1781473526943">Cadena con ángel de la guarda circular / Chain with circular guardian angel</a> — $35. Delicada cadena con medallón circular del ángel de la guarda en acero inoxidable. Una pieza de fe y protección para llevar siempre contigo.</li>
-<li><a href="?p=1781473627668">Cadena con dije de Luna y corazón turquesa / Chain with Moon charm and turquoise heart</a> — $45. Cadena veneciana con Dije de Luna y corazón con microcircones turquesas</li>
-<li><a href="?p=1781875334358">Collar de perla / Pearl Necklace</a> — $45. Collar entorchado con dije de perla barroca</li>
-<li><a href="?p=1781877227517">Cadena clip con dije de árbol de vida / Chain clip with tree of life charm</a> — $55. Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida</li>
-<li><a href="?p=1781877358815">Cadena con dije de gato y panza de corazón con circones / Cat charm chain and heart belly with zircons</a> — $35. Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones</li>
-<li><a href="?p=1781877568374">Cadena de balines con dije de corazón con circones / Heart charm pellet chain with zircons</a> — $45. Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k</li>
-<li><a href="?p=1781884615354">Cadena con dije de Cruz grande con piedras color esmeralda / Large Emerald Cross Charm Chain</a> — $45. Elegante cadena con imponente dije de cruz adornado con brillantes piedras color esmeralda en baño de oro 18k. Fe y estilo en una sola pieza.</li>
-<li><a href="?p=1781884804624">Cadena delicada con dije de corazón nacarado / Delicate Chain with Mother-of-Pearl Heart Charm</a> — $38. Delicada cadena dorada con un romántico dije de corazón nacarado en baño de oro 18k. Femenina y elegante para el uso diario.</li>
-<li><a href="?p=1781884881874">Cadena veneciana con un dije de Cruz de circones / Venetian Chain with Zirconia Cross Charm</a> — $125. Plata ley 925 con un baño de oro de 18 kilates</li>
-<li><a href="?p=1781884932644">3 corazónes de nácar y dos llanos / 3 Mother-of-Pearl Hearts &amp; 2 Plain Heart Charms Chain</a> — $38. Romántica cadena con cinco dijes: tres corazones de nácar y dos llanos en dorado 18k. Un diseño lleno de delicadeza y amor.</li>
-<li><a href="?p=1781884983133">San Benito con cruz / Saint Benedict Chain with Cross</a> — $45. Cadena protectora con medallón de San Benito y dije de cruz en baño de oro 18k. Fe y elegancia en una sola pieza.</li>
-<li><a href="?p=1781885024731">Corazón de perla con una silueta de corazón de circon / Pearl Heart with Zirconia Heart Silhouette Chain</a> — $38. Delicado dije que combina un corazón de perla con una silueta de corazón de circones sobre cadena dorada de 18k. Romántico y sofisticado.</li>
-<li><a href="?p=1781885110437">Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble / Turquoise Opal Charm Chain with Double-Chain Effect</a> — $45. Llamativa cadena dorada con dije de ópalo turquesa que crea un efecto de cadena doble en el frente. Única, original y sofisticada.</li>
-<li><a href="?p=1781885197196">Cadena de circon rosado bajo / Soft Pink Zirconia Chain</a> — $35. Elegante cadena con circones rosados en tono suave y delicado sobre base dorada de 18k. Romanticismo y feminidad en cada detalle.</li>
-<li><a href="?p=1781885271521">Dije de balletista con inicial / Ballerina Charm with Initial</a> — $38. Encantador dije personalizable de bailarina con tu inicial en baño de oro 18k. El regalo perfecto para las amantes del ballet y la danza.</li>
-<li><a href="?p=1785466095890">Cadena de cruz con circones / Cross chain with zircons</a> — $45. Es acero inoxidable con un baño de oro de 18k, waterproof e hipoalergénico. La cruz llena de circon le da ese toque Glam pero sigue siendo minimalista. Se ve elegante y con buen brillo. El tamaño de la cruz (1,74 cm) es perfecto para que se destaque sin verse exagerada.</li>
-<li><a href="?p=1786329172109">Collar Lazo Dorado con Zirconias / Gold Zirconia Bow Necklace</a> — $45. Bow Zirconia Necklace 🎀 
-Cadena dorada 18K + Dije lazo con zirconias brillantes. 
-Delicado, femenino y perfecto para el día a día.
-
-El detalle que eleva cualquier look. 
-Este collar minimalista de cadena dorada con dije en forma de lazo y zirconias brillantes es la pieza perfecta para regalar o usar todos los días. Ligero, elegante y con mucho brillo.
-
-Características:
-- Material: Cadena de goldfilled 18K + Zirconias de alta calidad
-- Diseño: Dije lazo/moño minimalista
-- Largo: 40cm + 5cm extensible | Ajustable
-- Cuidado: No exponer a químicos como perfumes, cremas | Hipoalergénico | 
-- Ideal para: Regalo | Uso diario | Layering | Detalle femenino</li>
+<li><a href="?p=1781399974669">Saint Benedict Chain with Cross</a> — $48. Saint Benedict chain with cross charm. Micro zirconia charms in 18k gold plating</li>
+<li><a href="?p=1781460544331">Black Necklace with Evil Eye</a> — $35. Semi-leather necklace with gold-plated evil eye charm</li>
+<li><a href="?p=1781473438388">Chain with Heart &amp; Ball Charm</a> — $28. Chain with plain heart, zirconia heart silhouette and ball charm</li>
+<li><a href="?p=1781473526943">Chain with circular guardian angel</a> — $35. Delicate chain with circular guardian angel medallion in stainless steel. A piece of faith and protection to always carry with you.</li>
+<li><a href="?p=1781473627668">Chain with Moon charm and turquoise heart</a> — $45. Venetian chain with moon charm and heart with turquoise microcircles</li>
+<li><a href="?p=1781875334358">Pearl Necklace</a> — $45. Baroque pearl charm ruffled necklace</li>
+<li><a href="?p=1781877227517">Chain clip with tree of life charm</a> — $55. It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life</li>
+<li><a href="?p=1781877358815">Cat charm chain and heart belly with zircons</a> — $35. Classic style chain with a special zircon heart belly kitten charm</li>
+<li><a href="?p=1781877568374">Heart charm pellet chain with zircons</a> — $45. Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons</li>
+<li><a href="?p=1781884615354">Large Emerald Cross Charm Chain</a> — $45. Elegant chain with a striking cross charm adorned with brilliant emerald-colored stones in 18k gold plating. Faith and style in one piece.</li>
+<li><a href="?p=1781884804624">Delicate Chain with Mother-of-Pearl Heart Charm</a> — $38. Delicate gold chain with a romantic mother-of-pearl heart charm in 18k gold plating. Feminine and elegant for everyday wear.</li>
+<li><a href="?p=1781884881874">Venetian Chain with Zirconia Cross Charm</a> — $125. 925 sterling silver with an 18-carat gold plating</li>
+<li><a href="?p=1781884932644">3 Mother-of-Pearl Hearts &amp; 2 Plain Heart Charms Chain</a> — $38. Romantic chain with five charms: three mother-of-pearl hearts and two plain ones in 18k gold. A design full of delicacy and love.</li>
+<li><a href="?p=1781884983133">Saint Benedict Chain with Cross</a> — $45. Protective chain with a Saint Benedict medallion and cross charm in 18k gold plating. Faith and elegance united in one piece.</li>
+<li><a href="?p=1781885024731">Pearl Heart with Zirconia Heart Silhouette Chain</a> — $38. Delicate charm combining a pearl heart with a zirconia heart silhouette on an 18k gold chain. Romantic and sophisticated.</li>
+<li><a href="?p=1781885110437">Turquoise Opal Charm Chain with Double-Chain Effect</a> — $45. Striking gold chain with a turquoise opal charm that creates a double-chain effect at the front. Unique, original and sophisticated.</li>
+<li><a href="?p=1781885197196">Soft Pink Zirconia Chain</a> — $35. Elegant chain with soft pink zirconia stones on an 18k gold base. Romance and femininity in every detail.</li>
+<li><a href="?p=1781885271521">Ballerina Charm with Initial</a> — $38. Charming personalized ballerina charm with your initial in 18k gold plating. The perfect gift for ballet and dance lovers.</li>
+<li><a href="?p=1785466095890">Cross chain with zircons</a> — $45. It is stainless steel with an 18k gold plating, waterproof and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.</li>
+<li><a href="?p=1786329172109">Gold Zirconia Bow Necklace</a> — $45. QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS</li>
 </ul>
-<h3>Ear cuff</h3>
+<h3>Ear Cuffs</h3>
 <ul>
-<li><a href="?p=1781878560407">Ear cuff ancho plateado / Silver Wide Ear Cuff</a> — $22. Ear cuff ancho en plata 925. Diseño moderno que no requiere perforación. Ideal para un look edgy y sofisticado.</li>
+<li><a href="?p=1781878560407">Silver Wide Ear Cuff</a> — $22. Wide ear cuff in 925 silver. Modern piercing-free design. Ideal for an edgy and sophisticated look.</li>
 </ul>
-<h3>Parejas</h3>
+<h3>Couples</h3>
 <ul>
-<li><a href="?p=1781977774245">Pulseras de pareja Ying y el yang / Yin &amp; Yang Couple Bracelets</a> — $40. Par de pulseras para parejas con el símbolo del yin y el yang en acero inoxidable. Representa el equilibrio y la unión perfecta de dos almas.</li>
+<li><a href="?p=1781977774245">Yin &amp; Yang Couple Bracelets</a> — $40. Pair of couple&#x27;s bracelets featuring the yin and yang symbol in stainless steel. Represents the balance and perfect union of two souls.</li>
 </ul>
-<h3>Juegos</h3>
+<h3>Sets</h3>
 <ul>
-<li><a href="?p=1782309956499">GG</a> — $75. Cadena GG junto con sus aretes, la cadena viene con 5 símbolos GG y 7 circones. 
-Con un labrado delicado y elegante ideal para hacerte sentir más confidente y segura. Los aretes son delicados y livianos.</li>
-<li><a href="?p=1788107242835">Set aretes y cadena / Earring &amp; Chain Set</a> — $55. Hermosos sets de 18K goldplated stainless steel.
-Una Joya para que luzcas mas bella de lo que ya eres</li>
+<li><a href="?p=1782309956499">GG</a> — $75. GG chain along with its earrings, the chain comes with 5 GG symbols and 7 zircons. 
+With a delicate and elegant workmanship ideal to make you feel more confident and secure. The earrings are delicate and lightweight.</li>
+<li><a href="?p=1788107242835">Earring &amp; Chain Set</a> — $55. Beautiful sets of 18K goldplated stainless steel.
+A Jewel to make you look more beautiful than you already are</li>
 </ul>
 <h3>Hand chain</h3>
 <ul>
 <li><a href="?p=1788107453046">Hand chain</a> — $28. 18K GOLD PLATED Stainless Steel 
-Preciosas, hacen que tu mano luzca femenina y delicada</li>
-<li><a href="?p=1788540460219">Hand chain</a> — $28. Hermosas hand chains 18 K Goldplated Stainless steel únicas para lucir tu mano mas bella y femenina.</li>
+Precious, they make your hand look feminine and delicate</li>
+<li><a href="?p=1788540460219">Hand chain</a> — $28. Beautiful 18K Goldplated Stainless Steel hand chains to show off your most beautiful and feminine hand.</li>
 </ul>
-<p><a href="/">CACUSA by Taitus — página principal</a></p>
+<p><a href="/en/">CACUSA by Taitus — home page</a></p>
 </section>
 </noscript>
 <!--NOSCRIPT_PRODUCTS_END-->
@@ -986,12 +943,12 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
     </a>
   </div>
   <div class="f-links">
-    <a href="/"><span class="t-es">Inicio</span><span class="t-en">Home</span></a>
+    <a href="/en/"><span class="t-es">Inicio</span><span class="t-en">Home</span></a>
     <a href="../../index.html#personalize"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
-    <a href="../../cacusa-lovers.html">Cacusa Lovers ♡</a>
-    <a href="../../envios.html"><span class="t-es">Envíos</span><span class="t-en">Shipping</span></a>
-    <a href="../../devoluciones.html"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
-    <a href="../../cuidados.html"><span class="t-es">Cuidados</span><span class="t-en">Care</span></a>
+    <a href="../../../cacusa-lovers.html">Cacusa Lovers ♡</a>
+    <a href="../../../envios.html"><span class="t-es">Envíos</span><span class="t-en">Shipping</span></a>
+    <a href="../../../devoluciones.html"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
+    <a href="../../../cuidados.html"><span class="t-es">Cuidados</span><span class="t-en">Care</span></a>
   </div>
 </footer>
 
@@ -1039,9 +996,9 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
         <div class="perk"><div class="perk-dot"></div>Gift wrap gratis</div>
       </div>
       <div class="modal-policy-links">
-        <a href="../../envios.html" target="_blank" rel="noopener"><span class="t-es">Política de envíos</span><span class="t-en">Shipping policy</span></a>
+        <a href="../../../envios.html" target="_blank" rel="noopener"><span class="t-es">Política de envíos</span><span class="t-en">Shipping policy</span></a>
         <span aria-hidden="true">·</span>
-        <a href="../../devoluciones.html" target="_blank" rel="noopener"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
+        <a href="../../../devoluciones.html" target="_blank" rel="noopener"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
       </div>
       <!-- REVIEWS -->
       <div class="reviews-section">
@@ -1245,7 +1202,7 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
           <span class="t-es">Pagar por Zelle / Transferencia</span><span class="t-en">Pay with Zelle / Transfer</span>
         </button>
         <div class="co-wa-note" id="squareNote"><span class="t-es">Pago seguro · Apple Pay · Google Pay</span><span class="t-en">Secure payment · Apple Pay · Google Pay</span></div>
-        <div class="co-wa-note"><span class="t-es">Piezas hechas a medida</span><span class="t-en">Custom made pieces</span> · <a href="../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:underline"><span class="t-es">ver política de devoluciones</span><span class="t-en">see return policy</span></a></div>
+        <div class="co-wa-note"><span class="t-es">Piezas hechas a medida</span><span class="t-en">Custom made pieces</span> · <a href="../../../devoluciones.html" target="_blank" rel="noopener" style="color:var(--ink);text-decoration:underline"><span class="t-es">ver política de devoluciones</span><span class="t-en">see return policy</span></a></div>
         <div class="wa-fallback">
           <a href="#" id="waFallbackBtn"><span class="t-es">Prefiero coordinar por WhatsApp</span><span class="t-en">I prefer to coordinate via WhatsApp</span></a>
         </div>
@@ -1280,8 +1237,8 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
   <div class="success-s">by Taitus</div>
   <p class="success-p"><span class="t-es">Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. ¡Gracias por elegirnos!</span><span class="t-en">We will contact you via WhatsApp to confirm your order. Thank you for choosing us!</span></p>
   <p class="success-p" style="margin-top:-8px;font-size:12.5px">
-    <span class="t-es">¿Sabías que puedes recibir joyas nuevas cada mes? Descubre <a href="../../cacusa-lovers.html" style="color:white;text-decoration:underline">Cacusa Lovers ♡</a></span>
-    <span class="t-en">Did you know you can get new jewelry every month? Discover <a href="../../cacusa-lovers.html" style="color:white;text-decoration:underline">Cacusa Lovers ♡</a></span>
+    <span class="t-es">¿Sabías que puedes recibir joyas nuevas cada mes? Descubre <a href="../../../cacusa-lovers.html" style="color:white;text-decoration:underline">Cacusa Lovers ♡</a></span>
+    <span class="t-en">Did you know you can get new jewelry every month? Discover <a href="../../../cacusa-lovers.html" style="color:white;text-decoration:underline">Cacusa Lovers ♡</a></span>
   </p>
   <button class="success-back" id="successBack"><span class="t-es">Seguir comprando</span><span class="t-en">Continue shopping</span></button>
 </div>
@@ -1328,7 +1285,7 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
 
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────
-const PRODUCTS_JSON_URL = '../../data/products.json';
+const PRODUCTS_JSON_URL = '../../../data/products.json';
 
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
@@ -1350,7 +1307,7 @@ function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base;
 
 // ─── IDIOMA ─────────────────────────────────────────────────
 // Traducciones embebidas directamente — no dependen de fetch
-const __LANG = localStorage.getItem('cacusa-lang') || 'es';
+const __LANG = 'en';
 const __EN_T = {
   "store.back":"Back to home","store.cartBtn":"Cart","store.filterLabel":"Filter:",
   "store.all":"All","store.sortDefault":"Sort: Featured","store.sortPriceAsc":"Price: low to high",
@@ -3026,7 +2983,7 @@ function _renderRelatedProducts(p) {
 }
 
 // ─── SEO: SCHEMA DINÁMICO ─────────────────────────────────
-const _SEO_BASE = 'https://cacusabytaitus.com/ui_kits/store/';
+const _SEO_BASE = 'https://cacusabytaitus.com/en/ui_kits/store/';
 const _SEO_ORG  = 'https://cacusabytaitus.com/#organization';
 const _SEO_IMG_DEFAULT = 'https://cacusabytaitus.com/assets/og-image.jpg';
 function _setMeta(id, val) { const el = document.getElementById(id); if (el) el.setAttribute('content', val); }
@@ -3084,15 +3041,15 @@ function _injectProductSchema(p) {
 }
 function _clearProductSchema() {
   const el = document.getElementById('ld-product'); if (el) el.remove();
-  document.title = 'CACUSA by Taitus — Joyería artesanal personalizada';
-  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y oro 18k. Grabado gratis. Envíos a Ecuador y USA.');
+  document.title = 'CACUSA by Taitus — Handmade Artisanal Jewelry';
+  _setMeta('meta-desc', 'Personalized handmade jewelry: rings, necklaces, bracelets and earrings in 925 silver and 18k gold. Free engraving. Shipping to the USA and Ecuador.');
   _setCanonical(_SEO_BASE);
   _setMeta('og-url', _SEO_BASE);
-  _setMeta('og-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
-  _setMeta('og-description', 'Anillos, collares, pulseras y aretes hechos a mano con baño de oro 18k, plata 925 y acero inoxidable. Personalización gratis. Envíos a USA.');
+  _setMeta('og-title', 'CACUSA by Taitus — Handmade Artisanal Jewelry');
+  _setMeta('og-description', 'Rings, necklaces, bracelets and earrings handmade with 18k gold plating, 925 silver and stainless steel. Free personalization. Shipping to the USA.');
   _setMeta('og-image', _SEO_IMG_DEFAULT);
-  _setMeta('tw-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
-  _setMeta('tw-description', 'Anillos, collares, pulseras y aretes hechos a mano. Personalización gratis.');
+  _setMeta('tw-title', 'CACUSA by Taitus — Handmade Artisanal Jewelry');
+  _setMeta('tw-description', 'Handmade rings, necklaces, bracelets and earrings. Free personalization.');
   _setMeta('tw-image', _SEO_IMG_DEFAULT);
 }
 function _patchSchemaRating(avg, count, reviews) {
