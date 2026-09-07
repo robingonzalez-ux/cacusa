@@ -78,9 +78,13 @@ export default {
         return await handleGcRedeem(body, env, allowOrigin, request);
       }
 
-      // Surcharges y markets — lectura pública (origin-restringida, sin token)
+      // Surcharges y markets — lectura pública (origin-restringida, sin token).
+      // /pub/surcharges también la llama cacusa-square servidor-a-servidor (para cobrar en
+      // Square el mismo precio con recargo que la tienda le mostró al cliente) — el fetch()
+      // de un Worker no puede fijar el header Origin (es un header prohibido por el estándar
+      // Fetch), así que esa llamada se autentica con ORDER_INGEST_KEY en su lugar.
       if (path.endsWith('/pub/surcharges')) {
-        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        if (!ORIGIN_ALLOWLIST.includes(origin) && !isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         return await handleSurchargesLoad(env, allowOrigin);
       }
       if (path.endsWith('/pub/markets')) {
