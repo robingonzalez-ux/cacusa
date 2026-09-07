@@ -2222,8 +2222,8 @@ function LeadsTab({ token }) {
 
   return (
     <div style={{ maxWidth: 700 }}>
-      <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Registros 10% descuento</div>
-      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida.</div>
+      <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Registros 10% descuento y carritos</div>
+      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida, o que llegaron al checkout con un carrito sin completar la compra. Los carritos sin comprar en 45 min avisan por push — esta tabla queda como respaldo para hacer seguimiento manual (WhatsApp/email).</div>
 
       {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
       {!loading && leads && leads.length === 0 && (
@@ -2233,12 +2233,17 @@ function LeadsTab({ token }) {
         <div>
           <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 10 }}>{leads.length} registro{leads.length !== 1 ? 's' : ''}</div>
           <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 160px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#A89AAF', textTransform: 'uppercase', letterSpacing: '.08em' }}>
-              <span>Email</span><span>Idioma</span><span>Fecha</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#A89AAF', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <span>Email</span><span>Carrito</span><span>Idioma</span><span>Fecha</span>
             </div>
             {leads.map((l, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 160px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500 }}>{l.email}</span>
+                <span style={{ fontSize: 12, color: l.source === 'cart_checkout_start' ? '#C0336E' : '#A89AAF' }}>
+                  {l.source === 'cart_checkout_start'
+                    ? `🛒 $${(l.total || 0).toFixed(2)}${l.cart && l.cart.length ? ' — ' + l.cart.map(c => c.name).slice(0, 2).join(', ') + (l.cart.length > 2 ? '…' : '') : ''}`
+                    : '10% bienvenida'}
+                </span>
                 <span style={{ fontSize: 12, color: '#A89AAF' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
                 <span style={{ fontSize: 12, color: '#A89AAF' }}>{fmt(l.date)}</span>
               </div>

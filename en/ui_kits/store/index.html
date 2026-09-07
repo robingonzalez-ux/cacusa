@@ -3297,11 +3297,11 @@ window.addEventListener('appinstalled', () => {
 })();
 
 // ── Captura de lead (compartida por el vignette y el checkout) ──
-function registerLead(email, source) {
+function registerLead(email, source, cartData, total) {
   if (!email) return;
   fetch(ADMIN_WORKER_URL + '/lead/register', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, lang: __LANG, source })
+    body: JSON.stringify({ email, lang: __LANG, source, cart: cartData, total })
   }).catch(() => {});
 }
 
@@ -3336,7 +3336,9 @@ function registerLead(email, source) {
     const email = emailInput.value.trim();
     if (_leadSent || !email || !email.includes('@') || !cart.length) return;
     _leadSent = true;
-    registerLead(email, 'cart_checkout_start');
+    const cartData = cart.map(i => ({ name: i.name, price: i.price }));
+    const total = cart.reduce((s, i) => s + i.price, 0);
+    registerLead(email, 'cart_checkout_start', cartData, total);
   });
 })();
 </script>
