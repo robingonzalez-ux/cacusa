@@ -5,7 +5,19 @@
   <url>
     <loc>https://cacusabytaitus.com/</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/"/>
-    <lastmod>2026-09-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/"/>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/"/>
+    <lastmod>2026-09-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,7 +25,19 @@
   <url>
     <loc>https://cacusabytaitus.com/ui_kits/store/</loc>
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/"/>
-    <lastmod>2026-09-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/ui_kits/store/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/ui_kits/store/"/>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/ui_kits/store/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/ui_kits/store/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/ui_kits/store/"/>
+    <lastmod>2026-09-07</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
