@@ -34,6 +34,8 @@
  *   POST   /webhook                    → recibe webhooks de Square (firmados)
  *   POST   /admin/cancel-subscription  → cancela una suscripción en Square
  *   GET    /admin/lovers                → lista suscriptoras + fotos destacadas
+ *   POST   /admin/lovers                → alta manual de una suscriptora (pago por
+ *                                          transferencia, sin suscripción real en Square)
  *   PATCH  /admin/lovers/{id}           → actualiza campos de una suscriptora
  *   DELETE /admin/lovers/{id}           → elimina una suscriptora
  *   PUT    /admin/lovers-photos         → guarda las fotos destacadas de la página pública
@@ -277,18 +279,59 @@ export default {
 
       // GET /admin/lovers — lista de suscriptoras + fotos destacadas
       if (url.pathname === '/admin/lovers') {
-        if (request.method !== 'GET') return adminJson({ error: 'Method not allowed' }, 405);
-        const [rSubs, rPhotos] = await Promise.all([
-          fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`),
-          fetch(`${dbUrl}/cacusa_lovers_photos.json?auth=${fbAuth}`),
-        ]);
-        if (!rSubs.ok) {
-          const errText = await rSubs.text().catch(() => rSubs.status);
-          return adminJson({ error: 'No se pudo leer cacusa_lovers', detail: errText }, 502);
+        if (request.method === 'GET') {
+          const [rSubs, rPhotos] = await Promise.all([
+            fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`),
+            fetch(`${dbUrl}/cacusa_lovers_photos.json?auth=${fbAuth}`),
+          ]);
+          if (!rSubs.ok) {
+            const errText = await rSubs.text().catch(() => rSubs.status);
+            return adminJson({ error: 'No se pudo leer cacusa_lovers', detail: errText }, 502);
+          }
+          const subscribers = (await rSubs.json()) || {};
+          const photos = rPhotos.ok ? ((await rPhotos.json()) || {}) : {};
+          return adminJson({ subscribers, photos }, 200);
         }
-        const subscribers = (await rSubs.json()) || {};
-        const photos = rPhotos.ok ? ((await rPhotos.json()) || {}) : {};
-        return adminJson({ subscribers, photos }, 200);
+
+        // POST /admin/lovers — alta manual de una suscriptora (ej. clientas que pagan por
+        // transferencia bancaria, sin suscripción recurrente real en Square). Se guarda con
+        // el mismo esquema que un registro real, marcado con metodo_pago:'manual' y sin
+        // square_subscription_id — así el botón "Cancelar en Square" del panel ya sabe no
+        // ofrecerlo para estos registros.
+        if (request.method === 'POST') {
+          let body;
+          try { body = await request.json(); } catch { return adminJson({ error: 'Invalid JSON' }, 400); }
+          const str = (v, max) => typeof v === 'string' ? v.trim().slice(0, max) : '';
+          const email  = str(body?.email, 150).toLowerCase();
+          const nombre = str(body?.nombre, 100);
+          if (!email || !nombre) {
+            return adminJson({ error: 'Faltan datos requeridos (nombre, email).' }, 400);
+          }
+          const isAnnual = body?.plan === 'anual';
+          const record = {
+            email,
+            nombre,
+            apellido:  str(body?.apellido, 100),
+            telefono:  str(body?.telefono, 30),
+            direccion: str(body?.direccion, 200),
+            apto:      str(body?.apto, 40),
+            ciudad:    str(body?.ciudad, 100),
+            estado:    str(body?.estado, 50),
+            zip:       str(body?.zip, 20),
+            pais:      str(body?.pais, 10),
+            plan:      isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+            monto:     isAnnual ? '$219.89/año' : '$19.99/mes',
+            fecha:     new Date().toISOString().slice(0, 10),
+            estado_pago: 'activo',
+            metodo_pago: 'manual',
+            notas:     str(body?.notas, 500),
+          };
+          const newKey = await createSubscriber(record, dbUrl, fbAuth);
+          if (!newKey) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
+          return adminJson({ ok: true, id: newKey, subscriber: record }, 200);
+        }
+
+        return adminJson({ error: 'Method not allowed' }, 405);
       }
 
       // PUT /admin/lovers-photos — guardar las fotos destacadas de la página pública
