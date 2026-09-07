@@ -130,7 +130,7 @@ def build_home(lang="es"):
         rows.append('<h1>CACUSA by Taitus — Personalized Jewelry</h1>')
         rows.append('<p>Handmade artisanal jewelry in 925 silver, 18k gold plating and '
                     'stainless steel. Personalization with name, initial, date or message '
-                    'included in the price. Shipping to the USA and Ecuador.</p>')
+                    'available via WhatsApp. Shipping to the USA and Ecuador.</p>')
         rows.append('<h2>Shop by category</h2>')
         rows.append('<ul>')
         for cat in cats:
@@ -144,7 +144,7 @@ def build_home(lang="es"):
         rows.append('<h1>CACUSA by Taitus — Joyería personalizada</h1>')
         rows.append('<p>Bisutería y joyería artesanal hecha a mano en plata 925, baño de oro 18k '
                     'y acero inoxidable. Personalización con nombre, inicial, fecha o mensaje '
-                    'incluida en el precio. Envíos a Ecuador y Estados Unidos.</p>')
+                    'disponible por WhatsApp. Envíos a Ecuador y Estados Unidos.</p>')
         rows.append('<h2>Comprar por categoría</h2>')
         rows.append('<ul>')
         for cat in cats:
