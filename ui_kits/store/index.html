@@ -634,6 +634,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   <nav class="drawer-nav">
     <a href="/" class="drawer-link"><span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span></a>
     <a href="../../cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="/#story" class="drawer-link"><span class="t-es">Nosotros</span><span class="t-en">About Us</span></a>
+    <a href="/#personalize" class="drawer-link"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
   </nav>
   <div class="drawer-lang">
     <button class="drawer-lang-btn" onclick="window.location.href='./'">ES</button>
@@ -1121,7 +1123,7 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
 </div>
 
 <!-- CHECKOUT MODAL — Square -->
-<div id="checkout-overlay">
+<div id="checkout-overlay" role="dialog" aria-modal="true" aria-label="Finalizar compra">
   <div class="checkout-box">
     <div class="checkout-inner">
       <div class="checkout-left">
@@ -2093,7 +2095,7 @@ function trapFocus(modalEl, onClose) {
     if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
   };
 }
-let _modalReleaseTrap = null, _cartReleaseTrap = null;
+let _modalReleaseTrap = null, _cartReleaseTrap = null, _checkoutReleaseTrap = null;
 
 function openModal(id) {
   const p = PRODUCTS.find(x => x.id === id);
@@ -2341,6 +2343,7 @@ function openCheckout() {
   document.getElementById('checkout-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   renderCheckoutSummary();
+  _checkoutReleaseTrap = trapFocus(document.getElementById('checkout-overlay'), closeCheckout);
 }
 function closeCheckout() {
   document.getElementById('checkout-overlay').classList.remove('open');
@@ -2348,6 +2351,7 @@ function closeCheckout() {
   document.querySelectorAll('.co-input').forEach(el => el.style.borderColor = '');
   const errorEl = document.getElementById('coError');
   if (errorEl) errorEl.textContent = '';
+  if (_checkoutReleaseTrap) { _checkoutReleaseTrap(); _checkoutReleaseTrap = null; }
 }
 document.getElementById('checkout-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('checkout-overlay')) closeCheckout();
