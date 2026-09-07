@@ -102,10 +102,10 @@ export default {
         return await handleSquarePaymentLink(body, env, allowOrigin, request);
       }
 
-      // Leads del 10% — registro público
+      // Leads del 10% / carrito iniciado — registro público
       if (path.endsWith('/lead/register')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
-        return await handleLeadRegister(body, env, allowOrigin, request);
+        return await handleLeadRegister(body, env, allowOrigin, request, ctx);
       }
 
       // Cupones — validación pública (origin-restringida, rate-limited)
@@ -371,6 +371,7 @@ async function handleOrder(body, env, origin, ctx, request) {
       body:  `${icon} ${newOrder.pago} · ${newOrder.cliente?.nombre || 'Cliente'} · $${newOrder.total}`,
       url:   'https://cacusabytaitus.com/ui_kits/admin/',
     });
+    if (ctx) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
   }
 
   return ok({ ok: true, id: newOrder.id }, origin);
@@ -632,7 +633,7 @@ async function handleMarketSave(body, env, origin) {
   return ok({ ok: true }, origin);
 }
 
-async function handleLeadRegister(body, env, origin, request) {
+async function handleLeadRegister(body, env, origin, request, ctx) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
   const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
   const rlKey = `leadrl:${ip}`;
@@ -642,16 +643,84 @@ async function handleLeadRegister(body, env, origin, request) {
   const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
   if (!email.includes('@')) return ok({ ok: true }, origin);
   const lang = body.lang === 'en' ? 'en' : 'es';
+  const source = ['vignette', 'cart_checkout_start'].includes(body.source) ? body.source : undefined;
+  const cart = Array.isArray(body.cart)
+    ? body.cart.slice(0, 20).map(i => ({ name: String(i.name || '').slice(0, 150), price: (typeof i.price === 'number' && isFinite(i.price)) ? i.price : 0 }))
+    : undefined;
+  const total = (typeof body.total === 'number' && isFinite(body.total)) ? body.total : undefined;
   let data = { leads: [] };
   const existing = await env.CACUSA_KV.get('leads');
   if (existing) try { data = JSON.parse(existing); } catch {}
   if (!Array.isArray(data.leads)) data.leads = [];
-  if (!data.leads.some(l => l.email === email)) {
-    data.leads.unshift({ email, lang, date: new Date().toISOString() });
+  const already = data.leads.find(l => l.email === email);
+  if (!already) {
+    data.leads.unshift({ email, lang, date: new Date().toISOString(), source, cart, total, notified: false });
+    data.lastUpdated = new Date().toISOString();
+    await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  } else if (source === 'cart_checkout_start' && already.source !== 'cart_checkout_start') {
+    // Ya era lead del 10% — si ahora llega al checkout con carrito, upgradeamos el registro
+    // para que sí entre en la revisión de abandono (sin duplicar la entrada).
+    already.source = source; already.cart = cart; already.total = total;
+    already.date = new Date().toISOString(); already.notified = false;
     data.lastUpdated = new Date().toISOString();
     await env.CACUSA_KV.put('leads', JSON.stringify(data));
   }
+  if (ctx && env.VAPID_PRIVATE_KEY_JWK) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
   return ok({ ok: true }, origin);
+}
+
+// ── Recuperación real de carrito abandonado ──────────────────────────
+// No hay Cron Trigger configurado para este Worker (requeriría wrangler.toml /
+// panel de Cloudflare), así que este chequeo se dispara "de aprovechado" en
+// cada /lead/register y /order — funciona igual de bien en un sitio con
+// tráfico regular, pero no es un temporizador exacto: si no llega ningún
+// request nuevo, el aviso espera al próximo. Para timing exacto haría falta
+// agregar un Cron Trigger en Cloudflare → Workers → cacusa-admin → Triggers.
+const ABANDON_MINUTES = 45;
+async function checkAbandonedCarts(env) {
+  if (!env.CACUSA_KV) return;
+  const raw = await env.CACUSA_KV.get('leads');
+  if (!raw) return;
+  let data;
+  try { data = JSON.parse(raw); } catch { return; }
+  if (!Array.isArray(data.leads)) return;
+
+  const pending = data.leads.filter(l => l.source === 'cart_checkout_start' && !l.notified);
+  if (!pending.length) return;
+
+  const cutoff = Date.now() - ABANDON_MINUTES * 60 * 1000;
+  const stale = pending.filter(l => new Date(l.date).getTime() <= cutoff);
+  if (!stale.length) return;
+
+  // Si ya hay un pedido de ese email posterior al lead, no fue abandono — se completó.
+  let orderEmails = new Set();
+  const ordersRaw = await env.CACUSA_KV.get('orders');
+  if (ordersRaw) {
+    try {
+      const od = JSON.parse(ordersRaw);
+      if (Array.isArray(od.orders)) {
+        orderEmails = new Set(od.orders.map(o => (o.cliente?.email || '').toLowerCase()).filter(Boolean));
+      }
+    } catch {}
+  }
+
+  let changed = false;
+  for (const lead of stale) {
+    lead.notified = true; // se marca sí o sí para no re-evaluarlo cada vez
+    changed = true;
+    if (orderEmails.has(lead.email)) continue; // compró — no es abandono real
+    const itemNames = (lead.cart || []).map(i => i.name).filter(Boolean).slice(0, 3).join(', ');
+    const totalTxt = typeof lead.total === 'number' ? ` · $${lead.total.toFixed(2)}` : '';
+    await sendWebPushAll(env, {
+      title: 'CACUSA · Carrito abandonado',
+      body: `🛒 ${lead.email}${totalTxt}${itemNames ? ' — ' + itemNames : ''}`,
+      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+    });
+  }
+  if (changed) {
+    data.lastUpdated = new Date().toISOString();
+    await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  }
 }
 
 async function handleLeadList(env, origin) {
