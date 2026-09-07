@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
   <script>
@@ -9,11 +12,8 @@
     gtag('js', new Date());
     gtag('config', 'G-1JPMVGERM2');
   </script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>CACUSA by Taitus — Joyería artesanal personalizada</title>
-  <meta id="meta-desc" name="description" content="CACUSA by Taitus — bisutería y joyería artesanal personalizada hecha a mano. Anillos, collares, pulseras y aretes en plata 925, baño de oro 18k y acero inoxidable. Grabado e iniciales gratis. Envíos a Ecuador y USA.">
+  <meta id="meta-desc" name="description" content="Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y oro 18k. Grabado gratis. Envíos a Ecuador y USA.">
   <meta name="keywords" content="bisutería personalizada, joyería artesanal, joyería personalizada Ecuador, bisutería USA, plata 925, baño de oro 18k, anillos personalizados, collares artesanales, pulseras tejidas, aretes hechos a mano, CACUSA, Taitus, joyería hecha a mano, regalo personalizado">
   <link rel="canonical" id="canonicalLink" href="https://cacusabytaitus.com/ui_kits/store/">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
@@ -26,7 +26,7 @@
   <meta id="og-image" property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:locale" content="es_US">
+  <meta property="og:locale" content="es_EC">
   <meta property="og:locale:alternate" content="en_US">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -168,6 +168,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .store-body{max-width:1280px;margin:0 auto;padding:40px 48px}
 .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes skeletonPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.pcard-skeleton{background:white;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-card)}
+.pcard-skeleton .sk-img{height:220px;background:var(--pink-pale);animation:skeletonPulse 1.6s ease-in-out infinite}
+.pcard-skeleton .sk-line{height:12px;margin:14px 16px;border-radius:6px;background:var(--pink-pale);animation:skeletonPulse 1.6s ease-in-out infinite}
+.pcard-skeleton .sk-line.short{width:50%}
 .pcard{background:white;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-card);transition:box-shadow .4s,transform .4s;cursor:none;position:relative;animation:cardIn .5s ease both}
 .pcard:hover{box-shadow:var(--shadow-hover);transform:translateY(-5px)}
 .pcard-img{height:220px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
@@ -247,7 +252,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .modal-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;display:block}
 .modal-select{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;margin-bottom:14px;cursor:none}
 .modal-select:focus{border-color:var(--pink)}
-.modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;margin-bottom:6px;transition:border-color .2s,box-shadow .2s}
+.modal-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:16px;color:var(--ink);outline:none;background:white;margin-bottom:6px;transition:border-color .2s,box-shadow .2s}
 .modal-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.12)}
 .modal-hint{font-family:var(--fu);font-size:10px;color:var(--ink-muted);margin-bottom:16px}
 .modal-qty{display:flex;align-items:center;border:1.5px solid var(--ink-light);border-radius:999px;overflow:hidden;width:fit-content;margin-bottom:20px}
@@ -262,6 +267,9 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .cacusa-toast strong{font-weight:800;white-space:nowrap}
 .modal-perks{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
 .perk{display:flex;align-items:center;gap:5px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
+.modal-policy-links{display:flex;gap:8px;align-items:center;margin-top:10px;font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
+.modal-policy-links a{color:var(--ink-muted);text-decoration:underline}
+.modal-policy-links a:hover{color:var(--ink)}
 .perk-dot{width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0}
 
 /* CART DRAWER */
@@ -303,13 +311,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 #checkout-overlay.open .checkout-box{transform:scale(1)}
 .checkout-inner{display:grid;grid-template-columns:1.1fr 1fr;min-height:500px}
 .checkout-left{padding:40px;border-right:1.5px solid var(--ink-light)}
-.checkout-right{padding:40px;background:var(--pink-pale);border-radius:0 28px 28px 0}
+.checkout-right{padding:40px;background:var(--pink-pale);border-radius:0 28px 28px 0;position:sticky;top:0;align-self:start;max-height:92vh;overflow-y:auto}
 .co-title{font-family:var(--fd);font-weight:700;font-size:26px;color:var(--ink);margin-bottom:8px}
 .co-subtitle{font-family:var(--fe);font-size:14px;font-style:italic;color:var(--ink-muted);margin-bottom:28px}
 .co-section{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:12px;margin-top:20px}
 .co-field{margin-bottom:14px}
 .co-label{font-family:var(--fu);font-size:11px;font-weight:500;color:var(--ink-muted);display:block;margin-bottom:5px}
-.co-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;transition:border-color .2s,box-shadow .2s}
+.co-input{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:16px;color:var(--ink);outline:none;background:white;transition:border-color .2s,box-shadow .2s}
 .co-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.12)}
 .co-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .addr-wrap{position:relative}
@@ -410,7 +418,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   .filters{padding:20px}
   .store-body{padding:24px 20px}
   .checkout-inner{grid-template-columns:1fr}
-  .checkout-right{border-radius:0 0 28px 28px}
+  .checkout-right{border-radius:0 0 28px 28px;position:static;max-height:none}
   .nav-back,.lang-sw,.nav-lovers-link{display:none}
   #navMenuBtn{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px;z-index:510;position:relative}
   #navMenuBtn span{display:block;width:22px;height:2px;background:var(--ink);border-radius:2px;transition:transform .3s,opacity .3s}
@@ -441,6 +449,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
   .modal-close,.modal-select,.modal-input,.modal-add,.qty-btn,
   .checkout-btn,.cart-close,.pay-btn,.success-back,.ci-remove,
   .nav-back,.nav-logo,#checkoutBack,.pcard-quick{cursor:pointer}
+  /* Áreas táctiles mínimas recomendadas (44px) en controles pequeños */
+  .modal-close,.cart-close,.wish-close,.gallery-btn{min-width:44px;min-height:44px}
+  .qty-btn{min-width:44px;min-height:44px}
+  .ci-remove{min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center}
+  .sp-star{padding:6px}
+  /* Evita el zoom automático de iOS al enfocar un input con font-size menor a 16px */
+  .search-input{font-size:16px}
 }
 .faq-section{padding:60px 24px 40px;max-width:760px;margin:0 auto}
 .faq-item{border:1.5px solid var(--ink-light);border-radius:14px;background:white;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
@@ -662,7 +677,14 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <!-- PRODUCT GRID -->
 <div class="store-body">
   <div class="prod-grid" id="prodGrid">
-    <div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)"><span class="t-es">Cargando productos…</span><span class="t-en">Loading products…</span></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
 <!--NOSCRIPT_PRODUCTS_START-->
 <noscript>
 <section aria-label="Catálogo de productos CACUSA by Taitus">
@@ -866,6 +888,7 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
   </div>
   <div class="f-links">
     <a href="/"><span class="t-es">Inicio</span><span class="t-en">Home</span></a>
+    <a href="../../index.html#personalize"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
     <a href="../../cacusa-lovers.html">Cacusa Lovers ♡</a>
     <a href="../../envios.html"><span class="t-es">Envíos</span><span class="t-en">Shipping</span></a>
     <a href="../../devoluciones.html"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
@@ -876,12 +899,12 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
 <!-- PRODUCT MODAL -->
 <div id="modal-overlay" role="dialog" aria-modal="true" aria-label="Detalle del producto">
   <div class="modal-box" style="position:relative">
-    <button class="modal-close" id="modalClose">&#x2715;</button>
+    <button class="modal-close" id="modalClose" aria-label="Cerrar">&#x2715;</button>
     <div class="modal-img" id="modalImgArea">
       <div class="gallery-main" id="galleryMain" onclick="openLightbox(_galleryImages,_galleryIdx)">
         <div class="modal-img-bg" id="modalImgBg"></div>
-        <button class="gallery-btn gallery-prev" id="galleryPrev" onclick="event.stopPropagation();switchGallerySlide(_galleryIdx-1)">&#8249;</button>
-        <button class="gallery-btn gallery-next" id="galleryNext" onclick="event.stopPropagation();switchGallerySlide(_galleryIdx+1)">&#8250;</button>
+        <button class="gallery-btn gallery-prev" id="galleryPrev" aria-label="Foto anterior" onclick="event.stopPropagation();switchGallerySlide(_galleryIdx-1)">&#8249;</button>
+        <button class="gallery-btn gallery-next" id="galleryNext" aria-label="Foto siguiente" onclick="event.stopPropagation();switchGallerySlide(_galleryIdx+1)">&#8250;</button>
         <button class="gallery-full-btn" onclick="event.stopPropagation();openLightbox(_galleryImages,_galleryIdx)" title="Ver en pantalla completa">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
         </button>
@@ -901,9 +924,9 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
         <div class="modal-hint"><span class="t-es">Máx. 20 caracteres · letras, números y espacios</span><span class="t-en">Max. 20 characters · letters, numbers and spaces</span></div>
       </div>
       <div class="modal-qty">
-        <button class="qty-btn" id="qtyMinus">&#x2212;</button>
+        <button class="qty-btn" id="qtyMinus" aria-label="Disminuir cantidad">&#x2212;</button>
         <span class="qty-num" id="qtyNum">1</span>
-        <button class="qty-btn" id="qtyPlus">+</button>
+        <button class="qty-btn" id="qtyPlus" aria-label="Aumentar cantidad">+</button>
       </div>
       <button class="modal-add" id="modalAddBtn">A&#xF1;adir al carrito</button>
       <button class="modal-wish-btn" id="modalWishBtn" onclick="toggleWishFromModal()">
@@ -915,6 +938,11 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
         <div class="perk"><div class="perk-dot"></div>Env&#xED;o express</div>
         <div class="perk"><div class="perk-dot"></div>5&#x2013;7 d&#xED;as h&#xE1;biles</div>
         <div class="perk"><div class="perk-dot"></div>Gift wrap gratis</div>
+      </div>
+      <div class="modal-policy-links">
+        <a href="../../envios.html" target="_blank" rel="noopener"><span class="t-es">Política de envíos</span><span class="t-en">Shipping policy</span></a>
+        <span aria-hidden="true">·</span>
+        <a href="../../devoluciones.html" target="_blank" rel="noopener"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
       </div>
       <!-- REVIEWS -->
       <div class="reviews-section">
@@ -957,7 +985,7 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
 <div id="wish-drawer">
   <div class="wish-head">
     <div class="wish-title">♡ <span class="t-es">Lista de deseos</span><span class="t-en">Wishlist</span></div>
-    <button class="wish-close" id="wishClose">&#x2715;</button>
+    <button class="wish-close" id="wishClose" aria-label="Cerrar">&#x2715;</button>
   </div>
   <div class="wish-items" id="wishItems"></div>
   <div class="wish-foot" id="wishFoot" style="display:none">
@@ -976,7 +1004,7 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
 <div id="cart-drawer" role="dialog" aria-modal="true" aria-label="Carrito de compras">
   <div class="cart-head">
     <div class="cart-title"><span class="t-es">Tu carrito</span><span class="t-en">Your cart</span></div>
-    <button class="cart-close" id="cartClose">&#x2715;</button>
+    <button class="cart-close" id="cartClose" aria-label="Cerrar">&#x2715;</button>
   </div>
   <div class="cart-items" id="cartItems"></div>
   <div class="cart-foot" id="cartFoot" style="display:none">
@@ -1163,7 +1191,7 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
 <div id="vignette">
   <div class="vig-box">
     <div class="vig-visual">
-      <button class="vig-close" id="vigClose">✕</button>
+      <button class="vig-close" id="vigClose" aria-label="Cerrar">✕</button>
       <div class="vig-pct">10%</div>
       <div class="vig-off"><span class="t-es">DE DESCUENTO</span><span class="t-en">OFF</span></div>
       <div class="vig-script"><span class="t-es">en tu primera pieza</span><span class="t-en">on your first piece</span></div>
@@ -1184,14 +1212,14 @@ Con un labrado delicado y elegante ideal para hacerte sentir más confidente y s
 
 <!-- LIGHTBOX -->
 <div id="lightbox">
-  <button id="lbClose">&#x2715;</button>
-  <button id="lbWish" onclick="toggleWishFromModal()">
+  <button id="lbClose" aria-label="Cerrar">&#x2715;</button>
+  <button id="lbWish" aria-label="Guardar en lista de deseos" onclick="toggleWishFromModal()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" id="lbWishPath"/></svg>
   </button>
   <div class="lb-main">
-    <button class="lb-navbtn" id="lbPrev" onclick="lbGoTo(_lbIdx-1)">&#8249;</button>
+    <button class="lb-navbtn" id="lbPrev" aria-label="Foto anterior" onclick="lbGoTo(_lbIdx-1)">&#8249;</button>
     <img id="lbImg" src="" alt="">
-    <button class="lb-navbtn" id="lbNext" onclick="lbGoTo(_lbIdx+1)">&#8250;</button>
+    <button class="lb-navbtn" id="lbNext" aria-label="Foto siguiente" onclick="lbGoTo(_lbIdx+1)">&#8250;</button>
   </div>
   <div class="lb-footer">
     <div id="lbCounter"></div>
@@ -1256,7 +1284,7 @@ const __EN_T = {
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
   "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
   "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection",
-  "combo.add":"🛒 Add combo"
+  "combo.add":"Add combo"
 };
 // Aplicar textos EN que CSS no puede manejar (select options, placeholders de inputs)
 if (__LANG === 'en') {
@@ -1533,6 +1561,7 @@ let _revRating = 5;
   reconcileCartPrices();
   applyTexts();
   renderFreeShippingBanner();
+  renderStoreItemListLd();
   renderFilters();
   renderMaterials();
   renderProducts();
@@ -1669,9 +1698,15 @@ function imgInner(p, alt) {
     const pos  = (p.focalX != null ? p.focalX : 50) + '% ' + (p.focalY != null ? p.focalY : 50) + '%';
     const zoom = p.zoom != null ? p.zoom : 1;
     const altText = alt ? alt + ' — joyería artesanal personalizada CACUSA' : 'Joyería artesanal personalizada CACUSA';
-    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(altText) + '" loading="lazy" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
+    const grad = esc((p && p.grad) || 'var(--grad)');
+    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(altText) + '" loading="lazy" onerror="_imgFallback(this,\'' + grad + '\')" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
   }
   return '';
+}
+// Si la imagen de un producto no carga, ocultarla y mostrar el degradado de marca en su lugar
+function _imgFallback(el, grad) {
+  el.style.display = 'none';
+  if (el.parentElement) el.parentElement.style.background = grad || 'var(--grad)';
 }
 
 // ─── MARKET BADGE ───────────────────────────────────────────
@@ -1681,11 +1716,11 @@ function getMarketBadge(p) {
   if (!country || market === 'both') return '';
   const isEC = country === 'EC';
   if (isEC) {
-    if (market === 'ec') return `<div class="pcard-market mkt-local">🇪🇨 ${t('store.mktLocal','Producto local')}</div>`;
-    if (market === 'us') return `<div class="pcard-market mkt-import">✈️ ${t('store.mktImport','Importado desde EE.UU.')}</div>`;
+    if (market === 'ec') return `<div class="pcard-market mkt-local">◎ ${t('store.mktLocal','Producto local')}</div>`;
+    if (market === 'us') return `<div class="pcard-market mkt-import">◇ ${t('store.mktImport','Importado desde EE.UU.')}</div>`;
   } else {
-    if (market === 'us') return `<div class="pcard-market mkt-local">🇺🇸 ${t('store.mktLocal','Producto local')}</div>`;
-    if (market === 'ec') return `<div class="pcard-market mkt-ec-only">🇪🇨 ${t('store.mktEcOnly','Enviado desde Ecuador')}</div>`;
+    if (market === 'us') return `<div class="pcard-market mkt-local">◎ ${t('store.mktLocal','Producto local')}</div>`;
+    if (market === 'ec') return `<div class="pcard-market mkt-ec-only">◎ ${t('store.mktEcOnly','Enviado desde Ecuador')}</div>`;
   }
   return '';
 }
@@ -1723,7 +1758,7 @@ function renderProducts() {
   grid.innerHTML = filtered.map((p, i) => `
     <div class="pcard" style="animation-delay:${i * 0.06}s" data-id="${p.id}">
       ${p.badge ? `<div class="pcard-badge ${p.badge}">${esc(tagLabel(p.tag))}</div>` : ''}
-      <button class="pcard-wish${_wish.has(p.id)?' liked':''}" onclick="toggleWish(${p.id},this)">
+      <button class="pcard-wish${_wish.has(p.id)?' liked':''}" aria-label="Guardar en lista de deseos" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style="${_wish.has(p.id)?'fill:var(--pink)':''}"/></svg>
       </button>
       <div class="pcard-img" onclick="openModal(${p.id})">
@@ -1762,7 +1797,7 @@ function renderCombos() {
     const saving = origTotal > c.price ? (origTotal - c.price).toFixed(2) : null;
     const imgEl = c.imageUrl
       ? `<img class="combo-img" src="${esc(c.imageUrl)}" alt="${esc(c.name)}">`
-      : `<div class="combo-img-ph">🎁</div>`;
+      : `<div class="combo-img-ph">◇</div>`;
     return `
       <div class="combo-card" onclick="addComboToCart(${c.id})">
         ${imgEl}
@@ -1773,7 +1808,7 @@ function renderCombos() {
             <span class="combo-price-now">$${(+c.price).toFixed(2)}</span>
             ${saving ? `<span class="combo-price-old">$${origTotal.toFixed(2)}</span><span class="combo-saving">Ahorras $${saving}</span>` : ''}
           </div>
-          <button class="combo-add">${t('combo.add', '🛒 Agregar combo')}</button>
+          <button class="combo-add">${t('combo.add', 'Agregar combo')}</button>
         </div>
       </div>`;
   }).join('');
@@ -1884,7 +1919,7 @@ function _renderWishlist(sharedIds) {
   let html = '';
   if (sharedIds) {
     html += `<div class="wish-shared-banner">
-      <div class="wish-shared-title">🎁 ${__LANG==='en'?'Gift Wishlist':'Lista de regalo'}</div>
+      <div class="wish-shared-title">◇ ${__LANG==='en'?'Gift Wishlist':'Lista de regalo'}</div>
       <div class="wish-shared-sub">${__LANG==='en'?'Add items you love to your cart!':'¡Agrega lo que te guste a tu carrito!'}</div>
     </div>`;
   }
@@ -2064,7 +2099,7 @@ function updateCartUI() {
           <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
             <span class="ci-price">$${(+item.price).toFixed(2)}</span>
-            <button class="ci-remove" onclick="removeItem(${item.cartId})">✕</button>
+            <button class="ci-remove" onclick="removeItem(${item.cartId})" aria-label="Quitar del carrito">✕</button>
           </div>
         </div>
       </div>`).join('');
@@ -2211,6 +2246,9 @@ function openCheckout() {
 function closeCheckout() {
   document.getElementById('checkout-overlay').classList.remove('open');
   document.body.style.overflow = '';
+  document.querySelectorAll('.co-input').forEach(el => el.style.borderColor = '');
+  const errorEl = document.getElementById('coError');
+  if (errorEl) errorEl.textContent = '';
 }
 document.getElementById('checkout-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('checkout-overlay')) closeCheckout();
@@ -2337,6 +2375,17 @@ function isValidPhone(tel) {
   const digits = tel.replace(/[\s\-\(\)\+\.]/g, '');
   return /^\d{7,15}$/.test(digits);
 }
+// Resalta el/los campo(s) inválidos del checkout con borde rojo y foco, además del mensaje de error genérico
+function _markCoFieldError(ids, errorEl, msg) {
+  document.querySelectorAll('.co-input').forEach(el => el.style.borderColor = '');
+  let first = null;
+  (Array.isArray(ids) ? ids : [ids]).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.style.borderColor = '#C0336E'; if (!first) first = el; }
+  });
+  if (first) first.focus();
+  if (errorEl) errorEl.textContent = msg;
+}
 
 // ─── ZELLE / TRANSFERENCIA BUTTON ────────────────────────────
 document.getElementById('zelleBtn').addEventListener('click', () => {
@@ -2344,11 +2393,11 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const nombre  = document.getElementById('coNombre').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
   if (!nombre || !tel) {
-    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y número móvil.');
+    _markCoFieldError([!nombre && 'coNombre', !tel && 'coTel'].filter(Boolean), errorEl, t('store.coError1', 'Por favor ingresa tu nombre y número móvil.'));
     return;
   }
   if (!isValidPhone(tel)) {
-    errorEl.textContent = t('store.coError3', 'Por favor ingresa un número de teléfono válido.');
+    _markCoFieldError('coTel', errorEl, t('store.coError3', 'Por favor ingresa un número de teléfono válido.'));
     return;
   }
   errorEl.textContent = '';
@@ -2359,11 +2408,11 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const estadoVal = (document.getElementById('coEstado').value || '').toUpperCase();
   const zipVal    = (document.getElementById('coZip').value || '').trim();
   if (paisVal === 'US' && !estadoVal) {
-    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    _markCoFieldError('coEstado', errorEl, t('store.coError2', 'Por favor selecciona tu estado.'));
     return;
   }
   if (paisVal === 'US' && !/^\d{5}$/.test(zipVal)) {
-    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
+    _markCoFieldError('coZip', errorEl, t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).'));
     return;
   }
   const direccion = document.getElementById('coDireccion').value.trim();
@@ -2424,11 +2473,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const tel     = document.getElementById('coTel').value.trim();
 
   if (!nombre || !tel) {
-    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y número móvil.');
+    _markCoFieldError([!nombre && 'coNombre', !tel && 'coTel'].filter(Boolean), errorEl, t('store.coError1', 'Por favor ingresa tu nombre y número móvil.'));
     return;
   }
   if (!isValidPhone(tel)) {
-    errorEl.textContent = t('store.coError3', 'Por favor ingresa un número de teléfono válido.');
+    _markCoFieldError('coTel', errorEl, t('store.coError3', 'Por favor ingresa un número de teléfono válido.'));
     return;
   }
   errorEl.textContent = '';
@@ -2436,11 +2485,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   const paisVal = document.getElementById('coPais').value;
   const estadoVal = document.getElementById('coEstado').value;
   if (paisVal === 'US' && !estadoVal) {
-    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    _markCoFieldError('coEstado', errorEl, t('store.coError2', 'Por favor selecciona tu estado.'));
     return;
   }
   if (paisVal === 'US' && !/^\d{5}$/.test((document.getElementById('coZip').value || '').trim())) {
-    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
+    _markCoFieldError('coZip', errorEl, t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).'));
     return;
   }
 
@@ -2497,7 +2546,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
-    errorEl.textContent = '⚠️ ' + err.message + (__LANG === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
+    errorEl.textContent = '! ' + err.message + (__LANG === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
     btn.disabled = false;
     btn.classList.remove('loading');
   }
@@ -2613,7 +2662,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const nombre  = document.getElementById('coNombre').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
   if (!nombre || !tel) {
-    errorEl.textContent = t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.');
+    _markCoFieldError([!nombre && 'coNombre', !tel && 'coTel'].filter(Boolean), errorEl, t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.'));
     return;
   }
   errorEl.textContent = '';
@@ -2623,11 +2672,11 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const ciudad     = document.getElementById('coCiudad').value.trim();
   const pais       = document.getElementById('coPais').value;
   if (pais === 'US' && !(document.getElementById('coEstado').value || '')) {
-    errorEl.textContent = t('store.coError2', 'Por favor selecciona tu estado.');
+    _markCoFieldError('coEstado', errorEl, t('store.coError2', 'Por favor selecciona tu estado.'));
     return;
   }
   if (pais === 'US' && !/^\d{5}$/.test((document.getElementById('coZip').value || '').trim())) {
-    errorEl.textContent = t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).');
+    _markCoFieldError('coZip', errorEl, t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).'));
     return;
   }
   const direccion  = document.getElementById('coDireccion').value.trim();
@@ -2751,14 +2800,14 @@ function initGallery(p) {
   if (multi) {
     thumbs.classList.remove('hidden');
     thumbs.innerHTML = _galleryImages.map((url, i) =>
-      `<div class="gallery-thumb ${i===0?'active':''}" onclick="switchGallerySlide(${i})"><img src="${esc(url)}" loading="lazy" alt=""></div>`
+      `<div class="gallery-thumb ${i===0?'active':''}" onclick="switchGallerySlide(${i})"><img src="${esc(url)}" loading="lazy" alt="${esc(p.name || '')} — foto ${i + 1}"></div>`
     ).join('');
   } else {
     thumbs.classList.add('hidden');
   }
   const dots = document.getElementById('galleryDots');
   dots.innerHTML = multi ? _galleryImages.map((_, i) =>
-    `<button class="gallery-dot ${i===0?'active':''}" onclick="event.stopPropagation();switchGallerySlide(${i})"></button>`
+    `<button class="gallery-dot ${i===0?'active':''}" aria-label="Foto ${i + 1}" onclick="event.stopPropagation();switchGallerySlide(${i})"></button>`
   ).join('') : '';
   document.getElementById('galleryPrev').classList.toggle('vis', multi);
   document.getElementById('galleryNext').classList.toggle('vis', multi);
@@ -2809,8 +2858,9 @@ function openLightbox(images, idx) {
   document.getElementById('lbPrev').classList.toggle('vis', multi);
   document.getElementById('lbNext').classList.toggle('vis', multi);
   const thumbs = document.getElementById('lbThumbs');
+  const _lbName = currentProduct ? (currentProduct.name || '') : '';
   thumbs.innerHTML = multi ? images.map((url, i) =>
-    `<div class="lb-thumb ${i===_lbIdx?'active':''}" onclick="lbGoTo(${i})"><img src="${esc(url)}" loading="lazy" alt=""></div>`
+    `<div class="lb-thumb ${i===_lbIdx?'active':''}" onclick="lbGoTo(${i})"><img src="${esc(url)}" loading="lazy" alt="${esc(_lbName)} — foto ${i + 1}"></div>`
   ).join('') : '';
   renderLbSlide();
   const _lbW = document.getElementById('lbWish');
@@ -2882,6 +2932,21 @@ const _SEO_ORG  = 'https://cacusabytaitus.com/#organization';
 const _SEO_IMG_DEFAULT = 'https://cacusabytaitus.com/assets/og-image.jpg';
 function _setMeta(id, val) { const el = document.getElementById(id); if (el) el.setAttribute('content', val); }
 function _setCanonical(url) { const el = document.getElementById('canonicalLink'); if (el) el.setAttribute('href', url); }
+// Respaldo de datos estructurados para el listado general (si el fetch de un producto individual falla o no se abre ningún modal)
+function renderStoreItemListLd() {
+  let el = document.getElementById('ld-storelist');
+  if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = 'ld-storelist'; document.head.appendChild(el); }
+  const top = PRODUCTS.filter(p => p.available !== false).slice(0, 30);
+  if (!top.length) { el.textContent = ''; return; }
+  el.textContent = JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'ItemList',
+    itemListElement: top.map((p, i) => ({
+      '@type': 'ListItem', position: i + 1,
+      url: _SEO_BASE + '?p=' + encodeURIComponent(p.id),
+      name: (__LANG === 'en' && p.name_en) ? p.name_en : p.name
+    }))
+  });
+}
 function _injectProductSchema(p) {
   const imgs = getProductImages(p);
   const name = (__LANG === 'en' && p.name_en) ? p.name_en : p.name;
@@ -2921,7 +2986,7 @@ function _injectProductSchema(p) {
 function _clearProductSchema() {
   const el = document.getElementById('ld-product'); if (el) el.remove();
   document.title = 'CACUSA by Taitus — Joyería artesanal personalizada';
-  _setMeta('meta-desc', 'CACUSA by Taitus — bisutería y joyería artesanal personalizada hecha a mano. Anillos, collares, pulseras y aretes en plata 925, baño de oro 18k y acero inoxidable. Grabado e iniciales gratis. Envíos a Ecuador y USA.');
+  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y oro 18k. Grabado gratis. Envíos a Ecuador y USA.');
   _setCanonical(_SEO_BASE);
   _setMeta('og-url', _SEO_BASE);
   _setMeta('og-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
@@ -3056,7 +3121,7 @@ async function applyGiftCard() {
     } else {
       _gcCode=raw; _gcBalance=Number(data.balance);
       msgEl.className='gc-msg ok';
-      msgEl.textContent=`✅ $${_gcBalance.toFixed(2)} ${__LANG==='en'?'credit applied':'de crédito aplicado'}`;
+      msgEl.textContent=`✓ $${_gcBalance.toFixed(2)} ${__LANG==='en'?'credit applied':'de crédito aplicado'}`;
     }
   } catch(_) {
     msgEl.className='gc-msg err';
@@ -3091,7 +3156,7 @@ async function applyCoupon() {
     renderCheckoutSummary();
     const disc = _cpType==='percent' ? `${_cpAmount}% OFF` : `$${_cpAmount.toFixed(2)} OFF`;
     msgEl.className='gc-msg ok';
-    msgEl.textContent=(__LANG==='en' ? `✅ Applied: ${disc}` : `✅ Aplicado: ${disc} — confirma el uso desde el admin después de recibir el pago`);
+    msgEl.textContent=(__LANG==='en' ? `✓ Applied: ${disc}` : `✓ Aplicado: ${disc} — confirma el uso desde el admin después de recibir el pago`);
   } catch(_) {
     msgEl.className='gc-msg err';
     msgEl.textContent=(__LANG==='en'?'Could not verify coupon.':'No se pudo verificar el cupón.');

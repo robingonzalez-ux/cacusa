@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<meta name="theme-color" content="#EE6FA8">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
 <script>
@@ -9,10 +13,6 @@
   gtag('js', new Date());
   gtag('config', 'G-1JPMVGERM2');
 </script>
-<meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#EE6FA8">
 <meta name="google-site-verification" content="L64KDbnGjyZSO_UYRj1ldEWyAF47fG4NrkZ9fdu7tDg">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="description" content="CACUSA by Taitus — Joyería artesanal personalizada hecha a mano en Ecuador y USA.">
@@ -712,7 +712,7 @@ html,body{overflow-x:hidden}
       </a>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy" id="hFooterCopy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Hecho con amor 🤍</div>
+      <div class="footer-copy" id="hFooterCopy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Hecho con amor ♡</div>
       <div style="font-family:var(--fs);font-size:20px;color:rgba(255,255,255,.97)">by Taitus</div>
     </div>
   </div>
@@ -1267,6 +1267,11 @@ if(!localStorage.getItem('cacusa-vig2')) setTimeout(()=>vig.classList.add('show'
 [document.getElementById('vigClose'),document.getElementById('vigSkip')].forEach(el=>el.addEventListener('click',()=>{
   vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
 }));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && vig.classList.contains('show')) {
+    vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
+  }
+});
 document.getElementById('vigBtn').addEventListener('click',()=>{
   const emailEl=document.getElementById('vigEmail');
   const email=(emailEl?emailEl.value:'').trim();
@@ -1349,6 +1354,7 @@ window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.relo
   btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
   if (close) close.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
 })();
 </script>
 </body>
