@@ -19,6 +19,9 @@
 <meta name="twitter:description" content="Suscríbete y recibe 2 joyas de alta calidad, seleccionadas por Cacusa, cada mes. Ecuador y USA.">
 <meta name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
 <link rel="canonical" href="https://cacusabytaitus.com/cacusa-lovers.html">
+<link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cacusa-lovers.html">
+<link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cacusa-lovers.html">
+<link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cacusa-lovers.html">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
@@ -56,6 +59,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;d
 .nav-links a{font-family:var(--fu);font-size:13px;font-weight:500;color:var(--ink-muted);letter-spacing:.04em;transition:color .2s;text-decoration:none;cursor:none}
 .nav-links a:hover{color:var(--pink)}
 .nav-lovers-badge{color:var(--ink)!important;background:var(--pink-pale);border-radius:999px;padding:6px 14px;border:1px solid var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:none;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink-deep);color:white}
+.drawer-lang{margin-top:24px;display:flex;align-items:center;gap:10px;color:white;font-family:var(--fu);font-size:15px}
+.drawer-lang-btn{background:none;border:none;color:white;font-family:var(--fu);font-size:15px;cursor:pointer;opacity:.7}
+.drawer-lang-btn:hover{opacity:1}
 .nav-cta{background:var(--pink-deep);color:white;font-family:var(--fu);font-weight:600;font-size:12px;letter-spacing:.06em;border:none;border-radius:999px;padding:10px 22px;cursor:none;transition:all .25s;box-shadow:0 2px 16px rgba(238,111,168,.35)}
 .nav-cta:hover{transform:scale(1.04)}
 #navMenuBtn{display:none}
@@ -503,6 +512,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./index.html#personalize">Personaliza</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
     <button class="nav-cta" onclick="joinNow()">Unirme ahora →</button>
     <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
@@ -517,6 +527,11 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
     <a href="./index.html#personalize" class="drawer-link">Personaliza</a>
   </nav>
+  <div class="drawer-lang">
+    <button class="drawer-lang-btn" onclick="window.location.href='/cacusa-lovers.html'">ES</button>
+    <span style="opacity:.5">/</span>
+    <button class="drawer-lang-btn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button>
+  </div>
 </div>
 
 <!-- HERO -->

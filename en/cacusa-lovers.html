@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#EE6FA8">
+<meta name="description" content="Cacusa Lovers — Monthly subscription of high-quality jewelry, selected by Cacusa. Get 2 unique pieces delivered to your door every month. Only $19.99/mo.">
+<meta property="og:title" content="Cacusa Lovers — Your Monthly Jewelry Club">
+<meta property="og:description" content="Subscribe and get 2 high-quality jewelry pieces, selected by Cacusa, every month. Ecuador and the USA.">
+<meta property="og:url" content="https://cacusabytaitus.com/en/cacusa-lovers.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="es_EC">
+<meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cacusa Lovers — Your Monthly Jewelry Club">
+<meta name="twitter:description" content="Subscribe and get 2 high-quality jewelry pieces, selected by Cacusa, every month. Ecuador and the USA.">
+<meta name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
+<link rel="canonical" href="https://cacusabytaitus.com/en/cacusa-lovers.html">
+<link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cacusa-lovers.html">
+<link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cacusa-lovers.html">
+<link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cacusa-lovers.html">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<title>Cacusa Lovers — Your Monthly Jewelry Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#EE6FA8;--pink-mid:#F5A0C8;--pink-pale:#FCE8F3;--pink-deep:#C0336E;
+  --lilac:#C4A0EC;--lilac-pale:#EEE4FA;
+  --sky:#88C8F0;--sky-pale:#DCF0FC;
+  --peach:#F5C8A8;--pearl:#FEF8FF;--white:#FFFFFF;
+  --ink:#8B2A5A;--ink-mid:#A05080;--ink-muted:#96486F;--ink-light:#E4C0D8;
+  --grad-full:linear-gradient(135deg,#F5C8A8 0%,#EE6FA8 30%,#C4A0EC 65%,#88C8F0 100%);
+  --grad-warm:linear-gradient(135deg,#F5C8A8,#EE6FA8,#F5A0C8);
+  --fd:'Bodoni Moda',serif;--fs:'Pinyon Script',cursive;
+  --fe:'Cormorant Garamond',serif;--fu:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fu);background:var(--pearl);color:var(--ink);overflow-x:hidden;cursor:none}
+
+/* ── CURSOR ── */
+#cursor{position:fixed;width:10px;height:10px;background:var(--pink);border-radius:50%;pointer-events:none;z-index:9999;transition:transform .15s;mix-blend-mode:multiply}
+#cursor-ring{position:fixed;width:32px;height:32px;border:1.5px solid var(--pink);border-radius:50%;pointer-events:none;z-index:9998;opacity:.5}
+.cursor-grow #cursor{transform:scale(2.8);opacity:.5}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;display:flex;align-items:center;justify-content:space-between;background:rgba(254,248,255,.95);backdrop-filter:blur(16px);border-bottom:1.5px solid var(--ink-light);box-shadow:0 2px 20px rgba(238,111,168,.08)}
+.nav-logo{display:flex;flex-direction:column;line-height:1;cursor:pointer;text-decoration:none}
+.nav-logo .w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;text-transform:uppercase;background:var(--grad-full);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-logo .s{font-family:var(--fs);font-size:15px;color:var(--ink-muted)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font-family:var(--fu);font-size:13px;font-weight:500;color:var(--ink-muted);letter-spacing:.04em;transition:color .2s;text-decoration:none;cursor:none}
+.nav-links a:hover{color:var(--pink)}
+.nav-lovers-badge{color:var(--ink)!important;background:var(--pink-pale);border-radius:999px;padding:6px 14px;border:1px solid var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:none;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink-deep);color:white}
+.drawer-lang{margin-top:24px;display:flex;align-items:center;gap:10px;color:white;font-family:var(--fu);font-size:15px}
+.drawer-lang-btn{background:none;border:none;color:white;font-family:var(--fu);font-size:15px;cursor:pointer;opacity:.7}
+.drawer-lang-btn:hover{opacity:1}
+.nav-cta{background:var(--pink-deep);color:white;font-family:var(--fu);font-weight:600;font-size:12px;letter-spacing:.06em;border:none;border-radius:999px;padding:10px 22px;cursor:none;transition:all .25s;box-shadow:0 2px 16px rgba(238,111,168,.35)}
+.nav-cta:hover{transform:scale(1.04)}
+#navMenuBtn{display:none}
+#navDrawer{display:none}
+
+/* ── HERO ── */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;padding-top:68px}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%}
+.hero-inner{position:relative;z-index:2;padding:0 24px;max-width:760px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.45);backdrop-filter:blur(8px);border:1px solid rgba(139,42,90,.25);border-radius:999px;padding:8px 20px;font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);margin-bottom:24px}
+.hero-h1{font-family:var(--fd);font-weight:900;font-size:clamp(52px,8vw,96px);color:var(--ink);line-height:.95;margin-bottom:8px}
+.hero-h1 em{font-style:italic;font-weight:400}
+.hero-script{font-family:var(--fs);font-size:clamp(28px,4vw,48px);color:rgba(139,42,90,.85);margin-bottom:22px}
+.hero-desc{font-family:var(--fe);font-size:clamp(17px,2.2vw,21px);font-style:italic;color:rgba(139,42,90,.9);line-height:1.7;max-width:520px;margin:0 auto 36px}
+.hero-price{display:inline-flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.5);backdrop-filter:blur(12px);border:1px solid rgba(139,42,90,.25);border-radius:24px;padding:20px 40px;margin-bottom:36px}
+.hero-price .amount{font-family:var(--fd);font-weight:900;font-size:52px;color:var(--ink);line-height:1}
+.hero-price .per{font-family:var(--fu);font-size:14px;color:rgba(139,42,90,.85);letter-spacing:.08em;margin-top:4px}
+.hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:white;color:var(--ink);font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border:none;border-radius:999px;padding:16px 38px;cursor:none;transition:all .3s;box-shadow:0 4px 24px rgba(139,42,90,.2)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(139,42,90,.3)}
+.btn-ghost{background:rgba(255,255,255,.4);color:var(--ink);border:1.5px solid rgba(139,42,90,.35);font-family:var(--fu);font-weight:500;font-size:14px;border-radius:999px;padding:14px 32px;cursor:none;transition:all .3s;backdrop-filter:blur(8px)}
+.btn-ghost:hover{background:rgba(255,255,255,.6)}
+.hero-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+.hero-scroll span{font-family:var(--fu);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(139,42,90,.75)}
+.scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);animation:sLine 2s ease infinite}
+@keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(32px);transition:opacity .8s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.4,0,.2,1)}
+.reveal-left{opacity:0;transform:translateX(-32px);transition:opacity .8s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.4,0,.2,1)}
+.reveal-scale{opacity:0;transform:scale(.94);transition:opacity .7s,transform .7s}
+.reveal.visible,.reveal-left.visible,.reveal-scale.visible{opacity:1;transform:none}
+[data-delay="1"]{transition-delay:.1s}[data-delay="2"]{transition-delay:.2s}[data-delay="3"]{transition-delay:.3s}[data-delay="4"]{transition-delay:.4s}
+
+/* ── SECTIONS ── */
+section{padding:96px 0}
+.container{max-width:1140px;margin:0 auto;padding:0 48px}
+.section-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);margin-bottom:14px}
+.section-h{font-family:var(--fd);font-weight:900;font-size:clamp(34px,4vw,52px);color:var(--ink);line-height:1.05}
+.section-h em{font-style:italic;font-weight:400;color:var(--pink)}
+.section-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted);line-height:1.7;margin-top:12px}
+
+/* ── WHAT IS IT ── */
+#what{background:var(--pearl)}
+.what-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;margin-top:56px}
+.what-visual{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.what-card{border-radius:20px;overflow:hidden;position:relative}
+.what-card:first-child{grid-column:1/3;height:220px}
+.what-card:not(:first-child){height:160px}
+.what-card .gfill{width:100%;height:100%;transition:transform .5s}
+.what-card:hover .gfill{transform:scale(1.06)}
+.what-card .wc-label{position:absolute;bottom:14px;left:14px;font-family:var(--fs);font-size:18px;color:white;text-shadow:0 1px 8px rgba(0,0,0,.2)}
+.what-list{display:flex;flex-direction:column;gap:18px;margin-top:28px}
+.what-item{display:flex;gap:14px;align-items:flex-start}
+.wi-icon{width:36px;height:36px;border-radius:50%;background:var(--grad-warm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 4px 12px rgba(238,111,168,.3)}
+.wi-title{font-family:var(--fu);font-weight:600;font-size:15px;color:var(--ink);margin-bottom:2px}
+.wi-desc{font-family:var(--fe);font-size:14px;font-style:italic;color:var(--ink-muted);line-height:1.5}
+
+/* ── PLAN ── */
+#plan{background:var(--lilac-pale)}
+.plan-center{text-align:center;margin-bottom:56px}
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:900px;margin:0 auto;align-items:start}
+.plan-card{background:white;border-radius:28px;overflow:visible;box-shadow:0 16px 60px rgba(238,111,168,.18);position:relative}
+.plan-card--annual{box-shadow:0 20px 70px rgba(155,93,229,.28);border:2px solid rgba(155,93,229,.25)}
+.plan-badge-annual{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:linear-gradient(rgba(139,42,90,.35),rgba(139,42,90,.35)),linear-gradient(135deg,#9B5DE5,#E8508A);color:white;font-family:var(--fu);font-weight:800;font-size:11px;letter-spacing:.12em;padding:6px 18px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(155,93,229,.45);z-index:2}
+.plan-card--annual .plan-header{background:linear-gradient(rgba(139,42,90,.25),rgba(139,42,90,.25)),linear-gradient(135deg,#7C3ADE,#9B5DE5,#C86DD4)}
+.plan-cents{font-family:var(--fd);font-weight:900;font-size:36px;color:white;align-self:flex-end;padding-bottom:10px}
+.btn-join--annual{background:linear-gradient(rgba(139,42,90,.2),rgba(139,42,90,.2)),linear-gradient(135deg,#7C3ADE,#9B5DE5)!important;box-shadow:0 6px 28px rgba(155,93,229,.45)!important}
+.btn-join--annual:hover{box-shadow:0 10px 36px rgba(155,93,229,.6)!important}
+.plan-header{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:44px 40px 36px;text-align:center;position:relative}
+.plan-tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:999px;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:white;padding:5px 16px;margin-bottom:18px}
+.plan-price-wrap{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin-bottom:8px}
+.plan-currency{font-family:var(--fd);font-weight:700;font-size:28px;color:white;margin-top:12px}
+.plan-amount{font-family:var(--fd);font-weight:900;font-size:80px;color:white;line-height:1}
+.plan-period{font-family:var(--fu);font-size:14px;color:white;align-self:flex-end;padding-bottom:8px}
+.plan-subtitle{font-family:var(--fs);font-size:22px;color:white}
+.plan-body{padding:36px 40px}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
+.plan-features li{display:flex;align-items:center;gap:12px;font-family:var(--fu);font-size:14px;color:var(--ink)}
+.plan-features li::before{content:'♡';color:var(--pink);font-size:16px;flex-shrink:0}
+.plan-note{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px}
+.btn-join{display:block;width:100%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:none;box-shadow:0 6px 28px rgba(238,111,168,.45);transition:all .3s;text-align:center;text-decoration:none}
+.btn-join:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(238,111,168,.55)}
+
+/* ── HOW IT WORKS ── */
+#how{background:var(--pearl)}
+.how-center{text-align:center;margin-bottom:56px}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+.step-card{text-align:center;padding:36px 28px;background:white;border-radius:22px;box-shadow:0 4px 24px rgba(238,111,168,.09);position:relative}
+.step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--grad-warm);border-radius:22px 22px 0 0}
+.step-num{width:52px;height:52px;border-radius:50%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);color:white;font-family:var(--fd);font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 6px 20px rgba(238,111,168,.35)}
+.step-title{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:10px}
+.step-desc{font-family:var(--fe);font-size:15px;font-style:italic;color:var(--ink-muted);line-height:1.65}
+.step-connector{position:absolute;top:50%;right:-20px;transform:translateY(-50%);font-size:20px;color:var(--ink);z-index:1}
+
+/* ── TESTIMONIALS ── */
+#testimonials{background:var(--pink-pale)}
+.testi-center{text-align:center;margin-bottom:48px}
+.testi-wrap{overflow:hidden;-webkit-mask:linear-gradient(to right,transparent,black 8%,black 92%,transparent)}
+.testi-track{display:flex;gap:18px;animation:tScroll 32s linear infinite}
+.testi-track:hover{animation-play-state:paused}
+.tcard{background:white;border-radius:20px;padding:28px;min-width:290px;box-shadow:0 4px 20px rgba(238,111,168,.1);flex-shrink:0}
+.tcard-stars{display:flex;gap:3px;margin-bottom:12px}
+.tcard-star{width:13px;height:13px;background:var(--pink);clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.tcard-text{font-family:var(--fe);font-size:15px;font-style:italic;color:var(--ink-mid);line-height:1.7;margin-bottom:14px}
+.tcard-name{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--ink)}
+.tcard-loc{font-family:var(--fu);font-size:11px;color:var(--ink-muted)}
+@keyframes tScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── CTA FINAL ── */
+#cta-final{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);text-align:center;padding:100px 0;position:relative;overflow:hidden}
+#cta-final::before{content:'';position:absolute;top:-80px;left:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 70%)}
+#cta-final::after{content:'';position:absolute;bottom:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.1),transparent 70%)}
+.cta-inner{position:relative;z-index:1}
+.cta-script{font-family:var(--fs);font-size:36px;color:white;margin-bottom:12px}
+.cta-h{font-family:var(--fd);font-weight:900;font-size:clamp(36px,5vw,60px);color:white;line-height:1.05;margin-bottom:16px;text-shadow:0 2px 24px rgba(0,0,0,.1)}
+.cta-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:460px;margin:0 auto 40px;line-height:1.7}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ── FAQ ── */
+#faq{background:var(--pearl)}
+.faq-center{text-align:center;margin-bottom:48px}
+.faq-list{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.faq-item{background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(238,111,168,.07)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;cursor:pointer;font-family:var(--fu);font-weight:600;font-size:15px;color:var(--ink)}
+.faq-q:hover{color:var(--pink)}
+.faq-icon{font-size:18px;color:var(--ink);transition:transform .3s;flex-shrink:0}
+.faq-item.open .faq-icon{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s}
+.faq-item.open .faq-a{max-height:200px;padding:0 24px 20px}
+.faq-a p{font-family:var(--fe);font-size:15px;font-style:italic;color:var(--ink-muted);line-height:1.7}
+
+/* ── CONDITIONS ── */
+#conditions{background:var(--lilac-pale)}
+.cond-center{text-align:center;margin-bottom:48px}
+.cond-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto}
+.cond-item{background:white;border-radius:18px;padding:24px 28px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(196,160,236,.12)}
+.cond-item--critical{border-left:3px solid var(--pink)}
+.cond-icon{width:40px;height:40px;border-radius:50%;background:var(--lilac-pale);border:1.5px solid var(--lilac);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.cond-text{flex:1}
+.cond-title{font-family:var(--fu);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}
+.cond-desc{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6}
+
+/* ── FOOTER ── */
+footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:48px 0 28px;text-align:center}
+.fb-w{font-family:var(--fd);font-weight:900;font-size:24px;letter-spacing:.16em;color:white;text-transform:uppercase}
+.fb-s{font-family:var(--fs);font-size:18px;color:white;margin-top:-2px;margin-bottom:14px}
+.footer-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.footer-links a{font-family:var(--fu);font-size:13px;color:white;text-decoration:none;transition:color .2s;cursor:none}
+.footer-links a:hover{color:white}
+.footer-social{display:flex;justify-content:center;gap:14px;margin-bottom:20px}
+.footer-social a{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;transition:background .2s;cursor:none}
+.footer-social a:hover{background:rgba(255,255,255,.32)}
+.footer-copy{font-family:var(--fu);font-size:11px;color:rgba(255,255,255,.98)}
+
+/* ── GRADIENT HELPERS ── */
+.gA{background:linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)}
+.gB{background:linear-gradient(135deg,#F5C8A8,#EE6FA8)}
+.gC{background:linear-gradient(135deg,#C4A0EC,#88C8F0)}
+.gD{background:linear-gradient(135deg,#88C8F0,#DCF0FC)}
+.gE{background:linear-gradient(135deg,#F5A0C8,#C4A0EC)}
+
+/* ── SUBSCRIPTION MODAL ── */
+#sub-overlay{position:fixed;inset:0;background:rgba(139,42,90,.38);backdrop-filter:blur(12px);z-index:900;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#sub-overlay.open{opacity:1;visibility:visible}
+.sub-box{background:white;border-radius:28px;max-width:500px;width:100%;max-height:none;overflow-y:visible;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.93);transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
+#sub-overlay.open .sub-box{transform:scale(1)}
+.sub-head{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:30px 32px 22px;border-radius:28px 28px 0 0;position:relative;text-align:center}
+.sub-head-close{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:50%;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.sub-head-close:hover{background:rgba(255,255,255,.4)}
+.sub-head-tag{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:white;margin-bottom:6px}
+.sub-head-title{font-family:var(--fd);font-weight:900;font-size:24px;color:white;line-height:1.1}
+.sub-head-price{font-family:var(--fu);font-size:13px;color:white;margin-top:5px}
+.sub-body{padding:28px 32px}
+.sub-step{display:none}
+.sub-step.active{display:block}
+.sub-dots{display:flex;gap:6px;justify-content:center;margin-bottom:22px}
+.sub-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-light);transition:all .3s}
+.sub-dot.act{background:var(--pink);transform:scale(1.2)}
+.sub-field{margin-bottom:14px}
+.sub-field-label{display:block;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
+.sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:16px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
+.sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
+.sub-field--ac{position:relative}
+.sub-ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--ink-light);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
+.sub-ac-list.open{display:block}
+.sub-ac-item{padding:10px 14px;cursor:pointer;font-family:var(--fu);font-size:13px;color:var(--ink);border-bottom:1px solid #f3f3f3;line-height:1.35}
+.sub-ac-item:last-child{border-bottom:none}
+.sub-ac-item:hover,.sub-ac-item.focused{background:#fdf0f7}
+.sub-ac-main{font-weight:500}
+.sub-ac-sub{font-size:11.5px;color:var(--ink-muted);margin-top:1px}
+.sub-ac-msg{padding:10px 14px;font-family:var(--fu);font-size:12.5px;color:var(--ink-muted)}
+.sub-error{color:#c0392b;font-family:var(--fu);font-size:12px;margin-bottom:12px;min-height:18px}
+.sub-btn{width:100%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;border:none;border-radius:999px;padding:15px;cursor:pointer;transition:all .3s;box-shadow:0 6px 24px rgba(238,111,168,.4);margin-top:4px;position:relative;overflow:hidden}
+.sub-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 32px rgba(238,111,168,.5)}
+.sub-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.sub-btn .spin{display:none;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.35);border-top-color:white;border-radius:50%;animation:subSpin .65s linear infinite;margin-left:10px;vertical-align:middle}
+.sub-btn.loading .spin{display:inline-block}
+@keyframes subSpin{to{transform:rotate(360deg)}}
+.sub-back{display:block;text-align:center;margin-top:12px;font-family:var(--fu);font-size:12px;color:var(--ink-muted);cursor:pointer;background:none;border:none;width:100%;text-decoration:underline}
+.sub-summary-box{background:var(--pink-pale);border-radius:16px;padding:18px 20px;margin-bottom:20px;border:1.5px solid rgba(238,111,168,.15)}
+.sub-sum-row{display:flex;justify-content:space-between;align-items:center;font-family:var(--fu);font-size:13px;color:var(--ink);margin-bottom:6px}
+.sub-sum-row:last-child{margin-bottom:0;font-weight:700;font-size:15px;color:var(--ink);padding-top:10px;border-top:1px solid rgba(238,111,168,.2)}
+.sub-sum-feature{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);margin-bottom:4px;padding-left:4px}
+.sub-sum-feature::before{content:'♡ ';color:var(--pink)}
+.sub-legal{font-family:var(--fe);font-size:11px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px;line-height:1.65}
+.sub-secure-badge{font-family:var(--fu);font-size:11px;font-weight:600;color:var(--ink-muted);text-align:center;margin-bottom:10px;letter-spacing:.02em}
+.sub-plan-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.sub-plan-opt{border:2px solid rgba(139,42,90,.18);border-radius:14px;padding:13px 10px;cursor:pointer;text-align:center;transition:all .2s;position:relative;background:white}
+.sub-plan-opt.selected{border-color:var(--pink);background:#fdf0f7}
+.sub-plan-opt--anual.selected{border-color:var(--lilac);background:#f5eeff}
+.sub-plan-opt-name{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--ink);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em}
+.sub-plan-opt-price{font-family:var(--fu);font-size:16px;font-weight:700;color:var(--pink)}
+.sub-plan-opt--anual .sub-plan-opt-price{color:var(--lilac)}
+.sub-plan-opt-badge{display:inline-block;background:var(--lilac);color:white;font-family:var(--fu);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:100px;margin-bottom:4px}
+/* ── SUCCESS SCREEN ── */
+#sub-success{display:none;position:fixed;inset:0;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+#sub-success.show{display:flex}
+.ss-icon{font-size:72px;margin-bottom:20px;animation:ssIn .6s cubic-bezier(.34,1.56,.64,1)}
+.ss-title{font-family:var(--fd);font-weight:900;font-size:clamp(32px,5vw,52px);color:white;margin-bottom:12px}
+.ss-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:460px;line-height:1.7;margin-bottom:32px}
+.ss-btn{background:white;color:var(--ink);font-family:var(--fu);font-weight:700;font-size:14px;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,.15);transition:transform .3s}
+.ss-btn:hover{transform:scale(1.04)}
+@keyframes ssIn{from{transform:scale(0) rotate(-15deg)}to{transform:scale(1) rotate(0)}}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  #navMenuBtn{display:flex;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:8px;z-index:510;position:relative}
+  #navMenuBtn span{display:block;width:24px;height:2px;background:var(--ink);border-radius:2px;transition:transform .3s,opacity .3s}
+  #navMenuBtn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  #navMenuBtn.open span:nth-child(2){opacity:0}
+  #navMenuBtn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  #navDrawer{display:none;position:fixed;inset:0;z-index:600;background:linear-gradient(160deg,var(--pink) 0%,var(--lilac) 100%);flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  #navDrawer.open{display:flex}
+  #navDrawerClose{position:absolute;top:24px;right:24px;background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1}
+  .drawer-nav{display:flex;flex-direction:column;align-items:center;gap:28px}
+  .drawer-link{font-family:var(--fu);font-size:22px;color:white;text-decoration:none;letter-spacing:.04em;opacity:.92}
+  .drawer-link--lovers{background:white;color:var(--ink);padding:10px 28px;border-radius:100px;opacity:1;font-weight:600}
+  .container{padding:0 20px}
+  section{padding:64px 0}
+  .what-grid{grid-template-columns:1fr;gap:40px}
+  .steps-grid{grid-template-columns:1fr;gap:20px}
+  .step-connector{display:none}
+  .plans-grid{grid-template-columns:1fr}
+  .plan-card--annual{margin-top:20px}
+  .plan-header{padding:32px 24px 28px}
+  .plan-body{padding:28px 24px}
+  .what-card:first-child{height:180px}
+  #hero{padding-top:100px}
+  /* ── Modal fix for mobile (iOS scroll + Android keyboard) ── */
+  #sub-overlay{align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:68px 12px 24px}
+  .sub-box{border-radius:20px;max-height:none;overflow-y:visible}
+  .sub-head{border-radius:20px 20px 0 0;padding:18px 18px 14px}
+  .sub-head-title{font-size:20px}
+  .sub-head-price{font-size:12px}
+  .sub-body{padding:18px 16px}
+  .sub-field{margin-bottom:10px}
+  .sub-input{padding:8px 11px;font-size:16px}
+  .sub-dots{margin-bottom:16px}
+  .sub-row-2{grid-template-columns:1fr}
+  .btn-join,.btn-join--annual,.sub-btn,.sub-head-close,.sub-back{cursor:pointer}
+  /* Reveal animations off on mobile — show everything immediately */
+  .reveal,.reveal-left,.reveal-scale{opacity:1!important;transform:none!important;transition:none!important}
+  /* Cursor pointer for all interactive elements on touch screens */
+  .btn-primary,.btn-ghost,.nav-cta{cursor:pointer}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- SUCCESS SCREEN -->
+<div id="sub-success">
+  <div class="ss-icon">✦</div>
+  <h2 class="ss-title">Welcome to the club!</h2>
+  <p class="ss-sub">Your <strong>Cacusa Lovers</strong> subscription is active. You'll receive a confirmation email from Square and your first box will arrive in the coming days. ♡</p>
+  <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explore more →</button>
+</div>
+
+<!-- SUBSCRIPTION MODAL -->
+<div id="sub-overlay" role="dialog" aria-modal="true" aria-label="Cacusa Lovers Subscription" onclick="if(event.target===this)closeSub()">
+  <div class="sub-box">
+    <div class="sub-head">
+      <button class="sub-head-close" onclick="closeSub()" aria-label="Close">✕</button>
+      <div class="sub-head-tag">✦ Monthly subscription club</div>
+      <div class="sub-head-title">Cacusa <em>Lovers</em></div>
+      <div class="sub-head-price" id="subHeadPrice">$19.99/mo · 2 selected pieces · shipping included</div>
+    </div>
+    <div class="sub-body">
+      <div class="sub-dots">
+        <div class="sub-dot act" id="dot1"></div>
+        <div class="sub-dot" id="dot2"></div>
+      </div>
+      <!-- STEP 1: Personal & shipping info -->
+      <div class="sub-step active" id="sub-step1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="sub-field">
+            <label class="sub-field-label" for="sNombre">First name *</label>
+            <input class="sub-input" id="sNombre" type="text" placeholder="Your first name" autocomplete="given-name">
+          </div>
+          <div class="sub-field">
+            <label class="sub-field-label" for="sApellido">Last name</label>
+            <input class="sub-input" id="sApellido" type="text" placeholder="Your last name" autocomplete="family-name">
+          </div>
+        </div>
+        <div class="sub-field">
+          <label class="sub-field-label" for="sEmail">Email *</label>
+          <input class="sub-input" id="sEmail" type="email" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="sub-field">
+          <label class="sub-field-label" for="sTel">Phone / WhatsApp *</label>
+          <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
+        </div>
+        <div class="sub-field sub-field--ac">
+          <label class="sub-field-label" for="sDireccion">Shipping address *</label>
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Start typing your address…" autocomplete="off" maxlength="120">
+          <div class="sub-ac-list" id="sAcList"></div>
+        </div>
+        <div class="sub-field">
+          <label class="sub-field-label" for="sApto">Apt / Suite / Floor (optional)</label>
+          <input class="sub-input" id="sApto" type="text" placeholder="Apt 4B, Suite 200, Floor 3…" maxlength="60">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="sub-field">
+            <label class="sub-field-label" for="sCiudad">City *</label>
+            <input class="sub-input" id="sCiudad" type="text" placeholder="City">
+          </div>
+          <div class="sub-field">
+            <label class="sub-field-label" for="sPais">Country *</label>
+            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()">
+              <option value="">Select…</option>
+              <option value="Ecuador">Ecuador</option>
+              <option value="USA">USA</option>
+              <option value="Otro">Other</option>
+            </select>
+          </div>
+        </div>
+        <!-- Campos dinámicos por país -->
+        <div id="sFieldsEC" hidden>
+          <div class="sub-field">
+            <label class="sub-field-label" for="sProvincia">Province *</label>
+            <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer">
+              <option value="">Select province…</option>
+              <option>Azuay</option><option>Bolívar</option><option>Cañar</option>
+              <option>Carchi</option><option>Chimborazo</option><option>Cotopaxi</option>
+              <option>El Oro</option><option>Esmeraldas</option><option>Galápagos</option>
+              <option>Guayas</option><option>Imbabura</option><option>Loja</option>
+              <option>Los Ríos</option><option>Manabí</option><option>Morona Santiago</option>
+              <option>Napo</option><option>Orellana</option><option>Pastaza</option>
+              <option>Pichincha</option><option>Santa Elena</option><option>Santo Domingo</option>
+              <option>Sucumbíos</option><option>Tungurahua</option><option>Zamora Chinchipe</option>
+            </select>
+          </div>
+        </div>
+        <div id="sFieldsUSA" hidden>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="sub-field">
+              <label class="sub-field-label" for="sEstadoUSA">State *</label>
+              <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer">
+                <option value="">Select…</option>
+                <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
+                <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
+                <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
+                <option>Illinois</option><option>Indiana</option><option>Iowa</option><option>Kansas</option>
+                <option>Kentucky</option><option>Louisiana</option><option>Maine</option><option>Maryland</option>
+                <option>Massachusetts</option><option>Michigan</option><option>Minnesota</option><option>Mississippi</option>
+                <option>Missouri</option><option>Montana</option><option>Nebraska</option><option>Nevada</option>
+                <option>New Hampshire</option><option>New Jersey</option><option>New Mexico</option><option>New York</option>
+                <option>North Carolina</option><option>North Dakota</option><option>Ohio</option><option>Oklahoma</option>
+                <option>Oregon</option><option>Pennsylvania</option><option>Rhode Island</option><option>South Carolina</option>
+                <option>South Dakota</option><option>Tennessee</option><option>Texas</option><option>Utah</option>
+                <option>Vermont</option><option>Virginia</option><option>Washington</option><option>West Virginia</option>
+                <option>Wisconsin</option><option>Wyoming</option>
+              </select>
+            </div>
+            <div class="sub-field">
+              <label class="sub-field-label" for="sZipUSA">ZIP Code *</label>
+              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" inputmode="numeric" maxlength="10">
+            </div>
+          </div>
+        </div>
+        <div id="sFieldsOtro" hidden>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="sub-field">
+              <label class="sub-field-label" for="sEstadoOtro">State / Province</label>
+              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="State or province">
+            </div>
+            <div class="sub-field">
+              <label class="sub-field-label" for="sZipOtro">Postal code</label>
+              <input class="sub-input" id="sZipOtro" type="text" placeholder="Postal code">
+            </div>
+          </div>
+        </div>
+        <div class="sub-error" id="sErr1"></div>
+        <button class="sub-btn" onclick="goStep2()">Continue →</button>
+      </div>
+      <!-- STEP 2: Confirm & pay -->
+      <div class="sub-step" id="sub-step2">
+        <!-- Plan selector -->
+        <div class="sub-plan-toggle">
+          <div class="sub-plan-opt selected" id="planOptMensual" onclick="selectPlan('mensual')">
+            <div class="sub-plan-opt-name">Monthly</div>
+            <div class="sub-plan-opt-price">$19.99/mo</div>
+          </div>
+          <div class="sub-plan-opt sub-plan-opt--anual" id="planOptAnual" onclick="selectPlan('anual')">
+            <div class="sub-plan-opt-badge">SAVE 8%</div>
+            <div class="sub-plan-opt-name">Annual</div>
+            <div class="sub-plan-opt-price">$219.89/yr</div>
+          </div>
+        </div>
+        <div class="sub-summary-box" id="sub-summary-box">
+          <div class="sub-sum-row"><span>Plan</span><span id="sum-plan-name">Cacusa Lovers</span></div>
+          <div class="sub-sum-feature">2 stainless steel jewelry pieces every month</div>
+          <div class="sub-sum-feature">Home delivery included</div>
+          <div class="sub-sum-feature">Free shipping on all your purchases</div>
+          <div class="sub-sum-feature">Early access to new collections</div>
+          <div class="sub-sum-row"><span id="sum-period-label">Monthly total</span><span id="sum-price">$19.99</span></div>
+        </div>
+        <div class="sub-error" id="sErr2"></div>
+        <div class="sub-secure-badge">◎ Secure payment processed by Square</div>
+        <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
+          Subscribe · $19.99/mo <span class="spin"></span>
+        </button>
+        <button class="sub-back" onclick="goStep1()">← Go back and edit info</button>
+        <p class="sub-legal" id="subLegal">You'll be redirected to Square (secure payment) to enter your card. Square charges automatically every month.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="nav-logo" href="./index.html">
+    <span class="w">CACUSA</span>
+    <span class="s">by Taitus</span>
+  </a>
+  <div class="nav-links">
+    <a href="./index.html">Home</a>
+    <a href="./ui_kits/store/">Store</a>
+    <a href="./cacusa-lovers.html" class="nav-lovers-badge">Cacusa Lovers ♡</a>
+    <a href="./index.html#personalize">Customize</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" class="on" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
+    <button class="nav-cta" onclick="joinNow()">Join now →</button>
+    <button id="navMenuBtn" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- Mobile nav drawer -->
+<div id="navDrawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+  <button id="navDrawerClose" aria-label="Close menu">✕</button>
+  <nav class="drawer-nav">
+    <a href="./index.html" class="drawer-link">Home</a>
+    <a href="./ui_kits/store/" class="drawer-link">Store</a>
+    <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="./index.html#personalize" class="drawer-link">Customize</a>
+  </nav>
+  <div class="drawer-lang">
+    <button class="drawer-lang-btn" onclick="window.location.href='/cacusa-lovers.html'">ES</button>
+    <span style="opacity:.5">/</span>
+    <button class="drawer-lang-btn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-inner">
+    <div class="hero-badge reveal">✦ Exclusive subscription club</div>
+    <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
+    <div class="hero-script reveal" data-delay="2">by Taitus</div>
+    <p class="hero-desc reveal" data-delay="3">Every month you'll receive 2 stainless steel pieces —they won't rust, won't tarnish— hand-picked and delivered straight to your door: pieces worth more than your monthly subscription, for an always-fresh outfit at an accessible price.</p>
+    <div class="hero-price reveal-scale" data-delay="3">
+      <div class="amount">$19.99</div>
+      <div class="per">per month · no commitment</div>
+      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(139,42,90,.85);letter-spacing:.05em">or <strong style="color:var(--ink)">$219.89/year</strong> · save 8%</div>
+    </div>
+    <div class="hero-btns reveal" data-delay="4">
+      <button class="btn-primary" onclick="joinNow()">♡ I want to be a Cacusa Lover</button>
+      <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How does it work?</button>
+    </div>
+  </div>
+  <div class="hero-scroll"><span>Discover</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- WHAT IS IT -->
+<section id="what">
+  <div class="container">
+    <div class="what-grid">
+      <div>
+        <div class="reveal"><div class="section-label">The club</div></div>
+        <div class="reveal" data-delay="1"><h2 class="section-h">What is<br><em>Cacusa Lovers?</em></h2></div>
+        <div class="reveal" data-delay="2"><p class="section-sub">A monthly membership designed for women who love high-quality jewelry and want to feel the excitement of receiving a special piece every month, without having to look for it.</p></div>
+        <div class="what-list">
+          <div class="what-item reveal" data-delay="2">
+            <div class="wi-icon">◆</div>
+            <div><div class="wi-title">Jewelry chosen for you</div><div class="wi-desc">Every month we select 2 stainless steel pieces for you: they won't rust, won't tarnish, and are yours to keep forever.</div></div>
+          </div>
+          <div class="what-item reveal" data-delay="3">
+            <div class="wi-icon">◎</div>
+            <div><div class="wi-title">Straight to your door</div><div class="wi-desc">Home delivery included in Ecuador and the United States. Without leaving home.</div></div>
+          </div>
+          <div class="what-item reveal" data-delay="4">
+            <div class="wi-icon">✦</div>
+            <div><div class="wi-title">Exclusive subscriber pieces</div><div class="wi-desc">Designs not sold in the store. Only for Cacusa Lovers.</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="what-visual reveal-left" data-delay="2">
+        <div class="what-card" id="wcard1"><div class="gfill gA" id="wfill1" style="height:100%"></div><div class="wc-label">This month's necklace</div></div>
+        <div class="what-card" id="wcard2"><div class="gfill gB" id="wfill2" style="height:100%"></div><div class="wc-label">Surprise ring</div></div>
+        <div class="what-card" id="wcard3"><div class="gfill gE" id="wfill3" style="height:100%"></div><div class="wc-label">Exclusive bracelet</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLAN -->
+<section id="plan">
+  <div class="container">
+    <div class="plan-center">
+      <div class="reveal"><div class="section-label" style="text-align:center">The membership</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Choose your<br><em>plan</em></h2></div>
+      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Everything included. No surprises on price.</p></div>
+    </div>
+
+    <div class="plans-grid">
+
+      <!-- PLAN MENSUAL -->
+      <div class="plan-card reveal-scale" data-delay="1">
+        <div class="plan-header">
+          <div class="plan-tag">Monthly</div>
+          <div class="plan-price-wrap">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">19</span>
+            <span class="plan-cents">.99</span>
+          </div>
+          <div class="plan-subtitle">per month</div>
+        </div>
+        <div class="plan-body">
+          <ul class="plan-features">
+            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
+            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
+            <li><strong>Free shipping</strong> on all your store purchases</li>
+            <li><strong>Exclusive discount coupons</strong></li>
+            <li><strong>Early access</strong> to new collections</li>
+          </ul>
+          <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Subscribe monthly →</a>
+          <p class="plan-note">Automatic billing every month</p>
+        </div>
+      </div>
+
+      <!-- PLAN ANUAL -->
+      <div class="plan-card plan-card--annual reveal-scale" data-delay="2">
+        <div class="plan-badge-annual">SAVE 8%</div>
+        <div class="plan-header">
+          <div class="plan-tag">Annual</div>
+          <div class="plan-price-wrap">
+            <span class="plan-currency">$</span>
+            <span class="plan-amount">219</span>
+            <span class="plan-cents">.89</span>
+          </div>
+          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mo · save $19.99</span></div>
+        </div>
+        <div class="plan-body">
+          <ul class="plan-features">
+            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
+            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
+            <li><strong>Free shipping</strong> on all your store purchases</li>
+            <li><strong>Exclusive discount coupons</strong></li>
+            <li><strong>Early access</strong> to new collections</li>
+            <li><strong>12 months of jewelry</strong> for the price of 11</li>
+          </ul>
+          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Subscribe annually →</a>
+          <p class="plan-note">One payment · Maximum savings · Renews automatically</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="how-center">
+      <div class="reveal"><div class="section-label" style="text-align:center">The process</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">How does<br><em>it work?</em></h2></div>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card reveal" data-delay="1" style="position:relative">
+        <div class="step-num">1</div>
+        <div class="step-title">Choose your plan and sign up</div>
+        <p class="step-desc">Pick the plan that suits you best — monthly or annual — and enter your shipping details. All in seconds.</p>
+        <div class="step-connector">→</div>
+      </div>
+      <div class="step-card reveal" data-delay="2" style="position:relative">
+        <div class="step-num">2</div>
+        <div class="step-title">We choose your box</div>
+        <p class="step-desc">Every month we hand-pick your pieces with you in mind — guaranteed surprise, guaranteed quality.</p>
+        <div class="step-connector">→</div>
+      </div>
+      <div class="step-card reveal" data-delay="3">
+        <div class="step-num">3</div>
+        <div class="step-title">Arrives at your door</div>
+        <p class="step-desc">Your selected jewelry box arrives straight to your home, every month, like a gift you deserve.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS — oculto hasta tener testimonios reales (club nuevo)
+<section id="testimonials">
+  <div class="container">
+    <div class="testi-center">
+      <div class="reveal"><div class="section-label" style="text-align:center">Lo que dicen</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Nuestras <em>Lovers</em> hablan</h2></div>
+    </div>
+  </div>
+  <div class="testi-wrap"><div class="testi-track" id="testiTrack"></div></div>
+</section>
+-->
+
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="container">
+    <div class="faq-center">
+      <div class="reveal"><div class="section-label" style="text-align:center">Frequently asked questions</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Your <em>questions</em>, answered</h2></div>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item reveal" data-delay="1">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>When will I receive my first box?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions.</p></div>
+      </div>
+      <div class="faq-item reveal" data-delay="2">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Can I choose the jewelry I receive?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose.</p></div>
+      </div>
+      <div class="faq-item reveal" data-delay="3">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Do you ship throughout Ecuador and the USA?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost.</p></div>
+      </div>
+      <div class="faq-item reveal" data-delay="4">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>How does the monthly payment work?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"When will I receive my first box?","acceptedAnswer":{"@type":"Answer","text":"Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions."}},
+{"@type":"Question","name":"Can I choose the jewelry I receive?","acceptedAnswer":{"@type":"Answer","text":"No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."}},
+{"@type":"Question","name":"Do you ship throughout Ecuador and the USA?","acceptedAnswer":{"@type":"Answer","text":"Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost."}},
+{"@type":"Question","name":"How does the monthly payment work?","acceptedAnswer":{"@type":"Answer","text":"You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge."}}
+]}
+</script>
+
+<!-- CTA FINAL -->
+<section id="cta-final">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="cta-script reveal">Ready to join?</div>
+      <h2 class="cta-h reveal" data-delay="1">This month's jewel<br><em>is waiting for you</em></h2>
+      <p class="cta-sub reveal" data-delay="2">"we create so you shine more beautiful than you already are"</p>
+      <div class="cta-btns reveal" data-delay="3">
+        <button class="btn-primary" onclick="joinNow()">♡ Join Cacusa Lovers</button>
+        <a href="./ui_kits/store/" class="btn-ghost" style="display:inline-flex;align-items:center;text-decoration:none">View store →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONDITIONS -->
+<section id="conditions">
+  <div class="container">
+    <div class="cond-center">
+      <div class="reveal"><div class="section-label" style="text-align:center">Important</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">General <em>Terms</em></h2></div>
+      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">We want you to join the club with all the information clear.</p></div>
+    </div>
+    <div class="cond-grid">
+      <div class="cond-item reveal" data-delay="1">
+        <div class="cond-icon">↻</div>
+        <div class="cond-text">
+          <div class="cond-title">Recurring monthly payment</div>
+          <div class="cond-desc">The $19.99 charge is processed automatically every month, on the same day you subscribed. The charge will appear on your statement as CACUSA by Taitus.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="2">
+        <div class="cond-icon">◻</div>
+        <div class="cond-text">
+          <div class="cond-title">Shipping after payment confirmation</div>
+          <div class="cond-desc">Shipments go out during the <strong>third week of each month</strong>, once payment is confirmed. Delivery time is 5 to 15 business days depending on the destination country. If you haven't received your box in the first few days of the month, it isn't a delay — shipments simply haven't gone out yet.</div>
+        </div>
+      </div>
+      <div class="cond-item cond-item--critical reveal" data-delay="3">
+        <div class="cond-icon">✕</div>
+        <div class="cond-text">
+          <div class="cond-title">No returns</div>
+          <div class="cond-desc">Returns and refunds are not accepted under this subscription model. Each piece is selected and shipped especially for you with care. Exception: if your piece arrives with a manufacturing defect, report it with photos within the first 48 hours and we'll replace it at no cost.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="1">
+        <div class="cond-icon">◇</div>
+        <div class="cond-text">
+          <div class="cond-title">Random selection by CACUSA</div>
+          <div class="cond-desc">Jewelry is randomly selected by the CACUSA team. The surprise and the careful selection are part of the club experience.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="2">
+        <div class="cond-icon">◆</div>
+        <div class="cond-text">
+          <div class="cond-title">Types of pieces included</div>
+          <div class="cond-desc">The 2 monthly pieces can be earrings, rings, bracelets or necklaces — made of <strong>stainless steel</strong>: it doesn't rust, doesn't tarnish, and keeps its shine over time.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="3">
+        <div class="cond-icon">◎</div>
+        <div class="cond-text">
+          <div class="cond-title">No exchanges for store items</div>
+          <div class="cond-desc">Subscription jewelry cannot be exchanged or swapped for items available in the online store. These are exclusive club pieces.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="1">
+        <div class="cond-icon">✕</div>
+        <div class="cond-text">
+          <div class="cond-title">Cancellation policy</div>
+          <div class="cond-desc">You can cancel your subscription anytime directly from the "Manage subscription" link that Square emails you when each payment is confirmed — no need to write to us or wait for a reply. Cancellation takes effect starting the next billing cycle: if the current month's or year's charge has already been processed, your subscription remains active and you'll receive the box for that period — we don't offer refunds on charges already processed. For cancellation to apply before your next charge, do it at least 5 days before your renewal date. If you have trouble finding the link, message us on WhatsApp or at facturacioncacusa@gmail.com and we'll help you.</div>
+        </div>
+      </div>
+      <div class="cond-item cond-item--critical reveal" data-delay="2">
+        <div class="cond-icon">!</div>
+        <div class="cond-text">
+          <div class="cond-title">Failed payment</div>
+          <div class="cond-desc">If your payment isn't processed successfully, Square will automatically try to charge again. While payment is pending, that month's shipment will be put on hold until the situation is resolved.</div>
+        </div>
+      </div>
+      <div class="cond-item reveal" data-delay="3">
+        <div class="cond-icon">◇</div>
+        <div class="cond-text">
+          <div class="cond-title">Price changes</div>
+          <div class="cond-desc">Any change to the subscription price will be communicated at least 30 days in advance via your registered email. You have the right to cancel at no charge if you disagree with the new price.</div>
+        </div>
+      </div>
+      <div class="cond-item cond-item--critical reveal" data-delay="1">
+        <div class="cond-icon">◎</div>
+        <div class="cond-text">
+          <div class="cond-title">Personal data</div>
+          <div class="cond-desc">Your shipping information (name, address, phone) is used exclusively to manage delivery of your jewelry. We do not share your data with third parties. Payment processing is handled securely by Square.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" data-delay="2" style="margin-top:40px;background:linear-gradient(135deg,rgba(232,93,138,.08),rgba(155,93,229,.08));border:1.5px solid rgba(232,93,138,.25);border-radius:16px;padding:24px 28px;max-width:720px;margin-left:auto;margin-right:auto">
+      <div style="font-weight:800;font-size:15px;color:var(--pink);margin-bottom:8px;font-family:var(--fu)">Important about shipping times</div>
+      <div style="font-size:13.5px;color:var(--ink);line-height:1.7;font-family:var(--fu)">Subscriptions all ship together during the <strong>third week of the month</strong>. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="fb-w">CACUSA</div>
+    <div class="fb-s">by Taitus</div>
+    <div class="footer-social">
+      <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" aria-label="Instagram CACUSA by Taitus">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="https://www.tiktok.com/@cacusabytaitus" target="_blank" rel="noopener" aria-label="TikTok CACUSA by Taitus">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.15 8.15 0 0 0 4.77 1.52V6.76a4.85 4.85 0 0 1-1-.07z"/></svg>
+      </a>
+    </div>
+    <div class="footer-links">
+      <a href="./index.html">Home</a>
+      <a href="./ui_kits/store/">Store</a>
+      <a href="./cacusa-lovers.html">Cacusa Lovers</a>
+      <a href="./index.html#personalize">Customize</a>
+      <a href="../envios.html">Shipping</a>
+      <a href="../devoluciones.html">Returns</a>
+    </div>
+    <div class="footer-copy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Made with love ♡</div>
+  </div>
+</footer>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const SQUARE_PAYMENT_LINK         = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/6JKDMFNS3AMD55HRRD7ZQVBW';  // mensual $19.99
+const SQUARE_PAYMENT_LINK_ANNUAL  = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/RJD6DHOGFOTPKVWHC6OXN3VS';  // anual $219.89
+let _selectedPlan    = 'mensual';
+let _fromPlanCard    = false;
+let _subNombre = '', _subApellido = '', _subDireccion = '', _subApto = '', _subCiudad = '', _subPais = '', _subEstado = '', _subZip = '';
+
+// ── FIREBASE (mismo proyecto que la tienda) ──────────────────
+const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
+const _FB_DB      = 'https://cacusa-pos-default-rtdb.firebaseio.com';
+let _fbIdToken = null;
+async function _fbSignIn(){
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${_FB_API_KEY}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({returnSecureToken:true}) }
+    );
+    if(r.ok){ const d=await r.json(); _fbIdToken=d.idToken||null; }
+  } catch(_){}
+}
+function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
+// ── Load what-card photos from Firebase ─────────────────────────────────────
+async function loadLoversPhotos() {
+  try {
+    await _fbSignIn();
+    const r = await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers_photos.json`));
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data) return;
+    [['card1','wfill1'],['card2','wfill2'],['card3','wfill3']].forEach(([key, fillId]) => {
+      const url = data[key]?.url;
+      if (url) {
+        const el = document.getElementById(fillId);
+        if (el) { el.style.backgroundImage = `url('${url}')`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundRepeat='no-repeat'; el.classList.remove('gA','gB','gC','gD','gE'); }
+      }
+    });
+  } catch(_) {}
+}
+loadLoversPhotos();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') loadLoversPhotos();
+});
+
+// ── SUBSCRIPTION MODAL ──────────────────────────────────────
+function onPaisChange(){
+  const pais = document.getElementById('sPais').value;
+  document.getElementById('sFieldsEC').hidden   = pais !== 'Ecuador';
+  document.getElementById('sFieldsUSA').hidden  = pais !== 'USA';
+  document.getElementById('sFieldsOtro').hidden = pais !== 'Otro';
+}
+// ─── AUTOCOMPLETE DIRECCIÓN (Photon / OpenStreetMap) ────────
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Normaliza para comparar sin tildes: "Sucumbíos" → "sucumbios"
+function _norm(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+// Selecciona la <option> de un select cuyo texto coincida con txt
+function _setSelectByText(selectId, txt){
+  if (!txt) return;
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const t = _norm(txt);
+  for (const opt of sel.options){
+    if (!opt.value) continue;
+    const o = _norm(opt.text);
+    if (o === t || o.startsWith(t) || t.startsWith(o)) { sel.value = opt.value; return; }
+  }
+}
+
+function closeAcList(){
+  const list = document.getElementById('sAcList');
+  if (list) { list.classList.remove('open'); list.innerHTML = ''; }
+  _acItems = [];
+}
+
+// Muestra un mensaje en lugar de sugerencias (buscando / sin resultados / error)
+function showAcMsg(txt){
+  const list = document.getElementById('sAcList');
+  if (!list) return;
+  list.innerHTML = '<div class="sub-ac-msg">' + esc(txt) + '</div>';
+  list.classList.add('open');
+  _acItems = [];
+}
+
+let _acItems = [];
+let _acSeq = 0;
+
+(function initAddrAutocomplete(){
+  const inp  = document.getElementById('sDireccion');
+  const list = document.getElementById('sAcList');
+  if (!inp || !list) return;
+  let _timer = null;
+
+  // Tipos de resultado que son un lugar (ciudad/pueblo/etc), no una direccion
+  const CITY_KINDS = ['city','town','village','hamlet','municipality','district','suburb','state','county'];
+
+  function fillFromFeature(f){
+    const p = f.properties;
+    const esLugar = CITY_KINDS.includes(p.osm_value) || CITY_KINDS.includes(p.type);
+    let ciudad = '';
+
+    if (p.street || p.housenumber) {
+      // Direccion exacta -> llena la linea de direccion
+      inp.value = ((p.housenumber ? p.housenumber + ' ' : '') + (p.street || '')).trim();
+      ciudad = p.city || p.town || p.village || p.county || '';
+    } else if (esLugar) {
+      // Resultado de ciudad -> NO tocar la direccion, solo la ciudad
+      ciudad = p.name || '';
+    } else {
+      // POI o edificio con nombre
+      inp.value = p.name || '';
+      ciudad = p.city || p.town || p.village || p.county || '';
+    }
+    if (ciudad) document.getElementById('sCiudad').value = ciudad;
+
+    // País: la tienda usa códigos, acá usamos etiquetas
+    const cc = (p.countrycode || '').toUpperCase();
+    const pais = cc === 'EC' ? 'Ecuador' : cc === 'US' ? 'USA' : 'Otro';
+    document.getElementById('sPais').value = pais;
+    onPaisChange();
+
+    // Estado/provincia + ZIP según el país
+    if (pais === 'Ecuador') {
+      _setSelectByText('sProvincia', p.state);
+    } else if (pais === 'USA') {
+      _setSelectByText('sEstadoUSA', p.state);
+      if (p.postcode) document.getElementById('sZipUSA').value = p.postcode.substring(0, 5);
+    } else {
+      document.getElementById('sEstadoOtro').value = p.state || '';
+      document.getElementById('sZipOtro').value    = p.postcode || '';
+    }
+    closeAcList();
+  }
+
+  inp.addEventListener('input', function(){
+    clearTimeout(_timer);
+    const q = this.value.trim();
+    if (q.length < 3) { closeAcList(); return; }
+    _timer = setTimeout(async () => {
+      const mySeq = ++_acSeq;
+      showAcMsg('Searching\u2026');
+      try {
+        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
+        if (!res.ok) throw new Error('photon ' + res.status);
+        const data = await res.json();
+        if (!data || !Array.isArray(data.features)) throw new Error('respuesta inesperada');
+        if (mySeq !== _acSeq) return;   // llego tarde: ya hay una busqueda mas nueva
+        // Si ya eligió país, filtrar las sugerencias a ese país
+        const selPais = document.getElementById('sPais').value;
+        const want = selPais === 'Ecuador' ? 'EC' : selPais === 'USA' ? 'US' : null;
+        const features = data.features.filter(f => {
+          const p = f.properties;
+          if (!p || !(p.name || p.street)) return false;
+          return !want || (p.countrycode || '').toUpperCase() === want;
+        });
+        if (!features.length) { showAcMsg('No suggestions \u2014 you can type your address manually'); return; }
+        _acItems = features;
+        list.innerHTML = features.map((f, i) => {
+          const p = f.properties;
+          const main   = (p.street || p.housenumber)
+            ? ((p.housenumber ? p.housenumber + ' ' : '') + (p.street || '')).trim()
+            : (p.name || '');
+          const sub    = [p.city || p.town || p.village, p.state, p.country].filter(Boolean).join(', ');
+          return '<div class="sub-ac-item" data-idx="' + i + '">'
+               + '<div class="sub-ac-main">' + esc(main) + '</div>'
+               + (sub ? '<div class="sub-ac-sub">' + esc(sub) + '</div>' : '')
+               + '</div>';
+        }).join('');
+        list.classList.add('open');
+      } catch(e) {
+        if (mySeq === _acSeq) showAcMsg('Could not connect to the address search');
+      }
+    }, 380);
+  });
+
+  list.addEventListener('click', function(e){
+    const item = e.target.closest('.sub-ac-item');
+    if (!item) return;
+    fillFromFeature(_acItems[+item.dataset.idx]);
+  });
+
+  inp.addEventListener('keydown', function(e){
+    const items = list.querySelectorAll('.sub-ac-item');
+    if (!items.length) return;
+    const focused = list.querySelector('.focused');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? (focused.nextElementSibling || items[0]) : items[0];
+      if (focused) focused.classList.remove('focused');
+      next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? (focused.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
+      if (focused) focused.classList.remove('focused');
+      prev.classList.add('focused');
+    } else if (e.key === 'Enter' && focused) {
+      e.preventDefault();
+      fillFromFeature(_acItems[+focused.dataset.idx]);
+    } else if (e.key === 'Escape') {
+      closeAcList();
+    }
+  });
+
+  document.addEventListener('click', function(e){
+    if (!inp.contains(e.target) && !list.contains(e.target)) closeAcList();
+  });
+})();
+
+function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
+
+// Cicla el Tab dentro de modalEl y cierra con Escape. Devuelve una función para liberar los listeners.
+function trapFocus(modalEl, onClose){
+  const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  const _prevFocused = document.activeElement;
+  function getFocusable(){ return Array.from(modalEl.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null); }
+  function onKeydown(e){
+    if (e.key === 'Escape'){ onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const items = getFocusable();
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+  document.addEventListener('keydown', onKeydown);
+  const items = getFocusable();
+  if (items.length) items[0].focus();
+  return function release(){
+    document.removeEventListener('keydown', onKeydown);
+    if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
+  };
+}
+let _subReleaseTrap = null;
+
+function openSub(){
+  document.getElementById('sub-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  _subReleaseTrap = trapFocus(document.getElementById('sub-overlay'), closeSub);
+}
+function closeSub(){
+  document.getElementById('sub-overlay').classList.remove('open');
+  document.body.style.overflow='';
+  if (_subReleaseTrap){ _subReleaseTrap(); _subReleaseTrap = null; }
+  // Reset to step 1
+  document.getElementById('sub-step2').classList.remove('active');
+  document.getElementById('sub-step1').classList.add('active');
+  document.getElementById('dot2').classList.remove('act');
+  document.getElementById('dot1').classList.add('act');
+  document.getElementById('sErr1').textContent='';
+  document.getElementById('sErr2').textContent='';
+  document.querySelectorAll('.sub-input').forEach(el => el.style.borderColor = '');
+  _subNombre=''; _subApellido=''; _subDireccion=''; _subApto=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
+  document.getElementById('sPais').value = '';
+  onPaisChange();
+  closeAcList();
+  const btn = document.getElementById('sPayBtn');
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  _fromPlanCard = false;
+  document.querySelector('.sub-plan-toggle').style.display = 'grid';
+}
+function _markFieldError(id, err, msg){
+  const el = document.getElementById(id);
+  if (el) { el.style.borderColor = '#C0336E'; el.focus(); }
+  if (err) err.textContent = msg;
+}
+function goStep2(){
+  const err      = document.getElementById('sErr1');
+  document.querySelectorAll('#sub-step1 .sub-input').forEach(el => el.style.borderColor = '');
+  const nombre   = document.getElementById('sNombre').value.trim();
+  const email    = document.getElementById('sEmail').value.trim();
+  const tel      = document.getElementById('sTel').value.trim();
+  const direccion= document.getElementById('sDireccion').value.trim();
+  const ciudad   = document.getElementById('sCiudad').value.trim();
+  const pais     = document.getElementById('sPais').value;
+
+  if(!nombre){ _markFieldError('sNombre', err, 'Please enter your first name.'); return; }
+  if(!email || !email.includes('@')){ _markFieldError('sEmail', err, 'Please enter a valid email.'); return; }
+  if(!tel){ _markFieldError('sTel', err, 'Please enter your phone number.'); return; }
+  if(!direccion){ _markFieldError('sDireccion', err, 'Please enter your shipping address.'); return; }
+  if(!ciudad){ _markFieldError('sCiudad', err, 'Please enter your city.'); return; }
+  if(!pais){ _markFieldError('sPais', err, 'Please select your country.'); return; }
+
+  let estado = '', zip = '';
+  if(pais === 'Ecuador'){
+    estado = document.getElementById('sProvincia').value;
+    if(!estado){ _markFieldError('sProvincia', err, 'Please select your province.'); return; }
+  } else if(pais === 'USA'){
+    estado = document.getElementById('sEstadoUSA').value;
+    zip    = document.getElementById('sZipUSA').value.trim();
+    if(!estado){ _markFieldError('sEstadoUSA', err, 'Please select your state.'); return; }
+    if(!zip){ _markFieldError('sZipUSA', err, 'Please enter your ZIP Code.'); return; }
+  } else if(pais === 'Otro'){
+    estado = document.getElementById('sEstadoOtro').value.trim();
+    zip    = document.getElementById('sZipOtro').value.trim();
+  }
+  err.textContent='';
+
+  _subNombre    = nombre;
+  _subApellido  = document.getElementById('sApellido').value.trim();
+  _subDireccion = direccion;
+  _subApto      = document.getElementById('sApto').value.trim();
+  _subCiudad    = ciudad;
+  _subPais      = pais;
+  _subEstado    = estado;
+  _subZip       = zip;
+
+  selectPlan(_selectedPlan);
+  document.querySelector('.sub-plan-toggle').style.display = _fromPlanCard ? 'none' : 'grid';
+
+  document.getElementById('sub-step1').classList.remove('active');
+  document.getElementById('sub-step2').classList.add('active');
+  document.getElementById('dot1').classList.remove('act');
+  document.getElementById('dot2').classList.add('act');
+}
+function goStep1(){
+  document.getElementById('sub-step2').classList.remove('active');
+  document.getElementById('sub-step1').classList.add('active');
+  document.getElementById('dot2').classList.remove('act');
+  document.getElementById('dot1').classList.add('act');
+  document.getElementById('sErr2').textContent='';
+}
+function selectPlan(plan){
+  _selectedPlan = plan;
+  const isAnual = plan === 'anual';
+  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Annual' : 'Cacusa Lovers Monthly';
+  document.getElementById('sum-period-label').textContent = isAnual ? 'Annual total' : 'Monthly total';
+  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$19.99';
+  document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
+  document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
+  const btn = document.getElementById('sPayBtn');
+  btn.innerHTML = isAnual
+    ? 'Subscribe · $219.89/yr <span class="spin"></span>'
+    : 'Subscribe · $19.99/mo <span class="spin"></span>';
+  const hp = document.getElementById('subHeadPrice');
+  if (hp) hp.textContent = isAnual ? '$219.89/yr · 2 selected pieces · shipping included' : '$19.99/mo · 2 selected pieces · shipping included';
+  document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
+  document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
+}
+
+async function submitSubscription(){
+  const btn = document.getElementById('sPayBtn');
+  const err = document.getElementById('sErr2');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  err.textContent = '';
+
+  const subscriber = {
+    nombre:      _subNombre,
+    apellido:    _subApellido,
+    email:       document.getElementById('sEmail').value.trim().toLowerCase(),
+    telefono:    document.getElementById('sTel').value.trim(),
+    direccion:   _subDireccion,
+    apto:        _subApto,
+    ciudad:      _subCiudad,
+    estado:      _subEstado,
+    zip:         _subZip,
+    pais:        _subPais,
+    plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+    monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$19.99/mes',
+    fecha:       new Date().toISOString().slice(0, 10),
+    metodo_pago: 'square',
+    estado_pago: 'pendiente',
+  };
+
+  // Guardar datos en Firebase (best-effort — no bloquea el pago si falla)
+  try {
+    if(!_fbIdToken) await _fbSignIn();
+    await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`), {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(subscriber),
+    });
+  } catch(e){ console.warn('[fb-save]', e); }
+
+  const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
+  window.location.href = link;
+}
+
+// ── DETECT RETURN FROM SQUARE (?subscribed=1 o ?paid=1) ─────
+(function checkReturn(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('subscribed') === '1' || params.get('paid') === '1'){
+    document.getElementById('sub-success').classList.add('show');
+    history.replaceState({}, '', location.pathname);
+  }
+})();
+
+// ── CURSOR ──────────────────────────────────────────────────
+// Cursor personalizado: solo en dispositivos con mouse real (no táctil) — ahorra batería/CPU en móvil
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const cur = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => {
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=(mx-5)+'px'; cur.style.top=(my-5)+'px';
+  });
+  (function anim(){
+    rx+=(mx-rx-16)*.14; ry+=(my-ry-16)*.14;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(anim);
+  })();
+  document.querySelectorAll('button,a,.faq-q').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
+  });
+}
+
+// ── HERO CANVAS ─────────────────────────────────────────────
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,blobs=[];
+const palette=[[238,111,168],[245,160,200],[196,160,236],[136,200,240],[245,200,168],[196,160,236]];
+function initCanvas(){
+  W=canvas.width=canvas.offsetWidth;
+  H=canvas.height=canvas.offsetHeight;
+  blobs=Array.from({length:8},(_,i)=>({
+    x:Math.random()*W,y:Math.random()*H,
+    vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+    r:140+Math.random()*200,c:palette[i%palette.length],
+    a:.28+Math.random()*.22,phase:Math.random()*Math.PI*2,speed:.0025+Math.random()*.003
+  }));
+}
+let _canvasRunning=false, _canvasRAF=null;
+function drawCanvas(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#F9D0E8');bg.addColorStop(.4,'#E8C0F0');bg.addColorStop(.8,'#C0DEFF');bg.addColorStop(1,'#F5E0C8');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  blobs.forEach(b=>{
+    b.x+=b.vx;b.y+=b.vy;b.phase+=b.speed;
+    if(b.x<-b.r)b.x=W+b.r;if(b.x>W+b.r)b.x=-b.r;
+    if(b.y<-b.r)b.y=H+b.r;if(b.y>H+b.r)b.y=-b.r;
+    const pulse=1+.1*Math.sin(b.phase);
+    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*pulse);
+    g.addColorStop(0,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},${b.a})`);
+    g.addColorStop(1,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,b.r*pulse,0,Math.PI*2);ctx.fill();
+  });
+  if(_canvasRunning) _canvasRAF=requestAnimationFrame(drawCanvas);
+}
+function startCanvasAnim(){
+  if(_canvasRunning) return;
+  _canvasRunning=true;
+  _canvasRAF=requestAnimationFrame(drawCanvas);
+}
+function stopCanvasAnim(){
+  _canvasRunning=false;
+  if(_canvasRAF) cancelAnimationFrame(_canvasRAF);
+  _canvasRAF=null;
+}
+initCanvas();
+window.addEventListener('resize',initCanvas);
+
+const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (_reduceMotion) {
+  drawCanvas();
+} else {
+  let _canvasInView = true;
+  const _canvasObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { _canvasInView = e.isIntersecting; });
+    _canvasInView && document.visibilityState==='visible' ? startCanvasAnim() : stopCanvasAnim();
+  }, {threshold:0});
+  _canvasObs.observe(canvas);
+  document.addEventListener('visibilitychange', () => {
+    _canvasInView && document.visibilityState==='visible' ? startCanvasAnim() : stopCanvasAnim();
+  });
+  startCanvasAnim();
+}
+
+// ── SCROLL REVEAL ───────────────────────────────────────────
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});},{threshold:.1});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-scale').forEach(el=>obs.observe(el));
+
+// ── TESTIMONIALS — oculto hasta tener testimonios reales (club nuevo) ──
+/*
+const testis=[
+  {t:'"Llevaba tiempo comprando en Cacusa y unirme al club fue el paso natural. Cada caja es una sorpresa que me encanta recibir."',n:'Valentina S.',l:'Quito, Ecuador'},
+  {t:'"Ya era clienta de Cacusa antes del club. Desde que soy Lover es como recibir un regalo hecho para mí cada mes. ¡Fue la mejor decisión!"',n:'Daniela M.',l:'Miami, USA'},
+  {t:'"Siempre compré en Cacusa y cuando vi el club no lo dudé. Las piezas son únicas y la calidad es exactamente la que ya conocía y adoraba."',n:'Camila R.',l:'Guayaquil, Ecuador'},
+  {t:'"Llevaba tiempo comprando en Cacusa y unirme al club fue el paso natural. Cada caja es una sorpresa que me encanta recibir."',n:'Valentina S.',l:'Quito, Ecuador'},
+  {t:'"Ya era clienta de Cacusa antes del club. Desde que soy Lover es como recibir un regalo hecho para mí cada mes. ¡Fue la mejor decisión!"',n:'Daniela M.',l:'Miami, USA'},
+  {t:'"Siempre compré en Cacusa y cuando vi el club no lo dudé. Las piezas son únicas y la calidad es exactamente la que ya conocía y adoraba."',n:'Camila R.',l:'Guayaquil, Ecuador'},
+];
+const track=document.getElementById('testiTrack');
+testis.forEach(t=>{
+  track.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${t.t}</div><div class="tcard-name">${t.n}</div><div class="tcard-loc">${t.l}</div></div>`;
+});
+*/
+
+// ── FAQ TOGGLE ──────────────────────────────────────────────
+function toggleFaq(el){
+  const item=el.parentElement;
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+
+// ── Mobile nav drawer ─────────────────────────────────────────
+(function(){
+  const btn   = document.getElementById('navMenuBtn');
+  const drawer= document.getElementById('navDrawer');
+  const close = document.getElementById('navDrawerClose');
+  if (!btn || !drawer) return;
+
+  function openDrawer(){
+    drawer.classList.add('open');
+    btn.classList.add('open');
+    btn.setAttribute('aria-expanded','true');
+    document.body.style.overflow='hidden';
+  }
+  function closeDrawer(){
+    drawer.classList.remove('open');
+    btn.classList.remove('open');
+    btn.setAttribute('aria-expanded','false');
+    document.body.style.overflow='';
+  }
+
+  btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
+  if (close) close.addEventListener('click', closeDrawer);
+  drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
+})();
+</script>
+</body>
+</html>
