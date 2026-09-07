@@ -161,6 +161,17 @@ const CATALOG_URL     = 'https://cacusabytaitus.com/data/products.json';
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 const PENDING_TTL_SECONDS = 2 * 60 * 60; // 2 horas — tiempo de sobra para completar el pago
 
+// Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
+// su URL *.workers.dev (error 1042, "This request could not be routed"). El Service Binding
+// ADMIN_WORKER (Cloudflare → cacusa-square → Settings → Bindings → Add → Service binding →
+// apunta a cacusa-admin) enruta la llamada directo entre Workers sin pasar por ese límite.
+// Si el binding todavía no está configurado, cae de vuelta al fetch() normal — que es
+// justamente el que dispara el 1042, así que hasta configurarlo estas llamadas siguen fallando.
+function adminFetch(env, path, options) {
+  const url = `${ADMIN_WORKER_URL}${path}`;
+  return env.ADMIN_WORKER ? env.ADMIN_WORKER.fetch(url, options) : fetch(url, options);
+}
+
 // ── Catalog fetch & price validation ─────────────────────────────────────────
 async function fetchCatalog() {
   const r = await fetch(CATALOG_URL, { cf: { cacheTtl: 60 } });
@@ -182,7 +193,7 @@ async function fetchCatalog() {
 // mismo ORDER_INGEST_KEY que ya usan forwardOrderToAdmin/burnCouponViaAdmin/etc. más abajo.
 async function fetchSurcharges(env) {
   try {
-    const r = await fetch(`${ADMIN_WORKER_URL}/pub/surcharges`, {
+    const r = await adminFetch(env, '/pub/surcharges', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: '{}'
@@ -294,7 +305,7 @@ async function fetchSquareOrder(orderId, token) {
 // Reenvía el pedido ya confirmado a cacusa-admin — llamada servidor-a-servidor,
 // autenticada con ORDER_INGEST_KEY (no con el Origin del navegador, que acá no aplica).
 async function forwardOrderToAdmin(order, env) {
-  const r = await fetch(`${ADMIN_WORKER_URL}/order`, {
+  const r = await adminFetch(env, '/order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     body: JSON.stringify({ order })
@@ -307,7 +318,7 @@ async function forwardOrderToAdmin(order, env) {
 // regalo sin quemarse aunque el pedido ya se haya creado.
 async function burnCouponViaAdmin(code, phone, email, env) {
   if (!code) return;
-  const r = await fetch(`${ADMIN_WORKER_URL}/coupon/burn`, {
+  const r = await adminFetch(env, '/coupon/burn', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     body: JSON.stringify({ code, phone, email })
@@ -317,7 +328,7 @@ async function burnCouponViaAdmin(code, phone, email, env) {
 
 async function redeemGiftCardViaAdmin(code, amountCents, env) {
   if (!code || !(amountCents > 0)) return;
-  const r = await fetch(`${ADMIN_WORKER_URL}/giftcard/redeem`, {
+  const r = await adminFetch(env, '/giftcard/redeem', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     body: JSON.stringify({ code, amount: amountCents / 100 })
