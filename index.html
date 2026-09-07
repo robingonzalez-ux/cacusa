@@ -429,6 +429,27 @@ html,body{overflow-x:hidden}
 </style>
 </head>
 <body>
+<!--NOSCRIPT_HOME_START-->
+<noscript>
+<section aria-label="CACUSA by Taitus">
+<h1>CACUSA by Taitus — Joyería personalizada</h1>
+<p>Bisutería y joyería artesanal hecha a mano en plata 925, baño de oro 18k y acero inoxidable. Personalización con nombre, inicial, fecha o mensaje incluida en el precio. Envíos a Ecuador y Estados Unidos.</p>
+<h2>Comprar por categoría</h2>
+<ul>
+<li><a href="./ui_kits/store/?cat=Anillos">Anillos</a></li>
+<li><a href="./ui_kits/store/?cat=Aretes">Aretes</a></li>
+<li><a href="./ui_kits/store/?cat=Pulseras">Pulseras</a></li>
+<li><a href="./ui_kits/store/?cat=Hombres">Hombres</a></li>
+<li><a href="./ui_kits/store/?cat=Cadenas">Cadenas</a></li>
+<li><a href="./ui_kits/store/?cat=Ear cuff">Ear cuff</a></li>
+<li><a href="./ui_kits/store/?cat=Parejas">Parejas</a></li>
+<li><a href="./ui_kits/store/?cat=Juegos">Juegos</a></li>
+<li><a href="./ui_kits/store/?cat=Hand chain">Hand chain</a></li>
+</ul>
+<p><a href="./ui_kits/store/">Ver toda la tienda</a> · <a href="./cacusa-lovers.html">Cacusa Lovers, suscripción mensual</a></p>
+</section>
+</noscript>
+<!--NOSCRIPT_HOME_END-->
 
 
 <div id="cursor"></div>
@@ -607,7 +628,7 @@ html,body{overflow-x:hidden}
         </div>
       </div>
       <div class="story-visual">
-        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" width="1080" height="1920" style="width:100%;height:100%;object-fit:cover;display:block"></div>
         <div class="s-img reveal-right" data-delay="1" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
         <div class="s-img reveal-right" data-delay="2" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
       </div>
@@ -820,7 +841,7 @@ function renderHomeItemListLd(products){
 // Ahora es fetch asíncrono: fillCollectionCards/heroSlideshow/renderFeaturedProducts/renderTestimonials
 // (declaradas más abajo) se llaman recién cuando los datos ya están disponibles, no antes.
 function loadHomeContent(){
-  fetch('./data/products.json?v=' + Date.now())
+  fetch('./data/products.json')
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       const cfg = data.config || {};
@@ -1134,7 +1155,7 @@ function renderFeaturedProducts(){
     const oldP  = p.oldPrice ? `<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>` : '';
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50, z = p.zoom ?? 1;
     const img = p.imageUrl
-      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
+      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;
     const badge = p.tag ? `<div class="prod-badge">${esc(p.tag)}</div>` : '';
     const card = document.createElement('div');
