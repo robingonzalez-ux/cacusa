@@ -25,7 +25,7 @@
       "Plata 925 con un baño de oro de 18k"
     ],
     "shipping": {
-      "freeThreshold": 150,
+      "freeThreshold": 90,
       "cost": 10
     },
     "texts": {

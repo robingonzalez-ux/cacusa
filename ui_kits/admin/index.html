@@ -75,7 +75,7 @@ function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base;
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
 const DEFAULT_CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
 const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
-const DEFAULT_SHIPPING   = { freeThreshold: 150, cost: 10 };
+const DEFAULT_SHIPPING   = { freeThreshold: 90, cost: 10 };
 const DEFAULT_TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -2839,7 +2839,7 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
             <label style={lbl}>Envío gratis desde ($)</label>
-            <input type="number" min="0" step="1" value={shipping.freeThreshold} onChange={e => setShip('freeThreshold', e.target.value)} placeholder="60" style={inp} />
+            <input type="number" min="0" step="1" value={shipping.freeThreshold} onChange={e => setShip('freeThreshold', e.target.value)} placeholder="90" style={inp} />
           </div>
           <div>
             <label style={lbl}>Costo de envío ($)</label>
