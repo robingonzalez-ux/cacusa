@@ -2270,7 +2270,7 @@ function LoversTab({ products = [], token }) {
   const [deletingId, setDeletingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
   const [busyId, setBusyId] = useState(null); // fila con una accion destructiva en curso (cancelar o eliminar)
-  const NEW_SUB_BLANK = { nombre: '', apellido: '', email: '', telefono: '', direccion: '', apto: '', ciudad: '', estado: '', zip: '', pais: '', plan: 'mensual', notas: '' };
+  const NEW_SUB_BLANK = { nombre: '', apellido: '', email: '', telefono: '', direccion: '', apto: '', ciudad: '', estado: '', zip: '', pais: '', plan: 'mensual', vence: '', notas: '' };
   const [showNewForm, setShowNewForm] = useState(false);
   const [newForm, setNewForm] = useState(NEW_SUB_BLANK);
   const [savingNew, setSavingNew] = useState(false);
@@ -2346,6 +2346,7 @@ function LoversTab({ products = [], token }) {
       estado: s.estado || '', zip: s.zip || '', pais: s.pais || '',
       ultimo_pago: s.ultimo_pago || '', square_invoice_id: s.square_invoice_id || '',
       square_subscription_id: s.square_subscription_id || '',
+      vence: s.vence || '',
       notas: s.notas || '',
     });
   };
@@ -2444,6 +2445,7 @@ function LoversTab({ products = [], token }) {
   const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
   const estadoLabel = e => ({ 'activo': 'Activo ✓', 'pendiente': 'Pendiente', 'cancelado': 'Cancelado', 'pago_fallido': 'Pago fallido ⚠️' }[e] || e || 'Pendiente');
   const fmt = iso => { try { return new Date(iso).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }); } catch { return iso || '—'; } };
+  const todayIso = new Date().toISOString().slice(0, 10);
 
   return (
     <div>
@@ -2505,13 +2507,20 @@ function LoversTab({ products = [], token }) {
                 </div>
               ))}
             </div>
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Plan</div>
-              <select value={newForm.plan} onChange={e => nf('plan', e.target.value)}
-                style={{ fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', fontFamily: 'inherit', color: '#1A1118', background: 'white' }}>
-                <option value="mensual">Mensual — $19.99/mes</option>
-                <option value="anual">Anual — $219.89/año</option>
-              </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Plan</div>
+                <select value={newForm.plan} onChange={e => nf('plan', e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', fontFamily: 'inherit', color: '#1A1118', background: 'white' }}>
+                  <option value="mensual">Mensual — $19.99/mes</option>
+                  <option value="anual">Anual — $219.89/año</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
+                <input type="date" value={newForm.vence} onChange={e => nf('vence', e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: '#1A1118' }} />
+              </div>
             </div>
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
@@ -2634,6 +2643,11 @@ function LoversTab({ products = [], token }) {
                       {estadoLabel(s.estado_pago)}
                     </span>
                     {s.ultimo_pago && <div style={{ fontSize: 11, color: '#A89AAF', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
+                    {s.vence && (
+                      <div style={{ fontSize: 11, textAlign: 'right', fontWeight: s.vence < todayIso && s.estado_pago === 'activo' ? 700 : 400, color: s.vence < todayIso && s.estado_pago === 'activo' ? '#DC2626' : '#A89AAF' }}>
+                        {s.vence < todayIso && s.estado_pago === 'activo' ? '⚠ Venció: ' : 'Válido hasta: '}{fmt(s.vence)}
+                      </div>
+                    )}
                     {s.fecha_cancelacion && <div style={{ fontSize: 11, color: '#ef4444', textAlign: 'right' }}>Canceló: {fmt(s.fecha_cancelacion)}</div>}
                     <select
                       disabled={!!updating[s.id]}
@@ -2722,6 +2736,11 @@ function LoversTab({ products = [], token }) {
                           </div>
                         ))}
                       </div>
+                    </div>
+                    <div style={{ marginBottom: 14 }}>
+                      <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
+                      <input type="date" value={editForm.vence} onChange={e => ef('vence', e.target.value)}
+                        style={{ boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: '#1A1118' }} />
                     </div>
                     <div style={{ marginBottom: 14 }}>
                       <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>

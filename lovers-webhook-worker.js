@@ -324,6 +324,7 @@ export default {
             fecha:     new Date().toISOString().slice(0, 10),
             estado_pago: 'activo',
             metodo_pago: 'manual',
+            vence:     /^\d{4}-\d{2}-\d{2}$/.test(body?.vence) ? body.vence : '',
             notas:     str(body?.notas, 500),
           };
           const newKey = await createSubscriber(record, dbUrl, fbAuth);
