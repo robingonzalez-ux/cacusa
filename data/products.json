@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-07T05:15:26.566Z",
+  "lastUpdated": "2026-09-07T10:53:44.759Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -139,7 +139,12 @@
         1786330341098,
         1788449850640,
         1788540460219
-      ]
+      ],
+      "collectionPhotoIds": {
+        "Hombres": 1781885393238,
+        "Pulseras": 1788449850640,
+        "Aretes": 1786303032752
+      }
     },
     "home_en": {
       "storyLabel": "Our Story",
