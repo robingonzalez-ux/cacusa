@@ -112,6 +112,56 @@ const DEFAULT_HOME = {
     copyright: `© ${new Date().getFullYear()} CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍`
   }
 };
+const DEFAULT_LOVERS = {
+  monthlyPrice: 19.99,
+  annualPrice: 219.89,
+  heroBadge: '✦ Club de suscripción exclusivo',
+  heroDesc: 'Cada mes recibirás 2 joyas en acero inoxidable —no se oxidan, no se ponen negras— seleccionadas a mano directamente a tu puerta: piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.',
+  whatDesc: 'Una membresía mensual pensada para mujeres que aman la joyería de alta calidad y quieren vivir esa emoción de recibir una pieza especial, cada mes, sin buscarla.',
+  whatItems: [
+    { title: 'Joyas elegidas para ti', desc: 'Cada mes seleccionamos 2 piezas en acero inoxidable para ti: no se oxidan, no se ponen negras y son tuyas para siempre.' },
+    { title: 'Directamente a tu puerta', desc: 'Envío a domicilio incluido en Ecuador y Estados Unidos. Sin salir de casa.' },
+    { title: 'Piezas exclusivas de suscriptora', desc: 'Diseños que no se venden en tienda. Solo para Cacusa Lovers.' }
+  ],
+  planFeatures: [
+    '2 joyas en acero inoxidable seleccionadas a mano',
+    'Envío a domicilio incluido — Ecuador y USA',
+    'Envíos gratis en todas tus compras en tienda',
+    'Cupones de descuento exclusivos',
+    'Acceso anticipado a nuevas colecciones'
+  ],
+  planFeatureAnnualExtra: '12 meses de joyas pagando solo 11',
+  howSteps: [
+    { title: 'Elige tu plan y regístrate', desc: 'Escoge el plan que mejor te convenga — mensual o anual — e ingresa tus datos de envío. Todo en segundos.' },
+    { title: 'Elegimos tu caja', desc: 'Cada mes seleccionamos a mano tus piezas pensando en ti — sorpresa garantizada, calidad asegurada.' },
+    { title: 'Llega a tu puerta', desc: 'Tu caja de joyería seleccionada llega directamente a tu domicilio, cada mes, como un regalo que te mereces.' }
+  ],
+  conditions: [
+    { title: 'Pago recurrente mensual', desc: 'El cobro se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.' },
+    { title: 'Envío tras confirmación de pago', desc: 'Los envíos se realizan durante la tercera semana de cada mes, una vez confirmado el pago. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — los envíos aún no han salido.' },
+    { title: 'Sin devoluciones', desc: 'No se aceptan devoluciones ni reembolsos en esta modalidad de suscripción. Cada pieza es seleccionada y enviada especialmente para ti con dedicación. Excepción: si tu pieza llega con un defecto de fabricación, repórtalo con fotos dentro de las primeras 48 horas y te la reponemos sin costo.' },
+    { title: 'Selección aleatoria por CACUSA', desc: 'Las joyas son seleccionadas de forma aleatoria por el equipo de CACUSA. La sorpresa y la cuidadosa selección son parte de la experiencia del club.' },
+    { title: 'Tipos de piezas incluidas', desc: 'Las 2 piezas mensuales pueden ser aretes, anillos, pulseras o collares — elaboradas en acero inoxidable: no se oxidan, no se ponen negras y mantienen su brillo con el tiempo.' },
+    { title: 'Sin cambios por artículos de tienda', desc: 'Las joyas de la suscripción no pueden canjearse ni cambiarse por artículos disponibles en la tienda online. Son piezas exclusivas del club.' },
+    { title: 'Política de cancelación', desc: 'Puedes cancelar tu suscripción cuando quieras directamente desde el enlace "Manage subscription" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a facturacioncacusa@gmail.com y te ayudamos.' },
+    { title: 'Pago fallido', desc: 'Si tu pago no se procesa exitosamente, Square intentará el cobro nuevamente de forma automática. Mientras el pago esté pendiente, el envío del mes quedará suspendido hasta que se regularice la situación.' },
+    { title: 'Cambios de precio', desc: 'Cualquier modificación en el precio de la suscripción será comunicada con al menos 30 días de anticipación a través del email registrado. Tienes derecho a cancelar sin cargo si no estás de acuerdo con el nuevo precio.' },
+    { title: 'Datos personales', desc: 'Tu información de envío (nombre, dirección, teléfono) se utiliza exclusivamente para gestionar la entrega de tus joyas. No compartimos tus datos con terceros. El procesamiento del pago lo realiza Square de forma segura.' }
+  ],
+  shippingNotice: {
+    title: 'Importante sobre los tiempos de envío',
+    text: 'Las suscripciones se envían todas juntas durante la tercera semana del mes. Esto es diferente a un pedido regular de la tienda. Si te unes a mediados de mes, tu primera caja saldrá en la tercera semana del mes siguiente. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — simplemente aún no ha llegado el momento del envío mensual.'
+  },
+  faq: [
+    { q: '¿Cuándo recibiré mi primera caja?', a: 'Tu primera caja se envía dentro de los primeros 5 días hábiles después de tu suscripción. A partir del segundo mes, los envíos salen durante la tercera semana del mes, junto con todas las suscripciones.' },
+    { q: '¿Puedo elegir las joyas que recibo?', a: 'No — la sorpresa es parte de la experiencia. Cada mes, el equipo de CACUSA selecciona las 2 piezas que recibirás, cuidando siempre variedad y calidad, sin que tengas que elegir nada.' },
+    { q: '¿Envían a toda la República del Ecuador y USA?', a: 'Sí. El envío está incluido en el precio de la membresía tanto para Ecuador como para Estados Unidos, sin costo adicional.' },
+    { q: '¿Cómo es el pago mensual?', a: 'El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro.' }
+  ],
+  ctaScript: '¿Lista para unirte?',
+  ctaHeading: 'Tu joya de este mes te está esperando',
+  ctaSub: 'creamos para que luzcas más bella de lo que ya eres'
+};
 const DEFAULT_PAGES = {
   envios: {
     intro: 'Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso.',
@@ -271,6 +321,30 @@ async function translateHomeBlock(home) {
       tagline:   await t(home.footer && home.footer.tagline),
       copyright: await t(home.footer && home.footer.copyright)
     }
+  };
+}
+// Traduce el bloque "lovers" (contenido público de la página Cacusa Lovers)
+async function translateLoversBlock(lovers) {
+  const t = async s => s ? await translateToEn(s) : '';
+  return {
+    monthlyPrice: lovers.monthlyPrice,   // números — no se traducen
+    annualPrice:  lovers.annualPrice,
+    heroBadge: await t(lovers.heroBadge),
+    heroDesc:  await t(lovers.heroDesc),
+    whatDesc:  await t(lovers.whatDesc),
+    whatItems: await Promise.all((lovers.whatItems || []).map(async it => ({ title: await translateToEn(it.title), desc: await translateToEn(it.desc) }))),
+    planFeatures: await Promise.all((lovers.planFeatures || []).map(f => translateToEn(f))),
+    planFeatureAnnualExtra: await t(lovers.planFeatureAnnualExtra),
+    howSteps: await Promise.all((lovers.howSteps || []).map(async st => ({ title: await translateToEn(st.title), desc: await translateToEn(st.desc) }))),
+    conditions: await Promise.all((lovers.conditions || []).map(async c => ({ title: await translateToEn(c.title), desc: await translateToEn(c.desc) }))),
+    shippingNotice: {
+      title: await t(lovers.shippingNotice && lovers.shippingNotice.title),
+      text:  await t(lovers.shippingNotice && lovers.shippingNotice.text)
+    },
+    faq: await Promise.all((lovers.faq || []).map(async f => ({ q: await translateToEn(f.q), a: await translateToEn(f.a) }))),
+    ctaScript:  await t(lovers.ctaScript),
+    ctaHeading: await t(lovers.ctaHeading),
+    ctaSub:     await t(lovers.ctaSub)
   };
 }
 // Traduce el bloque "pages" (envíos / devoluciones / cuidados)
@@ -1763,6 +1837,160 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
   );
 }
 
+// ── Cacusa Lovers (contenido de la página pública) ────────────────────────────
+function LoversPageTab({ lovers, setLovers, setDirty }) {
+  const setField = (k, v) => { setLovers(l => ({ ...l, [k]: v })); setDirty(true); };
+  const setWhatItem = (i, k, v) => { setLovers(l => ({ ...l, whatItems: l.whatItems.map((it, j) => j === i ? { ...it, [k]: v } : it) })); setDirty(true); };
+  const setPlanFeature = (i, v) => { setLovers(l => ({ ...l, planFeatures: l.planFeatures.map((f, j) => j === i ? v : f) })); setDirty(true); };
+  const setHowStep = (i, k, v) => { setLovers(l => ({ ...l, howSteps: l.howSteps.map((s, j) => j === i ? { ...s, [k]: v } : s) })); setDirty(true); };
+  const setCondition = (i, k, v) => { setLovers(l => ({ ...l, conditions: l.conditions.map((c, j) => j === i ? { ...c, [k]: v } : c) })); setDirty(true); };
+  const setShippingNotice = (k, v) => { setLovers(l => ({ ...l, shippingNotice: { ...l.shippingNotice, [k]: v } })); setDirty(true); };
+  const setFaq = (i, k, v) => { setLovers(l => ({ ...l, faq: l.faq.map((f, j) => j === i ? { ...f, [k]: v } : f) })); setDirty(true); };
+  const addFaq = () => { setLovers(l => ({ ...l, faq: [...(l.faq || []), { q: '', a: '' }] })); setDirty(true); };
+  const delFaq = i => { setLovers(l => ({ ...l, faq: l.faq.filter((_, j) => j !== i) })); setDirty(true); };
+
+  const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
+  const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
+  const card = { background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 };
+  const hint = { fontSize: 12, color: '#A89AAF', marginBottom: 16 };
+  const rowCard = { background: '#FAF7FB', borderRadius: 10, padding: 12, position: 'relative' };
+
+  const savePct = lovers.monthlyPrice > 0 ? Math.round((1 - lovers.annualPrice / (lovers.monthlyPrice * 12)) * 100) : 0;
+  const perMonthAnnual = lovers.annualPrice > 0 ? (lovers.annualPrice / 12).toFixed(2) : '0.00';
+
+  return (
+    <div style={{ maxWidth: 620, margin: '0 auto' }}>
+
+      {/* ── Precio ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>💰 Precio de la membresía</div>
+        <div style={hint}>El % de ahorro del plan anual y su equivalente mensual se calculan solos a partir de estos dos precios — no hace falta editarlos aparte.</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div><label style={lbl}>Precio mensual (USD)</label><input type="number" step="0.01" min="0" value={lovers.monthlyPrice} onChange={e => setField('monthlyPrice', parseFloat(e.target.value) || 0)} style={inp} /></div>
+          <div><label style={lbl}>Precio anual (USD)</label><input type="number" step="0.01" min="0" value={lovers.annualPrice} onChange={e => setField('annualPrice', parseFloat(e.target.value) || 0)} style={inp} /></div>
+        </div>
+        <div style={{ marginTop: 10, fontSize: 12, color: '#E85D8A', fontWeight: 600 }}>Vista previa: ahorra {savePct}% · ≈ ${perMonthAnnual}/mes en el plan anual</div>
+        <div style={{ marginTop: 12, background: '#FFF7E6', border: '1.5px solid #F5C77A', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#8A6416', lineHeight: 1.5 }}>
+          ⚠️ <strong>Importante:</strong> esto solo cambia el precio que se <em>muestra</em> en la página. El cobro real lo procesa un enlace de pago fijo de Square (uno para el plan mensual, otro para el anual), que tiene su propio monto configurado del lado de Square — cambiarlo aquí NO cambia lo que Square cobra. Si subes o bajas el precio, avísame para actualizar también los enlaces de Square y que ambos coincidan.
+        </div>
+      </div>
+
+      {/* ── Hero ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✦ Portada de Cacusa Lovers</div>
+        <div style={hint}>Lo primero que se ve al entrar a la página.</div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div><label style={lbl}>Etiqueta (badge)</label><input value={lovers.heroBadge || ''} onChange={e => setField('heroBadge', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Descripción</label><textarea value={lovers.heroDesc || ''} onChange={e => setField('heroDesc', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
+        </div>
+      </div>
+
+      {/* ── Qué es ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>💬 "¿Qué es Cacusa Lovers?"</div>
+        <div style={hint}>La descripción del club y sus 3 beneficios destacados.</div>
+        <div style={{ marginBottom: 14 }}><label style={lbl}>Descripción</label><textarea value={lovers.whatDesc || ''} onChange={e => setField('whatDesc', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(lovers.whatItems || []).map((it, i) => (
+            <div key={i} style={rowCard}>
+              <input value={it.title || ''} onChange={e => setWhatItem(i, 'title', e.target.value)} placeholder="Título" style={{ ...inp, fontWeight: 600, marginBottom: 8 }} />
+              <input value={it.desc || ''} onChange={e => setWhatItem(i, 'desc', e.target.value)} placeholder="Descripción" style={inp} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Beneficios del plan ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✓ Beneficios del plan</div>
+        <div style={hint}>Se muestran en ambas tarjetas (mensual y anual). El último es un beneficio extra que solo aparece en la tarjeta anual.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {(lovers.planFeatures || []).map((f, i) => (
+            <input key={i} value={f || ''} onChange={e => setPlanFeature(i, e.target.value)} placeholder={`Beneficio ${i + 1}`} style={inp} />
+          ))}
+        </div>
+        <div style={{ marginTop: 10 }}>
+          <label style={lbl}>Beneficio extra (solo plan anual)</label>
+          <input value={lovers.planFeatureAnnualExtra || ''} onChange={e => setField('planFeatureAnnualExtra', e.target.value)} style={inp} />
+        </div>
+      </div>
+
+      {/* ── Cómo funciona ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>① Cómo funciona</div>
+        <div style={hint}>Los 3 pasos del proceso.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(lovers.howSteps || []).map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', ...rowCard }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
+              <input value={s.title || ''} onChange={e => setHowStep(i, 'title', e.target.value)} placeholder="Título" style={{ ...inp, flex: 1, fontWeight: 600 }} />
+              <input value={s.desc || ''} onChange={e => setHowStep(i, 'desc', e.target.value)} placeholder="Descripción" style={{ ...inp, flex: 2 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Condiciones Generales ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📋 Condiciones Generales</div>
+        <div style={hint}>Incluye la política de cancelación, pago recurrente, devoluciones, etc. Este texto es lo que ven las suscriptoras como reglas del club — revísalo con cuidado antes de publicar.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {(lovers.conditions || []).map((c, i) => (
+            <div key={i} style={rowCard}>
+              <input value={c.title || ''} onChange={e => setCondition(i, 'title', e.target.value)} placeholder="Título de la condición" style={{ ...inp, fontWeight: 600, marginBottom: 8 }} />
+              <textarea value={c.desc || ''} onChange={e => setCondition(i, 'desc', e.target.value)} rows={2} placeholder="Descripción" style={{ ...inp, resize: 'vertical' }} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Aviso de tiempos de envío ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🚚 Aviso de tiempos de envío</div>
+        <div style={hint}>El recuadro destacado que explica el envío mensual conjunto.</div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div><label style={lbl}>Título</label><input value={lovers.shippingNotice?.title || ''} onChange={e => setShippingNotice('title', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Texto</label><textarea value={lovers.shippingNotice?.text || ''} onChange={e => setShippingNotice('text', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} /></div>
+        </div>
+      </div>
+
+      {/* ── FAQ ── */}
+      <div style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>❓ Preguntas frecuentes</div>
+          <button onClick={addFaq} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
+        </div>
+        <div style={hint}>Aparecen en la sección FAQ y también le dicen a Google cuáles son (datos estructurados) — deben coincidir con lo que ve la clienta, así que se sincronizan solas.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {(lovers.faq || []).map((f, i) => (
+            <div key={i} style={{ ...rowCard, paddingRight: 44 }}>
+              <button onClick={() => delFaq(i)} style={{ position: 'absolute', top: 8, right: 8, padding: '4px 9px', background: '#FEE2E2', color: '#DC2626', borderRadius: 8, fontSize: 12, border: 'none', cursor: 'pointer' }}>🗑</button>
+              <input value={f.q || ''} onChange={e => setFaq(i, 'q', e.target.value)} placeholder="Pregunta" style={{ ...inp, fontWeight: 600, marginBottom: 8 }} />
+              <textarea value={f.a || ''} onChange={e => setFaq(i, 'a', e.target.value)} rows={2} placeholder="Respuesta" style={{ ...inp, resize: 'vertical' }} />
+            </div>
+          ))}
+          {(lovers.faq || []).length === 0 && <div style={{ fontSize: 13, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>Sin preguntas.</div>}
+        </div>
+      </div>
+
+      {/* ── CTA final ── */}
+      <div style={card}>
+        <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>♡ Llamado a la acción final</div>
+        <div style={hint}>La última sección antes del pie de página.</div>
+        <div style={{ display: 'grid', gap: 14 }}>
+          <div><label style={lbl}>Frase pequeña</label><input value={lovers.ctaScript || ''} onChange={e => setField('ctaScript', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Título</label><input value={lovers.ctaHeading || ''} onChange={e => setField('ctaHeading', e.target.value)} style={inp} /></div>
+          <div><label style={lbl}>Subtítulo</label><input value={lovers.ctaSub || ''} onChange={e => setField('ctaSub', e.target.value)} style={inp} /></div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
+        💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para que los cambios se reflejen en la web, en español y en inglés.
+      </div>
+    </div>
+  );
+}
+
 // ── Pages Tab ───────────────────────────────────────────────────────────────
 function PagesTab({ pages, setPages, setDirty }) {
   const set = (page, key, val) => {
@@ -3054,6 +3282,7 @@ function App() {
   const [shipping, setShipping]       = useState(DEFAULT_SHIPPING);
   const [texts, setTexts]             = useState(DEFAULT_TEXTS);
   const [home, setHome]               = useState(DEFAULT_HOME);
+  const [lovers, setLovers]           = useState(DEFAULT_LOVERS);
   const [pages, setPages]             = useState(DEFAULT_PAGES);
   const [orders, setOrders]           = useState([]);
   const [ordersSha, setOrdersSha]     = useState(null);
@@ -3080,9 +3309,9 @@ function App() {
   const [fbMarkets, setFbMarkets]           = useState({});
   const [combos, setCombos]                 = useState([]);
   // Bloques en inglés cargados del JSON (se preservan/regeneran al publicar)
-  const enRef   = React.useRef({ translations: null, texts_en: null, home_en: null, pages_en: null });
+  const enRef   = React.useRef({ translations: null, texts_en: null, home_en: null, pages_en: null, lovers_en: null });
   // Snapshot del español al cargar, para detectar cambios y re-traducir solo lo editado
-  const snapRef = React.useRef({ texts: '', home: '', pages: '' });
+  const snapRef = React.useRef({ texts: '', home: '', pages: '', lovers: '' });
 
   useEffect(() => {
     (async () => {
@@ -3155,6 +3384,17 @@ function App() {
           footer: (h.footer && typeof h.footer === 'object') ? { ...DEFAULT_HOME.footer, ...h.footer } : DEFAULT_HOME.footer
         };
         setHome(mergedHome);
+        const l = (cfg.lovers && typeof cfg.lovers === 'object') ? cfg.lovers : {};
+        const mergedLovers = {
+          ...DEFAULT_LOVERS, ...l,
+          whatItems:   Array.isArray(l.whatItems)   ? l.whatItems   : DEFAULT_LOVERS.whatItems,
+          planFeatures:Array.isArray(l.planFeatures)? l.planFeatures: DEFAULT_LOVERS.planFeatures,
+          howSteps:    Array.isArray(l.howSteps)    ? l.howSteps    : DEFAULT_LOVERS.howSteps,
+          conditions:  Array.isArray(l.conditions)  ? l.conditions  : DEFAULT_LOVERS.conditions,
+          faq:         Array.isArray(l.faq)         ? l.faq         : DEFAULT_LOVERS.faq,
+          shippingNotice: (l.shippingNotice && typeof l.shippingNotice === 'object') ? { ...DEFAULT_LOVERS.shippingNotice, ...l.shippingNotice } : DEFAULT_LOVERS.shippingNotice
+        };
+        setLovers(mergedLovers);
         const mergedPages = {
           envios:       { ...DEFAULT_PAGES.envios,       ...((cfg.pages && cfg.pages.envios)       || {}) },
           devoluciones: { ...DEFAULT_PAGES.devoluciones, ...((cfg.pages && cfg.pages.devoluciones) || {}) },
@@ -3166,12 +3406,14 @@ function App() {
           translations: cfg.translations || null,
           texts_en:     cfg.texts_en     || null,
           home_en:      cfg.home_en      || null,
-          pages_en:     cfg.pages_en     || null
+          pages_en:     cfg.pages_en     || null,
+          lovers_en:    cfg.lovers_en    || null
         };
         snapRef.current = {
-          texts: JSON.stringify(mergedTexts),
-          home:  JSON.stringify(mergedHome),
-          pages: JSON.stringify(mergedPages)
+          texts:  JSON.stringify(mergedTexts),
+          home:   JSON.stringify(mergedHome),
+          pages:  JSON.stringify(mergedPages),
+          lovers: JSON.stringify(mergedLovers)
         };
       } else {
         setProducts([]);
@@ -3201,14 +3443,18 @@ function App() {
     try {
       // ── Traducción automática al inglés ──
       // Regenera un bloque solo si su versión en español cambió desde la carga; si no, preserva la traducción existente.
-      let texts_en = enRef.current.texts_en;
-      let home_en  = enRef.current.home_en;
-      let pages_en = enRef.current.pages_en;
+      let texts_en  = enRef.current.texts_en;
+      let home_en   = enRef.current.home_en;
+      let pages_en  = enRef.current.pages_en;
+      let lovers_en = enRef.current.lovers_en;
       if (JSON.stringify(texts) !== snapRef.current.texts || !texts_en) {
         setSyncMsg('🌐 Traduciendo textos de la tienda…'); texts_en = await translateTextsBlock(texts);
       }
       if (JSON.stringify(home) !== snapRef.current.home || !home_en) {
         setSyncMsg('🌐 Traduciendo sección "Nosotros"…');  home_en = await translateHomeBlock(home);
+      }
+      if (JSON.stringify(lovers) !== snapRef.current.lovers || !lovers_en) {
+        setSyncMsg('🌐 Traduciendo Cacusa Lovers…');       lovers_en = await translateLoversBlock(lovers);
       }
       if (JSON.stringify(pages) !== snapRef.current.pages || !pages_en) {
         setSyncMsg('🌐 Traduciendo páginas de ayuda…');    pages_en = await translatePagesBlock(pages);
@@ -3238,15 +3484,15 @@ function App() {
         whatsapp: whatsappNum,
         config: {
           whatsapp: whatsappNum, categories, materials, shipping,
-          texts, texts_en, home, home_en, pages, pages_en,
+          texts, texts_en, home, home_en, lovers, lovers_en, pages, pages_en,
           translations: enRef.current.translations || undefined
         },
         products: prodsOut,
         combos
       }, null, 2);
       // Refresca el snapshot para no re-traducir lo mismo en la próxima publicación de esta sesión
-      enRef.current = { translations: enRef.current.translations, texts_en, home_en, pages_en };
-      snapRef.current = { texts: JSON.stringify(texts), home: JSON.stringify(home), pages: JSON.stringify(pages) };
+      enRef.current = { translations: enRef.current.translations, texts_en, home_en, pages_en, lovers_en };
+      snapRef.current = { texts: JSON.stringify(texts), home: JSON.stringify(home), pages: JSON.stringify(pages), lovers: JSON.stringify(lovers) };
       await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
       // Pedidos (no bloquea si falla)
       try {
@@ -3402,6 +3648,7 @@ function App() {
             ['cupones',    '🏷️ Cupones',    0],
             ['leads',      '📋 Leads 10%',  0],
             ['lovers',     '🌸 Cacusa Lovers', loversCount],
+            ['lovers-page','💌 Lovers (página)', 0],
             ['settings',   '⚙️ Ajustes',    0]
           ].map(([tab, label, badge]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -3646,6 +3893,11 @@ function App() {
         {/* ── Landing tab ── */}
         {activeTab === 'landing' && (
           <LandingTab home={home} setHome={setHome} products={products} setDirty={setDirty} texts={texts} setTexts={setTexts} />
+        )}
+
+        {/* ── Cacusa Lovers (contenido de la página) tab ── */}
+        {activeTab === 'lovers-page' && (
+          <LoversPageTab lovers={lovers} setLovers={setLovers} setDirty={setDirty} />
         )}
 
         {/* ── Pages tab ── */}
