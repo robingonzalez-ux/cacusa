@@ -45,9 +45,32 @@ From $15 to approximately $80 USD depending on the piece and material.
 Los pedidos personalizados tardan 5 a 10 días hábiles en elaborarse, más tiempo de envío.
 Personalized orders take 5 to 10 business days to make, plus shipping time.
 
+## Cacusa Lovers (suscripción / subscription)
+
+Cacusa Lovers es un club de suscripción mensual: cada mes se envían 2 joyas en
+acero inoxidable de alta calidad, seleccionadas por Cacusa, directamente a la
+puerta del cliente. Disponible en plan mensual y plan anual (con descuento).
+Envíos a Ecuador y Estados Unidos.
+- Página / Page: https://cacusabytaitus.com/cacusa-lovers.html (español) —
+  https://cacusabytaitus.com/en/cacusa-lovers.html (English)
+
+Cacusa Lovers is a monthly subscription club: every month, 2 high-quality
+stainless steel jewelry pieces, hand-picked by Cacusa, are shipped straight to
+the customer's door. Available as a monthly or annual plan (with a discount).
+Ships to Ecuador and the United States.
+
+## Sitio en inglés / English site
+
+El sitio tiene versión completa en inglés bajo `/en/`, pensada para clientes
+en Estados Unidos:
+- Portada / Homepage: https://cacusabytaitus.com/en/
+- Tienda / Store: https://cacusabytaitus.com/en/ui_kits/store/
+- Cacusa Lovers: https://cacusabytaitus.com/en/cacusa-lovers.html
+
 ## Contacto y redes / Contact and social media
 
-- Tienda en línea / Online store: https://cacusabytaitus.com/ui_kits/store/
+- Tienda en línea (español) / Online store (Spanish): https://cacusabytaitus.com/ui_kits/store/
+- Tienda en línea (inglés) / Online store (English): https://cacusabytaitus.com/en/ui_kits/store/
 - Instagram: https://www.instagram.com/cacusabytaitus/
 - TikTok: https://www.tiktok.com/@cacusabytaitus
 
