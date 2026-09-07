@@ -434,6 +434,27 @@ html,body{overflow-x:hidden}
 </style>
 </head>
 <body>
+<!--NOSCRIPT_HOME_START-->
+<noscript>
+<section aria-label="CACUSA by Taitus">
+<h1>CACUSA by Taitus — Personalized Jewelry</h1>
+<p>Handmade artisanal jewelry in 925 silver, 18k gold plating and stainless steel. Personalization with name, initial, date or message included in the price. Shipping to the USA and Ecuador.</p>
+<h2>Shop by category</h2>
+<ul>
+<li><a href="./ui_kits/store/?cat=Anillos">Rings</a></li>
+<li><a href="./ui_kits/store/?cat=Aretes">Earrings</a></li>
+<li><a href="./ui_kits/store/?cat=Pulseras">Bracelets</a></li>
+<li><a href="./ui_kits/store/?cat=Hombres">Men</a></li>
+<li><a href="./ui_kits/store/?cat=Cadenas">Chains</a></li>
+<li><a href="./ui_kits/store/?cat=Ear cuff">Ear Cuffs</a></li>
+<li><a href="./ui_kits/store/?cat=Parejas">Couples</a></li>
+<li><a href="./ui_kits/store/?cat=Juegos">Sets</a></li>
+<li><a href="./ui_kits/store/?cat=Hand chain">Hand chain</a></li>
+</ul>
+<p><a href="./ui_kits/store/">Browse the full store</a> · <a href="./cacusa-lovers.html">Cacusa Lovers monthly subscription</a></p>
+</section>
+</noscript>
+<!--NOSCRIPT_HOME_END-->
 
 
 <div id="cursor"></div>
@@ -612,7 +633,7 @@ html,body{overflow-x:hidden}
         </div>
       </div>
       <div class="story-visual">
-        <div class="s-img reveal-right" style="height:180px"><img src="../assets/story-artesanos.jpg" alt="CACUSA artisans handcrafting personalized jewelry in 925 silver and 18k gold plating" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div class="s-img reveal-right" style="height:180px"><img src="../assets/story-artesanos.jpg" alt="CACUSA artisans handcrafting personalized jewelry in 925 silver and 18k gold plating" loading="lazy" width="1080" height="1920" style="width:100%;height:100%;object-fit:cover;display:block"></div>
         <div class="s-img reveal-right" data-delay="1" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
         <div class="s-img reveal-right" data-delay="2" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
       </div>
@@ -825,7 +846,7 @@ function renderHomeItemListLd(products){
 // Ahora es fetch asíncrono: fillCollectionCards/heroSlideshow/renderFeaturedProducts/renderTestimonials
 // (declaradas más abajo) se llaman recién cuando los datos ya están disponibles, no antes.
 function loadHomeContent(){
-  fetch('../data/products.json?v=' + Date.now())
+  fetch('../data/products.json')
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(data => {
       const cfg = data.config || {};
@@ -1139,7 +1160,7 @@ function renderFeaturedProducts(){
     const oldP  = p.oldPrice ? `<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>` : '';
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50, z = p.zoom ?? 1;
     const img = p.imageUrl
-      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
+      ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;
     const badge = p.tag ? `<div class="prod-badge">${esc(p.tag)}</div>` : '';
     const card = document.createElement('div');
