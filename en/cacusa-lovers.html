@@ -471,12 +471,12 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div class="sub-plan-toggle">
           <div class="sub-plan-opt selected" id="planOptMensual" onclick="selectPlan('mensual')">
             <div class="sub-plan-opt-name">Monthly</div>
-            <div class="sub-plan-opt-price">$19.99/mo</div>
+            <div class="sub-plan-opt-price" id="optMonthlyPrice">$19.99/mo</div>
           </div>
           <div class="sub-plan-opt sub-plan-opt--anual" id="planOptAnual" onclick="selectPlan('anual')">
-            <div class="sub-plan-opt-badge">SAVE 8%</div>
+            <div class="sub-plan-opt-badge" id="optAnnualBadge">SAVE 8%</div>
             <div class="sub-plan-opt-name">Annual</div>
-            <div class="sub-plan-opt-price">$219.89/yr</div>
+            <div class="sub-plan-opt-price" id="optAnnualPrice">$219.89/yr</div>
           </div>
         </div>
         <div class="sub-summary-box" id="sub-summary-box">
@@ -538,14 +538,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="hero">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
-    <div class="hero-badge reveal">✦ Exclusive subscription club</div>
+    <div class="hero-badge reveal" id="lHeroBadge">✦ Exclusive subscription club</div>
     <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
-    <p class="hero-desc reveal" data-delay="3">Every month you'll receive 2 stainless steel pieces —they won't rust, won't tarnish— hand-picked and delivered straight to your door: pieces worth more than your monthly subscription, for an always-fresh outfit at an accessible price.</p>
+    <p class="hero-desc reveal" data-delay="3" id="lHeroDesc">Every month you'll receive 2 stainless steel pieces —they won't rust, won't tarnish— hand-picked and delivered straight to your door: pieces worth more than your monthly subscription, for an always-fresh outfit at an accessible price.</p>
     <div class="hero-price reveal-scale" data-delay="3">
-      <div class="amount">$19.99</div>
+      <div class="amount" id="lHeroAmount">$19.99</div>
       <div class="per">per month · no commitment</div>
-      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(139,42,90,.85);letter-spacing:.05em">or <strong style="color:var(--ink)">$219.89/year</strong> · save 8%</div>
+      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(139,42,90,.85);letter-spacing:.05em" id="lHeroAnnualTease">or <strong style="color:var(--ink)">$219.89/year</strong> · save 8%</div>
     </div>
     <div class="hero-btns reveal" data-delay="4">
       <button class="btn-primary" onclick="joinNow()">♡ I want to be a Cacusa Lover</button>
@@ -604,18 +604,18 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div class="plan-tag">Monthly</div>
           <div class="plan-price-wrap">
             <span class="plan-currency">$</span>
-            <span class="plan-amount">19</span>
-            <span class="plan-cents">.99</span>
+            <span class="plan-amount" id="planMonthlyAmount">19</span>
+            <span class="plan-cents" id="planMonthlyCents">.99</span>
           </div>
           <div class="plan-subtitle">per month</div>
         </div>
         <div class="plan-body">
-          <ul class="plan-features">
-            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
-            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
-            <li><strong>Free shipping</strong> on all your store purchases</li>
-            <li><strong>Exclusive discount coupons</strong></li>
-            <li><strong>Early access</strong> to new collections</li>
+          <ul class="plan-features" id="planFeaturesMonthly">
+            <li>2 stainless steel jewelry pieces hand-picked</li>
+            <li>Home delivery included — Ecuador and USA</li>
+            <li>Free shipping on all your store purchases</li>
+            <li>Exclusive discount coupons</li>
+            <li>Early access to new collections</li>
           </ul>
           <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Subscribe monthly →</a>
           <p class="plan-note">Automatic billing every month</p>
@@ -624,24 +624,24 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 
       <!-- PLAN ANUAL -->
       <div class="plan-card plan-card--annual reveal-scale" data-delay="2">
-        <div class="plan-badge-annual">SAVE 8%</div>
+        <div class="plan-badge-annual" id="planBadgeAnnual">SAVE 8%</div>
         <div class="plan-header">
           <div class="plan-tag">Annual</div>
           <div class="plan-price-wrap">
             <span class="plan-currency">$</span>
-            <span class="plan-amount">219</span>
-            <span class="plan-cents">.89</span>
+            <span class="plan-amount" id="planAnnualAmount">219</span>
+            <span class="plan-cents" id="planAnnualCents">.89</span>
           </div>
-          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mo · save $19.99</span></div>
+          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span></div>
         </div>
         <div class="plan-body">
-          <ul class="plan-features">
-            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
-            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
-            <li><strong>Free shipping</strong> on all your store purchases</li>
-            <li><strong>Exclusive discount coupons</strong></li>
-            <li><strong>Early access</strong> to new collections</li>
-            <li><strong>12 months of jewelry</strong> for the price of 11</li>
+          <ul class="plan-features" id="planFeaturesAnnual">
+            <li>2 stainless steel jewelry pieces hand-picked</li>
+            <li>Home delivery included — Ecuador and USA</li>
+            <li>Free shipping on all your store purchases</li>
+            <li>Exclusive discount coupons</li>
+            <li>Early access to new collections</li>
+            <li>12 months of jewelry for the price of 11</li>
           </ul>
           <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Subscribe annually →</a>
           <p class="plan-note">One payment · Maximum savings · Renews automatically</p>
@@ -701,7 +701,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <div class="reveal"><div class="section-label" style="text-align:center">Frequently asked questions</div></div>
       <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Your <em>questions</em>, answered</h2></div>
     </div>
-    <div class="faq-list">
+    <div class="faq-list" id="faqList">
       <div class="faq-item reveal" data-delay="1">
         <div class="faq-q" onclick="toggleFaq(this)"><span>When will I receive my first box?</span><span class="faq-icon">+</span></div>
         <div class="faq-a"><p>Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions.</p></div>
@@ -721,7 +721,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
   </div>
 </section>
-<script type="application/ld+json">
+<script type="application/ld+json" id="faqJsonLd">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"When will I receive my first box?","acceptedAnswer":{"@type":"Answer","text":"Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions."}},
 {"@type":"Question","name":"Can I choose the jewelry I receive?","acceptedAnswer":{"@type":"Answer","text":"No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."}},
@@ -827,8 +827,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
 
     <div class="reveal" data-delay="2" style="margin-top:40px;background:linear-gradient(135deg,rgba(232,93,138,.08),rgba(155,93,229,.08));border:1.5px solid rgba(232,93,138,.25);border-radius:16px;padding:24px 28px;max-width:720px;margin-left:auto;margin-right:auto">
-      <div style="font-weight:800;font-size:15px;color:var(--pink);margin-bottom:8px;font-family:var(--fu)">Important about shipping times</div>
-      <div style="font-size:13.5px;color:var(--ink);line-height:1.7;font-family:var(--fu)">Subscriptions all ship together during the <strong>third week of the month</strong>. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment.</div>
+      <div style="font-weight:800;font-size:15px;color:var(--pink);margin-bottom:8px;font-family:var(--fu)" id="shipNoticeTitle">Important about shipping times</div>
+      <div style="font-size:13.5px;color:var(--ink);line-height:1.7;font-family:var(--fu)" id="shipNoticeText">Subscriptions all ship together during the third week of the month. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment.</div>
     </div>
   </div>
 </section>
@@ -902,6 +902,104 @@ loadLoversPhotos();
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') loadLoversPhotos();
 });
+
+window._loversData = null;
+async function loadLoversContent() {
+  try {
+    const r = await fetch('../data/products.json?v=' + Date.now());
+    if (!r.ok) return;
+    const data = await r.json();
+    const l = data.config && data.config.lovers_en;
+    if (!l || typeof l !== 'object') return;
+    window._loversData = l;
+    applyLoversContent(l);
+  } catch (_) {}
+}
+function applyLoversContent(l) {
+  const setText = (id, v) => { const el = document.getElementById(id); if (el && v != null && v !== '') el.textContent = v; };
+  const mp = l.monthlyPrice, ap = l.annualPrice;
+  const savePct = (mp && ap) ? Math.round((1 - ap / (mp * 12)) * 100) : null;
+  // Hero
+  setText('lHeroBadge', l.heroBadge);
+  setText('lHeroDesc', l.heroDesc);
+  if (mp) setText('lHeroAmount', '$' + mp.toFixed(2));
+  if (ap && savePct != null) {
+    const el = document.getElementById('lHeroAnnualTease');
+    if (el) el.innerHTML = 'or <strong style="color:var(--ink)">$' + ap.toFixed(2) + '/yr</strong> · save ' + savePct + '%';
+  }
+  // What it is
+  const whatDescEl = document.querySelector('#what .section-sub');
+  if (whatDescEl && l.whatDesc) whatDescEl.textContent = l.whatDesc;
+  if (Array.isArray(l.whatItems)) {
+    document.querySelectorAll('.wi-title').forEach((el, i) => { if (l.whatItems[i]) el.textContent = l.whatItems[i].title; });
+    document.querySelectorAll('.wi-desc').forEach((el, i) => { if (l.whatItems[i]) el.textContent = l.whatItems[i].desc; });
+  }
+  // Plan prices
+  if (mp != null) {
+    const [w, c] = mp.toFixed(2).split('.');
+    setText('planMonthlyAmount', w); setText('planMonthlyCents', '.' + c);
+    setText('optMonthlyPrice', '$' + mp.toFixed(2) + '/mo');
+  }
+  if (ap != null) {
+    const [w, c] = ap.toFixed(2).split('.');
+    setText('planAnnualAmount', w); setText('planAnnualCents', '.' + c);
+    setText('optAnnualPrice', '$' + ap.toFixed(2) + '/yr');
+    if (mp) {
+      setText('planAnnualSub', '≈ $' + (ap / 12).toFixed(2) + '/mo · save $' + mp.toFixed(2));
+      if (savePct != null) { setText('planBadgeAnnual', 'SAVE ' + savePct + '%'); setText('optAnnualBadge', 'SAVE ' + savePct + '%'); }
+    }
+  }
+  // Plan benefits
+  if (Array.isArray(l.planFeatures)) {
+    const mLis = document.querySelectorAll('#planFeaturesMonthly li');
+    l.planFeatures.forEach((f, i) => { if (mLis[i]) mLis[i].textContent = f; });
+    const aLis = document.querySelectorAll('#planFeaturesAnnual li');
+    l.planFeatures.forEach((f, i) => { if (aLis[i]) aLis[i].textContent = f; });
+    if (aLis[l.planFeatures.length] && l.planFeatureAnnualExtra) aLis[l.planFeatures.length].textContent = l.planFeatureAnnualExtra;
+  }
+  // How it works
+  if (Array.isArray(l.howSteps)) {
+    document.querySelectorAll('.step-title').forEach((el, i) => { if (l.howSteps[i]) el.textContent = l.howSteps[i].title; });
+    document.querySelectorAll('.step-desc').forEach((el, i) => { if (l.howSteps[i]) el.textContent = l.howSteps[i].desc; });
+  }
+  // General conditions
+  if (Array.isArray(l.conditions)) {
+    document.querySelectorAll('#conditions .cond-title').forEach((el, i) => { if (l.conditions[i]) el.textContent = l.conditions[i].title; });
+    document.querySelectorAll('#conditions .cond-desc').forEach((el, i) => { if (l.conditions[i]) el.textContent = l.conditions[i].desc; });
+  }
+  // Shipping notice
+  if (l.shippingNotice) {
+    setText('shipNoticeTitle', l.shippingNotice.title);
+    setText('shipNoticeText', l.shippingNotice.text);
+  }
+  // FAQ visible + JSON-LD (regenerated together from the same array)
+  if (Array.isArray(l.faq) && l.faq.length) {
+    const list = document.getElementById('faqList');
+    if (list) {
+      list.innerHTML = l.faq.map((f, i) =>
+        '<div class="faq-item reveal" data-delay="' + Math.min(i + 1, 4) + '">' +
+          '<div class="faq-q" onclick="toggleFaq(this)"><span>' + esc(f.q) + '</span><span class="faq-icon">+</span></div>' +
+          '<div class="faq-a"><p>' + esc(f.a) + '</p></div>' +
+        '</div>'
+      ).join('');
+    }
+    const ld = document.getElementById('faqJsonLd');
+    if (ld) {
+      ld.textContent = JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'FAQPage',
+        mainEntity: l.faq.map(f => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } }))
+      });
+    }
+  }
+  // Final CTA
+  const ctaScriptEl = document.querySelector('.cta-script');
+  if (ctaScriptEl && l.ctaScript) ctaScriptEl.textContent = l.ctaScript;
+  const ctaHEl = document.querySelector('.cta-h');
+  if (ctaHEl && l.ctaHeading) ctaHEl.textContent = l.ctaHeading;
+  const ctaSubEl = document.querySelector('.cta-sub');
+  if (ctaSubEl && l.ctaSub) ctaSubEl.textContent = '"' + l.ctaSub + '"';
+}
+loadLoversContent();
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
 function onPaisChange(){
@@ -1185,17 +1283,20 @@ function goStep1(){
 function selectPlan(plan){
   _selectedPlan = plan;
   const isAnual = plan === 'anual';
+  const mp = (window._loversData && window._loversData.monthlyPrice) || 19.99;
+  const ap = (window._loversData && window._loversData.annualPrice) || 219.89;
+  const priceTxt = isAnual ? '$' + ap.toFixed(2) : '$' + mp.toFixed(2);
   document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Annual' : 'Cacusa Lovers Monthly';
   document.getElementById('sum-period-label').textContent = isAnual ? 'Annual total' : 'Monthly total';
-  document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$19.99';
+  document.getElementById('sum-price').textContent = priceTxt;
   document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
   document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
   const btn = document.getElementById('sPayBtn');
   btn.innerHTML = isAnual
-    ? 'Subscribe · $219.89/yr <span class="spin"></span>'
-    : 'Subscribe · $19.99/mo <span class="spin"></span>';
+    ? 'Subscribe · ' + priceTxt + '/yr <span class="spin"></span>'
+    : 'Subscribe · ' + priceTxt + '/mo <span class="spin"></span>';
   const hp = document.getElementById('subHeadPrice');
-  if (hp) hp.textContent = isAnual ? '$219.89/yr · 2 selected pieces · shipping included' : '$19.99/mo · 2 selected pieces · shipping included';
+  if (hp) hp.textContent = isAnual ? priceTxt + '/yr · 2 selected pieces · shipping included' : priceTxt + '/mo · 2 selected pieces · shipping included';
   document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
   document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
 }
@@ -1219,7 +1320,7 @@ async function submitSubscription(){
     zip:         _subZip,
     pais:        _subPais,
     plan:        _selectedPlan === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-    monto:       _selectedPlan === 'anual' ? '$219.89/año' : '$19.99/mes',
+    monto:       (() => { const mp=(window._loversData&&window._loversData.monthlyPrice)||19.99, ap=(window._loversData&&window._loversData.annualPrice)||219.89; return _selectedPlan === 'anual' ? ('$' + ap.toFixed(2) + '/año') : ('$' + mp.toFixed(2) + '/mes'); })(),
     fecha:       new Date().toISOString().slice(0, 10),
     metodo_pago: 'square',
     estado_pago: 'pendiente',
