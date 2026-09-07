@@ -15,6 +15,9 @@
  *                              navegador — deja pasar /order, /coupon/burn y /giftcard/redeem
  *                              sin exigir el Origin del navegador cuando viaja este header.
  *   ALLOWED_ORIGIN   (text)    https://cacusabytaitus.com  (opcional)
+ *   VAPID_PUBLIC_KEY      (text)    llave pública VAPID (mismo valor que VAPID_PUB_KEY
+ *                                   en ui_kits/admin/index.html) — Web Push nativo de Safari
+ *   VAPID_PRIVATE_KEY_JWK (secret)  JWK privado del mismo par de llaves VAPID, en JSON
  *
  * KV Namespace (Cloudflare → Settings → Bindings):
  *   CACUSA_KV  — almacena pedidos de forma privada (no expuesto en GitHub Pages)
@@ -147,6 +150,13 @@ export default {
       if (path.endsWith('/ntfy-info')) {
         if (!env.NTFY_TOPIC) return ok({ configured: false }, allowOrigin);
         return ok({ configured: true, topic: env.NTFY_TOPIC, url: 'https://ntfy.sh/' + env.NTFY_TOPIC }, allowOrigin);
+      }
+      if (path.endsWith('/push/subscribe'))   return await handlePushSubscribe(body, env, allowOrigin, session);
+      if (path.endsWith('/push/unsubscribe')) return await handlePushUnsubscribe(body, env, allowOrigin, session);
+      if (path.endsWith('/push/test')) {
+        if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
+        await sendWebPushAll(env);
+        return ok({ ok: true }, allowOrigin);
       }
       return err('Ruta no encontrada', 404, allowOrigin);
     } catch (e) {
@@ -330,6 +340,9 @@ async function handleOrder(body, env, origin, ctx, request) {
 
   if (env.NTFY_TOPIC) {
     await sendNtfy(newOrder, env);
+  }
+  if (env.VAPID_PRIVATE_KEY_JWK) {
+    await sendWebPushAll(env);
   }
 
   return ok({ ok: true, id: newOrder.id }, origin);
@@ -726,6 +739,63 @@ async function sendNtfy(order, env) {
   } catch (e) {
     console.error('ntfy error:', e.message);
   }
+}
+
+// ── Web Push nativo (Safari/iOS) ───────────────────────────────────────────────
+// Firma un JWT VAPID (ES256) a mano con Web Crypto — sin librerías, igual de
+// "pegar y listo" que el resto de este Worker.
+async function vapidAuthHeader(endpoint, env) {
+  const priv = JSON.parse(env.VAPID_PRIVATE_KEY_JWK);
+  const key  = await crypto.subtle.importKey('jwk', { ...priv, ext: true },
+    { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const aud    = new URL(endpoint).origin;
+  const header = b64url(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const claims = b64url(new TextEncoder().encode(JSON.stringify({
+    aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: 'mailto:facturacioncacusa@gmail.com'
+  })));
+  const unsigned = `${header}.${claims}`;
+  // crypto.subtle ya devuelve la firma ECDSA en formato raw (r‖s), que es justo lo que pide JWS ES256.
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(unsigned));
+  return `vapid t=${unsigned}.${b64url(new Uint8Array(sig))}, k=${env.VAPID_PUBLIC_KEY}`;
+}
+async function sendWebPushOne(sub, env) {
+  return fetch(sub.endpoint, {
+    method:  'POST',
+    headers: { TTL: '86400', 'Content-Length': '0', Authorization: await vapidAuthHeader(sub.endpoint, env) }
+  });
+}
+async function sendWebPushAll(env) {
+  const list = await env.CACUSA_KV.list({ prefix: 'push:' });
+  for (const k of list.keys) {
+    const raw = await env.CACUSA_KV.get(k.name);
+    if (!raw) continue;
+    try {
+      const resp = await sendWebPushOne(JSON.parse(raw), env);
+      // 404/410 = la suscripción fue revocada o expiró del lado del navegador/Apple — limpiar.
+      if (resp.status === 404 || resp.status === 410) await env.CACUSA_KV.delete(k.name);
+      else if (!resp.ok) console.error('webpush fail', k.name, resp.status);
+    } catch (e) {
+      console.error('webpush error', k.name, e.message);
+    }
+  }
+}
+async function pushKeyFor(username, endpoint) {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
+  const hex  = [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+  return `push:${username}:${hex}`;
+}
+async function handlePushSubscribe(body, env, origin, session) {
+  const sub = body.subscription;
+  if (!sub || !sub.endpoint || !sub.keys) return err('Suscripción inválida', 400, origin);
+  const key = await pushKeyFor(session.user, sub.endpoint);
+  await env.CACUSA_KV.put(key, JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }));
+  return ok({ ok: true }, origin);
+}
+async function handlePushUnsubscribe(body, env, origin, session) {
+  if (!body.endpoint) return err('Falta endpoint', 400, origin);
+  const key = await pushKeyFor(session.user, body.endpoint);
+  await env.CACUSA_KV.delete(key);
+  return ok({ ok: true }, origin);
 }
 
 // ── GitHub ─────────────────────────────────────────────────────────────────────
