@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-07T11:01:17.565Z",
+  "lastUpdated": "2026-09-07T11:02:00.368Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -144,7 +144,9 @@
       "collectionPhotoIds": {
         "Hombres": 1781885393238,
         "Pulseras": 1788449850640,
-        "Aretes": 1786303032752
+        "Aretes": 1786303032752,
+        "Anillos": 1781879127320,
+        "Cadenas": 1781473627668
       }
     },
     "home_en": {
