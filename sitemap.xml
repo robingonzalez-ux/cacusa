@@ -44,7 +44,20 @@
 
   <url>
     <loc>https://cacusabytaitus.com/cacusa-lovers.html</loc>
-    <lastmod>2026-09-06</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cacusa-lovers.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cacusa-lovers.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cacusa-lovers.html"/>
+    <lastmod>2026-09-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/cacusa-lovers.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cacusa-lovers.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cacusa-lovers.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cacusa-lovers.html"/>
+    <lastmod>2026-09-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
