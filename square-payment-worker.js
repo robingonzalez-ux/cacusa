@@ -178,7 +178,7 @@ async function fetchCatalog() {
   if (!r.ok) throw new Error('No se pudo obtener el catálogo de productos');
   const data = await r.json();
   const products = Array.isArray(data) ? data : (data.products || []);
-  const shipping  = data.config?.shipping || { freeThreshold: 150, cost: 10 };
+  const shipping  = data.config?.shipping || { freeThreshold: 90, cost: 10 };
   const combos    = Array.isArray(data.combos) ? data.combos : [];
   return { products, shipping, combos };
 }
