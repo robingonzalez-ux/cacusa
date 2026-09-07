@@ -105,7 +105,7 @@ async function verifySignature(request, body, sigKey) {
   );
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
   const expected = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  return expected === sigHeader;
+  return safeEqual(expected, sigHeader);
 }
 
 // ── Find Firebase subscriber key by email ────────────────────────────────────
