@@ -1,31 +1,31 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#EE6FA8">
-<meta name="description" content="Cacusa Lovers — Suscripción mensual de joyería de alta calidad, seleccionada por Cacusa. Recibe 2 piezas únicas cada mes directamente en tu puerta. Solo $19.99/mes.">
-<meta property="og:title" content="Cacusa Lovers — Tu club de joyería mensual">
-<meta property="og:description" content="Suscríbete y recibe 2 joyas de alta calidad, seleccionadas por Cacusa, cada mes. Ecuador y USA.">
-<meta property="og:url" content="https://cacusabytaitus.com/cacusa-lovers.html">
+<meta name="description" content="Cacusa Lovers — Monthly subscription of high-quality jewelry, selected by Cacusa. Get 2 unique pieces delivered to your door every month. Only $19.99/mo.">
+<meta property="og:title" content="Cacusa Lovers — Your Monthly Jewelry Club">
+<meta property="og:description" content="Subscribe and get 2 high-quality jewelry pieces, selected by Cacusa, every month. Ecuador and the USA.">
+<meta property="og:url" content="https://cacusabytaitus.com/en/cacusa-lovers.html">
 <meta property="og:type" content="website">
-<meta property="og:locale" content="es_EC">
-<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="es_EC">
 <meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Cacusa Lovers — Tu club de joyería mensual">
-<meta name="twitter:description" content="Suscríbete y recibe 2 joyas de alta calidad, seleccionadas por Cacusa, cada mes. Ecuador y USA.">
+<meta name="twitter:title" content="Cacusa Lovers — Your Monthly Jewelry Club">
+<meta name="twitter:description" content="Subscribe and get 2 high-quality jewelry pieces, selected by Cacusa, every month. Ecuador and the USA.">
 <meta name="twitter:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
-<link rel="canonical" href="https://cacusabytaitus.com/cacusa-lovers.html">
+<link rel="canonical" href="https://cacusabytaitus.com/en/cacusa-lovers.html">
 <link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cacusa-lovers.html">
 <link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cacusa-lovers.html">
 <link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cacusa-lovers.html">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
-<title>Cacusa Lovers — Tu club de joyería mensual</title>
+<title>Cacusa Lovers — Your Monthly Jewelry Club</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -343,19 +343,19 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <!-- SUCCESS SCREEN -->
 <div id="sub-success">
   <div class="ss-icon">✦</div>
-  <h2 class="ss-title">¡Bienvenida al club!</h2>
-  <p class="ss-sub">Tu suscripción <strong>Cacusa Lovers</strong> está activa. Recibirás un email de confirmación de Square y tu primera caja llegará en los próximos días. ♡</p>
-  <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+  <h2 class="ss-title">Welcome to the club!</h2>
+  <p class="ss-sub">Your <strong>Cacusa Lovers</strong> subscription is active. You'll receive a confirmation email from Square and your first box will arrive in the coming days. ♡</p>
+  <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explore more →</button>
 </div>
 
 <!-- SUBSCRIPTION MODAL -->
-<div id="sub-overlay" role="dialog" aria-modal="true" aria-label="Suscripción Cacusa Lovers" onclick="if(event.target===this)closeSub()">
+<div id="sub-overlay" role="dialog" aria-modal="true" aria-label="Cacusa Lovers Subscription" onclick="if(event.target===this)closeSub()">
   <div class="sub-box">
     <div class="sub-head">
-      <button class="sub-head-close" onclick="closeSub()" aria-label="Cerrar">✕</button>
-      <div class="sub-head-tag">✦ Club de suscripción mensual</div>
+      <button class="sub-head-close" onclick="closeSub()" aria-label="Close">✕</button>
+      <div class="sub-head-tag">✦ Monthly subscription club</div>
       <div class="sub-head-title">Cacusa <em>Lovers</em></div>
-      <div class="sub-head-price" id="subHeadPrice">$19.99/mes · 2 joyas seleccionadas · envío incluido</div>
+      <div class="sub-head-price" id="subHeadPrice">$19.99/mo · 2 selected pieces · shipping included</div>
     </div>
     <div class="sub-body">
       <div class="sub-dots">
@@ -366,52 +366,52 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <div class="sub-step active" id="sub-step1">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
-            <label class="sub-field-label" for="sNombre">Nombre *</label>
-            <input class="sub-input" id="sNombre" type="text" placeholder="Tu nombre" autocomplete="given-name">
+            <label class="sub-field-label" for="sNombre">First name *</label>
+            <input class="sub-input" id="sNombre" type="text" placeholder="Your first name" autocomplete="given-name">
           </div>
           <div class="sub-field">
-            <label class="sub-field-label" for="sApellido">Apellido</label>
-            <input class="sub-input" id="sApellido" type="text" placeholder="Tu apellido" autocomplete="family-name">
+            <label class="sub-field-label" for="sApellido">Last name</label>
+            <input class="sub-input" id="sApellido" type="text" placeholder="Your last name" autocomplete="family-name">
           </div>
         </div>
         <div class="sub-field">
           <label class="sub-field-label" for="sEmail">Email *</label>
-          <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+          <input class="sub-input" id="sEmail" type="email" placeholder="you@email.com" autocomplete="email">
         </div>
         <div class="sub-field">
-          <label class="sub-field-label" for="sTel">Teléfono / WhatsApp *</label>
+          <label class="sub-field-label" for="sTel">Phone / WhatsApp *</label>
           <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
         </div>
         <div class="sub-field sub-field--ac">
-          <label class="sub-field-label" for="sDireccion">Dirección de envío *</label>
-          <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120">
+          <label class="sub-field-label" for="sDireccion">Shipping address *</label>
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Start typing your address…" autocomplete="off" maxlength="120">
           <div class="sub-ac-list" id="sAcList"></div>
         </div>
         <div class="sub-field">
-          <label class="sub-field-label" for="sApto">Apto / Suite / Piso (opcional)</label>
-          <input class="sub-input" id="sApto" type="text" placeholder="Apt 4B, Suite 200, Piso 3…" maxlength="60">
+          <label class="sub-field-label" for="sApto">Apt / Suite / Floor (optional)</label>
+          <input class="sub-input" id="sApto" type="text" placeholder="Apt 4B, Suite 200, Floor 3…" maxlength="60">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
-            <label class="sub-field-label" for="sCiudad">Ciudad *</label>
-            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad">
+            <label class="sub-field-label" for="sCiudad">City *</label>
+            <input class="sub-input" id="sCiudad" type="text" placeholder="City">
           </div>
           <div class="sub-field">
-            <label class="sub-field-label" for="sPais">País *</label>
+            <label class="sub-field-label" for="sPais">Country *</label>
             <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()">
-              <option value="">Seleccionar…</option>
+              <option value="">Select…</option>
               <option value="Ecuador">Ecuador</option>
               <option value="USA">USA</option>
-              <option value="Otro">Otro</option>
+              <option value="Otro">Other</option>
             </select>
           </div>
         </div>
         <!-- Campos dinámicos por país -->
         <div id="sFieldsEC" hidden>
           <div class="sub-field">
-            <label class="sub-field-label" for="sProvincia">Provincia *</label>
+            <label class="sub-field-label" for="sProvincia">Province *</label>
             <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer">
-              <option value="">Seleccionar provincia…</option>
+              <option value="">Select province…</option>
               <option>Azuay</option><option>Bolívar</option><option>Cañar</option>
               <option>Carchi</option><option>Chimborazo</option><option>Cotopaxi</option>
               <option>El Oro</option><option>Esmeraldas</option><option>Galápagos</option>
@@ -426,9 +426,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div id="sFieldsUSA" hidden>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
-              <label class="sub-field-label" for="sEstadoUSA">Estado *</label>
+              <label class="sub-field-label" for="sEstadoUSA">State *</label>
               <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer">
-                <option value="">Seleccionar…</option>
+                <option value="">Select…</option>
                 <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
                 <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
                 <option>Florida</option><option>Georgia</option><option>Hawaii</option><option>Idaho</option>
@@ -453,47 +453,47 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div id="sFieldsOtro" hidden>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
-              <label class="sub-field-label" for="sEstadoOtro">Estado / Provincia</label>
-              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="Estado o provincia">
+              <label class="sub-field-label" for="sEstadoOtro">State / Province</label>
+              <input class="sub-input" id="sEstadoOtro" type="text" placeholder="State or province">
             </div>
             <div class="sub-field">
-              <label class="sub-field-label" for="sZipOtro">Código postal</label>
-              <input class="sub-input" id="sZipOtro" type="text" placeholder="Código postal">
+              <label class="sub-field-label" for="sZipOtro">Postal code</label>
+              <input class="sub-input" id="sZipOtro" type="text" placeholder="Postal code">
             </div>
           </div>
         </div>
         <div class="sub-error" id="sErr1"></div>
-        <button class="sub-btn" onclick="goStep2()">Continuar →</button>
+        <button class="sub-btn" onclick="goStep2()">Continue →</button>
       </div>
       <!-- STEP 2: Confirm & pay -->
       <div class="sub-step" id="sub-step2">
         <!-- Plan selector -->
         <div class="sub-plan-toggle">
           <div class="sub-plan-opt selected" id="planOptMensual" onclick="selectPlan('mensual')">
-            <div class="sub-plan-opt-name">Mensual</div>
-            <div class="sub-plan-opt-price">$19.99/mes</div>
+            <div class="sub-plan-opt-name">Monthly</div>
+            <div class="sub-plan-opt-price">$19.99/mo</div>
           </div>
           <div class="sub-plan-opt sub-plan-opt--anual" id="planOptAnual" onclick="selectPlan('anual')">
-            <div class="sub-plan-opt-badge">AHORRA 8%</div>
-            <div class="sub-plan-opt-name">Anual</div>
-            <div class="sub-plan-opt-price">$219.89/año</div>
+            <div class="sub-plan-opt-badge">SAVE 8%</div>
+            <div class="sub-plan-opt-name">Annual</div>
+            <div class="sub-plan-opt-price">$219.89/yr</div>
           </div>
         </div>
         <div class="sub-summary-box" id="sub-summary-box">
           <div class="sub-sum-row"><span>Plan</span><span id="sum-plan-name">Cacusa Lovers</span></div>
-          <div class="sub-sum-feature">2 joyas en acero inoxidable cada mes</div>
-          <div class="sub-sum-feature">Envío a domicilio incluido</div>
-          <div class="sub-sum-feature">Envíos gratis en todas tus compras</div>
-          <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
-          <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$19.99</span></div>
+          <div class="sub-sum-feature">2 stainless steel jewelry pieces every month</div>
+          <div class="sub-sum-feature">Home delivery included</div>
+          <div class="sub-sum-feature">Free shipping on all your purchases</div>
+          <div class="sub-sum-feature">Early access to new collections</div>
+          <div class="sub-sum-row"><span id="sum-period-label">Monthly total</span><span id="sum-price">$19.99</span></div>
         </div>
         <div class="sub-error" id="sErr2"></div>
-        <div class="sub-secure-badge">◎ Pago seguro procesado por Square</div>
+        <div class="sub-secure-badge">◎ Secure payment processed by Square</div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
-          Suscribirme · $19.99/mes <span class="spin"></span>
+          Subscribe · $19.99/mo <span class="spin"></span>
         </button>
-        <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
-        <p class="sub-legal" id="subLegal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra automáticamente cada mes.</p>
+        <button class="sub-back" onclick="goStep1()">← Go back and edit info</button>
+        <p class="sub-legal" id="subLegal">You'll be redirected to Square (secure payment) to enter your card. Square charges automatically every month.</p>
       </div>
     </div>
   </div>
@@ -506,26 +506,26 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <span class="s">by Taitus</span>
   </a>
   <div class="nav-links">
-    <a href="./index.html">Inicio</a>
-    <a href="./ui_kits/store/">Tienda</a>
+    <a href="./index.html">Home</a>
+    <a href="./ui_kits/store/">Store</a>
     <a href="./cacusa-lovers.html" class="nav-lovers-badge">Cacusa Lovers ♡</a>
-    <a href="./index.html#personalize">Personaliza</a>
+    <a href="./index.html#personalize">Customize</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
-    <button class="nav-cta" onclick="joinNow()">Unirme ahora →</button>
-    <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
+    <div class="lang-sw"><button id="lEs" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" class="on" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
+    <button class="nav-cta" onclick="joinNow()">Join now →</button>
+    <button id="navMenuBtn" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </nav>
 
 <!-- Mobile nav drawer -->
-<div id="navDrawer" role="dialog" aria-modal="true" aria-label="Menú de navegación">
-  <button id="navDrawerClose" aria-label="Cerrar menú">✕</button>
+<div id="navDrawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+  <button id="navDrawerClose" aria-label="Close menu">✕</button>
   <nav class="drawer-nav">
-    <a href="./index.html" class="drawer-link">Inicio</a>
-    <a href="./ui_kits/store/" class="drawer-link">Tienda</a>
+    <a href="./index.html" class="drawer-link">Home</a>
+    <a href="./ui_kits/store/" class="drawer-link">Store</a>
     <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
-    <a href="./index.html#personalize" class="drawer-link">Personaliza</a>
+    <a href="./index.html#personalize" class="drawer-link">Customize</a>
   </nav>
   <div class="drawer-lang">
     <button class="drawer-lang-btn" onclick="window.location.href='/cacusa-lovers.html'">ES</button>
@@ -538,21 +538,21 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="hero">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
-    <div class="hero-badge reveal">✦ Club de suscripción exclusivo</div>
+    <div class="hero-badge reveal">✦ Exclusive subscription club</div>
     <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
-    <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas en acero inoxidable —no se oxidan, no se ponen negras— seleccionadas a mano directamente a tu puerta: piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.</p>
+    <p class="hero-desc reveal" data-delay="3">Every month you'll receive 2 stainless steel pieces —they won't rust, won't tarnish— hand-picked and delivered straight to your door: pieces worth more than your monthly subscription, for an always-fresh outfit at an accessible price.</p>
     <div class="hero-price reveal-scale" data-delay="3">
       <div class="amount">$19.99</div>
-      <div class="per">al mes · sin compromisos</div>
-      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(139,42,90,.85);letter-spacing:.05em">o <strong style="color:var(--ink)">$219.89/año</strong> · ahorra 8%</div>
+      <div class="per">per month · no commitment</div>
+      <div style="margin-top:10px;font-family:var(--fu);font-size:12px;color:rgba(139,42,90,.85);letter-spacing:.05em">or <strong style="color:var(--ink)">$219.89/year</strong> · save 8%</div>
     </div>
     <div class="hero-btns reveal" data-delay="4">
-      <button class="btn-primary" onclick="joinNow()">♡ Quiero ser Cacusa Lover</button>
-      <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">¿Cómo funciona?</button>
+      <button class="btn-primary" onclick="joinNow()">♡ I want to be a Cacusa Lover</button>
+      <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How does it work?</button>
     </div>
   </div>
-  <div class="hero-scroll"><span>Descubrir</span><div class="scroll-line"></div></div>
+  <div class="hero-scroll"><span>Discover</span><div class="scroll-line"></div></div>
 </section>
 
 <!-- WHAT IS IT -->
@@ -560,28 +560,28 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
   <div class="container">
     <div class="what-grid">
       <div>
-        <div class="reveal"><div class="section-label">El club</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h">¿Qué es<br><em>Cacusa Lovers?</em></h2></div>
-        <div class="reveal" data-delay="2"><p class="section-sub">Una membresía mensual pensada para mujeres que aman la joyería de alta calidad y quieren vivir esa emoción de recibir una pieza especial, cada mes, sin buscarla.</p></div>
+        <div class="reveal"><div class="section-label">The club</div></div>
+        <div class="reveal" data-delay="1"><h2 class="section-h">What is<br><em>Cacusa Lovers?</em></h2></div>
+        <div class="reveal" data-delay="2"><p class="section-sub">A monthly membership designed for women who love high-quality jewelry and want to feel the excitement of receiving a special piece every month, without having to look for it.</p></div>
         <div class="what-list">
           <div class="what-item reveal" data-delay="2">
             <div class="wi-icon">◆</div>
-            <div><div class="wi-title">Joyas elegidas para ti</div><div class="wi-desc">Cada mes seleccionamos 2 piezas en acero inoxidable para ti: no se oxidan, no se ponen negras y son tuyas para siempre.</div></div>
+            <div><div class="wi-title">Jewelry chosen for you</div><div class="wi-desc">Every month we select 2 stainless steel pieces for you: they won't rust, won't tarnish, and are yours to keep forever.</div></div>
           </div>
           <div class="what-item reveal" data-delay="3">
             <div class="wi-icon">◎</div>
-            <div><div class="wi-title">Directamente a tu puerta</div><div class="wi-desc">Envío a domicilio incluido en Ecuador y Estados Unidos. Sin salir de casa.</div></div>
+            <div><div class="wi-title">Straight to your door</div><div class="wi-desc">Home delivery included in Ecuador and the United States. Without leaving home.</div></div>
           </div>
           <div class="what-item reveal" data-delay="4">
             <div class="wi-icon">✦</div>
-            <div><div class="wi-title">Piezas exclusivas de suscriptora</div><div class="wi-desc">Diseños que no se venden en tienda. Solo para Cacusa Lovers.</div></div>
+            <div><div class="wi-title">Exclusive subscriber pieces</div><div class="wi-desc">Designs not sold in the store. Only for Cacusa Lovers.</div></div>
           </div>
         </div>
       </div>
       <div class="what-visual reveal-left" data-delay="2">
-        <div class="what-card" id="wcard1"><div class="gfill gA" id="wfill1" style="height:100%"></div><div class="wc-label">Collar del mes</div></div>
-        <div class="what-card" id="wcard2"><div class="gfill gB" id="wfill2" style="height:100%"></div><div class="wc-label">Anillo sorpresa</div></div>
-        <div class="what-card" id="wcard3"><div class="gfill gE" id="wfill3" style="height:100%"></div><div class="wc-label">Pulsera exclusiva</div></div>
+        <div class="what-card" id="wcard1"><div class="gfill gA" id="wfill1" style="height:100%"></div><div class="wc-label">This month's necklace</div></div>
+        <div class="what-card" id="wcard2"><div class="gfill gB" id="wfill2" style="height:100%"></div><div class="wc-label">Surprise ring</div></div>
+        <div class="what-card" id="wcard3"><div class="gfill gE" id="wfill3" style="height:100%"></div><div class="wc-label">Exclusive bracelet</div></div>
       </div>
     </div>
   </div>
@@ -591,9 +591,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="plan">
   <div class="container">
     <div class="plan-center">
-      <div class="reveal"><div class="section-label" style="text-align:center">La membresía</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Elige tu<br><em>plan</em></h2></div>
-      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Todo incluido. Sin sorpresas en el precio.</p></div>
+      <div class="reveal"><div class="section-label" style="text-align:center">The membership</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Choose your<br><em>plan</em></h2></div>
+      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Everything included. No surprises on price.</p></div>
     </div>
 
     <div class="plans-grid">
@@ -601,50 +601,50 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <!-- PLAN MENSUAL -->
       <div class="plan-card reveal-scale" data-delay="1">
         <div class="plan-header">
-          <div class="plan-tag">Mensual</div>
+          <div class="plan-tag">Monthly</div>
           <div class="plan-price-wrap">
             <span class="plan-currency">$</span>
             <span class="plan-amount">19</span>
             <span class="plan-cents">.99</span>
           </div>
-          <div class="plan-subtitle">al mes</div>
+          <div class="plan-subtitle">per month</div>
         </div>
         <div class="plan-body">
           <ul class="plan-features">
-            <li><strong>2 joyas en acero inoxidable</strong> seleccionadas a mano</li>
-            <li><strong>Envío a domicilio</strong> incluido — Ecuador y USA</li>
-            <li><strong>Envíos gratis</strong> en todas tus compras en tienda</li>
-            <li><strong>Cupones de descuento</strong> exclusivos</li>
-            <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
+            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
+            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
+            <li><strong>Free shipping</strong> on all your store purchases</li>
+            <li><strong>Exclusive discount coupons</strong></li>
+            <li><strong>Early access</strong> to new collections</li>
           </ul>
-          <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Suscribirme mensual →</a>
-          <p class="plan-note">Cobro automático cada mes</p>
+          <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Subscribe monthly →</a>
+          <p class="plan-note">Automatic billing every month</p>
         </div>
       </div>
 
       <!-- PLAN ANUAL -->
       <div class="plan-card plan-card--annual reveal-scale" data-delay="2">
-        <div class="plan-badge-annual">AHORRA 8%</div>
+        <div class="plan-badge-annual">SAVE 8%</div>
         <div class="plan-header">
-          <div class="plan-tag">Anual</div>
+          <div class="plan-tag">Annual</div>
           <div class="plan-price-wrap">
             <span class="plan-currency">$</span>
             <span class="plan-amount">219</span>
             <span class="plan-cents">.89</span>
           </div>
-          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mes · ahorras $19.99</span></div>
+          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px">≈ $18.32/mo · save $19.99</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features">
-            <li><strong>2 joyas en acero inoxidable</strong> seleccionadas a mano</li>
-            <li><strong>Envío a domicilio</strong> incluido — Ecuador y USA</li>
-            <li><strong>Envíos gratis</strong> en todas tus compras en tienda</li>
-            <li><strong>Cupones de descuento</strong> exclusivos</li>
-            <li><strong>Acceso anticipado</strong> a nuevas colecciones</li>
-            <li><strong>12 meses de joyas</strong> pagando solo 11</li>
+            <li><strong>2 stainless steel jewelry pieces</strong> hand-picked</li>
+            <li><strong>Home delivery</strong> included — Ecuador and USA</li>
+            <li><strong>Free shipping</strong> on all your store purchases</li>
+            <li><strong>Exclusive discount coupons</strong></li>
+            <li><strong>Early access</strong> to new collections</li>
+            <li><strong>12 months of jewelry</strong> for the price of 11</li>
           </ul>
-          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Suscribirme anual →</a>
-          <p class="plan-note">Un solo pago · Máximo ahorro · Renueva automáticamente</p>
+          <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Subscribe annually →</a>
+          <p class="plan-note">One payment · Maximum savings · Renews automatically</p>
         </div>
       </div>
 
@@ -656,26 +656,26 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="how">
   <div class="container">
     <div class="how-center">
-      <div class="reveal"><div class="section-label" style="text-align:center">El proceso</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">¿Cómo<br><em>funciona?</em></h2></div>
+      <div class="reveal"><div class="section-label" style="text-align:center">The process</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">How does<br><em>it work?</em></h2></div>
     </div>
     <div class="steps-grid">
       <div class="step-card reveal" data-delay="1" style="position:relative">
         <div class="step-num">1</div>
-        <div class="step-title">Elige tu plan y regístrate</div>
-        <p class="step-desc">Escoge el plan que mejor te convenga — mensual o anual — e ingresa tus datos de envío. Todo en segundos.</p>
+        <div class="step-title">Choose your plan and sign up</div>
+        <p class="step-desc">Pick the plan that suits you best — monthly or annual — and enter your shipping details. All in seconds.</p>
         <div class="step-connector">→</div>
       </div>
       <div class="step-card reveal" data-delay="2" style="position:relative">
         <div class="step-num">2</div>
-        <div class="step-title">Elegimos tu caja</div>
-        <p class="step-desc">Cada mes seleccionamos a mano tus piezas pensando en ti — sorpresa garantizada, calidad asegurada.</p>
+        <div class="step-title">We choose your box</div>
+        <p class="step-desc">Every month we hand-pick your pieces with you in mind — guaranteed surprise, guaranteed quality.</p>
         <div class="step-connector">→</div>
       </div>
       <div class="step-card reveal" data-delay="3">
         <div class="step-num">3</div>
-        <div class="step-title">Llega a tu puerta</div>
-        <p class="step-desc">Tu caja de joyería seleccionada llega directamente a tu domicilio, cada mes, como un regalo que te mereces.</p>
+        <div class="step-title">Arrives at your door</div>
+        <p class="step-desc">Your selected jewelry box arrives straight to your home, every month, like a gift you deserve.</p>
       </div>
     </div>
   </div>
@@ -698,35 +698,35 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="faq">
   <div class="container">
     <div class="faq-center">
-      <div class="reveal"><div class="section-label" style="text-align:center">Preguntas frecuentes</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Tus <em>dudas</em>, resueltas</h2></div>
+      <div class="reveal"><div class="section-label" style="text-align:center">Frequently asked questions</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Your <em>questions</em>, answered</h2></div>
     </div>
     <div class="faq-list">
       <div class="faq-item reveal" data-delay="1">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>¿Cuándo recibiré mi primera caja?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>Tu primera caja se envía dentro de los primeros 5 días hábiles después de tu suscripción. A partir del segundo mes, los envíos salen durante la tercera semana del mes, junto con todas las suscripciones.</p></div>
+        <div class="faq-q" onclick="toggleFaq(this)"><span>When will I receive my first box?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="2">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>¿Puedo elegir las joyas que recibo?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>No — la sorpresa es parte de la experiencia. Cada mes, el equipo de CACUSA selecciona las 2 piezas que recibirás, cuidando siempre variedad y calidad, sin que tengas que elegir nada.</p></div>
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Can I choose the jewelry I receive?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="3">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>¿Envían a toda la República del Ecuador y USA?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>Sí. El envío está incluido en el precio de la membresía tanto para Ecuador como para Estados Unidos, sin costo adicional.</p></div>
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Do you ship throughout Ecuador and the USA?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="4">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>¿Cómo es el pago mensual?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro.</p></div>
+        <div class="faq-q" onclick="toggleFaq(this)"><span>How does the monthly payment work?</span><span class="faq-icon">+</span></div>
+        <div class="faq-a"><p>You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge.</p></div>
       </div>
     </div>
   </div>
 </section>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"¿Cuándo recibiré mi primera caja?","acceptedAnswer":{"@type":"Answer","text":"Tu primera caja se envía dentro de los primeros 5 días hábiles después de tu suscripción. A partir del segundo mes, los envíos salen durante la tercera semana del mes, junto con todas las suscripciones."}},
-{"@type":"Question","name":"¿Puedo elegir las joyas que recibo?","acceptedAnswer":{"@type":"Answer","text":"No — la sorpresa es parte de la experiencia. Cada mes, el equipo de CACUSA selecciona las 2 piezas que recibirás, cuidando siempre variedad y calidad, sin que tengas que elegir nada."}},
-{"@type":"Question","name":"¿Envían a toda la República del Ecuador y USA?","acceptedAnswer":{"@type":"Answer","text":"Sí. El envío está incluido en el precio de la membresía tanto para Ecuador como para Estados Unidos, sin costo adicional."}},
-{"@type":"Question","name":"¿Cómo es el pago mensual?","acceptedAnswer":{"@type":"Answer","text":"El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro."}}
+{"@type":"Question","name":"When will I receive my first box?","acceptedAnswer":{"@type":"Answer","text":"Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions."}},
+{"@type":"Question","name":"Can I choose the jewelry I receive?","acceptedAnswer":{"@type":"Answer","text":"No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."}},
+{"@type":"Question","name":"Do you ship throughout Ecuador and the USA?","acceptedAnswer":{"@type":"Answer","text":"Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost."}},
+{"@type":"Question","name":"How does the monthly payment work?","acceptedAnswer":{"@type":"Answer","text":"You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge."}}
 ]}
 </script>
 
@@ -734,12 +734,12 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="cta-final">
   <div class="container">
     <div class="cta-inner">
-      <div class="cta-script reveal">¿Lista para unirte?</div>
-      <h2 class="cta-h reveal" data-delay="1">Tu joya de este mes<br><em>te está esperando</em></h2>
-      <p class="cta-sub reveal" data-delay="2">"creamos para que luzcas más bella de lo que ya eres"</p>
+      <div class="cta-script reveal">Ready to join?</div>
+      <h2 class="cta-h reveal" data-delay="1">This month's jewel<br><em>is waiting for you</em></h2>
+      <p class="cta-sub reveal" data-delay="2">"we create so you shine more beautiful than you already are"</p>
       <div class="cta-btns reveal" data-delay="3">
-        <button class="btn-primary" onclick="joinNow()">♡ Unirme a Cacusa Lovers</button>
-        <a href="./ui_kits/store/" class="btn-ghost" style="display:inline-flex;align-items:center;text-decoration:none">Ver tienda →</a>
+        <button class="btn-primary" onclick="joinNow()">♡ Join Cacusa Lovers</button>
+        <a href="./ui_kits/store/" class="btn-ghost" style="display:inline-flex;align-items:center;text-decoration:none">View store →</a>
       </div>
     </div>
   </div>
@@ -749,86 +749,86 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="conditions">
   <div class="container">
     <div class="cond-center">
-      <div class="reveal"><div class="section-label" style="text-align:center">Importante</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">Condiciones <em>Generales</em></h2></div>
-      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">Queremos que seas parte del club con toda la información clara.</p></div>
+      <div class="reveal"><div class="section-label" style="text-align:center">Important</div></div>
+      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">General <em>Terms</em></h2></div>
+      <div class="reveal" data-delay="2"><p class="section-sub" style="text-align:center">We want you to join the club with all the information clear.</p></div>
     </div>
     <div class="cond-grid">
       <div class="cond-item reveal" data-delay="1">
         <div class="cond-icon">↻</div>
         <div class="cond-text">
-          <div class="cond-title">Pago recurrente mensual</div>
-          <div class="cond-desc">El cobro de $19.99 se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.</div>
+          <div class="cond-title">Recurring monthly payment</div>
+          <div class="cond-desc">The $19.99 charge is processed automatically every month, on the same day you subscribed. The charge will appear on your statement as CACUSA by Taitus.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
         <div class="cond-icon">◻</div>
         <div class="cond-text">
-          <div class="cond-title">Envío tras confirmación de pago</div>
-          <div class="cond-desc">Los envíos se realizan durante la <strong>tercera semana de cada mes</strong>, una vez confirmado el pago. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — los envíos aún no han salido.</div>
+          <div class="cond-title">Shipping after payment confirmation</div>
+          <div class="cond-desc">Shipments go out during the <strong>third week of each month</strong>, once payment is confirmed. Delivery time is 5 to 15 business days depending on the destination country. If you haven't received your box in the first few days of the month, it isn't a delay — shipments simply haven't gone out yet.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="3">
         <div class="cond-icon">✕</div>
         <div class="cond-text">
-          <div class="cond-title">Sin devoluciones</div>
-          <div class="cond-desc">No se aceptan devoluciones ni reembolsos en esta modalidad de suscripción. Cada pieza es seleccionada y enviada especialmente para ti con dedicación. Excepción: si tu pieza llega con un defecto de fabricación, repórtalo con fotos dentro de las primeras 48 horas y te la reponemos sin costo.</div>
+          <div class="cond-title">No returns</div>
+          <div class="cond-desc">Returns and refunds are not accepted under this subscription model. Each piece is selected and shipped especially for you with care. Exception: if your piece arrives with a manufacturing defect, report it with photos within the first 48 hours and we'll replace it at no cost.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="1">
         <div class="cond-icon">◇</div>
         <div class="cond-text">
-          <div class="cond-title">Selección aleatoria por CACUSA</div>
-          <div class="cond-desc">Las joyas son seleccionadas de forma aleatoria por el equipo de CACUSA. La sorpresa y la cuidadosa selección son parte de la experiencia del club.</div>
+          <div class="cond-title">Random selection by CACUSA</div>
+          <div class="cond-desc">Jewelry is randomly selected by the CACUSA team. The surprise and the careful selection are part of the club experience.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
         <div class="cond-icon">◆</div>
         <div class="cond-text">
-          <div class="cond-title">Tipos de piezas incluidas</div>
-          <div class="cond-desc">Las 2 piezas mensuales pueden ser aretes, anillos, pulseras o collares — elaboradas en <strong>acero inoxidable</strong>: no se oxidan, no se ponen negras y mantienen su brillo con el tiempo.</div>
+          <div class="cond-title">Types of pieces included</div>
+          <div class="cond-desc">The 2 monthly pieces can be earrings, rings, bracelets or necklaces — made of <strong>stainless steel</strong>: it doesn't rust, doesn't tarnish, and keeps its shine over time.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="3">
         <div class="cond-icon">◎</div>
         <div class="cond-text">
-          <div class="cond-title">Sin cambios por artículos de tienda</div>
-          <div class="cond-desc">Las joyas de la suscripción no pueden canjearse ni cambiarse por artículos disponibles en la tienda online. Son piezas exclusivas del club.</div>
+          <div class="cond-title">No exchanges for store items</div>
+          <div class="cond-desc">Subscription jewelry cannot be exchanged or swapped for items available in the online store. These are exclusive club pieces.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="1">
         <div class="cond-icon">✕</div>
         <div class="cond-text">
-          <div class="cond-title">Política de cancelación</div>
-          <div class="cond-desc">Puedes cancelar tu suscripción cuando quieras directamente desde el enlace "Manage subscription" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a facturacioncacusa@gmail.com y te ayudamos.</div>
+          <div class="cond-title">Cancellation policy</div>
+          <div class="cond-desc">You can cancel your subscription anytime directly from the "Manage subscription" link that Square emails you when each payment is confirmed — no need to write to us or wait for a reply. Cancellation takes effect starting the next billing cycle: if the current month's or year's charge has already been processed, your subscription remains active and you'll receive the box for that period — we don't offer refunds on charges already processed. For cancellation to apply before your next charge, do it at least 5 days before your renewal date. If you have trouble finding the link, message us on WhatsApp or at facturacioncacusa@gmail.com and we'll help you.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="2">
         <div class="cond-icon">!</div>
         <div class="cond-text">
-          <div class="cond-title">Pago fallido</div>
-          <div class="cond-desc">Si tu pago no se procesa exitosamente, Square intentará el cobro nuevamente de forma automática. Mientras el pago esté pendiente, el envío del mes quedará suspendido hasta que se regularice la situación.</div>
+          <div class="cond-title">Failed payment</div>
+          <div class="cond-desc">If your payment isn't processed successfully, Square will automatically try to charge again. While payment is pending, that month's shipment will be put on hold until the situation is resolved.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="3">
         <div class="cond-icon">◇</div>
         <div class="cond-text">
-          <div class="cond-title">Cambios de precio</div>
-          <div class="cond-desc">Cualquier modificación en el precio de la suscripción será comunicada con al menos 30 días de anticipación a través del email registrado. Tienes derecho a cancelar sin cargo si no estás de acuerdo con el nuevo precio.</div>
+          <div class="cond-title">Price changes</div>
+          <div class="cond-desc">Any change to the subscription price will be communicated at least 30 days in advance via your registered email. You have the right to cancel at no charge if you disagree with the new price.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="1">
         <div class="cond-icon">◎</div>
         <div class="cond-text">
-          <div class="cond-title">Datos personales</div>
-          <div class="cond-desc">Tu información de envío (nombre, dirección, teléfono) se utiliza exclusivamente para gestionar la entrega de tus joyas. No compartimos tus datos con terceros. El procesamiento del pago lo realiza Square de forma segura.</div>
+          <div class="cond-title">Personal data</div>
+          <div class="cond-desc">Your shipping information (name, address, phone) is used exclusively to manage delivery of your jewelry. We do not share your data with third parties. Payment processing is handled securely by Square.</div>
         </div>
       </div>
     </div>
 
     <div class="reveal" data-delay="2" style="margin-top:40px;background:linear-gradient(135deg,rgba(232,93,138,.08),rgba(155,93,229,.08));border:1.5px solid rgba(232,93,138,.25);border-radius:16px;padding:24px 28px;max-width:720px;margin-left:auto;margin-right:auto">
-      <div style="font-weight:800;font-size:15px;color:var(--pink);margin-bottom:8px;font-family:var(--fu)">Importante sobre los tiempos de envío</div>
-      <div style="font-size:13.5px;color:var(--ink);line-height:1.7;font-family:var(--fu)">Las suscripciones se envían todas juntas durante la <strong>tercera semana del mes</strong>. Esto es diferente a un pedido regular de la tienda. Si te unes a mediados de mes, tu primera caja saldrá en la tercera semana del mes siguiente. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — simplemente aún no ha llegado el momento del envío mensual.</div>
+      <div style="font-weight:800;font-size:15px;color:var(--pink);margin-bottom:8px;font-family:var(--fu)">Important about shipping times</div>
+      <div style="font-size:13.5px;color:var(--ink);line-height:1.7;font-family:var(--fu)">Subscriptions all ship together during the <strong>third week of the month</strong>. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment.</div>
     </div>
   </div>
 </section>
@@ -847,14 +847,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       </a>
     </div>
     <div class="footer-links">
-      <a href="./index.html">Inicio</a>
-      <a href="./ui_kits/store/">Tienda</a>
+      <a href="./index.html">Home</a>
+      <a href="./ui_kits/store/">Store</a>
       <a href="./cacusa-lovers.html">Cacusa Lovers</a>
-      <a href="./index.html#personalize">Personaliza</a>
-      <a href="./envios.html">Envíos</a>
-      <a href="./devoluciones.html">Devoluciones</a>
+      <a href="./index.html#personalize">Customize</a>
+      <a href="../envios.html">Shipping</a>
+      <a href="../devoluciones.html">Returns</a>
     </div>
-    <div class="footer-copy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Hecho con amor ♡</div>
+    <div class="footer-copy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Made with love ♡</div>
   </div>
 </footer>
 
@@ -1000,7 +1000,7 @@ let _acSeq = 0;
     if (q.length < 3) { closeAcList(); return; }
     _timer = setTimeout(async () => {
       const mySeq = ++_acSeq;
-      showAcMsg('Buscando\u2026');
+      showAcMsg('Searching\u2026');
       try {
         const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
         if (!res.ok) throw new Error('photon ' + res.status);
@@ -1015,7 +1015,7 @@ let _acSeq = 0;
           if (!p || !(p.name || p.street)) return false;
           return !want || (p.countrycode || '').toUpperCase() === want;
         });
-        if (!features.length) { showAcMsg('Sin sugerencias \u2014 puedes escribir la direcci\u00f3n a mano'); return; }
+        if (!features.length) { showAcMsg('No suggestions \u2014 you can type your address manually'); return; }
         _acItems = features;
         list.innerHTML = features.map((f, i) => {
           const p = f.properties;
@@ -1030,7 +1030,7 @@ let _acSeq = 0;
         }).join('');
         list.classList.add('open');
       } catch(e) {
-        if (mySeq === _acSeq) showAcMsg('No se pudo conectar al buscador de direcciones');
+        if (mySeq === _acSeq) showAcMsg('Could not connect to the address search');
       }
     }, 380);
   });
@@ -1136,22 +1136,22 @@ function goStep2(){
   const ciudad   = document.getElementById('sCiudad').value.trim();
   const pais     = document.getElementById('sPais').value;
 
-  if(!nombre){ _markFieldError('sNombre', err, 'Por favor ingresa tu nombre.'); return; }
-  if(!email || !email.includes('@')){ _markFieldError('sEmail', err, 'Por favor ingresa un email válido.'); return; }
-  if(!tel){ _markFieldError('sTel', err, 'Por favor ingresa tu número de teléfono.'); return; }
-  if(!direccion){ _markFieldError('sDireccion', err, 'Por favor ingresa tu dirección de envío.'); return; }
-  if(!ciudad){ _markFieldError('sCiudad', err, 'Por favor ingresa tu ciudad.'); return; }
-  if(!pais){ _markFieldError('sPais', err, 'Por favor selecciona tu país.'); return; }
+  if(!nombre){ _markFieldError('sNombre', err, 'Please enter your first name.'); return; }
+  if(!email || !email.includes('@')){ _markFieldError('sEmail', err, 'Please enter a valid email.'); return; }
+  if(!tel){ _markFieldError('sTel', err, 'Please enter your phone number.'); return; }
+  if(!direccion){ _markFieldError('sDireccion', err, 'Please enter your shipping address.'); return; }
+  if(!ciudad){ _markFieldError('sCiudad', err, 'Please enter your city.'); return; }
+  if(!pais){ _markFieldError('sPais', err, 'Please select your country.'); return; }
 
   let estado = '', zip = '';
   if(pais === 'Ecuador'){
     estado = document.getElementById('sProvincia').value;
-    if(!estado){ _markFieldError('sProvincia', err, 'Por favor selecciona tu provincia.'); return; }
+    if(!estado){ _markFieldError('sProvincia', err, 'Please select your province.'); return; }
   } else if(pais === 'USA'){
     estado = document.getElementById('sEstadoUSA').value;
     zip    = document.getElementById('sZipUSA').value.trim();
-    if(!estado){ _markFieldError('sEstadoUSA', err, 'Por favor selecciona tu estado.'); return; }
-    if(!zip){ _markFieldError('sZipUSA', err, 'Por favor ingresa tu ZIP Code.'); return; }
+    if(!estado){ _markFieldError('sEstadoUSA', err, 'Please select your state.'); return; }
+    if(!zip){ _markFieldError('sZipUSA', err, 'Please enter your ZIP Code.'); return; }
   } else if(pais === 'Otro'){
     estado = document.getElementById('sEstadoOtro').value.trim();
     zip    = document.getElementById('sZipOtro').value.trim();
@@ -1185,17 +1185,17 @@ function goStep1(){
 function selectPlan(plan){
   _selectedPlan = plan;
   const isAnual = plan === 'anual';
-  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers Mensual';
-  document.getElementById('sum-period-label').textContent = isAnual ? 'Total anual' : 'Total mensual';
+  document.getElementById('sum-plan-name').textContent = isAnual ? 'Cacusa Lovers Annual' : 'Cacusa Lovers Monthly';
+  document.getElementById('sum-period-label').textContent = isAnual ? 'Annual total' : 'Monthly total';
   document.getElementById('sum-price').textContent = isAnual ? '$219.89' : '$19.99';
   document.getElementById('sum-plan-name').style.color = isAnual ? '#9B5DE5' : '';
   document.getElementById('sum-price').style.color = isAnual ? '#9B5DE5' : '';
   const btn = document.getElementById('sPayBtn');
   btn.innerHTML = isAnual
-    ? 'Suscribirme · $219.89/año <span class="spin"></span>'
-    : 'Suscribirme · $19.99/mes <span class="spin"></span>';
+    ? 'Subscribe · $219.89/yr <span class="spin"></span>'
+    : 'Subscribe · $19.99/mo <span class="spin"></span>';
   const hp = document.getElementById('subHeadPrice');
-  if (hp) hp.textContent = isAnual ? '$219.89/año · 2 joyas seleccionadas · envío incluido' : '$19.99/mes · 2 joyas seleccionadas · envío incluido';
+  if (hp) hp.textContent = isAnual ? '$219.89/yr · 2 selected pieces · shipping included' : '$19.99/mo · 2 selected pieces · shipping included';
   document.getElementById('planOptMensual').classList.toggle('selected', !isAnual);
   document.getElementById('planOptAnual').classList.toggle('selected', isAnual);
 }
