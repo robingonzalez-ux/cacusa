@@ -817,6 +817,7 @@ function loadHomeContent(){
       CACUSA_WHATSAPP = data.whatsapp || cfg.whatsapp || '';
       window._cacusaProds    = Array.isArray(data.products) ? data.products : [];
       window._cacusaFeatured = cfg.home && Array.isArray(cfg.home.featuredProductIds) ? cfg.home.featuredProductIds : null;
+      window._cacusaHeroIds  = cfg.home && Array.isArray(cfg.home.heroProductIds)     ? cfg.home.heroProductIds     : null;
       const home = cfg.home;
       if (home) {
         CACUSA_HOME = home;
@@ -1057,7 +1058,9 @@ function fillCollectionCards(){
 
 // ── HERO — gran slideshow de imágenes con crossfade ─────────
 function heroSlideshow(){
-  const all = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  const avail = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
+  const heroIds = window._cacusaHeroIds;
+  const all = heroIds && heroIds.length ? heroIds.map(id => avail.find(p => p.id === id)).filter(Boolean) : avail;
   const stage = document.getElementById('heroStage');
   if (!all.length || !stage) return;
   const A = document.getElementById('hsA'), B = document.getElementById('hsB');
