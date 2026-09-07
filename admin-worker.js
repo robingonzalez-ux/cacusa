@@ -200,7 +200,7 @@ function passwordFor(user, env) {
 // Llamada servidor-a-servidor confiable (hoy solo cacusa-square, tras confirmar un pago
 // por webhook) — reemplaza la verificación de Origin, que no aplica a este tipo de llamada.
 function isInternalIngest(request, env) {
-  return !!env.ORDER_INGEST_KEY && request.headers.get('x-order-ingest-key') === env.ORDER_INGEST_KEY;
+  return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
 }
 
 async function handleLogin(body, env, origin, request) {

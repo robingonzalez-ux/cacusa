@@ -279,6 +279,15 @@ async function couponPeekCents(env, code, totalCents) {
 }
 
 // ── Firma de webhooks de Square (idéntico al de lovers-webhook-worker.js) ────
+// Comparación en tiempo constante — evita filtrar por timing cuánto de la firma coincidió.
+function safeEqual(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
 async function verifySquareSignature(request, rawBody, sigKey) {
   const sigHeader = request.headers.get('x-square-hmacsha256-signature');
   if (!sigHeader || !sigKey) return false;
@@ -290,7 +299,7 @@ async function verifySquareSignature(request, rawBody, sigKey) {
   );
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(payload));
   const expected = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  return expected === sigHeader;
+  return safeEqual(expected, sigHeader);
 }
 
 async function fetchSquareOrder(orderId, token) {
@@ -530,12 +539,28 @@ async function handleCreatePaymentLink(body, env, allowed) {
     amount_money: { amount: cpDiscountCents, currency: 'USD' }, scope: 'ORDER'
   });
 
-  // ── reference_id propio — así el webhook puede encontrar este pedido después ──
-  const referenceId = crypto.randomUUID().replace(/-/g, '');
-
   // ── Guardar el pedido pendiente en KV — el webhook lo usa cuando Square confirme el pago ──
   const grossCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
   const netCents    = Math.max(0, grossCents - gcDiscountCents - cpDiscountCents);
+
+  // ── reference_id propio — así el webhook puede encontrar este pedido después ──
+  // Derivado (no aleatorio) del contenido real del carrito + cliente + el total ya con
+  // descuentos aplicados + una ventana de 5 minutos: un doble-click accidental del mismo
+  // pedido (mismo carrito, mismo cliente, mismo total neto) cae en el mismo hash, así que
+  // Square reutiliza el mismo Payment Link en vez de crear uno nuevo. Si el cliente cambia
+  // algo que afecte el total (agrega/quita un cupón o gift card, cambia el carrito), el hash
+  // cambia también, así que sigue tratándose como un pedido distinto — no solo dedupe por
+  // carrito, dedupe por lo que realmente se le va a cobrar.
+  const dedupBucket = Math.floor(Date.now() / (5 * 60 * 1000));
+  const dedupInput = JSON.stringify({
+    items: validatedItems.map(i => [i.id, i.price, i.personalization || '']),
+    email: (customer?.email || '').toLowerCase().trim(),
+    phone: (customer?.phone || '').trim(),
+    netCents,
+    bucket: dedupBucket,
+  });
+  const dedupHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(dedupInput));
+  const referenceId = Array.from(new Uint8Array(dedupHash)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
   // Mismo formato que generateOrderNum() en la tienda, para que se vea igual que los pedidos
   // por WhatsApp/Zelle en el admin (ej. CA-260906-1234).
   const orderNum = 'CA-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-'
@@ -582,7 +607,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
 
   // ── Square API call ────────────────────────────────────────────────────
   const payload = {
-    idempotency_key: crypto.randomUUID(),
+    idempotency_key: referenceId,
     checkout_options: {
       redirect_url: REDIRECT_URL,
       ask_for_shipping_address: false,
