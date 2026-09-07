@@ -9,6 +9,8 @@
 <meta property="og:description" content="Suscríbete y recibe 2 joyas artesanales únicas cada mes. Ecuador y USA.">
 <meta property="og:url" content="https://cacusabytaitus.com/cacusa-lovers.html">
 <meta property="og:type" content="website">
+<meta property="og:locale" content="es_EC">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -20,7 +22,7 @@
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
-<title>Cacusa Lovers — Joyería mensual a tu puerta</title>
+<title>Cacusa Lovers — Tu club de joyería mensual</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -128,7 +130,7 @@ section{padding:96px 0}
 .plan-price-wrap{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin-bottom:8px}
 .plan-currency{font-family:var(--fd);font-weight:700;font-size:28px;color:white;margin-top:12px}
 .plan-amount{font-family:var(--fd);font-weight:900;font-size:80px;color:white;line-height:1}
-.plan-period{font-family:var(--fu);font-size:14px;color:white;align-self:flex-end;padding-bottom:8px}/mes
+.plan-period{font-family:var(--fu);font-size:14px;color:white;align-self:flex-end;padding-bottom:8px}
 .plan-subtitle{font-family:var(--fs);font-size:22px;color:white}
 .plan-body{padding:36px 40px}
 .plan-features{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
@@ -191,6 +193,7 @@ section{padding:96px 0}
 .cond-center{text-align:center;margin-bottom:48px}
 .cond-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto}
 .cond-item{background:white;border-radius:18px;padding:24px 28px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(196,160,236,.12)}
+.cond-item--critical{border-left:3px solid var(--pink)}
 .cond-icon{width:40px;height:40px;border-radius:50%;background:var(--lilac-pale);border:1.5px solid var(--lilac);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .cond-text{flex:1}
 .cond-title{font-family:var(--fu);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}
@@ -203,6 +206,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .footer-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
 .footer-links a{font-family:var(--fu);font-size:13px;color:white;text-decoration:none;transition:color .2s;cursor:none}
 .footer-links a:hover{color:white}
+.footer-social{display:flex;justify-content:center;gap:14px;margin-bottom:20px}
+.footer-social a{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;transition:background .2s;cursor:none}
+.footer-social a:hover{background:rgba(255,255,255,.32)}
 .footer-copy{font-family:var(--fu);font-size:11px;color:rgba(255,255,255,.98)}
 
 /* ── GRADIENT HELPERS ── */
@@ -231,7 +237,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .sub-dot.act{background:var(--pink);transform:scale(1.2)}
 .sub-field{margin-bottom:14px}
 .sub-field-label{display:block;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
-.sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
+.sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:16px;color:var(--ink);outline:none;transition:border-color .2s;background:white;appearance:none;-webkit-appearance:none}
 .sub-input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(238,111,168,.1)}
 .sub-field--ac{position:relative}
 .sub-ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#fff;border:1.5px solid var(--ink-light);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;display:none}
@@ -256,6 +262,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .sub-sum-feature{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);margin-bottom:4px;padding-left:4px}
 .sub-sum-feature::before{content:'♡ ';color:var(--pink)}
 .sub-legal{font-family:var(--fe);font-size:11px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px;line-height:1.65}
+.sub-secure-badge{font-family:var(--fu);font-size:11px;font-weight:600;color:var(--ink-muted);text-align:center;margin-bottom:10px;letter-spacing:.02em}
 .sub-plan-toggle{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .sub-plan-opt{border:2px solid rgba(139,42,90,.18);border-radius:14px;padding:13px 10px;cursor:pointer;text-align:center;transition:all .2s;position:relative;background:white}
 .sub-plan-opt.selected{border-color:var(--pink);background:#fdf0f7}
@@ -314,7 +321,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
   .sub-head-price{font-size:12px}
   .sub-body{padding:18px 16px}
   .sub-field{margin-bottom:10px}
-  .sub-input{padding:8px 11px;font-size:14px}
+  .sub-input{padding:8px 11px;font-size:16px}
   .sub-dots{margin-bottom:16px}
   .sub-row-2{grid-template-columns:1fr}
   .btn-join,.btn-join--annual,.sub-btn,.sub-head-close,.sub-back{cursor:pointer}
@@ -333,7 +340,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <!-- SUCCESS SCREEN -->
 <div id="sub-success">
   <div class="ss-icon">✦</div>
-  <h1 class="ss-title">¡Bienvenida al club!</h1>
+  <h2 class="ss-title">¡Bienvenida al club!</h2>
   <p class="ss-sub">Tu suscripción <strong>Cacusa Lovers</strong> está activa. Recibirás un email de confirmación de Square y tu primera caja llegará en los próximos días. ♡</p>
   <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
 </div>
@@ -342,7 +349,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <div id="sub-overlay" role="dialog" aria-modal="true" aria-label="Suscripción Cacusa Lovers" onclick="if(event.target===this)closeSub()">
   <div class="sub-box">
     <div class="sub-head">
-      <button class="sub-head-close" onclick="closeSub()">✕</button>
+      <button class="sub-head-close" onclick="closeSub()" aria-label="Cerrar">✕</button>
       <div class="sub-head-tag">✦ Club de suscripción mensual</div>
       <div class="sub-head-title">Cacusa <em>Lovers</em></div>
       <div class="sub-head-price" id="subHeadPrice">$19.99/mes · 2 joyas artesanales · envío incluido</div>
@@ -487,6 +494,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           </div>
         </div>
         <div class="sub-error" id="sErr2"></div>
+        <div class="sub-secure-badge">◎ Pago seguro procesado por Square</div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
           Suscribirme · $19.99/mes <span class="spin"></span>
         </button>
@@ -533,7 +541,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <div class="hero-badge reveal">✦ Club de suscripción exclusivo</div>
     <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
-    <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas seleccionadas a mano directamente a tu puerta — piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.</p>
+    <p class="hero-desc reveal" data-delay="3">Cada mes recibirás 2 joyas en acero inoxidable —no se oxidan, no se ponen negras— seleccionadas a mano directamente a tu puerta: piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.</p>
     <div class="hero-price reveal-scale" data-delay="3">
       <div class="amount">$19.99</div>
       <div class="per">al mes · sin compromisos</div>
@@ -766,7 +774,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div class="cond-desc">Los envíos se realizan durante la <strong>tercera semana de cada mes</strong>, una vez confirmado el pago. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — los envíos aún no han salido.</div>
         </div>
       </div>
-      <div class="cond-item reveal" data-delay="3">
+      <div class="cond-item cond-item--critical reveal" data-delay="3">
         <div class="cond-icon">✕</div>
         <div class="cond-text">
           <div class="cond-title">Sin devoluciones</div>
@@ -801,7 +809,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div class="cond-desc">Puedes cancelar tu suscripción cuando quieras directamente desde el enlace "Manage subscription" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a cacusabytaitus@gmail.com y te ayudamos.</div>
         </div>
       </div>
-      <div class="cond-item reveal" data-delay="2">
+      <div class="cond-item cond-item--critical reveal" data-delay="2">
         <div class="cond-icon">!</div>
         <div class="cond-text">
           <div class="cond-title">Pago fallido</div>
@@ -815,7 +823,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div class="cond-desc">Cualquier modificación en el precio de la suscripción será comunicada con al menos 30 días de anticipación a través del email registrado. Tienes derecho a cancelar sin cargo si no estás de acuerdo con el nuevo precio.</div>
         </div>
       </div>
-      <div class="cond-item reveal" data-delay="1">
+      <div class="cond-item cond-item--critical reveal" data-delay="1">
         <div class="cond-icon">◎</div>
         <div class="cond-text">
           <div class="cond-title">Datos personales</div>
@@ -836,6 +844,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
   <div class="container">
     <div class="fb-w">CACUSA</div>
     <div class="fb-s">by Taitus</div>
+    <div class="footer-social">
+      <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" aria-label="Instagram CACUSA by Taitus">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="https://www.tiktok.com/@cacusabytaitus" target="_blank" rel="noopener" aria-label="TikTok CACUSA by Taitus">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.15 8.15 0 0 0 4.77 1.52V6.76a4.85 4.85 0 0 1-1-.07z"/></svg>
+      </a>
+    </div>
     <div class="footer-links">
       <a href="./index.html">Inicio</a>
       <a href="./ui_kits/store/">Tienda</a>
@@ -1102,6 +1118,7 @@ function closeSub(){
   document.getElementById('dot1').classList.add('act');
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
+  document.querySelectorAll('.sub-input').forEach(el => el.style.borderColor = '');
   _subNombre=''; _subApellido=''; _subDireccion=''; _subApto=''; _subCiudad=''; _subPais=''; _subEstado=''; _subZip='';
   document.getElementById('sPais').value = '';
   onPaisChange();
@@ -1112,8 +1129,14 @@ function closeSub(){
   _fromPlanCard = false;
   document.querySelector('.sub-plan-toggle').style.display = 'grid';
 }
+function _markFieldError(id, err, msg){
+  const el = document.getElementById(id);
+  if (el) { el.style.borderColor = '#C0336E'; el.focus(); }
+  if (err) err.textContent = msg;
+}
 function goStep2(){
   const err      = document.getElementById('sErr1');
+  document.querySelectorAll('#sub-step1 .sub-input').forEach(el => el.style.borderColor = '');
   const nombre   = document.getElementById('sNombre').value.trim();
   const email    = document.getElementById('sEmail').value.trim();
   const tel      = document.getElementById('sTel').value.trim();
@@ -1121,22 +1144,22 @@ function goStep2(){
   const ciudad   = document.getElementById('sCiudad').value.trim();
   const pais     = document.getElementById('sPais').value;
 
-  if(!nombre){ err.textContent='Por favor ingresa tu nombre.'; return; }
-  if(!email || !email.includes('@')){ err.textContent='Por favor ingresa un email válido.'; return; }
-  if(!tel){ err.textContent='Por favor ingresa tu número de teléfono.'; return; }
-  if(!direccion){ err.textContent='Por favor ingresa tu dirección de envío.'; return; }
-  if(!ciudad){ err.textContent='Por favor ingresa tu ciudad.'; return; }
-  if(!pais){ err.textContent='Por favor selecciona tu país.'; return; }
+  if(!nombre){ _markFieldError('sNombre', err, 'Por favor ingresa tu nombre.'); return; }
+  if(!email || !email.includes('@')){ _markFieldError('sEmail', err, 'Por favor ingresa un email válido.'); return; }
+  if(!tel){ _markFieldError('sTel', err, 'Por favor ingresa tu número de teléfono.'); return; }
+  if(!direccion){ _markFieldError('sDireccion', err, 'Por favor ingresa tu dirección de envío.'); return; }
+  if(!ciudad){ _markFieldError('sCiudad', err, 'Por favor ingresa tu ciudad.'); return; }
+  if(!pais){ _markFieldError('sPais', err, 'Por favor selecciona tu país.'); return; }
 
   let estado = '', zip = '';
   if(pais === 'Ecuador'){
     estado = document.getElementById('sProvincia').value;
-    if(!estado){ err.textContent='Por favor selecciona tu provincia.'; return; }
+    if(!estado){ _markFieldError('sProvincia', err, 'Por favor selecciona tu provincia.'); return; }
   } else if(pais === 'USA'){
     estado = document.getElementById('sEstadoUSA').value;
     zip    = document.getElementById('sZipUSA').value.trim();
-    if(!estado){ err.textContent='Por favor selecciona tu estado.'; return; }
-    if(!zip){ err.textContent='Por favor ingresa tu ZIP Code.'; return; }
+    if(!estado){ _markFieldError('sEstadoUSA', err, 'Por favor selecciona tu estado.'); return; }
+    if(!zip){ _markFieldError('sZipUSA', err, 'Por favor ingresa tu ZIP Code.'); return; }
   } else if(pais === 'Otro'){
     estado = document.getElementById('sEstadoOtro').value.trim();
     zip    = document.getElementById('sZipOtro').value.trim();
@@ -1261,22 +1284,25 @@ async function submitSubscription(){
 })();
 
 // ── CURSOR ──────────────────────────────────────────────────
-const cur = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove', e => {
-  mx=e.clientX; my=e.clientY;
-  cur.style.left=(mx-5)+'px'; cur.style.top=(my-5)+'px';
-});
-(function anim(){
-  rx+=(mx-rx-16)*.14; ry+=(my-ry-16)*.14;
-  ring.style.left=rx+'px'; ring.style.top=ry+'px';
-  requestAnimationFrame(anim);
-})();
-document.querySelectorAll('button,a,.faq-q').forEach(el=>{
-  el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
-  el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
-});
+// Cursor personalizado: solo en dispositivos con mouse real (no táctil) — ahorra batería/CPU en móvil
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  const cur = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e => {
+    mx=e.clientX; my=e.clientY;
+    cur.style.left=(mx-5)+'px'; cur.style.top=(my-5)+'px';
+  });
+  (function anim(){
+    rx+=(mx-rx-16)*.14; ry+=(my-ry-16)*.14;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(anim);
+  })();
+  document.querySelectorAll('button,a,.faq-q').forEach(el=>{
+    el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-grow'));
+    el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-grow'));
+  });
+}
 
 // ── HERO CANVAS ─────────────────────────────────────────────
 const canvas = document.getElementById('hero-canvas');
