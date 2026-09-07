@@ -7,6 +7,13 @@
  *   SQUARE_LOCATION_ID       — Your Square location ID
  *   SQUARE_PLAN_VARIATION_ID — Subscription plan variation ID (from Square Dashboard)
  *
+ * KV Namespace (Cloudflare → Settings → Bindings), OPCIONAL pero recomendado:
+ *   CACUSA_KV — el mismo namespace que ya usan cacusa-admin y cacusa-lovers-webhook.
+ *               Si está enlazado, este worker limita a 10 solicitudes/hora por IP para
+ *               que el formulario público no se pueda usar para gastar cuota de la API
+ *               de Square sin límite. Si no está enlazado, el worker sigue funcionando
+ *               normal, simplemente sin ese límite.
+ *
  * Setup steps:
  *   1. In Square Dashboard → Subscriptions → Create plan "Cacusa Lovers" $20/month
  *   2. Copy the plan variation ID and set it as SQUARE_PLAN_VARIATION_ID secret
@@ -50,6 +57,17 @@ export default {
 
     if (!name || !email || !phone || !address || !city || !country) {
       return json({ error: 'Faltan datos requeridos (nombre, email, teléfono, dirección, ciudad, país).' }, 400);
+    }
+
+    // Rate limit por IP (10/hr) — evita que el formulario público se use sin límite para
+    // generar payment links de Square (gasta cuota/costo de la API). Solo aplica si el
+    // namespace CACUSA_KV está enlazado a este worker; si no, no bloquea nada.
+    if (env.CACUSA_KV) {
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const rlKey = `sub-rl:${ip}`;
+      const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+      if (rlCount >= 10) return json({ error: 'Demasiadas solicitudes. Intenta más tarde.' }, 429);
+      await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
     }
 
     const idempotencyKey = `sub-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;

@@ -406,8 +406,11 @@ async function handleCreatePaymentLink(body, env, allowed) {
   const { items, customer } = body;
   const isEcuador = (customer?.country || '') === 'EC';
 
-  if (!items || items.length === 0) {
+  if (!items || !Array.isArray(items) || items.length === 0) {
     return jsonError('El carrito está vacío', 400, allowed);
+  }
+  if (items.length > 50) {
+    return jsonError('El carrito tiene demasiados productos', 400, allowed);
   }
   if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) {
     return jsonError('Worker no configurado — faltan credenciales Square', 500, allowed);
@@ -466,8 +469,8 @@ async function handleCreatePaymentLink(body, env, allowed) {
 
   // ── US State Sales Tax ─────────────────────────────────────────────────
   if (!isEcuador && customer?.state) {
-    const st   = customer.state.toUpperCase();
-    const rate = getTaxRate(st, customer.zip || '');
+    const st   = String(customer.state).toUpperCase();
+    const rate = getTaxRate(st, String(customer.zip || ''));
     if (rate) {
       const baseCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
       const pct = (rate * 100).toFixed(2).replace(/\.?0+$/, '');

@@ -120,7 +120,7 @@ export default {
       // ya autenticado con ORDER_INGEST_KEY tras confirmar el pago)
       if (path.endsWith('/coupon/burn')) {
         if (!ORIGIN_ALLOWLIST.includes(origin) && !isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
-        return await handleCouponBurnPublic(body, env, allowOrigin);
+        return await handleCouponBurnPublic(body, env, allowOrigin, request);
       }
 
       // Notificación push disparada desde OTRO Worker (hoy: cacusa-lovers-webhook, cuando
@@ -752,8 +752,17 @@ async function handleLeadList(env, origin) {
 
 // Se llama al confirmar un pedido — pública para WhatsApp/Zelle (origin-restringida),
 // o interna desde cacusa-square (ORDER_INGEST_KEY) tras confirmar el pago con tarjeta.
-async function handleCouponBurnPublic(body, env, origin) {
+async function handleCouponBurnPublic(body, env, origin, request) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
+  // Rate limit por IP (15/hr) — igual que /giftcard/redeem, para que no se pueda agotar el
+  // maxUses de un cupón ni bloquear el teléfono/email de una clienta real sin límite.
+  if (!isInternalIngest(request, env)) {
+    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+    const rlKey = `cpburnrl:${ip}`;
+    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+    if (rlCount >= 15) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  }
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ ok: true }, origin);
   // Registrar uso por teléfono y email (1 año)
