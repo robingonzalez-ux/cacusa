@@ -316,7 +316,12 @@ function PushSection({ token }) {
     if (!supported) return;
     navigator.serviceWorker.ready
       .then(reg => reg.pushManager.getSubscription())
-      .then(sub => setSubscribed(!!sub))
+      .then(sub => {
+        setSubscribed(!!sub);
+        // Re-sincroniza con el servidor por si el POST de /push/subscribe falló la vez
+        // pasada (el navegador ya tiene la suscripción, pero el Worker nunca la guardó).
+        if (sub) apiCall('push/subscribe', { token, subscription: sub.toJSON() }).catch(() => {});
+      })
       .catch(() => {});
   }, []);
 
@@ -340,8 +345,14 @@ function PushSection({ token }) {
   const test = async () => {
     setBusy(true); setMsg('');
     try {
-      await apiCall('push/test', { token });
-      setMsg('Notificación de prueba enviada — debería llegar en unos segundos.');
+      const r = await apiCall('push/test', { token });
+      if (!r.total) {
+        setMsg('⚠️ El servidor no tiene ninguna suscripción guardada — toca "Activar" de nuevo.');
+      } else if (r.sent > 0) {
+        setMsg(`Enviado a ${r.sent} de ${r.total} dispositivo(s) — debería llegar en unos segundos.`);
+      } else {
+        setMsg(`⚠️ Había ${r.total} suscripción(es) pero ninguna recibió el envío (${r.failed} con error, ${r.cleaned} revocada(s)). Vuelve a tocar "Activar".`);
+      }
     } catch (e) {
       setMsg('Error al probar: ' + e.message);
     }

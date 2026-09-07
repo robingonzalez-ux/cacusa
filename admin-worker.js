@@ -155,8 +155,8 @@ export default {
       if (path.endsWith('/push/unsubscribe')) return await handlePushUnsubscribe(body, env, allowOrigin, session);
       if (path.endsWith('/push/test')) {
         if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
-        await sendWebPushAll(env);
-        return ok({ ok: true }, allowOrigin);
+        const stats = await sendWebPushAll(env);
+        return ok({ ok: true, ...stats }, allowOrigin);
       }
       return err('Ruta no encontrada', 404, allowOrigin);
     } catch (e) {
@@ -764,20 +764,26 @@ async function sendWebPushOne(sub, env) {
     headers: { TTL: '86400', 'Content-Length': '0', Authorization: await vapidAuthHeader(sub.endpoint, env) }
   });
 }
+// Devuelve estadísticas del envío — sirve para que /push/test le diga al usuario si
+// realmente hay suscripciones guardadas en vez de reportar éxito a ciegas.
 async function sendWebPushAll(env) {
   const list = await env.CACUSA_KV.list({ prefix: 'push:' });
+  const stats = { total: list.keys.length, sent: 0, failed: 0, cleaned: 0 };
   for (const k of list.keys) {
     const raw = await env.CACUSA_KV.get(k.name);
     if (!raw) continue;
     try {
       const resp = await sendWebPushOne(JSON.parse(raw), env);
       // 404/410 = la suscripción fue revocada o expiró del lado del navegador/Apple — limpiar.
-      if (resp.status === 404 || resp.status === 410) await env.CACUSA_KV.delete(k.name);
-      else if (!resp.ok) console.error('webpush fail', k.name, resp.status);
+      if (resp.status === 404 || resp.status === 410) { await env.CACUSA_KV.delete(k.name); stats.cleaned++; }
+      else if (!resp.ok) { stats.failed++; console.error('webpush fail', k.name, resp.status, await resp.text().catch(() => '')); }
+      else stats.sent++;
     } catch (e) {
+      stats.failed++;
       console.error('webpush error', k.name, e.message);
     }
   }
+  return stats;
 }
 async function pushKeyFor(username, endpoint) {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
