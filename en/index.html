@@ -93,6 +93,8 @@ html{scroll-behavior:smooth}
 body{font-family:var(--fu);background:var(--pearl);color:var(--ink);overflow-x:hidden;cursor:none}
 
 /* ── CUSTOM CURSOR ─────────────────────────────────── */
+.wa-float{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:450;transition:transform .2s}
+.wa-float:hover{transform:scale(1.08)}
 #cursor{position:fixed;width:10px;height:10px;background:var(--pink);border-radius:50%;pointer-events:none;z-index:9999;transition:transform .15s;mix-blend-mode:multiply}
 #cursor-ring{position:fixed;width:32px;height:32px;border:1.5px solid var(--pink);border-radius:50%;pointer-events:none;z-index:9998;opacity:.5;transition:transform .4s cubic-bezier(.25,.46,.45,.94)}
 .cursor-grow #cursor{transform:scale(2.8);opacity:.5}
@@ -436,6 +438,11 @@ html,body{overflow-x:hidden}
 
 <div id="cursor"></div>
 <div id="cursor-ring"></div>
+
+<!-- WHATSAPP FLOTANTE -->
+<a id="waFloat" class="wa-float" href="https://wa.me/17867375336?text=Hi%2C%20I%20have%20a%20question" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
+</a>
 
 <!-- LOADER -->
 <div id="loader">
@@ -823,6 +830,12 @@ function loadHomeContent(){
     .then(data => {
       const cfg = data.config || {};
       CACUSA_WHATSAPP = data.whatsapp || cfg.whatsapp || '';
+      const _waFloatEl = document.getElementById('waFloat');
+      if (_waFloatEl && CACUSA_WHATSAPP) {
+        const _waFloatNum = String(CACUSA_WHATSAPP).replace(/\D/g, '');
+        const _waFloatMsg = localStorage.getItem('cacusa-lang') === 'en' ? 'Hi, I have a question' : 'Hola, tengo una consulta';
+        _waFloatEl.href = 'https://wa.me/' + _waFloatNum + '?text=' + encodeURIComponent(_waFloatMsg);
+      }
       window._cacusaProds    = Array.isArray(data.products) ? data.products : [];
       window._cacusaFeatured = cfg.home && Array.isArray(cfg.home.featuredProductIds) ? cfg.home.featuredProductIds : null;
       window._cacusaHeroIds  = cfg.home && Array.isArray(cfg.home.heroProductIds)     ? cfg.home.heroProductIds     : null;
