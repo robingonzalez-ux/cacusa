@@ -517,6 +517,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./index.html">Inicio</a>
     <a href="./ui_kits/store/">Tienda</a>
     <a href="./cacusa-lovers.html" class="nav-lovers-badge">Cacusa Lovers ♡</a>
+    <a href="./index.html#story">Nosotros</a>
     <a href="./index.html#personalize">Personaliza</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
@@ -533,6 +534,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./index.html" class="drawer-link">Inicio</a>
     <a href="./ui_kits/store/" class="drawer-link">Tienda</a>
     <a href="./cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
+    <a href="./index.html#story" class="drawer-link">Nosotros</a>
     <a href="./index.html#personalize" class="drawer-link">Personaliza</a>
   </nav>
   <div class="drawer-lang">
@@ -549,7 +551,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <div class="hero-badge reveal" id="lHeroBadge">✦ Club de suscripción exclusivo</div>
     <h1 class="hero-h1 reveal" data-delay="1">Cacusa<br><em>Lovers</em></h1>
     <div class="hero-script reveal" data-delay="2">by Taitus</div>
-    <p class="hero-desc reveal" data-delay="3" id="lHeroDesc">Cada mes recibirás 2 joyas en acero inoxidable —no se oxidan, no se ponen negras— seleccionadas a mano directamente a tu puerta: piezas con un valor mayor a tu suscripción mensual, para un outfit siempre renovado a un precio accesible.</p>
+    <p class="hero-desc reveal" data-delay="3" id="lHeroDesc">Cada mes recibirás 2 joyas en acero inoxidable —no se oxidan, no se ponen negras— seleccionadas a mano directamente a tu puerta: piezas cuyo valor combinado en la tienda suele superar los $60, para un outfit siempre renovado a un precio accesible.</p>
     <div class="hero-price reveal-scale" data-delay="3">
       <div class="amount" id="lHeroAmount">$19.99</div>
       <div class="per">al mes · sin compromisos</div>
@@ -559,6 +561,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <button class="btn-primary" onclick="joinNow()">♡ Quiero ser Cacusa Lover</button>
       <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">¿Cómo funciona?</button>
     </div>
+    <div class="hero-urgency reveal" data-delay="5" id="lUrgencyNote" style="margin-top:14px;font-family:var(--fu);font-size:12.5px;color:var(--pink);font-weight:600"></div>
   </div>
   <div class="hero-scroll"><span>Descubrir</span><div class="scroll-line"></div></div>
 </section>
@@ -1021,6 +1024,26 @@ function applyLoversContent(l) {
   if (ctaSubEl && l.ctaSub) ctaSubEl.textContent = '"' + l.ctaSub + '"';
 }
 loadLoversContent();
+
+// ── URGENCIA REAL: corte de envío mensual (tercera semana del mes) ──
+function renderLoversUrgency() {
+  const el = document.getElementById('lUrgencyNote');
+  if (!el) return;
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const CUTOFF_DAY = 15;
+  const now = new Date();
+  const day = now.getDate();
+  if (day <= CUTOFF_DAY) {
+    const daysLeft = CUTOFF_DAY - day;
+    el.textContent = daysLeft === 0
+      ? '⏳ Hoy es el último día para que tu primera caja salga este mes'
+      : `⏳ Suscríbete en los próximos ${daysLeft} día${daysLeft === 1 ? '' : 's'} para que tu primera caja salga este mes`;
+  } else {
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    el.textContent = `⏳ El envío de este mes ya salió — suscríbete ahora y tu primera caja sale en ${MESES[nextMonth.getMonth()]}`;
+  }
+}
+renderLoversUrgency();
 
 // ── SUBSCRIPTION MODAL ──────────────────────────────────────
 function onPaisChange(){
