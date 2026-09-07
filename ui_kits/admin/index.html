@@ -50,7 +50,7 @@ const IMAGES_PATH    = 'ui_kits/store/images';
 const LOVERS_WEBHOOK_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
 const ADMIN_ACTION_KEY   = 'SBxAvquZ71E6nuo0ti9sxvziQghd5ypz8hAP5Xg0zto';
 const STORE_URL      = 'https://cacusabytaitus.com/';
-const VAPID_PUB_KEY  = 'BDj3vzNjIprLSnAzuBzZHBjC0Zoa9033J2Ye7el8Zd0PTat1YFlMEDZbjeVo1zuzI6xRG9QJEtyfRehwYVMo1v8';
+const VAPID_PUB_KEY  = 'BLLRPGO7zFrAiyfZ1KzNlaysb9wUVJnZeog3Z4sVJRqSFXiodQ9g8PALWr2uYT7sRuZ6W2V0iaDRQ-5XUcQif9U';
 
 const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👸', color: '#E85D8A' },
@@ -292,6 +292,108 @@ async function fetchNtfyInfo(token) {
   catch { return { configured: false }; }
 }
 
+// ── Web Push nativo (Safari/iOS) ────────────────────────────────────────────
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+function PushSection({ token }) {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const supported = 'serviceWorker' in navigator && 'PushManager' in window;
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+  const [permission, setPermission] = React.useState(() => (typeof Notification !== 'undefined' ? Notification.permission : 'denied'));
+  const [subscribed, setSubscribed] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
+
+  React.useEffect(() => {
+    if (!supported) return;
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => setSubscribed(!!sub))
+      .catch(() => {});
+  }, []);
+
+  const activate = async () => {
+    setBusy(true); setMsg('');
+    try {
+      const perm = await Notification.requestPermission();
+      setPermission(perm);
+      if (perm !== 'granted') { setMsg('No se concedió el permiso de notificaciones.'); setBusy(false); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUB_KEY) });
+      await apiCall('push/subscribe', { token, subscription: sub.toJSON() });
+      setSubscribed(true);
+      setMsg('✅ Notificaciones push activadas en este dispositivo.');
+    } catch (e) {
+      setMsg('Error al activar: ' + e.message);
+    }
+    setBusy(false);
+  };
+
+  const test = async () => {
+    setBusy(true); setMsg('');
+    try {
+      await apiCall('push/test', { token });
+      setMsg('Notificación de prueba enviada — debería llegar en unos segundos.');
+    } catch (e) {
+      setMsg('Error al probar: ' + e.message);
+    }
+    setBusy(false);
+  };
+
+  if (!supported) return null;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18, paddingBottom: 18, borderBottom: '1.5px solid #F3EFF5' }}>
+      <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700 }}>📲 Notificación nativa (recomendado)</div>
+
+      {isIOS && !isStandalone && (
+        <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '12px 14px', fontSize: 12.5, color: '#92400E', lineHeight: 1.5 }}>
+          En iPhone, Safari solo permite notificaciones si este panel está instalado en tu
+          pantalla de inicio. Toca <strong>Compartir → Agregar a inicio</strong> y abre la
+          app desde ese ícono nuevo (no desde la pestaña de Safari) para poder activarlas.
+        </div>
+      )}
+
+      {(!isIOS || isStandalone) && !subscribed && (
+        <button onClick={activate} disabled={busy}
+          style={{ padding: '11px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>
+          {busy ? 'Activando…' : 'Activar notificaciones push'}
+        </button>
+      )}
+
+      {subscribed && (
+        <>
+          <div style={{ background: '#F0FDF4', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#065F46', display: 'flex', gap: 8 }}>
+            <span>✅</span>
+            <span>Este dispositivo recibirá notificaciones nativas con cada pedido nuevo.</span>
+          </div>
+          <button onClick={test} disabled={busy}
+            style={{ padding: '10px', background: '#F3EFF5', color: '#7A5F8A', borderRadius: 99, fontWeight: 700, fontSize: 12.5, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>
+            {busy ? 'Enviando…' : 'Probar notificación'}
+          </button>
+        </>
+      )}
+
+      {permission === 'denied' && (
+        <div style={{ fontSize: 12, color: '#92400E' }}>
+          Bloqueaste las notificaciones para este sitio — actívalas desde Ajustes del
+          navegador para poder usarlas.
+        </div>
+      )}
+
+      {msg && <div style={{ fontSize: 12, color: '#4B5563' }}>{msg}</div>}
+    </div>
+  );
+}
+
 function NtfyModal({ token, onClose }) {
   const [info, setInfo] = React.useState(null);
   React.useEffect(() => {
@@ -309,6 +411,10 @@ function NtfyModal({ token, onClose }) {
           <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>🔔 Notificaciones de pedidos</div>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
+
+        <PushSection token={token} />
+
+        <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700, marginBottom: 4 }}>Alternativa: app ntfy</div>
 
         {!info && <div style={{ textAlign: 'center', padding: '20px 0', color: '#aaa' }}>Cargando…</div>}
 
@@ -3465,6 +3571,12 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+// Service worker para Web Push (notificaciones de pedidos nuevas, sin apps de terceros).
+// Scope explícito a esta carpeta para no chocar con el /sw.js (solo caché) de la tienda.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/ui_kits/admin/sw.js', { scope: '/ui_kits/admin/' }).catch(() => {});
+}
 </script>
 </body>
 </html>
