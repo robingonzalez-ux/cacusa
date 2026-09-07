@@ -177,11 +177,14 @@ async function fetchCatalog() {
 // misma ruta (ver ui_kits/store/index.html). Hay que replicarlo acá con la fórmula idéntica:
 // si no, Square cobra el precio base mientras el checkout con tarjeta mostró el precio con
 // recargo, y el total no coincide con lo que la clienta vio.
+// Nota: NO se puede autenticar esta llamada fijando el header Origin — es un header
+// "prohibido" del estándar Fetch y el fetch() de un Worker lo ignora — por eso se usa el
+// mismo ORDER_INGEST_KEY que ya usan forwardOrderToAdmin/burnCouponViaAdmin/etc. más abajo.
 async function fetchSurcharges(env) {
   try {
     const r = await fetch(`${ADMIN_WORKER_URL}/pub/surcharges`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Origin': 'https://cacusabytaitus.com' },
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: '{}'
     });
     if (!r.ok) return {};
