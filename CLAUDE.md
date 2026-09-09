@@ -221,6 +221,13 @@ elegibles por quien llama:
   formulario público (reseñas, alta de Lovers) — solo permiten crear, no
   leer/editar/borrar sin `FB_DB_SECRET`.
 
+## Historial de cambios
+
+`CHANGELOG.md` en la raíz del repo tiene el historial completo de
+versionamiento del sitio, agrupado por fecha en lenguaje simple (no un log
+técnico crudo). Al terminar un batch de trabajo importante en una sesión
+nueva, agregar una entrada ahí — no solo confiar en los mensajes de commit.
+
 ## Flujo de git
 
 - Todo commit a `main` publica de inmediato vía GitHub Pages — no hay
