@@ -177,6 +177,20 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 /* PRODUCT GRID */
 .store-body{max-width:1280px;margin:0 auto;padding:40px 48px}
 .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+
+/* CATEGORY PICKER — primera pantalla, antes de elegir categoría */
+.cat-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.cat-tile{position:relative;border-radius:20px;overflow:hidden;aspect-ratio:1/1;box-shadow:var(--shadow-card);transition:box-shadow .3s,transform .3s;animation:cardIn .5s ease both;cursor:pointer}
+.cat-tile:hover{box-shadow:var(--shadow-hover);transform:translateY(-4px)}
+.cat-tile-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s ease}
+.cat-tile:hover .cat-tile-bg{transform:scale(1.06)}
+.cat-tile-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(139,42,90,0) 35%,rgba(139,42,90,.72) 100%)}
+.cat-tile-label{position:absolute;left:0;right:0;bottom:0;padding:18px 16px}
+.cat-tile-label span{display:block;text-align:center;font-family:var(--fd);font-weight:700;font-size:19px;color:white;letter-spacing:.01em;text-shadow:0 2px 10px rgba(0,0,0,.3)}
+.cat-picker-viewall-wrap{grid-column:1/-1;text-align:center;margin-top:10px}
+.cat-picker-viewall{font-family:var(--fu);font-size:13px;color:var(--ink-muted);text-decoration:underline;cursor:pointer}
+.cat-picker-viewall:hover{color:var(--pink-deep)}
+@media(max-width:768px){.cat-picker-grid{grid-template-columns:repeat(2,1fr);gap:14px}.cat-tile-label span{font-size:16px}}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 @keyframes skeletonPulse{0%,100%{opacity:.6}50%{opacity:1}}
 .pcard-skeleton{background:white;border-radius:20px;overflow:hidden;box-shadow:var(--shadow-card)}
@@ -1363,7 +1377,7 @@ function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base;
 const __LANG = 'en';
 const __EN_T = {
   "store.back":"Back to home","store.cartBtn":"Cart","store.filterLabel":"Filter:",
-  "store.all":"All","store.sortDefault":"Sort: Featured","store.sortPriceAsc":"Price: low to high",
+  "store.all":"All","store.viewAllCatalog":"View full catalog →","store.sortDefault":"Sort: Featured","store.sortPriceAsc":"Price: low to high",
   "store.sortPriceDesc":"Price: high to low","store.sortNew":"Newest","store.loading":"Loading products…",
   "nav.followUs":"Follow us on social media","store.footerHome":"Home","store.footerShippingLink":"Shipping",
   "store.footerReturnsLink":"Returns","store.footerCareLink":"Care","store.personLabel":"Personalization",
@@ -1600,6 +1614,23 @@ function normalizeProd(p) {
 // ─── ESTADO ─────────────────────────────────────────────────
 let cart = JSON.parse(localStorage.getItem('cacusa-cart') || '[]');
 let currentProduct = null, qty = 1, activeFilter = 'all', searchTerm = '';
+// Mientras esta bandera sea false y no haya búsqueda activa, la primera pantalla muestra
+// las categorías en vez de los 74 productos juntos — se "apaga" en cuanto la clienta elige
+// una categoría, busca algo, o pide ver todo el catálogo.
+let _categoryPickerDismissed = false;
+// Función compartida entre los botones de filtro de la cabecera y las tarjetas de
+// categoría de la primera pantalla — ambos caminos llevan al mismo resultado.
+function selectCategory(cat) {
+  _categoryPickerDismissed = true;
+  activeFilter = cat;
+  document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
+  renderProducts();
+  const u = new URL(window.location.href);
+  u.searchParams.delete('p');
+  if (cat === 'all') u.searchParams.delete('cat'); else u.searchParams.set('cat', cat);
+  history.pushState({}, '', u.toString());
+  _updateListingSeo();
+}
 let _reviewSummaries = {};
 let _galleryImages = [], _galleryIdx = 0;
 let _lbImages = [], _lbIdx = 0;
@@ -1693,12 +1724,15 @@ let _revRating = 5;
   renderFreeShippingBanner();
   renderFilters();
   renderMaterials();
+  // Un link directo a un producto (?p=) no debe mostrar el selector de categorías detrás
+  // del modal — se apaga de una vez, igual que si la clienta ya hubiera elegido.
+  const _autoP = new URLSearchParams(window.location.search).get('p');
+  if (_autoP) _categoryPickerDismissed = true;
   renderProducts();
   _updateListingSeo();
   loadReviewSummaries();
   renderCombos();
   updateCartUI();
-  const _autoP = new URLSearchParams(window.location.search).get('p');
   if (_autoP) { const _apId = _extractProductId(_autoP); const _ap = PRODUCTS.find(x => String(x.id) === String(_apId)); if (_ap) openModal(_ap.id); }
   const _autoW = new URLSearchParams(window.location.search).get('wishlist');
   if (_autoW) { const _wids = _autoW.split(',').filter(Boolean); if (_wids.length) openWishlist(_wids); }
@@ -1755,19 +1789,7 @@ function renderFilters() {
   wrap.innerHTML = '<button class="filter-btn active" data-filter="all">' + t('store.all', 'Todo') + '</button>' +
     CATEGORIES.map(c => '<button class="filter-btn" data-filter="' + c + '">' + t('cat.' + c.toLowerCase(), c) + '</button>').join('');
   wrap.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      activeFilter = btn.dataset.filter;
-      renderProducts();
-      // Cada categoría pasa a tener su propia URL (?cat=), no solo un filtro visual —
-      // así queda indexable y compartible por separado, no solo la tienda genérica.
-      const u = new URL(window.location.href);
-      u.searchParams.delete('p');
-      if (activeFilter === 'all') u.searchParams.delete('cat'); else u.searchParams.set('cat', activeFilter);
-      history.pushState({}, '', u.toString());
-      _updateListingSeo();
-    });
+    btn.addEventListener('click', () => selectCategory(btn.dataset.filter));
   });
   // Permite enlazar a una categoría desde fuera (ej. footer del landing) con ?cat=NombreCategoria
   const reqCat = new URLSearchParams(window.location.search).get('cat');
@@ -1862,9 +1884,37 @@ function getMarketBadge(p) {
   return '';
 }
 
+// ─── CATEGORY PICKER (primera pantalla) ──────────────────────
+// En vez de recibir a la clienta con los 74 productos de golpe, la primera vista es un
+// selector visual de categorías — menos abrumador, más parecido a Mejuri/Kendra Scott.
+function renderCategoryPicker() {
+  const grid = document.getElementById('prodGrid');
+  grid.className = 'cat-picker-grid';
+  const tiles = CATEGORIES.map(cat => {
+    const catProducts = PRODUCTS.filter(p => p.cat === cat && p.available !== false);
+    const featured = catProducts.find(p => (p.tag || '').toLowerCase() === 'bestseller' && getProductImages(p).length)
+      || catProducts.find(p => getProductImages(p).length)
+      || catProducts[0];
+    const bgUrl = featured ? getProductImages(featured)[0] : '';
+    const label = t('cat.' + cat.toLowerCase(), cat);
+    const bgStyle = bgUrl ? `background-image:url('${bgUrl.replace(/'/g, '%27')}')` : 'background:var(--grad)';
+    return `
+      <div class="cat-tile" onclick="selectCategory('${cat.replace(/'/g, "\\'")}')">
+        <div class="cat-tile-bg" style="${bgStyle}"></div>
+        <div class="cat-tile-overlay"></div>
+        <div class="cat-tile-label"><span>${esc(label)}</span></div>
+      </div>`;
+  }).join('');
+  grid.innerHTML = tiles +
+    `<div class="cat-picker-viewall-wrap"><span class="cat-picker-viewall" onclick="selectCategory('all')">${t('store.viewAllCatalog', 'Ver todo el catálogo →')}</span></div>`;
+  refreshCursorTargets();
+}
+
 // ─── RENDER PRODUCTS ────────────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
+  if (activeFilter === 'all' && !searchTerm && !_categoryPickerDismissed) { renderCategoryPicker(); return; }
+  grid.className = 'prod-grid';
   let filtered = activeFilter === 'all'
     ? PRODUCTS
     : PRODUCTS.filter(p => p.cat === activeFilter || (p.cat || '').startsWith(activeFilter));
