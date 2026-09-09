@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-09T02:57:23.025Z",
+  "lastUpdated": "2026-09-09T03:05:43.522Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -2269,6 +2269,30 @@
       "name_en": "Lumière Ring",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1788922634845,
+      "promo": null
+    },
+    {
+      "name": "Cadena Golden Silk",
+      "category": "Cadenas",
+      "price": 35,
+      "oldPrice": 40,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "El básico dorado que hace que todo se vea más elegante.\n\nGolden Silk es una cadena de acabado liso y luminoso que abraza delicadamente el cuello y captura la luz con cada movimiento. Su diseño plano crea ese efecto dorado sofisticado que luce increíble tanto por sí solo como combinado con otras cadenas.\n\nEs una de esas joyas que puedes llevar todos los días: con una camiseta básica, un vestido o para completar un look de noche. Minimalista, versátil y atemporal.\n\nDetalles: acero inoxidable 316L · acabado dorado · cadena plana · 45 cm + 5 cm de extensión · largo ajustable.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788923119948_cacusa_cadena_seda_producto_jpg.jpg",
+      "focalX": 50.219298245614034,
+      "focalY": 57.27272727272727,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788923130922_cacusa_cadena_seda_modelo_jpg.jpg"
+      ],
+      "name_en": "Golden Silk Chain",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1788923140476,
       "promo": null
     }
   ],
