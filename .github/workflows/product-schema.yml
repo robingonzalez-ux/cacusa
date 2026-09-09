@@ -1,0 +1,44 @@
+name: Regenerar JSON-LD estático de productos
+
+# Cada vez que data/products.json cambia en main (ej. una edición desde el panel
+# admin, que comitea directo por la API de GitHub), regenera el bloque estático
+# de JSON-LD (schema.org Product) en ui_kits/store/index.html y
+# en/ui_kits/store/index.html, y lo comitea de vuelta. Así el HTML que sirve
+# GitHub Pages siempre trae el schema actualizado, sin depender de que se
+# ejecute JavaScript en el navegador.
+#
+# No entra en loop: este workflow solo mira cambios en data/products.json, y su
+# propio commit únicamente toca los dos index.html — nunca products.json — así
+# que no se vuelve a disparar a sí mismo.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/products.json"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Generar JSON-LD estático
+        run: python3 .github/scripts/generate_product_schema.py
+
+      - name: Commitear si hubo cambios
+        run: |
+          git config user.name "cacusa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- ui_kits/store/index.html en/ui_kits/store/index.html; then
+            echo "Sin cambios en el JSON-LD estático."
+            exit 0
+          fi
+          git add ui_kits/store/index.html en/ui_kits/store/index.html
+          git commit -m "Regenerar JSON-LD estático de productos [skip ci]"
+          git push
