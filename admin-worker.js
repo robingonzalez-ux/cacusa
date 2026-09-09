@@ -16,6 +16,10 @@
  *                              deja pasar /order, /coupon/burn, /giftcard/redeem y
  *                              /push/notify sin exigir el Origin del navegador cuando viaja
  *                              este header. Debe tener EL MISMO valor en los 3 Workers.
+ *                              Este Worker también la USA para llamar a cacusa-lovers-webhook
+ *                              (GET /internal/lovers/active) al emitir un código de
+ *                              referido, para confirmar que el teléfono es de una
+ *                              suscriptora activa antes de generar el cupón.
  *   ALLOWED_ORIGIN   (text)    https://cacusabytaitus.com  (opcional)
  *   VAPID_PUBLIC_KEY      (text)    llave pública VAPID (mismo valor que VAPID_PUB_KEY
  *                                   en ui_kits/admin/index.html) — Web Push nativo de Safari
@@ -598,11 +602,33 @@ function couponIsValid(c) {
   return true;
 }
 
+const LOVERS_WORKER_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
+
+// ── Verifica contra cacusa-lovers-webhook (Worker-a-Worker, ORDER_INGEST_KEY) si un
+// teléfono pertenece a una suscriptora activa de Cacusa Lovers. Falla cerrado: cualquier
+// error de red o de configuración se trata como "no activa", nunca como "activa".
+async function isActiveLoversPhone(phoneDigits, env) {
+  if (!env.ORDER_INGEST_KEY) return false;
+  try {
+    const r = await fetch(`${LOVERS_WORKER_URL}/internal/lovers/active?phone=${encodeURIComponent(phoneDigits)}`, {
+      headers: { 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+    });
+    if (!r.ok) return false;
+    const d = await r.json().catch(() => ({}));
+    return !!d.active;
+  } catch (e) {
+    return false;
+  }
+}
+
 // ── Referidos — "invita a una amiga" ────────────────────────────────────────────
 // Genera (o recupera, si ya lo pidió antes) un cupón de referido para una clienta, sin
-// necesitar sesión de admin. Reglas fijas y no elegibles por quien llama (15% para la amiga
-// referida, uso ilimitado) — a diferencia de /coupon/create (que sí permite elegir tipo/monto),
-// esta ruta es pública, así que nunca deja que el llamador defina el descuento.
+// necesitar sesión de admin. Exclusivo para suscriptoras activas de Cacusa Lovers —
+// se verifica el teléfono contra Firebase (vía cacusa-lovers-webhook) antes de emitir
+// nada, para que el beneficio no quede abierto a cualquier visitante del sitio.
+// Reglas fijas y no elegibles por quien llama (15% para la amiga referida, uso
+// ilimitado) — a diferencia de /coupon/create (que sí permite elegir tipo/monto), esta
+// ruta es pública, así que nunca deja que el llamador defina el descuento.
 // El código es determinístico a partir del teléfono, así pedirlo dos veces no crea 2 cupones.
 async function handleReferralCode(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
@@ -616,6 +642,9 @@ async function handleReferralCode(body, env, origin, request) {
   const phoneDigits = String(body.phone || '').replace(/\D/g, '');
   if (!name || phoneDigits.length < 7) {
     return err('Faltan nombre o teléfono válido', 400, origin);
+  }
+  if (!(await isActiveLoversPhone(phoneDigits, env))) {
+    return err('Este beneficio es exclusivo para suscriptoras activas de Cacusa Lovers.', 403, origin);
   }
   const code = 'AMIGA' + phoneDigits.slice(-6);
 
