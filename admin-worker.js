@@ -111,6 +111,15 @@ export default {
         return await handleLeadRegister(body, env, allowOrigin, request, ctx);
       }
 
+      // Referidos — genera (o recupera) el código de descuento de una clienta que quiere
+      // invitar a una amiga. Pública, origin-restringida + rate-limit. Reusa el sistema de
+      // cupones existente (couponKey/couponGet), pero con reglas fijas (no elegidas por quien
+      // llama) para que no se pueda abusar como si fuera /coupon/create.
+      if (path.endsWith('/referral/code')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleReferralCode(body, env, allowOrigin, request);
+      }
+
       // Cupones — validación pública (origin-restringida, rate-limited)
       if (path.endsWith('/coupon/validate')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
@@ -587,6 +596,40 @@ function couponIsValid(c) {
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return false;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return false;
   return true;
+}
+
+// ── Referidos — "invita a una amiga" ────────────────────────────────────────────
+// Genera (o recupera, si ya lo pidió antes) un cupón de referido para una clienta, sin
+// necesitar sesión de admin. Reglas fijas y no elegibles por quien llama (15% para la amiga
+// referida, uso ilimitado) — a diferencia de /coupon/create (que sí permite elegir tipo/monto),
+// esta ruta es pública, así que nunca deja que el llamador defina el descuento.
+// El código es determinístico a partir del teléfono, así pedirlo dos veces no crea 2 cupones.
+async function handleReferralCode(body, env, origin, request) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `refrl:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+
+  const name = String(body.name || '').trim().slice(0, 100);
+  const phoneDigits = String(body.phone || '').replace(/\D/g, '');
+  if (!name || phoneDigits.length < 7) {
+    return err('Faltan nombre o teléfono válido', 400, origin);
+  }
+  const code = 'AMIGA' + phoneDigits.slice(-6);
+
+  let coupon = await couponGet(env, code);
+  if (!coupon) {
+    coupon = {
+      code, type: 'percent', amount: 15,
+      maxUses: null, usedCount: 0, active: true, expiresAt: null,
+      note: `Referido de ${name} (${body.phone ? String(body.phone).slice(0, 30) : ''})`,
+      createdAt: new Date().toISOString(), createdBy: 'referral-system',
+    };
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  }
+  return ok({ ok: true, code: coupon.code, type: coupon.type, amount: coupon.amount }, origin);
 }
 
 async function handleCouponValidate(body, env, origin, request) {
