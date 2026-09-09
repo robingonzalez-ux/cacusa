@@ -137,6 +137,16 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <div class="callout" data-i18n="cui.callout">Siguiendo estos cuidados, tu joya CACUSA mantendrá su brillo y color por mucho más tiempo. ✨</div>
     </div>
 
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="cui.sec6H2">¿Por qué importa el material?</span></h2>
+      <p data-i18n="cui.sec6Body">Cada material de CACUSA se comporta distinto, y saber la diferencia te ayuda a cuidarlo mejor:</p>
+      <ul>
+        <li data-i18n="cui.sec6Li1"><b>Plata 925:</b> plata de ley real (92.5% pura). Es duradera, pero puede oxidarse un poco con el aire y la humedad — el paño suave la devuelve a su brillo original.</li>
+        <li data-i18n="cui.sec6Li2"><b>Baño de oro 18k:</b> una capa fina de oro sobre una base metálica. Es más accesible que el oro sólido, pero justamente por ser una capa, se desgasta más rápido si tiene contacto frecuente con agua, químicos o fricción — por eso los cuidados de arriba son especialmente importantes en estas piezas.</li>
+        <li data-i18n="cui.sec6Li3"><b>Acero inoxidable:</b> el más resistente al agua, los golpes y el uso diario. No se opaca con facilidad y es una buena opción hipoalergénica si tu piel es sensible a otros metales.</li>
+      </ul>
+    </div>
+
     <div class="contact">
       <p data-i18n="cui.contact">En CACUSA creamos para que luzcas más bella de lo que ya eres.</p>
       <a id="waBtn" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="wa-btn">
@@ -199,6 +209,14 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         st('cuiSec2Body',pgEn.sec2Body||'Avoid direct contact with perfumes, creams, alcohol, lotions, and sunscreen. These products contain chemicals that react with the metal and accelerate loss of shine or color change.');
         st('cuiSec3Body',pgEn.sec3Body||'When not in use, store it in its original packaging or an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.');
         st('cuiSec5Body',pgEn.sec5Body||'Clean your piece occasionally with a soft, dry cloth to remove dust and natural skin oils. Avoid toothpaste, baking soda, or other abrasive products — they can scratch the surface and damage the finish.');
+        const cui6={
+          'cui.sec6H2':'Why does the material matter?',
+          'cui.sec6Body':'Each CACUSA material behaves differently, and knowing the difference helps you care for it better:',
+          'cui.sec6Li1':'<b>Sterling silver 925:</b> real sterling silver (92.5% pure). It\'s durable, but can tarnish slightly with air and humidity — a soft cloth restores its original shine.',
+          'cui.sec6Li2':'<b>18k gold plating:</b> a thin layer of gold over a metal base. It\'s more affordable than solid gold, but being a thin layer, it wears faster with frequent contact with water, chemicals, or friction — which is why the care tips above matter especially for these pieces.',
+          'cui.sec6Li3':'<b>Stainless steel:</b> the most resistant to water, knocks, and daily wear. It doesn\'t tarnish easily and is a good hypoallergenic option if your skin is sensitive to other metals.'
+        };
+        document.querySelectorAll('[data-i18n^="cui.sec6"]').forEach(el=>{const v=cui6[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
       }
     }
   }catch(e){}

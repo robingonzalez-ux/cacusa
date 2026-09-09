@@ -76,9 +76,21 @@
   </url>
   <url>
     <loc>https://cacusabytaitus.com/cuidados.html</loc>
-    <lastmod>2026-09-06</lastmod>
+    <lastmod>2026-09-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/guia-tallas.html</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://cacusabytaitus.com/guia-regalos.html</loc>
+    <lastmod>2026-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
 
 </urlset>

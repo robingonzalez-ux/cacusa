@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#EE6FA8">
+<meta name="description" content="Guía de tallas CACUSA by Taitus — cómo medir tu talla de anillo en casa, tabla de conversión de tallas y guía de largo de cadenas y collares.">
+<title>Guía de Tallas — CACUSA by Taitus</title>
+<link rel="canonical" href="https://cacusabytaitus.com/guia-tallas.html">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pink:#EE6FA8;--pink-mid:#F5A0C8;--pink-pale:#FCE8F3;--lilac:#C4A0EC;--lilac-pale:#EEE4FA;
+  --sky:#88C8F0;--peach:#F5C8A8;--pearl:#FEF8FF;--white:#FFFFFF;
+  --ink:#8B2A5A;--ink-mid:#A05080;--ink-muted:#C090B0;--ink-light:#E4C0D8;
+  --grad-full:linear-gradient(135deg,#F5C8A8 0%,#EE6FA8 30%,#C4A0EC 65%,#88C8F0 100%);
+  --grad-warm:linear-gradient(135deg,#F5C8A8,#EE6FA8,#F5A0C8);
+  --fd:'Bodoni Moda',serif;--fs:'Pinyon Script',cursive;--fe:'Cormorant Garamond',serif;--fu:'Outfit',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--fu);background:var(--pearl);color:var(--ink);overflow-x:hidden;line-height:1.6}
+a{text-decoration:none;color:inherit}
+
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 52px;border-bottom:1.5px solid var(--ink-light);position:sticky;top:0;background:rgba(254,248,255,.95);backdrop-filter:blur(16px);z-index:10}
+.nav-logo{display:flex;flex-direction:column;line-height:1}
+.nav-logo .w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;text-transform:uppercase;background:var(--grad-full);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.nav-logo .s{font-family:var(--fs);font-size:15px;color:var(--ink-muted)}
+.nav-back{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink);border:1.5px solid var(--ink-light);border-radius:999px;padding:9px 20px;transition:all .2s}
+.nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
+.lang-sw{display:flex;align-items:center;gap:2px}
+.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on{background:var(--pink);color:white}
+
+/* HEADER */
+header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
+header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
+.h-label{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:14px;position:relative}
+.h-title{font-family:var(--fd);font-weight:900;font-size:clamp(34px,5vw,56px);color:white;line-height:1.05;position:relative;text-shadow:0 2px 24px rgba(0,0,0,.1)}
+.h-script{font-family:var(--fs);font-size:clamp(24px,3vw,36px);color:rgba(255,255,255,.75);margin-top:6px;position:relative}
+
+/* CONTENT */
+.wrap{max-width:760px;margin:-40px auto 0;padding:0 24px 80px;position:relative;z-index:2}
+.card{background:white;border-radius:24px;padding:48px 44px;box-shadow:0 12px 48px rgba(238,111,168,.14)}
+.intro{font-family:var(--fe);font-size:19px;font-style:italic;color:var(--ink-mid);line-height:1.7;margin-bottom:32px;padding-bottom:28px;border-bottom:1.5px solid var(--ink-light)}
+.sec{margin-bottom:34px}
+.sec:last-of-type{margin-bottom:0}
+.sec h2{font-family:var(--fd);font-weight:700;font-size:22px;color:var(--ink);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.sec h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--pink);flex-shrink:0}
+.sec p{font-family:var(--fu);font-size:15.5px;color:var(--ink-mid);margin-bottom:12px}
+.sec ol,.sec ul{list-style:none;margin:8px 0 4px}
+.sec ol li{counter-increment:step;font-family:var(--fu);font-size:15px;color:var(--ink-mid);padding:8px 0 8px 34px;position:relative;border-bottom:1px solid #F4ECF2}
+.sec ol{counter-reset:step}
+.sec ol li::before{content:counter(step);position:absolute;left:0;top:6px;width:22px;height:22px;border-radius:50%;background:var(--pink-pale);color:var(--pink);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.sec ol li:last-child{border-bottom:none}
+.callout{background:var(--pink-pale);border-left:4px solid var(--pink);border-radius:12px;padding:18px 22px;margin:6px 0 4px}
+.callout strong{color:var(--ink)}
+.tbl-wrap{overflow-x:auto;margin:14px 0 6px;border-radius:14px;border:1.5px solid var(--ink-light)}
+table{width:100%;border-collapse:collapse;font-family:var(--fu);font-size:14px;min-width:420px}
+table th{background:var(--pink-pale);color:var(--ink);font-weight:700;text-align:left;padding:12px 16px;font-size:12.5px;letter-spacing:.03em}
+table td{padding:11px 16px;color:var(--ink-mid);border-top:1px solid #F4ECF2}
+table tr:nth-child(even) td{background:#FDF6FA}
+.contact{margin-top:36px;padding-top:30px;border-top:1.5px solid var(--ink-light);text-align:center}
+.contact p{font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-bottom:16px}
+.wa-btn{display:inline-flex;align-items:center;gap:10px;background:var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.04em;border-radius:999px;padding:14px 30px;box-shadow:0 4px 20px rgba(238,111,168,.35);transition:transform .25s}
+.wa-btn:hover{transform:translateY(-2px)}
+.store-link{display:inline-block;margin-top:14px;font-family:var(--fu);font-size:13px;color:var(--pink);text-decoration:underline}
+.updated{text-align:center;font-family:var(--fu);font-size:12px;color:var(--ink-muted);margin-top:24px}
+
+/* FOOTER */
+footer{background:var(--grad-full);padding:40px 24px;text-align:center}
+.f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
+.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8)}
+.f-links a:hover{color:white}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:20px;margin-bottom:12px}
+.f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
+.f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s}
+.f-social-btn:hover{background:rgba(255,255,255,.28)}
+
+@media(max-width:600px){
+  nav{padding:14px 20px}
+  header{padding:54px 22px 56px}
+  .card{padding:32px 22px;border-radius:18px}
+  .intro{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+  </div>
+</nav>
+
+<header>
+  <div class="h-label" data-i18n="gt.hLabel">Guía de compra</div>
+  <h1 class="h-title" data-i18n="gt.hTitle">Guía de Tallas</h1>
+  <div class="h-script">by Taitus</div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <p class="intro" data-i18n="gt.intro">Para que tu joya te quede perfecta, ya sea que la compres para ti o la regales. Aquí te explicamos cómo funcionan nuestros anillos ajustables, cómo medir tu talla exacta en casa, y cómo elegir el largo ideal de cadena o collar.</p>
+
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="gt.sec1H2">Anillos ajustables</span></h2>
+      <p data-i18n="gt.sec1Body">La mayoría de nuestros anillos son ajustables: tienen una pequeña apertura en la banda que puedes abrir o cerrar suavemente con los dedos para adaptarlos a un rango amplio de tallas (aproximadamente talla 5 a 9 US). Son la opción más segura si no conoces tu talla exacta o si vas a regalar sin poder medir a la otra persona.</p>
+      <div class="callout" data-i18n="gt.sec1Callout"><strong>Tip:</strong> ajusta el anillo con cuidado y poco a poco — abrir o cerrar la banda de golpe puede debilitar el metal con el tiempo.</div>
+    </div>
+
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="gt.sec2H2">Anillos de talla fija — cómo medir tu talla en casa</span></h2>
+      <p data-i18n="gt.sec2Body">Algunas de nuestras piezas vienen en una talla específica (no ajustable). Puedes calcular tu talla con cualquiera de estos dos métodos, usando solo una regla:</p>
+      <ol>
+        <li data-i18n="gt.sec2Li1"><b>Método del hilo:</b> envuelve un hilo o tira de papel alrededor de la base del dedo donde usarás el anillo, marca dónde se superpone, y mide esa longitud en milímetros con una regla. Ese número es tu circunferencia — compárala con la tabla de abajo.</li>
+        <li data-i18n="gt.sec2Li2"><b>Método del anillo que ya te queda bien:</b> toma un anillo que uses en ese mismo dedo y mide el diámetro interior (de borde a borde, pasando por el centro) en milímetros. Compáralo con la columna de diámetro en la tabla.</li>
+      </ol>
+    </div>
+
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="gt.sec3H2">Tabla de conversión de tallas de anillo</span></h2>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th data-i18n="gt.thUs">Talla US</th><th data-i18n="gt.thDiam">Diámetro interior (mm)</th><th data-i18n="gt.thCirc">Circunferencia (mm)</th></tr></thead>
+          <tbody>
+            <tr><td>5</td><td>15.7</td><td>49.3</td></tr>
+            <tr><td>5.5</td><td>16.1</td><td>50.6</td></tr>
+            <tr><td>6</td><td>16.5</td><td>51.9</td></tr>
+            <tr><td>6.5</td><td>16.9</td><td>53.1</td></tr>
+            <tr><td>7</td><td>17.3</td><td>54.4</td></tr>
+            <tr><td>7.5</td><td>17.7</td><td>55.7</td></tr>
+            <tr><td>8</td><td>18.1</td><td>56.9</td></tr>
+            <tr><td>8.5</td><td>18.5</td><td>58.2</td></tr>
+            <tr><td>9</td><td>18.9</td><td>59.5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p data-i18n="gt.sec3Note">Valores de referencia aproximados. Si tu medida queda entre dos tallas, o tienes dudas, escríbenos por WhatsApp y te ayudamos.</p>
+    </div>
+
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="gt.sec4H2">Largo de cadenas y collares</span></h2>
+      <p data-i18n="gt.sec4Body">El largo cambia mucho cómo se ve una cadena puesta. Esta es la referencia estándar de la industria para elegir:</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th data-i18n="gt.thLen">Largo</th><th data-i18n="gt.thStyle">Estilo</th><th data-i18n="gt.thFall">Cómo cae</th></tr></thead>
+          <tbody>
+            <tr><td>40 cm</td><td data-i18n="gt.len40n">Gargantilla</td><td data-i18n="gt.len40d">Ajustada, a la altura del cuello</td></tr>
+            <tr><td>45 cm</td><td data-i18n="gt.len45n">Princesa</td><td data-i18n="gt.len45d">El largo más común — cae sobre la clavícula</td></tr>
+            <tr><td>50 cm</td><td data-i18n="gt.len50n">Matinée</td><td data-i18n="gt.len50d">Debajo de la clavícula, ideal con escote</td></tr>
+            <tr><td>55–60 cm</td><td data-i18n="gt.len55n">Ópera / larga</td><td data-i18n="gt.len55d">Cae sobre el pecho, look más dramático</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p data-i18n="gt.sec4Note">El largo exacto de cada pieza está en su descripción dentro de la tienda. Si vas a regalar y no estás segura del largo ideal, escríbenos por WhatsApp — te ayudamos a elegir.</p>
+    </div>
+
+    <div class="contact">
+      <p data-i18n="gt.contact">¿Aún tienes dudas sobre tu talla? Escríbenos y te ayudamos a elegir la pieza correcta.</p>
+      <a id="waBtn" href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="wa-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
+        <span data-i18n="nav.waBtn">Escríbenos por WhatsApp</span>
+      </a>
+      <div><a class="store-link" href="./ui_kits/store/" data-i18n="gt.storeLink">Ver toda la tienda →</a></div>
+    </div>
+
+    <div class="updated" id="updated"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="f-w">CACUSA</div>
+  <div class="f-s">by Taitus</div>
+  <div class="f-social-label" data-i18n="nav.followUs">Síguenos en nuestras redes sociales</div>
+  <div class="f-social">
+    <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="f-social-btn">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      @cacusabytaitus
+    </a>
+    <a href="https://www.tiktok.com/@cacusabytaitus" target="_blank" rel="noopener" class="f-social-btn">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.15 8.15 0 0 0 4.77 1.52V6.76a4.85 4.85 0 0 1-1-.07z"/></svg>
+      @cacusabytaitus
+    </a>
+  </div>
+  <div class="f-links">
+    <a href="./" data-i18n="nav.home">Inicio</a>
+    <a href="./ui_kits/store/" data-i18n="nav.store">Tienda</a>
+  </div>
+</footer>
+
+<script>
+const I18N_EN = {
+  'nav.back':'← Back to home','nav.waBtn':'Message us on WhatsApp','nav.followUs':'Follow us on social media',
+  'nav.home':'Home','nav.store':'Store',
+  'gt.hLabel':'Buying guide','gt.hTitle':'Size Guide',
+  'gt.intro':"So your jewelry fits perfectly, whether you're buying it for yourself or gifting it. Here's how our adjustable rings work, how to measure your exact ring size at home, and how to choose the right necklace or chain length.",
+  'gt.sec1H2':'Adjustable rings',
+  'gt.sec1Body':'Most of our rings are adjustable: they have a small opening in the band that you can gently open or close with your fingers to fit a wide range of sizes (roughly US 5 to 9). They\'re the safest option if you don\'t know your exact size, or if you\'re gifting without being able to measure the other person.',
+  'gt.sec1Callout':'<strong>Tip:</strong> adjust the ring gently and gradually — opening or closing the band too fast can weaken the metal over time.',
+  'gt.sec2H2':'Fixed-size rings — how to measure your size at home',
+  'gt.sec2Body':'Some of our pieces come in one specific size (not adjustable). You can work out your size with either of these two methods, using just a ruler:',
+  'gt.sec2Li1':'<b>String method:</b> wrap a piece of string or a strip of paper around the base of the finger you\'ll wear the ring on, mark where it overlaps, and measure that length in millimeters with a ruler. That number is your circumference — compare it to the table below.',
+  'gt.sec2Li2':'<b>Ring-that-already-fits method:</b> take a ring you already wear on that same finger and measure its inner diameter (edge to edge, through the center) in millimeters. Compare it to the diameter column in the table.',
+  'gt.sec3H2':'Ring size conversion table',
+  'gt.thUs':'US size','gt.thDiam':'Inner diameter (mm)','gt.thCirc':'Circumference (mm)',
+  'gt.sec3Note':'Approximate reference values. If your measurement falls between two sizes, or you\'re unsure, message us on WhatsApp and we\'ll help.',
+  'gt.sec4H2':'Necklace and chain length',
+  'gt.sec4Body':'Length changes a lot about how a chain looks when worn. Here\'s the standard industry reference to help you choose:',
+  'gt.thLen':'Length','gt.thStyle':'Style','gt.thFall':'How it falls',
+  'gt.len40n':'Choker','gt.len40d':'Snug, sits at the neckline',
+  'gt.len45n':'Princess','gt.len45d':'The most common length — falls at the collarbone',
+  'gt.len50n':'Matinee','gt.len50d':'Below the collarbone, great with necklines',
+  'gt.len55n':'Opera / long','gt.len55d':'Falls at chest level, a more dramatic look',
+  'gt.sec4Note':'The exact length of each piece is listed in its description in the store. If you\'re gifting and aren\'t sure of the right length, message us on WhatsApp — we\'ll help you choose.',
+  'gt.contact':'Still unsure about your size? Message us and we\'ll help you pick the right piece.',
+  'gt.storeLink':'Browse the full store →'
+};
+(async function(){
+  var _L=localStorage.getItem('cacusa-lang')||'es';
+  try{
+    const res=await fetch('./data/products.json?v='+Date.now());
+    if(res.ok){
+      const data=await res.json();
+      const cfg=data.config||{};
+      const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
+      if(num){
+        const msg=_L==='en'?'Hi, I have a question about ring/chain sizing at CACUSA ✨':'Hola, tengo una consulta sobre tallas de anillo/cadena en CACUSA ✨';
+        document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
+      }
+    }
+  }catch(e){}
+  if(_L==='en'){
+    document.title='Ring & Chain Size Guide — CACUSA by Taitus';
+    document.querySelectorAll('[data-i18n]').forEach(el=>{const v=I18N_EN[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
+    document.querySelectorAll('a[href^="./ui_kits/store/"]').forEach(a=>{a.href=a.href.replace('/ui_kits/store/','/en/ui_kits/store/');});
+  }
+  const d=new Date();
+  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
+  if(bEs)bEs.className=_L==='es'?'on':'';
+  if(bEn)bEn.className=_L==='en'?'on':'';
+})();
+window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
+</script>
+</body>
+</html>
