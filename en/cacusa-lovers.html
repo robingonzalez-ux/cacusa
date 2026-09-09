@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://robingonzalez-ux.github.io; connect-src 'self' https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://robingonzalez-ux.github.io; connect-src 'self' https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com https://cacusa-admin.facturacioncacusa.workers.dev; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="theme-color" content="#EE6FA8">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
@@ -170,6 +170,17 @@ section{padding:96px 0}
 .step-title{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);margin-bottom:10px}
 .step-desc{font-family:var(--fe);font-size:15px;font-style:italic;color:var(--ink-muted);line-height:1.65}
 .step-connector{position:absolute;top:50%;right:-20px;transform:translateY(-50%);font-size:20px;color:var(--ink);z-index:1}
+
+/* ── REFERRAL ── */
+#referral{background:white}
+.referral-card{max-width:560px;margin:0 auto;text-align:center;padding:40px 32px;background:var(--pearl);border-radius:24px;box-shadow:0 4px 24px rgba(238,111,168,.09)}
+.referral-desc{font-family:var(--fe);font-size:15px;color:var(--ink-muted);margin:10px 0 26px;line-height:1.65}
+.referral-form{display:flex;flex-direction:column;gap:12px;text-align:left}
+.referral-result{display:none;margin-top:20px;padding:20px;background:white;border-radius:16px;border:1.5px dashed var(--pink)}
+.referral-result.show{display:block}
+.referral-code{font-family:var(--fd);font-weight:800;font-size:26px;color:var(--pink);letter-spacing:.04em;margin-bottom:6px}
+.referral-msg{font-size:12.5px;color:#DC2626;margin-top:8px;display:none}
+.referral-msg.show{display:block}
 
 /* ── TESTIMONIALS ── */
 #testimonials{background:var(--pink-pale)}
@@ -662,7 +673,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <li>Free shipping on all your store purchases</li>
             <li>Exclusive discount coupons</li>
             <li>Early access to new collections</li>
-            <li>12 months of jewelry for the price of 11</li>
+            <li>VIP early access — 48h before the monthly plan</li>
           </ul>
           <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Subscribe annually →</a>
           <p class="plan-note">One payment · Maximum savings · Renews automatically</p>
@@ -697,6 +708,28 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div class="step-num">3</div>
         <div class="step-title">Arrives at your door</div>
         <p class="step-desc">Your selected jewelry box arrives straight to your home, every month, like a gift you deserve.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REFER A FRIEND -->
+<section id="referral">
+  <div class="container">
+    <div class="referral-card reveal">
+      <div class="section-label">Share the love</div>
+      <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Invite a <em>friend</em></h2>
+      <p class="referral-desc">Enter your name and WhatsApp, we'll give you your code to share — your friend gets 15% off her first purchase in the store.</p>
+      <div class="referral-form" id="referralForm">
+        <input class="sub-input" id="refName" type="text" placeholder="Your name" autocomplete="given-name">
+        <input class="sub-input" id="refPhone" type="tel" placeholder="Your WhatsApp (+1 000 000 0000)" autocomplete="tel">
+        <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Get my code →</button>
+        <div class="referral-msg" id="refMsg"></div>
+      </div>
+      <div class="referral-result" id="referralResult">
+        <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your code</div>
+        <div class="referral-code" id="refCode">—</div>
+        <a class="btn-join" id="refShareBtn" href="#" target="_blank" rel="noopener" style="margin-top:16px">Share on WhatsApp →</a>
       </div>
     </div>
   </div>
@@ -890,6 +923,7 @@ let _subNombre = '', _subApellido = '', _subDireccion = '', _subApto = '', _subC
 // ── FIREBASE (mismo proyecto que la tienda) ──────────────────
 const _FB_API_KEY = 'AIzaSyDwEVeHU0mwSekHbrKM8EjBgn4HSM3zZfM';
 const _FB_DB      = 'https://cacusa-pos-default-rtdb.firebaseio.com';
+const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 let _fbIdToken = null;
 async function _fbSignIn(){
   try {
@@ -1215,6 +1249,48 @@ let _acSeq = 0;
 })();
 
 function joinNow(plan, fromCard){ _selectedPlan = plan || 'mensual'; _fromPlanCard = !!fromCard; openSub(); }
+
+// ── Refer a friend ────────────────────────────────────────
+async function getReferralCode() {
+  const nameEl = document.getElementById('refName');
+  const phoneEl = document.getElementById('refPhone');
+  const msgEl = document.getElementById('refMsg');
+  const btn = document.getElementById('refSubmitBtn');
+  const name = (nameEl.value || '').trim();
+  const phone = (phoneEl.value || '').trim();
+  msgEl.classList.remove('show');
+  if (!name || phone.replace(/\D/g, '').length < 7) {
+    msgEl.textContent = 'Please enter your name and a valid WhatsApp number.';
+    msgEl.classList.add('show');
+    (!name ? nameEl : phoneEl).focus();
+    return;
+  }
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  try {
+    const r = await fetch(ADMIN_WORKER_URL + '/referral/code', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok && data.ok) {
+      document.getElementById('refCode').textContent = data.code;
+      const shareMsg = `Hi! Here's my code *${data.code}* for 15% off your first purchase at CACUSA by Taitus ✦ https://cacusabytaitus.com/en/ui_kits/store/`;
+      document.getElementById('refShareBtn').href = 'https://wa.me/?text=' + encodeURIComponent(shareMsg);
+      document.getElementById('referralForm').style.display = 'none';
+      document.getElementById('referralResult').classList.add('show');
+    } else {
+      msgEl.textContent = data.error || 'Could not generate your code. Please try again.';
+      msgEl.classList.add('show');
+    }
+  } catch (e) {
+    msgEl.textContent = 'Connection error. Please try again.';
+    msgEl.classList.add('show');
+  }
+  btn.textContent = originalLabel;
+  btn.disabled = false;
+}
 
 // Cicla el Tab dentro de modalEl y cierra con Escape. Devuelve una función para liberar los listeners.
 function trapFocus(modalEl, onClose){
