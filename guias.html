@@ -48,8 +48,8 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .guide-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
 .guide-card{background:white;border-radius:20px;padding:28px 26px;box-shadow:0 8px 32px rgba(238,111,168,.1);transition:transform .25s,box-shadow .25s;display:flex;flex-direction:column;gap:10px}
 .guide-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(238,111,168,.2)}
-.guide-icon{width:44px;height:44px;border-radius:12px;background:var(--pink-pale);display:flex;align-items:center;justify-content:center;font-size:22px}
-.guide-card h2{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink)}
+.guide-card h2{font-family:var(--fd);font-weight:700;font-size:20px;color:var(--ink);display:flex;align-items:center;gap:10px}
+.guide-card h2 .dot{width:8px;height:8px;border-radius:50%;background:var(--pink);flex-shrink:0}
 .guide-card p{font-family:var(--fu);font-size:14px;color:var(--ink-mid);flex:1}
 .guide-card .go{font-family:var(--fu);font-size:12.5px;font-weight:700;color:var(--pink);letter-spacing:.02em}
 .contact{margin-top:36px;padding-top:30px;border-top:1.5px solid var(--ink-light);text-align:center}
@@ -101,38 +101,32 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
   <div class="guide-grid">
     <a class="guide-card" href="./guia-tallas.html">
-      <div class="guide-icon">📏</div>
-      <h2 data-i18n="gs.c1h">Guía de tallas</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c1h">Guía de tallas</span></h2>
       <p data-i18n="gs.c1p">Cómo funcionan los anillos ajustables, cómo medir tu talla en casa, y qué largo de cadena elegir.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
     <a class="guide-card" href="./guia-regalos.html">
-      <div class="guide-icon">🎁</div>
-      <h2 data-i18n="gs.c2h">Guía de regalos</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c2h">Guía de regalos</span></h2>
       <p data-i18n="gs.c2p">Ideas por ocasión — San Valentín, cumpleaños, aniversario, Día de la Madre y más.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
     <a class="guide-card" href="./cuidados.html">
-      <div class="guide-icon">✨</div>
-      <h2 data-i18n="gs.c3h">Cuidado de tu joya</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c3h">Cuidado de tu joya</span></h2>
       <p data-i18n="gs.c3p">Cómo limpiar, guardar y conservar tu pieza — y por qué importa el material.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
     <a class="guide-card" href="./significado-piedras.html">
-      <div class="guide-icon">💎</div>
-      <h2 data-i18n="gs.c4h">Significado de las piedras</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c4h">Significado de las piedras</span></h2>
       <p data-i18n="gs.c4p">La piedra de nacimiento de cada mes y qué representa tradicionalmente.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
     <a class="guide-card" href="./como-combinar-joyas.html">
-      <div class="guide-icon">🪞</div>
-      <h2 data-i18n="gs.c5h">Cómo combinar tus joyas</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c5h">Cómo combinar tus joyas</span></h2>
       <p data-i18n="gs.c5p">Mezclar metales, apilar anillos y usar collares en capas sin verte recargada.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
     <a class="guide-card" href="./ui_kits/store/">
-      <div class="guide-icon">🛍️</div>
-      <h2 data-i18n="gs.c6h">Ir a la tienda</h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c6h">Ir a la tienda</span></h2>
       <p data-i18n="gs.c6p">Explora anillos, cadenas, pulseras, aretes y más — hechos a mano.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
