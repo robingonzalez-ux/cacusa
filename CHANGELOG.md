@@ -12,6 +12,35 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## Antes del 9 de agosto de 2026 — sin historial verificable
+
+El sitio (home, tienda, panel admin, todo el diseño) ya existía completo y
+funcionando antes de esta fecha — pero **no hay ningún registro de eso en
+el git de este repositorio**. El primer commit que existe acá
+(9 de agosto de 2026) no es un punto de partida: ya trae el sitio entero
+de una sola vez, sin ningún commit previo que muestre cómo se construyó.
+Se revisaron las 3 ramas del repo (`main`, `workers-src`,
+`claude/implement-landing-page-Ssmfm`) y ninguna tiene historial más
+antiguo.
+
+No se reconstruye esa etapa por fecha ni por hito acá porque no hay ninguna
+fuente verificable para hacerlo — ni en git, ni en memoria de esta sesión
+(no hay memoria real entre sesiones de Claude). Si en algún momento aparece
+algo confiable de esa época (capturas, notas, otro repositorio), se puede
+agregar aquí como sección aparte, dejando claro que viene de otra fuente y
+no del historial de git.
+
+## 9 de agosto – 4 de septiembre de 2026 — mantenimiento normal del catálogo
+
+En este tramo el repositorio solo registra actividad rutinaria del panel
+admin: Tita y Robin agregando, editando y subiendo fotos de productos
+(`[Admin] Productos`, `Imagen:`, `Imagen galería:`). No hay cambios de
+desarrollo del sitio en sí durante este período — el primer commit de
+desarrollo real después del arranque del repo es el del 5 de septiembre,
+con el que empieza el detalle de abajo.
+
+---
+
 ## 2026-09-05 — Lanzamiento de Cacusa Lovers
 
 Se construyó desde cero el club de suscripción mensual:
