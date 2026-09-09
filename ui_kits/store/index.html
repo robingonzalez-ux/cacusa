@@ -1435,6 +1435,7 @@ const __EN_T = {
   "tag.nuevo":"New","tag.bestseller":"Bestseller",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
   "cat.pulseras":"Bracelets","cat.ear cuff":"Ear Cuff","cat.parejas":"Couples",
+  "cat.juegos":"Sets","cat.hand chain":"Hand Chain",
   "cat.personalizado":"Custom","cat.gold edition":"Gold Edition","cat.colección":"Collection",
   "combo.add":"Add combo"
 };
@@ -1454,6 +1455,31 @@ let WHATSAPP_NUMBER = '';
 // Config dinámica (se sobreescribe con products.json → config)
 let CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
 let MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
+
+// Meta description por categoría — para que cada URL ?cat= tenga contenido único
+// para buscadores, en vez de repetir siempre la misma descripción genérica de la tienda.
+const CATEGORY_DESC_ES = {
+  cadenas: 'Cadenas y collares artesanales en plata 925, baño de oro 18k y acero inoxidable — con dijes y personalización disponible por WhatsApp.',
+  aretes: 'Aretes artesanales personalizados en plata 925, baño de oro 18k y acero inoxidable — desde argollas hasta ear cuffs.',
+  anillos: 'Anillos artesanales ajustables y de talla fija en plata 925, baño de oro 18k y acero inoxidable — grabado personalizado disponible.',
+  hombres: 'Joyería para hombre: cadenas, anillos y pulseras en acero inoxidable y baño de oro 18k, resistentes para el uso diario.',
+  pulseras: 'Pulseras artesanales tejidas y en cadena, en plata 925, baño de oro 18k y acero inoxidable — con opción de personalización.',
+  'ear cuff': 'Ear cuffs artesanales sin necesidad de perforación, en baño de oro 18k y acero inoxidable, para un look moderno.',
+  parejas: 'Piezas a juego para parejas — anillos, cadenas y pulseras que se complementan, ideales para regalar en San Valentín o aniversario.',
+  juegos: 'Juegos y sets de joyería a conjunto (aretes, cadena y pulsera) en plata 925 y baño de oro 18k, listos para regalar.',
+  'hand chain': 'Hand chains artesanales que combinan anillo y pulsera en una sola pieza, en baño de oro 18k y acero inoxidable.',
+};
+const CATEGORY_DESC_EN = {
+  cadenas: 'Handmade chains and necklaces in 925 silver, 18k gold plating and stainless steel — with charms and personalization available via WhatsApp.',
+  aretes: 'Handmade personalized earrings in 925 silver, 18k gold plating and stainless steel — from hoops to ear cuffs.',
+  anillos: 'Handmade adjustable and fixed-size rings in 925 silver, 18k gold plating and stainless steel — custom engraving available.',
+  hombres: "Men's jewelry: chains, rings and bracelets in stainless steel and 18k gold plating, built for everyday wear.",
+  pulseras: 'Handmade woven and chain bracelets in 925 silver, 18k gold plating and stainless steel — personalization available.',
+  'ear cuff': 'Handmade ear cuffs with no piercing needed, in 18k gold plating and stainless steel, for a modern look.',
+  parejas: "Matching pieces for couples — rings, chains and bracelets that pair together, perfect for Valentine's Day or anniversaries.",
+  juegos: 'Jewelry sets (earrings, chain and bracelet) in 925 silver and 18k gold plating, ready to gift.',
+  'hand chain': 'Handmade hand chains combining a ring and bracelet in one piece, in 18k gold plating and stainless steel.',
+};
 let SHIPPING   = { freeThreshold: 90, cost: 10 };
 const US_STATE_TAX = {
   AL:0.04,AZ:0.056,AR:0.065,CA:0.0725,CO:0.029,CT:0.0635,FL:0.07,GA:0.04,
@@ -1719,10 +1745,10 @@ let _revRating = 5;
   reconcileCartPrices();
   applyTexts();
   renderFreeShippingBanner();
-  renderStoreItemListLd();
   renderFilters();
   renderMaterials();
   renderProducts();
+  _updateListingSeo();
   loadReviewSummaries();
   renderCombos();
   updateCartUI();
@@ -1788,6 +1814,13 @@ function renderFilters() {
       btn.classList.add('active');
       activeFilter = btn.dataset.filter;
       renderProducts();
+      // Cada categoría pasa a tener su propia URL (?cat=), no solo un filtro visual —
+      // así queda indexable y compartible por separado, no solo la tienda genérica.
+      const u = new URL(window.location.href);
+      u.searchParams.delete('p');
+      if (activeFilter === 'all') u.searchParams.delete('cat'); else u.searchParams.set('cat', activeFilter);
+      history.pushState({}, '', u.toString());
+      _updateListingSeo();
     });
   });
   // Permite enlazar a una categoría desde fuera (ej. footer del landing) con ?cat=NombreCategoria
@@ -2185,7 +2218,7 @@ function openModal(id) {
   _syncModalWish();
   loadProductReviews(p.id);
   setRevRating(5);
-  history.pushState({productId: p.id}, '', '?p=' + encodeURIComponent(_productParam(p)));
+  { const _u = new URL(window.location.href); _u.searchParams.set('p', _productParam(p)); history.pushState({productId: p.id}, '', _u.toString()); }
   _injectProductSchema(p);
   _renderRelatedProducts(p);
 }
@@ -2198,7 +2231,7 @@ function closeModal() {
   document.body.style.overflow = '';
   if (_modalReleaseTrap) { _modalReleaseTrap(); _modalReleaseTrap = null; }
   const _u = new URL(window.location.href); _u.searchParams.delete('p'); history.pushState({}, '', _u.toString());
-  _clearProductSchema();
+  _updateListingSeo();
   dismissToast();
 }
 
@@ -3187,11 +3220,14 @@ function _extractProductId(param) {
 }
 function _setMeta(id, val) { const el = document.getElementById(id); if (el) el.setAttribute('content', val); }
 function _setCanonical(url) { const el = document.getElementById('canonicalLink'); if (el) el.setAttribute('href', url); }
-// Respaldo de datos estructurados para el listado general (si el fetch de un producto individual falla o no se abre ningún modal)
-function renderStoreItemListLd() {
+// Respaldo de datos estructurados para el listado general o por categoría (si el fetch de
+// un producto individual falla o no se abre ningún modal)
+function renderStoreItemListLd(cat) {
   let el = document.getElementById('ld-storelist');
   if (!el) { el = document.createElement('script'); el.type = 'application/ld+json'; el.id = 'ld-storelist'; document.head.appendChild(el); }
-  const top = PRODUCTS.filter(p => p.available !== false).slice(0, 30);
+  let top = PRODUCTS.filter(p => p.available !== false);
+  if (cat) top = top.filter(p => p.cat === cat);
+  top = top.slice(0, 30);
   if (!top.length) { el.textContent = ''; return; }
   el.textContent = JSON.stringify({
     '@context': 'https://schema.org', '@type': 'ItemList',
@@ -3202,6 +3238,54 @@ function renderStoreItemListLd() {
     }))
   });
 }
+// Meta/canonical/schema dinámicos para una categoría filtrada — le da a cada ?cat= una
+// URL con contenido propio (título, descripción, canonical e ItemList), no solo un filtro
+// visual sobre la misma página genérica.
+function _updateCategorySeo(cat) {
+  const key = cat.toLowerCase();
+  const label = t('cat.' + key, cat);
+  const desc = (__LANG === 'en' ? CATEGORY_DESC_EN : CATEGORY_DESC_ES)[key]
+    || (__LANG === 'en'
+      ? `Handmade ${label} — personalized jewelry in 925 silver, 18k gold plating and stainless steel.`
+      : `${label} artesanales — joyería personalizada en plata 925, baño de oro 18k y acero inoxidable.`);
+  const url = _SEO_BASE + '?cat=' + encodeURIComponent(cat);
+  const title = label + ' — CACUSA by Taitus';
+  const catProducts = PRODUCTS.filter(p => p.cat === cat && p.available !== false);
+  const firstImg = catProducts.length ? getProductImages(catProducts[0])[0] : null;
+  document.title = title;
+  _setMeta('meta-desc', desc);
+  _setCanonical(url);
+  _setMeta('og-url', url);
+  _setMeta('og-title', title);
+  _setMeta('og-description', desc);
+  if (firstImg) _setMeta('og-image', firstImg);
+  _setMeta('tw-title', title);
+  _setMeta('tw-description', desc);
+  if (firstImg) _setMeta('tw-image', firstImg);
+  const schemaEl = document.getElementById('ld-product');
+  if (schemaEl) schemaEl.remove();
+  renderStoreItemListLd(cat);
+}
+// Dispatcher: decide si la URL actual pide una categoría (?cat=) o el listado general,
+// y actualiza el SEO en consecuencia. Se llama al cargar, al cambiar de filtro y al
+// cerrar el modal de producto (openModal/_injectProductSchema siempre corre después y
+// tiene prioridad si además hay un ?p= en la URL).
+function _updateListingSeo() {
+  const catParam = new URLSearchParams(window.location.search).get('cat');
+  const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
+  if (match) _updateCategorySeo(match); else _clearProductSchema();
+}
+// Atrás/adelante del navegador entre categorías (no toca el modal de producto —
+// abrir/cerrarlo con popstate es un caso aparte que ya se maneja distinto).
+window.addEventListener('popstate', () => {
+  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+  const catParam = new URLSearchParams(window.location.search).get('cat');
+  const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
+  activeFilter = match || 'all';
+  document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === activeFilter));
+  renderProducts();
+  _updateListingSeo();
+});
 function _injectProductSchema(p) {
   const imgs = getProductImages(p);
   const name = (__LANG === 'en' && p.name_en) ? p.name_en : p.name;
@@ -3250,6 +3334,7 @@ function _clearProductSchema() {
   _setMeta('tw-title', 'CACUSA by Taitus — Joyería artesanal personalizada');
   _setMeta('tw-description', 'Anillos, collares, pulseras y aretes hechos a mano. Personalización gratis.');
   _setMeta('tw-image', _SEO_IMG_DEFAULT);
+  renderStoreItemListLd();
 }
 function _patchSchemaRating(avg, count, reviews) {
   const el = document.getElementById('ld-product'); if (!el) return;
