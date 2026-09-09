@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-09T03:17:32.515Z",
+  "lastUpdated": "2026-09-09T03:17:52.248Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -1250,16 +1250,18 @@
       "color": "rose",
       "tag": null,
       "description": "Tierno anillo entorchado ajustable con corazón dorado en baño de oro 18k. Perfecto para llevar el amor en tus manos.",
-      "description_en": "Sweet adjustable twisted ring with a golden heart in 18k gold plating. Perfect for carrying love in your hands.",
+      "description_en": "Tender adjustable hooked ring with gold heart in 18k gold plating. Perfect for holding love in your hands.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879698277_image_jpg.jpg",
       "focalX": 52.01698513800424,
       "focalY": 48.48484848484847,
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781879732319,
-      "name_en": "Golden Heart Adjustable Twisted Ring"
+      "name_en": "Golden heart. Adjustable looped ring",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo doble línea llana con corazón plateado ",
@@ -1270,16 +1272,18 @@
       "color": "rose",
       "tag": null,
       "description": "Elegante anillo de doble banda lisa con un delicado corazón plateado en baño de rodio. Diseño romántico y minimalista.",
-      "description_en": "Elegant double flat-band ring with a delicate silver heart in rhodium plating. Romantic and minimalist design.",
+      "description_en": "Elegant double smooth band ring with a delicate silver heart in rhodium plating. Romantic and minimalist design.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879783335_image_jpg.jpg",
       "focalX": 43.736730360934175,
       "focalY": 45.90909090909091,
       "zoom": 1.45,
       "material": "Baño de Rodio",
       "id": 1781879811459,
-      "name_en": "Double Flat Band Ring with Silver Heart"
+      "name_en": "Flat-line double ring with silver heart",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
