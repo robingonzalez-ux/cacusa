@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-09T02:46:33.471Z",
+  "lastUpdated": "2026-09-09T02:51:47.465Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -2223,6 +2223,28 @@
       "name_en": "Golden Shell Ring",
       "description_en": "A design inspired by the organic shapes of the sea. The Golden Shell Ring is composed of small interlocking shells that create a delicate, luminous and different piece.\n\nMade of 316L stainless steel with a gold finish, it is ideal to wear alone as the protagonist or combine with other rings for a more personal look.\n\nDetails: 316L stainless steel · gold finish · shell design · delicate and minimalist style. Adjustable size",
       "id": 1788921701764,
+      "promo": null
+    },
+    {
+      "name": "Anillo Golden Stars",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": 28,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Un anillo hecho para robar miradas.\n\nGolden Stars combina estrellas doradas con destellos de circones para crear una pieza llamativa, femenina y sofisticada. Su diseño abierto permite que las estrellas recorran el dedo y reflejen la luz desde distintos ángulos.\n\nPerfecto para llevarlo como protagonista o combinarlo con piezas más minimalistas. Además, su talla ajustable permite adaptarlo cómodamente a diferentes dedos.\n\nDetalles\nAcero inoxidable 316L · Acabado dorado · Circones transparentes · Talla ajustable",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788922244830_anillo_estrellas_producto_jpg.jpg",
+      "focalX": 50.6578947368421,
+      "focalY": 40.90909090909091,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [],
+      "name_en": "Golden stars ring",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1788922298558,
       "promo": null
     }
   ],
