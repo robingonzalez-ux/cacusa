@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-09T02:51:47.465Z",
+  "lastUpdated": "2026-09-09T02:57:23.025Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -2245,6 +2245,30 @@
       "name_en": "Golden stars ring",
       "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
       "id": 1788922298558,
+      "promo": null
+    },
+    {
+      "name": "Anillo Lumière",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": 30,
+      "img": "collar",
+      "color": "rose",
+      "tag": "Nuevo",
+      "description": "Lumière está diseñado para conseguir ese efecto de joyería delicada que se nota sin resultar excesiva. Sus dos líneas doradas con circones crean la ilusión de llevar dos anillos perfectamente combinados, aportando un destello elegante cada vez que mueves la mano.\n\nEs de esas piezas fáciles de usar todos los días, pero suficientemente especiales para acompañarte en una ocasión importante. Su diseño de talla ajustable permite adaptarlo cómodamente a diferentes dedos.\n\nDetalles\nAcero inoxidable 316L · Acabado dorado · Circones transparentes · Diseño doble · Talla ajustable",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788922613863_anillo_circones_producto_jpg.jpg",
+      "focalX": 51.53508771929825,
+      "focalY": 37.27272727272727,
+      "zoom": 0.85,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788922629421_anillo_circones_modelo_jpg.jpg"
+      ],
+      "name_en": "Lumière Ring",
+      "description_en": "QUERY LENGTH LIMIT EXCEEDED. MAX ALLOWED QUERY : 500 CHARS",
+      "id": 1788922634845,
       "promo": null
     }
   ],
