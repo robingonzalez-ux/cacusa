@@ -153,6 +153,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5 0-.2-.1-1-.4-1.9-1.1-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.4 0-.1-.5-1.3-.7-1.7-.2-.4-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2.9 2.4.1.2 1.6 2.5 3.9 3.4.5.2 1 .4 1.3.5.5.2 1 .1 1.4.1.4-.1 1.4-.6 1.6-1.1.2-.5.2-1 .1-1.1z"/></svg>
         <span data-i18n="nav.waBtn">Escríbenos por WhatsApp</span>
       </a>
+      <div><a href="./guias.html" style="display:inline-block;margin-top:14px;font-family:var(--fu);font-size:13px;color:var(--ink-muted);text-decoration:underline" data-i18n="cui.moreGuides">Ver todas las guías →</a></div>
     </div>
 
     <div class="updated" id="updated"></div>
@@ -214,9 +215,10 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
           'cui.sec6Body':'Each CACUSA material behaves differently, and knowing the difference helps you care for it better:',
           'cui.sec6Li1':'<b>Sterling silver 925:</b> real sterling silver (92.5% pure). It\'s durable, but can tarnish slightly with air and humidity — a soft cloth restores its original shine.',
           'cui.sec6Li2':'<b>18k gold plating:</b> a thin layer of gold over a metal base. It\'s more affordable than solid gold, but being a thin layer, it wears faster with frequent contact with water, chemicals, or friction — which is why the care tips above matter especially for these pieces.',
-          'cui.sec6Li3':'<b>Stainless steel:</b> the most resistant to water, knocks, and daily wear. It doesn\'t tarnish easily and is a good hypoallergenic option if your skin is sensitive to other metals.'
+          'cui.sec6Li3':'<b>Stainless steel:</b> the most resistant to water, knocks, and daily wear. It doesn\'t tarnish easily and is a good hypoallergenic option if your skin is sensitive to other metals.',
+          'cui.moreGuides':'See all guides →'
         };
-        document.querySelectorAll('[data-i18n^="cui.sec6"]').forEach(el=>{const v=cui6[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
+        document.querySelectorAll('[data-i18n^="cui.sec6"],[data-i18n="cui.moreGuides"]').forEach(el=>{const v=cui6[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
       }
     }
   }catch(e){}
