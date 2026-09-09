@@ -36,8 +36,8 @@
       "perks": [
         "Hecho a mano",
         "Envío express",
-        "5–7 días hábiles",
-        "Gift wrap gratis"
+        "5–10 días hábiles",
+        "Empaque especial para regalo"
       ]
     },
     "texts_en": {
@@ -48,8 +48,8 @@
       "perks": [
         "Handmade",
         "Express shipping",
-        "5–7 business days",
-        "Free gift wrap"
+        "5–10 business days",
+        "Special gift packaging"
       ]
     },
     "home": {
@@ -86,7 +86,7 @@
           },
           {
             "title": "Nosotros creamos",
-            "desc": "Hecho a mano, listo en 5–7 días"
+            "desc": "Hecho a mano, listo en 5–10 días"
           }
         ]
       },
@@ -183,7 +183,7 @@
           },
           {
             "title": "We created this.",
-            "desc": "Handmade, ready in 5–7 days"
+            "desc": "Handmade, ready in 5–10 days"
           }
         ]
       },
