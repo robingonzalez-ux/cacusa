@@ -719,7 +719,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <div class="referral-card reveal">
       <div class="section-label">Comparte el amor</div>
       <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Invita a una <em>amiga</em></h2>
-      <p class="referral-desc">Exclusivo para suscriptoras activas del club. Escribe tu nombre y el WhatsApp con el que te suscribiste, te damos tu código para compartir — tu amiga recibe 15% de descuento en su primera compra en la tienda.</p>
+      <p class="referral-desc">Exclusivo para suscriptoras activas del club. Escribe tu nombre y el WhatsApp con el que te suscribiste, te damos tu código para compartir — tu amiga recibe 10% de descuento en su primera compra en la tienda.</p>
       <div class="referral-form" id="referralForm">
         <input class="sub-input" id="refName" type="text" placeholder="Tu nombre" autocomplete="given-name">
         <input class="sub-input" id="refPhone" type="tel" placeholder="Tu WhatsApp (+1 000 000 0000)" autocomplete="tel">
@@ -1291,7 +1291,7 @@ async function getReferralCode() {
     const data = await r.json().catch(() => ({}));
     if (r.ok && data.ok) {
       document.getElementById('refCode').textContent = data.code;
-      const shareMsg = `¡Hola! Te comparto mi código *${data.code}* para que tengas 15% de descuento en tu primera compra en CACUSA by Taitus ✦ https://cacusabytaitus.com/ui_kits/store/`;
+      const shareMsg = `¡Hola! Te comparto mi código *${data.code}* para que tengas 10% de descuento en tu primera compra en CACUSA by Taitus ✦ https://cacusabytaitus.com/ui_kits/store/`;
       document.getElementById('refShareBtn').href = 'https://wa.me/?text=' + encodeURIComponent(shareMsg);
       document.getElementById('referralForm').style.display = 'none';
       document.getElementById('referralResult').classList.add('show');

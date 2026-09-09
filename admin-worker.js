@@ -621,14 +621,31 @@ async function isActiveLoversPhone(phoneDigits, env) {
   }
 }
 
+// ── Límite de "1 regalo de referido por mes" — por código (= por suscriptora que
+// refiere, ya que el código es 1:1 con su teléfono), sin importar quién lo use. Se
+// consulta en /coupon/validate (para no dejar seguir a alguien que de todos modos no
+// va a poder cobrar el descuento) y se marca en /coupon/burn (al confirmarse el pedido).
+function referralMonthKey(code) {
+  const ym = new Date().toISOString().slice(0, 7); // YYYY-MM (UTC)
+  return `refmonth:${code}:${ym}`;
+}
+async function referralMonthlyCapReached(env, code) {
+  return !!(await env.CACUSA_KV.get(referralMonthKey(code)));
+}
+async function markReferralMonthlyUse(env, code) {
+  // 40 días de margen: sobra para cubrir el mes que está marcando y se autolimpia solo.
+  await env.CACUSA_KV.put(referralMonthKey(code), '1', { expirationTtl: 40 * 24 * 3600 });
+}
+
 // ── Referidos — "invita a una amiga" ────────────────────────────────────────────
 // Genera (o recupera, si ya lo pidió antes) un cupón de referido para una clienta, sin
 // necesitar sesión de admin. Exclusivo para suscriptoras activas de Cacusa Lovers —
 // se verifica el teléfono contra Firebase (vía cacusa-lovers-webhook) antes de emitir
 // nada, para que el beneficio no quede abierto a cualquier visitante del sitio.
-// Reglas fijas y no elegibles por quien llama (15% para la amiga referida, uso
-// ilimitado) — a diferencia de /coupon/create (que sí permite elegir tipo/monto), esta
-// ruta es pública, así que nunca deja que el llamador defina el descuento.
+// Reglas fijas y no elegibles por quien llama (10% para la amiga referida, máximo 1
+// regalo de referido por mes por código — ver referralMonthlyCapReached más abajo) —
+// a diferencia de /coupon/create (que sí permite elegir tipo/monto), esta ruta es
+// pública, así que nunca deja que el llamador defina el descuento.
 // El código es determinístico a partir del teléfono, así pedirlo dos veces no crea 2 cupones.
 async function handleReferralCode(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
@@ -651,11 +668,16 @@ async function handleReferralCode(body, env, origin, request) {
   let coupon = await couponGet(env, code);
   if (!coupon) {
     coupon = {
-      code, type: 'percent', amount: 15,
+      code, type: 'percent', amount: 10, kind: 'referral',
       maxUses: null, usedCount: 0, active: true, expiresAt: null,
       note: `Referido de ${name} (${body.phone ? String(body.phone).slice(0, 30) : ''})`,
       createdAt: new Date().toISOString(), createdBy: 'referral-system',
     };
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  } else if (coupon.createdBy === 'referral-system' && (coupon.amount !== 10 || coupon.kind !== 'referral')) {
+    // Migra códigos generados antes de bajar a 10% / agregar el tope mensual.
+    coupon.amount = 10;
+    coupon.kind = 'referral';
     await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
   }
   return ok({ ok: true, code: coupon.code, type: coupon.type, amount: coupon.amount }, origin);
@@ -681,7 +703,9 @@ async function handleCouponValidate(body, env, origin, request) {
   const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
   if (codeCount >= 8) return ok({ valid: false }, origin);
   const coupon = await couponGet(env, rawCode);
-  const valid = couponIsValid(coupon);
+  let valid = couponIsValid(coupon);
+  // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
+  if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
   if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
   if (!valid) return ok({ valid: false }, origin);
   return ok({ valid: true, code: coupon.code, type: coupon.type, amount: coupon.amount }, origin);
@@ -847,6 +871,7 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   if (coupon) {
     coupon.usedCount = (coupon.usedCount || 0) + 1;
     await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
+    if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
   }
   return ok({ ok: true }, origin);
 }
