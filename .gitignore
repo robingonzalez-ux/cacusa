@@ -1,3 +1,5 @@
 .claude/
 C*tmp*.txt
 *_diff.txt
+__pycache__/
+*.pyc
