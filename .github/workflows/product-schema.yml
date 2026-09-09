@@ -1,15 +1,19 @@
-name: Regenerar JSON-LD estático de productos
+name: Regenerar JSON-LD y sitemap de productos
 
 # Cada vez que data/products.json cambia en main (ej. una edición desde el panel
-# admin, que comitea directo por la API de GitHub), regenera el bloque estático
-# de JSON-LD (schema.org Product) en ui_kits/store/index.html y
-# en/ui_kits/store/index.html, y lo comitea de vuelta. Así el HTML que sirve
-# GitHub Pages siempre trae el schema actualizado, sin depender de que se
-# ejecute JavaScript en el navegador.
+# admin, que comitea directo por la API de GitHub — alta, edición o eliminación
+# de un producto), regenera dos cosas y las comitea de vuelta:
+#   1. El bloque estático de JSON-LD (schema.org Product) en
+#      ui_kits/store/index.html y en/ui_kits/store/index.html — así el HTML que
+#      sirve GitHub Pages siempre trae el schema actualizado, sin depender de
+#      que se ejecute JavaScript en el navegador.
+#   2. Una URL propia por producto (ES + EN) en sitemap.xml — así cada
+#      producto nuevo entra solo al sitemap, y uno eliminado se quita solo,
+#      sin que nadie tenga que acordarse de tocarlo a mano.
 #
 # No entra en loop: este workflow solo mira cambios en data/products.json, y su
-# propio commit únicamente toca los dos index.html — nunca products.json — así
-# que no se vuelve a disparar a sí mismo.
+# propio commit únicamente toca los index.html y sitemap.xml — nunca
+# products.json — así que no se vuelve a disparar a sí mismo.
 on:
   push:
     branches: [main]
@@ -31,14 +35,17 @@ jobs:
       - name: Generar JSON-LD estático
         run: python3 .github/scripts/generate_product_schema.py
 
+      - name: Generar URLs de producto en el sitemap
+        run: python3 .github/scripts/generate_sitemap_products.py
+
       - name: Commitear si hubo cambios
         run: |
           git config user.name "cacusa-bot"
           git config user.email "actions@users.noreply.github.com"
-          if git diff --quiet -- ui_kits/store/index.html en/ui_kits/store/index.html; then
-            echo "Sin cambios en el JSON-LD estático."
+          if git diff --quiet -- ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml; then
+            echo "Sin cambios."
             exit 0
           fi
-          git add ui_kits/store/index.html en/ui_kits/store/index.html
-          git commit -m "Regenerar JSON-LD estático de productos [skip ci]"
+          git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml
+          git commit -m "Regenerar JSON-LD y sitemap de productos [skip ci]"
           git push
