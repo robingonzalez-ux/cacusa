@@ -23,6 +23,12 @@
  *                                   que mande la notificación push a los celulares de Tita y
  *                                   Robin — sin este secret, la notificación simplemente no
  *                                   se envía (el resto del webhook sigue funcionando igual).
+ *                                   También autentica la dirección contraria: cacusa-admin
+ *                                   llama a GET /internal/lovers/active con este mismo header
+ *                                   para saber si un teléfono es de una suscriptora activa
+ *                                   antes de emitir un código de referido — sin este secret,
+ *                                   esa ruta rechaza la llamada y el programa de referidos
+ *                                   no puede emitir códigos.
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
  *   subscription.created            → crea registro en Firebase cuando nace la suscripción
@@ -31,6 +37,10 @@
  *   subscription.updated            → si status=CANCELED, marca "cancelado"
  *
  * Rutas:
+ *   GET    /internal/lovers/active      → Worker-a-Worker (X-Order-Ingest-Key), usado por
+ *                                          cacusa-admin para saber si un teléfono es de una
+ *                                          suscriptora activa antes de emitir un código de
+ *                                          referido
  *   POST   /webhook                    → recibe webhooks de Square (firmados)
  *   POST   /admin/cancel-subscription  → cancela una suscripción en Square
  *   GET    /admin/lovers                → lista suscriptoras + fotos destacadas
@@ -227,12 +237,45 @@ async function isAuthorizedAdmin(request, env) {
   return !!session;
 }
 
+// ── Autenticación Worker-a-Worker (mismo ORDER_INGEST_KEY que ya comparten
+// cacusa-admin y cacusa-square) — usado por /internal/lovers/active, que cacusa-admin
+// llama para saber si un teléfono pertenece a una suscriptora activa antes de emitir un
+// código de referido. Nunca se expone al navegador: sin este header, la ruta rechaza.
+function isInternalIngest(request, env) {
+  return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
     const fbAuth = env.FB_DB_SECRET;
+
+    // ── GET /internal/lovers/active?phone=... — Worker-a-Worker, autenticado con
+    // ORDER_INGEST_KEY. Responde si ese teléfono pertenece a una suscriptora activa
+    // (estado_pago === 'activo' y, si tiene fecha de vencimiento manual, que no haya
+    // vencido) — sin devolver ningún otro dato de la suscriptora.
+    if (url.pathname === '/internal/lovers/active') {
+      if (request.method !== 'GET') return adminJson({ error: 'Method not allowed' }, 405);
+      if (!isInternalIngest(request, env)) return adminJson({ error: 'Unauthorized' }, 401);
+      if (!fbAuth) return adminJson({ error: 'FB_DB_SECRET no está configurado en el worker' }, 500);
+
+      const phoneDigits = String(url.searchParams.get('phone') || '').replace(/\D/g, '');
+      if (phoneDigits.length < 7) return adminJson({ active: false }, 200);
+
+      const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+      if (!r.ok) return adminJson({ error: 'No se pudo leer cacusa_lovers' }, 502);
+      const subscribers = (await r.json()) || {};
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const active = Object.values(subscribers).some(s => {
+        if (!s || String(s.telefono || '').replace(/\D/g, '').slice(-7) !== phoneDigits.slice(-7)) return false;
+        if (s.estado_pago !== 'activo') return false;
+        if (s.vence && s.vence < todayIso) return false;
+        return true;
+      });
+      return adminJson({ active }, 200);
+    }
 
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
