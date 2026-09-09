@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-09T03:17:52.248Z",
+  "lastUpdated": "2026-09-09T03:18:54.458Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -1716,16 +1716,18 @@
       "color": "rose",
       "tag": null,
       "description": "Anillo artesanal en baño de oro 18k. Elegante y versátil, perfecto para el uso diario o para ocasiones especiales.",
-      "description_en": "Artisanal ring in 18k gold plating. Elegant and versatile, perfect for everyday wear or special occasions.",
+      "description_en": "Handcrafted ring in 18k gold plating. Elegant and versatile, perfect for everyday use or special occasions.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892983627_image_jpg.jpg",
-      "focalX": 52.972399150743115,
-      "focalY": 55.45454545454545,
-      "zoom": 1.3,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1788923918431_cacusa_anillo_corona_producto_jpg.jpg",
+      "focalX": 52.09520616828698,
+      "focalY": 42.72727272727273,
+      "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781893045956,
-      "name_en": "Ring"
+      "name_en": "ing",
+      "images": [],
+      "promo": null
     },
     {
       "name": "Pulseras de pareja Ying y el yang",
