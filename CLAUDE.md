@@ -193,13 +193,18 @@ elegibles por quien llama:
 - **`llms.txt`**: resumen del negocio para LLMs/IA — actualizar si cambian
   datos de negocio (precios, envío, materiales, políticas) o se agrega
   contenido nuevo importante (guías, categorías).
-- Auditorías publicadas como Artifacts (privados, en la cuenta del usuario):
-  - Auditoría SEO/UX/Comercial (68/76 resueltos, no tocada en sesiones
-    recientes)
-  - Auditoría de Seguridad (9/10 resuelto, 1 nota informativa sin acción)
-  - Benchmark Mundial vs. Mejuri/Kendra Scott/Pandora/etc. (10/26 resuelto)
-  — mantenerlas sincronizadas cuando se resuelva un hallazgo nuevo de
-  cualquiera de las tres.
+- Auditorías publicadas como Artifacts (privados, en la cuenta del usuario —
+  no viven en este repo, son objetos aparte). Al resolver un hallazgo nuevo
+  de cualquiera, leer el Artifact con la URL de abajo, editar el hallazgo
+  correspondiente marcándolo resuelto, y volver a publicar con `url:` (esa
+  misma URL) para que actualice en el mismo lugar en vez de crear uno nuevo:
+  - **SEO/UX/Comercial** (68/76 resueltos, no tocada en sesiones recientes):
+    `https://claude.ai/code/artifact/45c105ed-9fad-4615-9856-1d1a3fce21f3`
+  - **Seguridad** (9/10 resuelto, 1 nota informativa sin acción):
+    `https://claude.ai/code/artifact/6872c756-df31-4134-bf6b-b16219a461ca`
+  - **Benchmark Mundial** vs. Mejuri/Kendra Scott/Pandora/etc. (10/26
+    resuelto):
+    `https://claude.ai/code/artifact/8448c651-61d8-4be3-a439-fd46721dffea`
 
 ## Seguridad — ya auditado y cerrado
 
