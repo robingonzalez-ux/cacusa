@@ -41,6 +41,30 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-12 — Fix: suscriptoras de Cacusa Lovers duplicadas
+
+Se detectó (con una suscriptora registrada 3 veces el mismo día) que el
+guardado en `cacusa_lovers` tenía una condición de carrera real: el
+formulario del sitio y los webhooks de Square (`subscription.created`,
+`invoice.payment_made`) escribían cada uno por su cuenta, consultando
+primero si el email ya existía y creando un registro nuevo con ID al azar
+si no lo encontraban. Cuando dos de esas escrituras caían casi al mismo
+tiempo, ambas veían "no existe" y ambas creaban su propia copia.
+
+Se cambió el guardado en los 5 puntos que tocan `cacusa_lovers` (formulario
+en `cacusa-lovers.html`/`en/`, los 4 handlers de eventos de Square y el
+alta manual desde el admin, en `lovers-webhook-worker.js`) para que todos
+calculen la misma key determinística a partir del email y escriban con
+merge (`PATCH`) sobre esa key exacta, en vez de buscar-y-crear con ID
+al azar. Así, sin importar el orden en que lleguen los eventos, todos
+apuntan al mismo registro — la duplicación queda eliminada de raíz, no
+solo mitigada.
+
+De paso, `notifyAdminPush()` ahora deja un log claro si el Worker
+`cacusa-lovers-webhook` no tiene configurado `ORDER_INGEST_KEY` (antes
+fallaba en silencio sin ningún rastro) — causa más probable de por qué no
+llegó la notificación push de esta alta en particular.
+
 ## 2026-09-05 — Lanzamiento de Cacusa Lovers
 
 Se construyó desde cero el club de suscripción mensual:
