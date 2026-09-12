@@ -280,6 +280,11 @@ const apiLoad   = (token)                 => apiCall('load', { token });
 const apiSave   = (token, path, content, message) => apiCall('save', { token, path, content, message });
 // Sube una imagen (base64) vía backend
 const apiUpload = (token, path, contentBase64, message) => apiCall('upload', { token, path, contentBase64, message });
+// Pedidos: cada uno se crea/edita individualmente (nunca se reenvía el array completo,
+// ver auditoría de concurrencia — antes esto podía perder pedidos nuevos en silencio).
+const apiOrderManual = (token, order)     => apiCall('order/manual', { token, order });
+const apiOrderUpdate  = (token, id, patch) => apiCall('order/update', { token, id, patch });
+const apiOrderDelete  = (token, id)        => apiCall('order/update', { token, id, delete: true });
 // Traduce texto de español a inglés vía MyMemory (gratis, sin API key)
 async function translateToEn(text) {
   if (!text || !text.trim()) return '';
@@ -3641,11 +3646,8 @@ function App() {
       enRef.current = { translations: enRef.current.translations, texts_en, home_en, pages_en, lovers_en };
       snapRef.current = { texts: JSON.stringify(texts), home: JSON.stringify(home), pages: JSON.stringify(pages), lovers: JSON.stringify(lovers) };
       await apiSave(session.token, PRODUCTS_PATH, json, `[Admin] Productos - ${session.username}`);
-      // Pedidos (no bloquea si falla)
-      try {
-        const oJson = JSON.stringify({ version: '1.0', lastUpdated: new Date().toISOString(), orders }, null, 2);
-        await apiSave(session.token, ORDERS_PATH, oJson, `[Admin] Pedidos - ${session.username}`);
-      } catch (oe) { console.warn('orders save:', oe); }
+      // Pedidos: ya no se resave acá — cada pedido se persiste al instante en su propia
+      // llave (ver updateOrderRemote/deleteOrderRemote/apiOrderManual más arriba).
       setDirty(false);
       setSyncMsg('✅ ¡Publicado en cacusabytaitus.com! La tienda se actualiza en 1–2 min.');
       setTimeout(() => setSyncMsg(''), 8000);
@@ -3677,11 +3679,13 @@ function App() {
     } catch (_) {}
     setDirty(true); setShowModal(false); setEditProd(null);
   };
-  const saveOrdersNow = async (updatedOrders) => {
-    try {
-      const oJson = JSON.stringify({ version: '1.0', lastUpdated: new Date().toISOString(), orders: updatedOrders }, null, 2);
-      await apiSave(session.token, ORDERS_PATH, oJson, `[Admin] Pedidos - ${session.username}`);
-    } catch (e) { console.warn('orders auto-save:', e); }
+  // Persiste solo el cambio puntual de UN pedido (nunca el array completo — ver
+  // auditoría de concurrencia, antes esto podía perder pedidos nuevos en silencio).
+  const updateOrderRemote = (id, patch) => {
+    apiOrderUpdate(session.token, id, patch).catch(e => console.warn('order update:', e));
+  };
+  const deleteOrderRemote = (id) => {
+    apiOrderDelete(session.token, id).catch(e => console.warn('order delete:', e));
   };
   const toggleProd = p => { setProducts(prev => prev.map(x => x.id === p.id ? { ...x, available: !x.available } : x)); setDirty(true); };
   const deleteProd = p => { setProducts(prev => prev.filter(x => x.id !== p.id)); setDelConfirm(null); setDirty(true); };
@@ -3945,11 +3949,11 @@ function App() {
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                             {grupo.map(o => (
                               <OrderCard key={o.id} order={o}
-                                onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
-                                onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
-                                onTrackingChange={(ord, tracking) => { const u = orders.map(x => x.id === ord.id ? { ...x, tracking } : x); setOrders(u); saveOrdersNow(u); }}
-                                onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
-                                onClienteUpdate={(ord, updates) => { const u = orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x); setOrders(u); saveOrdersNow(u); }}
+                                onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
+                                onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
+                                onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
+                                onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
+                                onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
                               />
                             ))}
                           </div>
@@ -4018,11 +4022,11 @@ function App() {
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                               {grupo.map(o => (
                                 <OrderCard key={o.id} order={o}
-                                  onStatusChange={(ord, newState) => { const u = orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x); setOrders(u); saveOrdersNow(u); }}
-                                  onDelete={ord => { const u = orders.filter(x => x.id !== ord.id); setOrders(u); saveOrdersNow(u); }}
-                                  onTrackingChange={(ord, tracking) => { const u = orders.map(x => x.id === ord.id ? { ...x, tracking } : x); setOrders(u); saveOrdersNow(u); }}
-                                  onCarrierChange={(ord, carrier) => { const u = orders.map(x => x.id === ord.id ? { ...x, carrier } : x); setOrders(u); saveOrdersNow(u); }}
-                                  onClienteUpdate={(ord, updates) => { const u = orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x); setOrders(u); saveOrdersNow(u); }}
+                                  onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
+                                  onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
+                                  onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
+                                  onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
+                                  onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
                                 />
                               ))}
                             </div>
@@ -4083,7 +4087,11 @@ function App() {
 
         {/* ── Modals ── */}
         {showNtfyModal && <NtfyModal token={session.token} onClose={() => setShowNtfyModal(false)} />}
-        {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => { setOrders(prev => [o, ...prev]); setDirty(true); }} />}
+        {showOrderModal && <NewOrderModal open={showOrderModal} onClose={() => setShowOrderModal(false)} onSave={o => {
+          apiOrderManual(session.token, o)
+            .then(res => setOrders(prev => [res.order || o, ...prev]))
+            .catch(e => { console.warn('order manual:', e); setSyncMsg('❌ No se pudo guardar el pedido: ' + e.message); });
+        }} />}
         {showModal && <ProductModal product={editProduct} token={session.token} categories={categories} materials={materials} fbSurcharges={fbSurcharges} fbMarkets={fbMarkets} onSave={saveProduct} onClose={() => { setShowModal(false); setEditProd(null); }} />}
 
         {delConfirm && (
