@@ -258,6 +258,18 @@ async function handleLoad(env, origin) {
   return ok({ products: products ? products.text : null, orders: ordersText }, origin);
 }
 
+async function notifyNgrokSyncFailure(err, env) {
+  if (!env.CACUSA_KV) return;
+  const alertKey = 'ngroksync:lastalert';
+  if (await env.CACUSA_KV.get(alertKey)) return; // ya avisamos hace poco, no repetir en cada guardado
+  await env.CACUSA_KV.put(alertKey, '1', { expirationTtl: 6 * 3600 });
+  await sendWebPushAll(env, {
+    title: 'CACUSA · Falló la sincronización con Excel/POS',
+    body:  `El servidor local (ngrok) no respondió: ${err.message}. Revisa que siga corriendo — no vas a recibir otro aviso por 6h aunque siga fallando.`,
+    url:   'https://cacusabytaitus.com/ui_kits/admin/',
+  }).catch(() => {});
+}
+
 async function handleSave(body, env, origin, session, ctx) {
   const { path, content, message } = body;
   if (path !== PRODUCTS_PATH && path !== ORDERS_PATH) return err('Ruta no permitida', 403, origin);
@@ -277,7 +289,12 @@ async function handleSave(body, env, origin, session, ctx) {
   const cur = await ghGetContent(path, env);
   const res = await ghPut(path, b64encode(content), cur ? cur.sha : null, message || `[admin] ${session.user}`, env);
 
-  // Notificar al servidor local (ngrok) para sincronizar Excel + POS — fire-and-forget
+  // Notificar al servidor local (ngrok) para sincronizar Excel + POS — fire-and-forget,
+  // pero avisa por push si falla. Antes esto se tragaba cualquier error en silencio: si
+  // el túnel de ngrok gratis cambiaba de URL (pasa en cada reinicio del túnel, a menos
+  // que se use un dominio fijo), la sincronización se detenía sin que nadie se enterara
+  // hasta notar el POS desactualizado — justo lo que pasó. Cooldown de 6h entre alertas
+  // (vía CACUSA_KV) para no saturar de notificaciones si el túnel queda caído varios días.
   if (ctx) {
     ctx.waitUntil(
       fetch('https://upfront-yearbook-fascism.ngrok-free.dev/sync-admin-productos', {
@@ -285,7 +302,9 @@ async function handleSave(body, env, origin, session, ctx) {
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '1' },
         body: JSON.stringify({ trigger: 'admin-publish', user: session.user }),
         signal: AbortSignal.timeout(8000)
-      }).catch(() => {})
+      })
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); })
+        .catch(e => notifyNgrokSyncFailure(e, env))
     );
   }
 
