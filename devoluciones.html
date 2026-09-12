@@ -159,6 +159,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 <script>
 (async function(){
   var _L=localStorage.getItem('cacusa-lang')||'es';
+  document.documentElement.lang=_L;
   try{
     const res=await fetch('./data/products.json?v='+Date.now());
     if(res.ok){

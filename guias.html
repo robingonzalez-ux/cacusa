@@ -180,6 +180,7 @@ const I18N_EN = {
 };
 (async function(){
   var _L=localStorage.getItem('cacusa-lang')||'es';
+  document.documentElement.lang=_L;
   try{
     const res=await fetch('./data/products.json?v='+Date.now());
     if(res.ok){

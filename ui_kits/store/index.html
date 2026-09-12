@@ -377,6 +377,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .pay-method-opt.selected{border-color:var(--pink);color:var(--ink);background:rgba(238,111,168,.08)}
 .pay-method-opt small{display:block;font-size:10px;font-weight:500;margin-top:3px;opacity:.75}
 .pay-method-opt.selected small{opacity:1}
+.pay-method-opt:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
 .zelle-btn{width:100%;background:linear-gradient(135deg,#7D3C98,#5B2C6F);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:pointer;box-shadow:0 4px 24px rgba(125,60,152,.35);transition:all .3s;margin-top:20px;display:none;align-items:center;justify-content:center;gap:8px}
 .zelle-btn.show{display:flex}
 .zelle-btn:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(125,60,152,.45)}
@@ -570,9 +571,10 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .review-form{background:rgba(238,111,168,.07);border-radius:12px;padding:12px 14px}
 .review-form-title{font-family:var(--fu);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--pink);margin-bottom:8px}
 .star-picker{display:flex;gap:2px;margin-bottom:8px}
-.sp-star{font-size:22px;line-height:1;color:#e0c0d0;cursor:pointer;user-select:none;transition:transform .1s,color .1s}
+.sp-star{font-size:22px;line-height:1;color:#e0c0d0;cursor:pointer;user-select:none;transition:transform .1s,color .1s;border:none;background:none;padding:0;font-family:inherit}
 .sp-star.lit{color:var(--pink)}
 .sp-star:hover{transform:scale(1.18)}
+.sp-star:focus-visible{outline:2px solid var(--pink);outline-offset:2px;border-radius:4px}
 .rev-inp{width:100%;padding:8px 11px;border:1.5px solid var(--ink-light);border-radius:8px;font-family:var(--fu);font-size:12.5px;color:var(--ink);outline:none;background:white;margin-bottom:6px;transition:border-color .2s}
 .rev-inp:focus{border-color:var(--pink)}
 .rev-ta{resize:vertical;min-height:56px;font-family:var(--fe);font-style:italic}
@@ -1105,12 +1107,12 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
         <div class="reviews-list" id="revList"></div>
         <div class="review-form">
           <div class="review-form-title"><span class="t-es">Dejar una reseña</span><span class="t-en">Leave a review</span></div>
-          <div class="star-picker" id="revStarPicker">
-            <span class="sp-star lit" onclick="setRevRating(1)">★</span>
-            <span class="sp-star lit" onclick="setRevRating(2)">★</span>
-            <span class="sp-star lit" onclick="setRevRating(3)">★</span>
-            <span class="sp-star lit" onclick="setRevRating(4)">★</span>
-            <span class="sp-star lit" onclick="setRevRating(5)">★</span>
+          <div class="star-picker" id="revStarPicker" role="radiogroup" aria-label="Calificación" onkeydown="starKeydown(event)">
+            <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="1 estrella" tabindex="-1" onclick="setRevRating(1)">★</button>
+            <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="2 estrellas" tabindex="-1" onclick="setRevRating(2)">★</button>
+            <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="3 estrellas" tabindex="-1" onclick="setRevRating(3)">★</button>
+            <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="4 estrellas" tabindex="-1" onclick="setRevRating(4)">★</button>
+            <button type="button" class="sp-star lit" role="radio" aria-checked="true" aria-label="5 estrellas" tabindex="0" onclick="setRevRating(5)">★</button>
           </div>
           <input class="rev-inp" id="revName" maxlength="40" placeholder="Tu nombre / Your name">
           <textarea class="rev-inp rev-ta" id="revComment" maxlength="300" placeholder="Tu opinión… / Your review…"></textarea>
@@ -1260,12 +1262,12 @@ Preciosas, hacen que tu mano luzca femenina y delicada</li>
         <div class="co-step" id="coStep2">
         <button class="co-step-back" id="coBackStepBtn"><span class="t-es">← Volver y editar datos</span><span class="t-en">← Back to edit details</span></button>
         <div class="co-section" style="margin-top:0"><span class="t-es">Método de pago</span><span class="t-en">Payment Method</span></div>
-        <div class="pay-method-grid">
-          <div class="pay-method-opt selected" data-method="square" onclick="selectPayMethod(this)">
+        <div class="pay-method-grid" role="radiogroup" aria-label="Método de pago">
+          <div class="pay-method-opt selected" data-method="square" role="radio" aria-checked="true" tabindex="0" onclick="selectPayMethod(this)" onkeydown="payMethodKeydown(event,this)">
             <span class="t-es">Square / Tarjeta</span><span class="t-en">Square / Credit Card</span>
             <small>Apple Pay · Google Pay</small>
           </div>
-          <div class="pay-method-opt" data-method="zelle" onclick="selectPayMethod(this)">
+          <div class="pay-method-opt" data-method="zelle" role="radio" aria-checked="false" tabindex="-1" onclick="selectPayMethod(this)" onkeydown="payMethodKeydown(event,this)">
             Zelle / Transfer
             <small><span class="t-es">-4% descuento</span><span class="t-en">-4% discount</span></small>
           </div>
@@ -2672,9 +2674,23 @@ function renderCheckoutSummary() {
 }
 
 // ─── PAYMENT METHOD SELECTOR ─────────────────────────────────
+function payMethodKeydown(e, el) {
+  const opts = [...el.parentElement.querySelectorAll('.pay-method-opt')];
+  const i = opts.indexOf(el);
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPayMethod(el); return; }
+  if (['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) {
+    e.preventDefault();
+    const dir = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
+    const next = opts[(i + dir + opts.length) % opts.length];
+    next.focus();
+    selectPayMethod(next);
+  }
+}
 function selectPayMethod(el) {
-  document.querySelectorAll('.pay-method-opt').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.pay-method-opt').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-checked', 'false'); b.tabIndex = -1; });
   el.classList.add('selected');
+  el.setAttribute('aria-checked', 'true');
+  el.tabIndex = 0;
   const isZelle = el.dataset.method === 'zelle';
   document.getElementById('payBtn').style.display        = isZelle ? 'none' : '';
   document.getElementById('zelleBtn').classList.toggle('show', isZelle);
@@ -3441,7 +3457,19 @@ function _patchSchemaRating(avg, count, reviews) {
 // ─── REVIEWS ──────────────────────────────────────────────
 function setRevRating(n) {
   _revRating = n;
-  document.querySelectorAll('#revStarPicker .sp-star').forEach((s, i) => s.classList.toggle('lit', i < n));
+  document.querySelectorAll('#revStarPicker .sp-star').forEach((s, i) => {
+    s.classList.toggle('lit', i < n);
+    s.setAttribute('aria-checked', i === n - 1 ? 'true' : 'false');
+    s.tabIndex = i === n - 1 ? 0 : -1;
+  });
+}
+function starKeydown(e) {
+  if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
+  e.preventDefault();
+  const dir = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
+  const next = Math.min(5, Math.max(1, _revRating + dir));
+  setRevRating(next);
+  document.querySelectorAll('#revStarPicker .sp-star')[next - 1].focus();
 }
 document.getElementById('revStarPicker').addEventListener('mouseover', e => {
   if (!e.target.classList.contains('sp-star')) return;
