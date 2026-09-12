@@ -76,7 +76,10 @@ const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 // ── Avisa a cacusa-admin para que mande la notificación push (best-effort — nunca
 // bloquea ni rompe el procesamiento del webhook de Square si falla) ──────────────
 async function notifyAdminPush(title, body, env) {
-  if (!env.ORDER_INGEST_KEY) return;
+  if (!env.ORDER_INGEST_KEY) {
+    console.error('notifyAdminPush: ORDER_INGEST_KEY no está configurado en este Worker — la notificación no se envía. Revisar Cloudflare → cacusa-lovers-webhook → Settings → Variables.');
+    return;
+  }
   try {
     const r = await fetch(`${ADMIN_WORKER_URL}/push/notify`, {
       method: 'POST',
@@ -118,18 +121,38 @@ async function verifySignature(request, body, sigKey) {
   return safeEqual(expected, sigHeader);
 }
 
-// ── Find Firebase subscriber key by email ────────────────────────────────────
-async function findSubscriberByEmail(email, dbUrl, fbAuth) {
-  const url = `${dbUrl}/cacusa_lovers.json?auth=${fbAuth}&orderBy="email"&equalTo="${encodeURIComponent(email)}"`;
-  const r = await fetch(url);
-  if (!r.ok) return null;
-  const data = await r.json();
-  if (!data) return null;
-  const keys = Object.keys(data);
-  return keys.length > 0 ? keys[0] : null;
+// ── Key determinística por email ──────────────────────────────────────────────
+// Antes, cada alta (formulario público + subscription.created + invoice.payment_made
+// + alta manual del admin) buscaba "¿ya existe alguien con este email?" vía una
+// query indexada y, si no encontraba nada, creaba un registro nuevo con ID
+// aleatorio. Esa búsqueda-y-decide tiene una ventana de carrera real: si dos de
+// esos 4 caminos corren cerca uno del otro (típico — Square puede mandar
+// subscription.created e invoice.payment_made casi al mismo tiempo), ambos
+// pueden creer "no existe" y crear su propio registro — resultado: 2 o 3 copias
+// de la misma suscriptora, como pasó con Elizabeth Galarza el 10 de septiembre.
+//
+// La key ahora se calcula siempre igual, directo del email, en los 4 caminos —
+// así todos apuntan al MISMO nodo de Firebase sin necesidad de preguntar nada
+// antes. Aunque dos lleguen "al mismo tiempo", como escriben a la misma key,
+// Firebase los fusiona (PATCH) en un solo registro — nunca puede haber 2.
+// Firebase no permite '.', '#', '$', '[', ']', '/' en una key, por eso se
+// reemplazan por ','.
+function subscriberKey(email) {
+  return String(email || '').trim().toLowerCase().replace(/[.#$[\]/]/g, ',');
 }
 
-// ── Update subscriber in Firebase. estadoPago=null deja el estado como está ──
+// ── Lee un registro por su key determinística — lookup directo por ID, no una
+// query indexada (más confiable, no depende de que Firebase tenga .indexOn) ──
+async function getSubscriberByKey(key, dbUrl, fbAuth) {
+  const r = await fetch(`${dbUrl}/cacusa_lovers/${key}.json?auth=${fbAuth}`);
+  if (!r.ok) return null;
+  return await r.json(); // null si esa key no existe todavía
+}
+
+// ── Mezcla (PATCH) campos en el registro de esa key. Si la key no existe
+// todavía, Firebase la crea con exactamente esos campos — llamarlo 2+ veces
+// con los mismos datos nunca duplica nada, solo actualiza el mismo nodo.
+// estadoPago=null deja el estado_pago como está (no lo toca).
 async function updateSubscriber(key, estadoPago, extras, dbUrl, fbAuth) {
   const url = `${dbUrl}/cacusa_lovers/${key}.json?auth=${fbAuth}`;
   const body = { ...extras };
@@ -144,23 +167,6 @@ async function updateSubscriber(key, estadoPago, extras, dbUrl, fbAuth) {
     console.error(`Firebase PATCH failed (${r.status}):`, errText);
   }
   return r.ok;
-}
-
-// ── Create new subscriber record in Firebase ───────────────────────────────────
-async function createSubscriber(data, dbUrl, fbAuth) {
-  const url = `${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`;
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!r.ok) {
-    const errText = await r.text().catch(() => r.status);
-    console.error(`Firebase POST failed (${r.status}):`, errText);
-    return null;
-  }
-  const d = await r.json();
-  return d?.name || null; // Firebase returns { name: "<key>" }
 }
 
 // ── Get customer from Square ──────────────────────────────────────────────────
@@ -370,9 +376,10 @@ export default {
             vence:     /^\d{4}-\d{2}-\d{2}$/.test(body?.vence) ? body.vence : '',
             notas:     str(body?.notas, 500),
           };
-          const newKey = await createSubscriber(record, dbUrl, fbAuth);
-          if (!newKey) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
-          return adminJson({ ok: true, id: newKey, subscriber: record }, 200);
+          const key = subscriberKey(email);
+          const ok = await updateSubscriber(key, null, record, dbUrl, fbAuth);
+          if (!ok) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
+          return adminJson({ ok: true, id: key, subscriber: record }, 200);
         }
 
         return adminJson({ error: 'Method not allowed' }, 405);
@@ -489,9 +496,10 @@ export default {
           const addr = customer?.address || {};
           // Detect annual: monthly price ~$19.99 = ~2000 cents; annual ~$219.89 = ~21989 cents
           const isAnnual = (sub.price_money?.amount || 0) > 5000;
-          const existingKey = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbAuth);
-          if (!existingKey) {
-            const newKey = await createSubscriber({
+          const key = subscriberKey(email);
+          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          if (!existing) {
+            await updateSubscriber(key, 'pendiente', {
               email: email.toLowerCase(),
               nombre:    customer?.given_name  || '',
               apellido:  customer?.family_name || '',
@@ -504,10 +512,9 @@ export default {
               plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
               monto: isAnnual ? '$219.89/año' : '$19.99/mes',
               fecha: today,
-              estado_pago: 'pendiente',
               square_subscription_id: sub.id || '',
             }, dbUrl, fbAuth);
-            console.log('Created subscriber record (subscription.created):', email, '→', newKey);
+            console.log('Created subscriber record (subscription.created):', email, '→', key);
             const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
             await notifyAdminPush(
               'CACUSA · Nueva suscriptora Lovers',
@@ -517,7 +524,7 @@ export default {
           } else {
             // Ya existe (vino del formulario): solo adjuntar la referencia de Square,
             // sin tocar sus datos ni su estado_pago actual.
-            await updateSubscriber(existingKey, null, {
+            await updateSubscriber(key, null, {
               square_subscription_id: sub.id || '',
             }, dbUrl, fbAuth);
             console.log('Attached square_subscription_id to existing record (subscription.created):', email);
@@ -554,8 +561,9 @@ export default {
             zip:       addr.postal_code      || '',
             pais:      addr.country          || '',
           };
-          const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbAuth);
-          if (key) {
+          const key = subscriberKey(email);
+          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          if (existing) {
             // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
             // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
             await updateSubscriber(key, 'activo', {
@@ -568,17 +576,16 @@ export default {
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
             const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
             const isAnnual = amountCents > 5000;
-            const newKey = await createSubscriber({
+            await updateSubscriber(key, 'activo', {
               email: email.toLowerCase(),
               ...customerFields,
               plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
               monto: isAnnual ? '$219.89/año' : '$19.99/mes',
               fecha: today,
-              estado_pago: 'activo',
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
-            console.log('Created activo record for:', email, '→', newKey);
+            console.log('Created activo record for:', email, '→', key);
             const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
             await notifyAdminPush(
               'CACUSA · Nueva suscriptora Lovers',
@@ -597,8 +604,9 @@ export default {
           || (customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null);
 
         if (email) {
-          const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbAuth);
-          if (key) {
+          const key = subscriberKey(email);
+          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          if (existing) {
             await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
             console.log('Marked pago_fallido:', email);
           } else {
@@ -614,8 +622,9 @@ export default {
           const customerId = sub?.customer_id;
           const email = customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null;
           if (email) {
-            const key = await findSubscriberByEmail(email.toLowerCase(), dbUrl, fbAuth);
-            if (key) {
+            const key = subscriberKey(email);
+            const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+            if (existing) {
               await updateSubscriber(key, 'cancelado', {
                 fecha_cancelacion: new Date().toISOString().slice(0, 10),
               }, dbUrl, fbAuth);
