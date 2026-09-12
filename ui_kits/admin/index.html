@@ -488,6 +488,45 @@ function PushSection({ token }) {
   );
 }
 
+// ── Modal accesible compartido — role=dialog, trap de foco, cierre con Escape,
+// foco inicial y retorno de foco al elemento que lo abrió (ver auditoría a11y) ──
+function Modal({ onClose, label, labelledBy, overlayStyle, boxStyle, closeOnOverlayClick = true, children }) {
+  const boxRef = useRef(null);
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return;
+    const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    const prevFocused = document.activeElement;
+    const getFocusable = () => Array.from(box.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null);
+    function onKeydown(e) {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab') return;
+      const items = getFocusable();
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKeydown);
+    const items = getFocusable();
+    if (items.length) items[0].focus();
+    return () => {
+      document.removeEventListener('keydown', onKeydown);
+      if (prevFocused && prevFocused.focus) prevFocused.focus();
+    };
+  }, []);
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, ...overlayStyle }}
+      onClick={e => closeOnOverlayClick && e.target === e.currentTarget && onClose()}>
+      <div ref={boxRef} role="dialog" aria-modal="true" aria-label={label} aria-labelledby={labelledBy}
+        style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 400, boxShadow: '0 24px 60px rgba(0,0,0,.3)', animation: 'fadeIn .2s ease', ...boxStyle }}
+        onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function NtfyModal({ token, onClose }) {
   const [info, setInfo] = React.useState(null);
   React.useEffect(() => {
@@ -497,13 +536,10 @@ function NtfyModal({ token, onClose }) {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-      onClick={onClose}>
-      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 400, boxShadow: '0 24px 60px rgba(0,0,0,.3)', animation: 'fadeIn .2s ease' }}
-        onClick={e => e.stopPropagation()}>
+    <Modal onClose={onClose} label="Notificaciones de pedidos">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>🔔 Notificaciones de pedidos</div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
 
         <PushSection token={token} />
@@ -553,8 +589,7 @@ function NtfyModal({ token, onClose }) {
             </a>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -956,12 +991,12 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(26,17,36,.65)', zIndex: 1000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '20px 16px', overflowY: 'auto' }}
-      onClick={e => e.target === e.currentTarget && confirmClose()}>
-      <div style={{ background: 'white', borderRadius: 24, padding: '32px 28px', width: '100%', maxWidth: 540, boxShadow: '0 24px 80px rgba(0,0,0,.35)', marginTop: 20, animation: 'fadeIn .3s ease' }}>
+    <Modal onClose={confirmClose} labelledBy="productModalTitle"
+      overlayStyle={{ alignItems: 'flex-start', overflowY: 'auto' }}
+      boxStyle={{ borderRadius: 24, padding: '32px 28px', maxWidth: 540, marginTop: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a' }}>{isNew ? '➕ Nuevo Producto' : '✏️ Editar Producto'}</h2>
-          <button onClick={confirmClose} style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f0', color: '#666', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
+          <h2 id="productModalTitle" style={{ fontSize: 20, fontWeight: 800, color: '#1a1a1a' }}>{isNew ? '➕ Nuevo Producto' : '✏️ Editar Producto'}</h2>
+          <button onClick={confirmClose} aria-label="Cerrar" style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f0', color: '#666', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* Image upload */}
@@ -1199,8 +1234,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             {translating ? '🌐 Traduciendo al inglés…' : (uploading || galleryUploading) ? '⏳ Espera a que suba la foto…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -1465,11 +1499,12 @@ function NewOrderModal({ open, onClose, onSave }) {
     onClose();
   };
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'white', borderRadius: 20, padding: 28, width: '100%', maxWidth: 440, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+    <Modal onClose={onClose} labelledBy="newOrderModalTitle"
+      overlayStyle={{ background: 'rgba(0,0,0,0.5)', zIndex: 300 }}
+      boxStyle={{ maxWidth: 440, maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>Nuevo pedido manual</div>
-          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
+          <div id="newOrderModalTitle" style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>Nuevo pedido manual</div>
+          <button onClick={onClose} aria-label="Cerrar" style={{ width: 32, height: 32, borderRadius: '50%', background: '#F9F5F7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7A6880', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
         </div>
         <form onSubmit={submit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1497,8 +1532,7 @@ function NewOrderModal({ open, onClose, onSave }) {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
