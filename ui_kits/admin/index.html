@@ -1003,6 +1003,8 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
         <div style={{ marginBottom: 20 }}>
           <label style={lbl}>Foto del Producto</label>
           <div onClick={() => !uploading && fileRef.current.click()}
+            role="button" tabIndex={0} aria-label="Foto del producto — toca o arrastra una foto"
+            onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && !uploading) { e.preventDefault(); fileRef.current.click(); } }}
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
             onDrop={handleDrop}
@@ -1622,6 +1624,8 @@ function CategoryProductPicker({ products, selectedIds, onToggle, emptyMsg }) {
         return (
           <div key={cat} style={{ border: '1.5px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
             <div onClick={() => setOpenCat(isOpen ? null : cat)}
+              role="button" tabIndex={0} aria-expanded={isOpen}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenCat(isOpen ? null : cat); } }}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', background: isOpen ? '#FFF0F6' : '#FAFAFA' }}>
               <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1118' }}>{cat} <span style={{ fontWeight: 400, color: '#7A6B85' }}>({prods.length})</span></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1635,6 +1639,8 @@ function CategoryProductPicker({ products, selectedIds, onToggle, emptyMsg }) {
                   const sel = selectedIds.includes(p.id);
                   return (
                     <div key={p.id} onClick={() => onToggle(p.id)}
+                      role="checkbox" aria-checked={sel} tabIndex={0} aria-label={p.name}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(p.id); } }}
                       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', borderRadius: 10, border: `2px solid ${sel ? '#E85D8A' : '#eee'}`, background: sel ? '#FFF0F6' : 'white', cursor: 'pointer', transition: 'all .15s' }}>
                       {p.imageUrl
                         ? <img src={p.imageUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" />
