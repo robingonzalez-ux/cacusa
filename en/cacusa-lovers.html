@@ -211,7 +211,8 @@ section{padding:96px 0}
 .faq-center{text-align:center;margin-bottom:48px}
 .faq-list{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .faq-item{background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(238,111,168,.07)}
-.faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;cursor:pointer;font-family:var(--fu);font-weight:600;font-size:15px;color:var(--ink)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;cursor:pointer;font-family:var(--fu);font-weight:600;font-size:15px;color:var(--ink);width:100%;text-align:left;background:none;border:none}
+.faq-q:focus-visible{outline:2px solid var(--pink);outline-offset:-2px}
 .faq-q:hover{color:var(--pink)}
 .faq-icon{font-size:18px;color:var(--ink);transition:transform .3s;flex-shrink:0}
 .faq-item.open .faq-icon{transform:rotate(45deg)}
@@ -758,20 +759,20 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
     <div class="faq-list" id="faqList">
       <div class="faq-item reveal" data-delay="1">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>When will I receive my first box?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions.</p></div>
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA1"><span>When will I receive my first box?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA1"><p>Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="2">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>Can I choose the jewelry I receive?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose.</p></div>
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA2"><span>Can I choose the jewelry I receive?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA2"><p>No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="3">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>Do you ship throughout Ecuador and the USA?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost.</p></div>
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA3"><span>Do you ship throughout Ecuador and the USA?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA3"><p>Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="4">
-        <div class="faq-q" onclick="toggleFaq(this)"><span>How does the monthly payment work?</span><span class="faq-icon">+</span></div>
-        <div class="faq-a"><p>You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge.</p></div>
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA4"><span>How does the monthly payment work?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA4"><p>You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge.</p></div>
       </div>
     </div>
   </div>
@@ -1042,8 +1043,8 @@ function applyLoversContent(l) {
     if (list) {
       list.innerHTML = l.faq.map((f, i) =>
         '<div class="faq-item reveal" data-delay="' + Math.min(i + 1, 4) + '">' +
-          '<div class="faq-q" onclick="toggleFaq(this)"><span>' + esc(f.q) + '</span><span class="faq-icon">+</span></div>' +
-          '<div class="faq-a"><p>' + esc(f.a) + '</p></div>' +
+          '<button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA-dyn-' + i + '"><span>' + esc(f.q) + '</span><span class="faq-icon">+</span></button>' +
+          '<div class="faq-a" id="faqA-dyn-' + i + '"><p>' + esc(f.a) + '</p></div>' +
         '</div>'
       ).join('');
     }
@@ -1587,7 +1588,8 @@ function toggleFaq(el){
   const item=el.parentElement;
   const isOpen=item.classList.contains('open');
   document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
-  if(!isOpen)item.classList.add('open');
+  document.querySelectorAll('.faq-q').forEach(b=>b.setAttribute('aria-expanded','false'));
+  if(!isOpen){item.classList.add('open');el.setAttribute('aria-expanded','true');}
 }
 
 // ── Mobile nav drawer ─────────────────────────────────────────
