@@ -510,7 +510,7 @@ function NtfyModal({ token, onClose }) {
 
         <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700, marginBottom: 4 }}>Alternativa: app ntfy</div>
 
-        {!info && <div style={{ textAlign: 'center', padding: '20px 0', color: '#aaa' }}>Cargando…</div>}
+        {!info && <div style={{ textAlign: 'center', padding: '20px 0', color: '#767676' }}>Cargando…</div>}
 
         {info && !info.configured && (
           <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '14px 16px', fontSize: 13, color: '#92400E' }}>
@@ -668,7 +668,7 @@ function LoginScreen({ onLogin }) {
         <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Activar acceso biométrico</div>
         <div style={{ fontSize: 14, color: '#666', marginBottom: 28 }}>¿Usar Face ID o huella la próxima vez?</div>
         <button onClick={activarFaceId} disabled={loading}
-          style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', borderRadius:99, fontWeight:700, fontSize:15, marginBottom:10, opacity:loading?.7:1, border:'none', cursor:'pointer' }}>
+          style={{ width:'100%', padding:14, background:'linear-gradient(135deg,#C0336E,#9B5DE5)', color:'white', borderRadius:99, fontWeight:700, fontSize:15, marginBottom:10, opacity:loading?.7:1, border:'none', cursor:'pointer' }}>
           {loading ? 'Configurando…' : 'Activar Face ID'}
         </button>
         <button onClick={() => onLogin(pendingSess)}
@@ -684,7 +684,7 @@ function LoginScreen({ onLogin }) {
       <div style={card}>
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{ fontFamily: 'Georgia,serif', fontSize: 34, fontWeight: 900, letterSpacing: '.15em', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CACUSA</div>
-          <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, color: '#aaa', fontStyle: 'italic', marginTop: 3 }}>Panel de Administración</div>
+          <div style={{ fontFamily: 'Georgia,serif', fontSize: 13, color: '#767676', fontStyle: 'italic', marginTop: 3 }}>Panel de Administración</div>
         </div>
         <form onSubmit={submit}>
           <div style={{ marginBottom: 16 }}>
@@ -700,7 +700,7 @@ function LoginScreen({ onLogin }) {
           <div style={{ marginBottom: 8 }} />
           {error && <div style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>{error}</div>}
           <button type="submit" disabled={loading}
-            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s', border: 'none', cursor: 'pointer' }}>
+            style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 15, letterSpacing: '.04em', boxShadow: '0 4px 20px rgba(155,93,229,.4)', opacity: loading ? .7 : 1, transition: 'opacity .2s', border: 'none', cursor: 'pointer' }}>
             {loading ? 'Verificando…' : 'Ingresar →'}
           </button>
         </form>
@@ -747,7 +747,7 @@ function ProductCard({ p, onEdit, onDelete, onToggle, onMoveUp, onMoveDown, canU
         {p.personalized && <div style={{ fontSize: 10, color: '#9B5DE5', fontWeight: 600 }}>✦ Personalizable</div>}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontWeight: 800, color: '#C9A84C', fontSize: 15 }}>${p.price}</span>
-          {p.oldPrice && <span style={{ fontSize: 12, color: '#bbb', textDecoration: 'line-through' }}>${p.oldPrice}</span>}
+          {p.oldPrice && <span style={{ fontSize: 12, color: '#707070', textDecoration: 'line-through' }}>${p.oldPrice}</span>}
         </div>
         <div style={{ display: 'flex', gap: 5, marginTop: 4 }}>
           <button onClick={() => onToggle(p)} style={{ flex: 1, padding: '5px 0', background: active ? '#FEE2E2' : '#D1FAE5', color: active ? '#DC2626' : '#065F46', borderRadius: 8, fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
@@ -974,7 +974,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             style={{ height: 160, borderRadius: 14, border: dragOver ? '2px dashed #9B5DE5' : '2px dashed #e0e0e0', cursor: uploading ? 'wait' : 'pointer', overflow: 'hidden', background: dragOver ? '#F6F0FE' : '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'border-color .2s, background .2s' }}>
             {imgPrev
               ? <img src={imgPrev} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${form.focalX ?? 50}% ${form.focalY ?? 50}%`, transform: `scale(${form.zoom ?? 1})`, transformOrigin: `${form.focalX ?? 50}% ${form.focalY ?? 50}%` }} alt="preview" />
-              : <div style={{ textAlign: 'center', color: dragOver ? '#9B5DE5' : '#bbb', pointerEvents: 'none' }}>
+              : <div style={{ textAlign: 'center', color: dragOver ? '#9B5DE5' : '#707070', pointerEvents: 'none' }}>
                   <div style={{ fontSize: 40, marginBottom: 6 }}>{dragOver ? '⬇️' : '📸'}</div>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>{dragOver ? 'Suelta la foto aquí' : 'Toca para elegir una foto'}</div>
                   <div style={{ fontSize: 12, marginTop: 3 }}>o arrástrala aquí · JPG · PNG · WebP</div>
@@ -987,7 +987,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
           {uploadMsg && <div style={{ fontSize: 12, marginTop: 6, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
-          {!uploadMsg && <div style={{ fontSize: 11, color: '#aaa', marginTop: 6 }}>💡 La foto se optimiza automáticamente para cargar rápido en la tienda.</div>}
+          {!uploadMsg && <div style={{ fontSize: 11, color: '#767676', marginTop: 6 }}>💡 La foto se optimiza automáticamente para cargar rápido en la tienda.</div>}
           {imgPrev && !uploading && (
             <div style={{ marginTop: 10, background: '#FAF7FB', borderRadius: 10, padding: '10px 14px' }}>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#7A6880', marginBottom: 8 }}>🎯 Ajustar posición y zoom</div>
@@ -1005,7 +1005,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
           open={(form.images || []).length > 0}>
           <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#7A6880', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
             🖼️ Galería de fotos adicionales — {(form.images || []).length === 0 ? 'ninguna' : `${(form.images || []).length} foto${(form.images || []).length > 1 ? 's' : ''}`}
-            <span style={{ fontSize: 10, fontWeight: 400, color: '#aaa' }}>para el carrusel en la tienda</span>
+            <span style={{ fontSize: 10, fontWeight: 400, color: '#767676' }}>para el carrusel en la tienda</span>
           </summary>
           <div style={{ marginTop: 12 }}>
             {(form.images || []).length > 0 && (
@@ -1170,7 +1170,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             <div style={{ marginTop: 12 }}>
               {revLoading && <div style={{ fontSize: 13, color: '#9B5DE5', textAlign: 'center', padding: '12px 0' }}>Cargando reseñas…</div>}
               {!revLoading && reviews !== null && reviews.length === 0 && (
-                <div style={{ fontSize: 13, color: '#aaa', textAlign: 'center', padding: '8px 0' }}>No hay reseñas aún para este producto</div>
+                <div style={{ fontSize: 13, color: '#767676', textAlign: 'center', padding: '8px 0' }}>No hay reseñas aún para este producto</div>
               )}
               {!revLoading && reviews && reviews.map(r => (
                 <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f0e8f8' }}>
@@ -1178,7 +1178,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{r.name || 'Anónimo'}</span>
                       <span style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>{'★'.repeat(r.rating || 0)}{'☆'.repeat(5 - (r.rating || 0))}</span>
-                      <span style={{ fontSize: 11, color: '#aaa', marginLeft: 'auto' }}>{r.date || ''}</span>
+                      <span style={{ fontSize: 11, color: '#767676', marginLeft: 'auto' }}>{r.date || ''}</span>
                     </div>
                     {r.comment && <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>{r.comment}</div>}
                   </div>
@@ -1195,7 +1195,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={confirmClose} style={{ flex: 1, padding: 13, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Cancelar</button>
           <button onClick={save} disabled={!form.name || !form.price || translating || uploading || galleryUploading}
-            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating || uploading || galleryUploading) ? .5 : 1, cursor: (translating || uploading || galleryUploading) ? 'wait' : 'pointer', border: 'none' }}>
+            style={{ flex: 2, padding: 13, background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, boxShadow: '0 4px 16px rgba(155,93,229,.35)', opacity: (!form.name || !form.price || translating || uploading || galleryUploading) ? .5 : 1, cursor: (translating || uploading || galleryUploading) ? 'wait' : 'pointer', border: 'none' }}>
             {translating ? '🌐 Traduciendo al inglés…' : (uploading || galleryUploading) ? '⏳ Espera a que suba la foto…' : (isNew ? '+ Agregar Producto' : '💾 Guardar Cambios')}
           </button>
         </div>
@@ -1361,7 +1361,7 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
                     ✓ Guardar
                   </button>
                   <button onClick={() => setZipFound(null)}
-                    style={{ fontSize: 11, color: '#A89AAF', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    style={{ fontSize: 11, color: '#7A6B85', background: 'none', border: 'none', cursor: 'pointer' }}>
                     Descartar
                   </button>
                 </>
@@ -1372,7 +1372,7 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
         </div>
         <span style={{ background: STATE_COLORS[estado] || '#E8508A', color: 'white', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 99 }}>{estado}</span>
       </div>
-      <div style={{ fontSize: 12, color: '#A89AAF', display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ fontSize: 12, color: '#7A6B85', display: 'flex', gap: 8, alignItems: 'center' }}>
         {order.numero && <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#7A5F8A', background: '#F3EFF5', padding: '2px 8px', borderRadius: 6 }}>#{order.numero}</span>}
         <span>{dateStr} · {order.pago || 'Sin método'}</span>
       </div>
@@ -1439,7 +1439,7 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
         {waStatusUrl && <a href={waStatusUrl} target="_blank" rel="noopener noreferrer" title="Notificar estado por WhatsApp"
           style={{ padding: '8px 12px', background: '#DCF8C6', color: '#128C7E', borderRadius: 99, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>💬 Notificar</a>}
         <button onClick={() => onDelete(order)}
-          style={{ padding: '8px 12px', background: '#F9F5F7', color: '#A89AAF', borderRadius: 99, fontSize: 12, border: 'none', cursor: 'pointer' }} title="Eliminar">🗑</button>
+          style={{ padding: '8px 12px', background: '#F9F5F7', color: '#7A6B85', borderRadius: 99, fontSize: 12, border: 'none', cursor: 'pointer' }} title="Eliminar">🗑</button>
       </div>
     </div>
   );
@@ -1473,7 +1473,7 @@ function NewOrderModal({ open, onClose, onSave }) {
         </div>
         <form onSubmit={submit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1 }}>DATOS DEL CLIENTE</div>
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1 }}>DATOS DEL CLIENTE</div>
             <input required placeholder="Nombre completo *" value={form.nombre} onChange={e => set('nombre', e.target.value)} style={inp} />
             <input required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e => set('telefono', e.target.value)} style={inp} />
             <input required placeholder="Ciudad, País *" value={form.ciudad} onChange={e => set('ciudad', e.target.value)} style={inp} />
@@ -1486,11 +1486,11 @@ function NewOrderModal({ open, onClose, onSave }) {
               <option>Efectivo (entrega local)</option>
               <option>WhatsApp Pay</option>
             </select>
-            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1, marginTop: 4 }}>PRODUCTO</div>
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1, marginTop: 4 }}>PRODUCTO</div>
             <input placeholder="Nombre del producto" value={form.prodNombre} onChange={e => set('prodNombre', e.target.value)} style={inp} />
             <input placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e => set('prodPersonal', e.target.value)} style={inp} />
             <input type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e => set('prodPrecio', e.target.value)} style={inp} />
-            <div style={{ fontWeight: 700, fontSize: 11, color: '#A89AAF', letterSpacing: 1, marginTop: 4 }}>NOTAS</div>
+            <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1, marginTop: 4 }}>NOTAS</div>
             <textarea placeholder="Notas adicionales..." value={form.notas} onChange={e => set('notas', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
             <button type="submit" style={{ background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, padding: '12px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', marginTop: 4 }}>
               Guardar pedido
@@ -1538,7 +1538,7 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
   return (
     <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 }}>
       <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>{title}</div>
-      {hint && <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 14 }}>{hint}</div>}
+      {hint && <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 14 }}>{hint}</div>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
         {items.map((it, idx) => (
           <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FAF7FB', borderRadius: 10, padding: '6px 8px 6px 12px' }}>
@@ -1547,7 +1547,7 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
                 onKeyDown={e => { if (e.key === 'Enter') commitEdit(); if (e.key === 'Escape') setEditIdx(-1); }}
                 style={inp} />
             ) : (
-              <span style={{ flex: 1, fontSize: 14, color: '#1A1118' }}>{it}{usageCount && <span style={{ color: '#A89AAF', fontSize: 12 }}> · {usageCount(it)}</span>}</span>
+              <span style={{ flex: 1, fontSize: 14, color: '#1A1118' }}>{it}{usageCount && <span style={{ color: '#7A6B85', fontSize: 12 }}> · {usageCount(it)}</span>}</span>
             )}
             {editIdx === idx ? (
               <button onClick={commitEdit} style={{ padding: '6px 12px', background: '#10B981', color: 'white', borderRadius: 8, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer' }}>✓</button>
@@ -1561,7 +1561,7 @@ function ListEditor({ title, hint, items, onChange, onRename, usageCount, emptyO
       <div style={{ display: 'flex', gap: 8 }}>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()}
           placeholder="Agregar nuevo…" style={inp} />
-        <button onClick={add} style={{ padding: '9px 18px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 9, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Agregar</button>
+        <button onClick={add} style={{ padding: '9px 18px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 9, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Agregar</button>
       </div>
       {err && <div style={{ fontSize: 12, color: '#DC2626', fontWeight: 500, marginTop: 8 }}>{err}</div>}
     </div>
@@ -1589,10 +1589,10 @@ function CategoryProductPicker({ products, selectedIds, onToggle, emptyMsg }) {
           <div key={cat} style={{ border: '1.5px solid #eee', borderRadius: 12, overflow: 'hidden' }}>
             <div onClick={() => setOpenCat(isOpen ? null : cat)}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', background: isOpen ? '#FFF0F6' : '#FAFAFA' }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1118' }}>{cat} <span style={{ fontWeight: 400, color: '#A89AAF' }}>({prods.length})</span></div>
+              <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1118' }}>{cat} <span style={{ fontWeight: 400, color: '#7A6B85' }}>({prods.length})</span></div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {selCount > 0 && <span style={{ fontSize: 11, fontWeight: 700, color: '#E85D8A', background: '#FFE3EE', padding: '2px 8px', borderRadius: 999 }}>{selCount} sel.</span>}
-                <span style={{ display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: '#A89AAF' }}>▾</span>
+                <span style={{ display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: '#7A6B85' }}>▾</span>
               </div>
             </div>
             {isOpen && (
@@ -1607,7 +1607,7 @@ function CategoryProductPicker({ products, selectedIds, onToggle, emptyMsg }) {
                         : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                        <div style={{ fontSize: 11, color: '#A89AAF' }}>${p.price}</div>
+                        <div style={{ fontSize: 11, color: '#7A6B85' }}>${p.price}</div>
                       </div>
                       <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${sel ? '#E85D8A' : '#ddd'}`, background: sel ? '#E85D8A' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, flexShrink: 0 }}>
                         {sel && '✓'}
@@ -1642,11 +1642,11 @@ function CollectionPhotoPicker({ products, categories, selection, onSelect }) {
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', cursor: 'pointer', background: isOpen ? '#FFF0F6' : '#FAFAFA' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                 {selectedProd?.imageUrl && <img src={selectedProd.imageUrl} style={{ width: 28, height: 28, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} alt="" />}
-                <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1118', whiteSpace: 'nowrap' }}>{cat} <span style={{ fontWeight: 400, color: '#A89AAF' }}>({prods.length})</span></div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: '#1A1118', whiteSpace: 'nowrap' }}>{cat} <span style={{ fontWeight: 400, color: '#7A6B85' }}>({prods.length})</span></div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 {selectedProd && <span style={{ fontSize: 11, fontWeight: 700, color: '#E85D8A', background: '#FFE3EE', padding: '2px 8px', borderRadius: 999, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{selectedProd.name}</span>}
-                <span style={{ display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: '#A89AAF' }}>▾</span>
+                <span style={{ display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s', color: '#7A6B85' }}>▾</span>
               </div>
             </div>
             {isOpen && (
@@ -1661,7 +1661,7 @@ function CollectionPhotoPicker({ products, categories, selection, onSelect }) {
                           <img src={p.imageUrl} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} alt="" />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                            <div style={{ fontSize: 11, color: '#A89AAF' }}>${p.price}</div>
+                            <div style={{ fontSize: 11, color: '#7A6B85' }}>${p.price}</div>
                           </div>
                           <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${sel ? '#E85D8A' : '#ddd'}`, background: sel ? '#E85D8A' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, flexShrink: 0 }}>
                             {sel && '✓'}
@@ -1723,7 +1723,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Banner de beneficios ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✨ Banner de beneficios</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Frases que aparecen en la barra superior de la tienda: "Hecho a mano", "Envío express", etc.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Frases que aparecen en la barra superior de la tienda: "Hecho a mano", "Envío express", etc.</div>
         <ListEditor
           title=""
           hint="Frases cortas que se muestran como íconos en la tienda."
@@ -1736,7 +1736,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Productos destacados ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>⭐ Productos destacados en portada</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>
           Selecciona hasta 4 productos para mostrar en la portada de la web. Si no seleccionas ninguno, se muestran los primeros 4 disponibles automáticamente.
         </div>
         <CategoryProductPicker products={availProds} selectedIds={featured} onToggle={toggleFeatured} emptyMsg="No hay productos disponibles aún." />
@@ -1748,7 +1748,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Carrusel del hero (portada) ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🎠 Carrusel del hero (portada)</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>
           Selecciona hasta 8 productos para el carrusel grande de arriba de todo en la portada. Si no seleccionas ninguno, se muestran los primeros 8 productos disponibles con foto automáticamente.
         </div>
         <CategoryProductPicker products={availPhotoProds} selectedIds={heroSel} onToggle={toggleHero} emptyMsg="No hay productos con foto disponibles aún." />
@@ -1760,7 +1760,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Foto principal de cada colección ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🖼️ Foto principal de "Encuentra tu pieza perfecta"</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>
           Elige qué producto representa la foto de cada categoría en esa sección de la portada. Abre una categoría para elegir solo entre sus propios productos. Si no eliges ninguno, se usa automáticamente el primero disponible con foto de esa categoría.
         </div>
         <CollectionPhotoPicker products={availPhotoProds} categories={COLLECTION_CATS} selection={collectionPhotos} onSelect={setCollectionPhoto} />
@@ -1769,7 +1769,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Quiénes somos ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🏛️ Quiénes somos</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>La sección de historia en la portada principal.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>La sección de historia en la portada principal.</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div><label style={lbl}>Etiqueta</label><input value={home.storyLabel || ''} onChange={e => setHomeField('storyLabel', e.target.value)} style={inp} /></div>
           <div><label style={lbl}>Título</label><input value={home.storyTitle || ''} onChange={e => setHomeField('storyTitle', e.target.value)} style={inp} /></div>
@@ -1790,7 +1790,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       {/* ── Pasos de personalización ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>✨ Pasos de personalización</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Los 3 pasos que explican cómo se crea una pieza.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Los 3 pasos que explican cómo se crea una pieza.</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
           <div><label style={lbl}>Etiqueta</label><input value={home.person?.label || ''} onChange={e => setPersonField('label', e.target.value)} style={inp} /></div>
           <div><label style={lbl}>Título</label><input value={home.person?.title || ''} onChange={e => setPersonField('title', e.target.value)} style={inp} /></div>
@@ -1799,7 +1799,7 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {(home.person?.steps || []).map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', background: '#FAF7FB', borderRadius: 10, padding: 12 }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
               <input value={s.title || ''} onChange={e => setStep(i, 'title', e.target.value)} placeholder="Título" style={{ ...inp, flex: 1, fontWeight: 600 }} />
               <input value={s.desc || ''} onChange={e => setStep(i, 'desc', e.target.value)} placeholder="Descripción" style={{ ...inp, flex: 2 }} />
             </div>
@@ -1811,9 +1811,9 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
       <div style={card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>💬 Testimonios</div>
-          <button onClick={addTesti} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
+          <button onClick={addTesti} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
         </div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Reseñas de clientas que aparecen en la portada.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Reseñas de clientas que aparecen en la portada.</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {(home.testimonials || []).map((t, i) => (
             <div key={i} style={{ background: '#FAF7FB', borderRadius: 10, padding: 12, position: 'relative' }}>
@@ -1825,21 +1825,21 @@ function LandingTab({ home, setHome, products, setDirty, texts, setTexts }) {
               </div>
             </div>
           ))}
-          {(home.testimonials || []).length === 0 && <div style={{ fontSize: 13, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>Sin testimonios.</div>}
+          {(home.testimonials || []).length === 0 && <div style={{ fontSize: 13, color: '#707070', textAlign: 'center', padding: '16px 0' }}>Sin testimonios.</div>}
         </div>
       </div>
 
       {/* ── Pie de página ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📍 Pie de página</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Textos del footer de la portada principal.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Textos del footer de la portada principal.</div>
         <div style={{ display: 'grid', gap: 14 }}>
           <div><label style={lbl}>Frase</label><input value={home.footer?.tagline || ''} onChange={e => setFooterField('tagline', e.target.value)} style={inp} /></div>
           <div><label style={lbl}>Copyright</label><input value={home.footer?.copyright || ''} onChange={e => setFooterField('copyright', e.target.value)} style={inp} /></div>
         </div>
       </div>
 
-      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
+      <div style={{ fontSize: 12, color: '#7A6B85', textAlign: 'center', marginTop: 12 }}>
         💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para que los cambios se reflejen en la web.
       </div>
     </div>
@@ -1861,7 +1861,7 @@ function LoversPageTab({ lovers, setLovers, setDirty }) {
   const inp = { padding: '10px 13px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 14, outline: 'none', width: '100%', boxSizing: 'border-box' };
   const lbl = { display: 'block', fontSize: 11, fontWeight: 600, color: '#777', letterSpacing: '.11em', textTransform: 'uppercase', marginBottom: 5 };
   const card = { background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 };
-  const hint = { fontSize: 12, color: '#A89AAF', marginBottom: 16 };
+  const hint = { fontSize: 12, color: '#7A6B85', marginBottom: 16 };
   const rowCard = { background: '#FAF7FB', borderRadius: 10, padding: 12, position: 'relative' };
 
   const savePct = lovers.monthlyPrice > 0 ? Math.round((1 - lovers.annualPrice / (lovers.monthlyPrice * 12)) * 100) : 0;
@@ -1931,7 +1931,7 @@ function LoversPageTab({ lovers, setLovers, setDirty }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {(lovers.howSteps || []).map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', ...rowCard }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{i + 1}</div>
               <input value={s.title || ''} onChange={e => setHowStep(i, 'title', e.target.value)} placeholder="Título" style={{ ...inp, flex: 1, fontWeight: 600 }} />
               <input value={s.desc || ''} onChange={e => setHowStep(i, 'desc', e.target.value)} placeholder="Descripción" style={{ ...inp, flex: 2 }} />
             </div>
@@ -1967,7 +1967,7 @@ function LoversPageTab({ lovers, setLovers, setDirty }) {
       <div style={card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>❓ Preguntas frecuentes</div>
-          <button onClick={addFaq} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
+          <button onClick={addFaq} style={{ padding: '7px 14px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer' }}>+ Agregar</button>
         </div>
         <div style={hint}>Aparecen en la sección FAQ y también le dicen a Google cuáles son (datos estructurados) — deben coincidir con lo que ve la clienta, así que se sincronizan solas.</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -1978,7 +1978,7 @@ function LoversPageTab({ lovers, setLovers, setDirty }) {
               <textarea value={f.a || ''} onChange={e => setFaq(i, 'a', e.target.value)} rows={2} placeholder="Respuesta" style={{ ...inp, resize: 'vertical' }} />
             </div>
           ))}
-          {(lovers.faq || []).length === 0 && <div style={{ fontSize: 13, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>Sin preguntas.</div>}
+          {(lovers.faq || []).length === 0 && <div style={{ fontSize: 13, color: '#707070', textAlign: 'center', padding: '16px 0' }}>Sin preguntas.</div>}
         </div>
       </div>
 
@@ -1993,7 +1993,7 @@ function LoversPageTab({ lovers, setLovers, setDirty }) {
         </div>
       </div>
 
-      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
+      <div style={{ fontSize: 12, color: '#7A6B85', textAlign: 'center', marginTop: 12 }}>
         💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para que los cambios se reflejen en la web, en español y en inglés.
       </div>
     </div>
@@ -2021,7 +2021,7 @@ function PagesTab({ pages, setPages, setDirty }) {
       {/* ── Envíos ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🚚 Página de Envíos</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/envios</strong></div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/envios</strong></div>
         <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={3} value={env.intro||''} onChange={e=>set('envios','intro',e.target.value)} style={ta} /></div>
         <div style={sub}>🇪🇨 Ecuador — Servientrega</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
@@ -2030,7 +2030,7 @@ function PagesTab({ pages, setPages, setDirty }) {
         </div>
         <div style={sec}><label style={lbl}>Nota de tiempos Ecuador</label><textarea rows={2} value={env.servientregaNote||''} onChange={e=>set('envios','servientregaNote',e.target.value)} style={ta} /></div>
         <div style={sub}>🇺🇸 Estados Unidos — USPS</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 8 }}>La tarifa de envío USA se toma de Ajustes → Costo de envío. Solo edita el tiempo aquí.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 8 }}>La tarifa de envío USA se toma de Ajustes → Costo de envío. Solo edita el tiempo aquí.</div>
         <div style={sec}><label style={lbl}>Tiempo de entrega USA</label><input value={env.uspsTime||''} onChange={e=>set('envios','uspsTime',e.target.value)} style={inp} placeholder="2–5 días hábiles" /></div>
         <div style={sub}>🌎 Otros países</div>
         <div style={sec}><label style={lbl}>Mensaje para otros países</label><textarea rows={2} value={env.otrosPaisesBody||''} onChange={e=>set('envios','otrosPaisesBody',e.target.value)} style={ta} /></div>
@@ -2039,7 +2039,7 @@ function PagesTab({ pages, setPages, setDirty }) {
       {/* ── Devoluciones ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>↩️ Página de Devoluciones</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/devoluciones</strong></div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/devoluciones</strong></div>
         <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={3} value={dev.intro||''} onChange={e=>set('devoluciones','intro',e.target.value)} style={ta} /></div>
         <div style={sub}>Secciones de la política</div>
         <div style={sec}><label style={lbl}>¿Por qué no aceptamos devoluciones?</label><textarea rows={3} value={dev.secPorQueBody||''} onChange={e=>set('devoluciones','secPorQueBody',e.target.value)} style={ta} /></div>
@@ -2050,7 +2050,7 @@ function PagesTab({ pages, setPages, setDirty }) {
       {/* ── Cuidados ── */}
       <div style={card}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>💎 Página de Cuidados</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/cuidados</strong></div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Contenido de <strong>cacusabytaitus.com/cuidados</strong></div>
         <div style={sec}><label style={lbl}>Párrafo de introducción</label><textarea rows={2} value={cui.intro||''} onChange={e=>set('cuidados','intro',e.target.value)} style={ta} /></div>
         <div style={sub}>Tips de cuidado</div>
         <div style={sec}><label style={lbl}>1 · Evita el contacto con agua</label><textarea rows={2} value={cui.sec1Body||''} onChange={e=>set('cuidados','sec1Body',e.target.value)} style={ta} /></div>
@@ -2059,7 +2059,7 @@ function PagesTab({ pages, setPages, setDirty }) {
         <div style={sec}><label style={lbl}>5 · Limpieza recomendada</label><textarea rows={2} value={cui.sec5Body||''} onChange={e=>set('cuidados','sec5Body',e.target.value)} style={ta} /></div>
       </div>
 
-      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 4 }}>
+      <div style={{ fontSize: 12, color: '#7A6B85', textAlign: 'center', marginTop: 4 }}>
         💡 Haz clic en <strong>"☁️ Publicar cambios"</strong> para actualizar estas páginas en la web.
       </div>
     </div>
@@ -2152,7 +2152,7 @@ function GiftCardsTab({ token }) {
           style={{ ...inp, width:'100%', boxSizing:'border-box', marginBottom:12 }} />
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <button onClick={create} disabled={creating}
-            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
+            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#C0336E,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
             {creating ? '⏳ Creando…' : '+ Crear tarjeta de regalo'}
           </button>
           {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
@@ -2165,8 +2165,8 @@ function GiftCardsTab({ token }) {
           <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase' }}>Tarjetas emitidas</div>
           <button onClick={load} style={{ fontSize:12, color:'#9B5DE5', fontWeight:600, cursor:'pointer', background:'none', border:'none' }}>↺ Recargar</button>
         </div>
-        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>Cargando…</div>}
-        {!loading && (!cards || cards.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>No hay tarjetas emitidas aún</div>}
+        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#767676', fontSize:13 }}>Cargando…</div>}
+        {!loading && (!cards || cards.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#767676', fontSize:13 }}>No hay tarjetas emitidas aún</div>}
         {!loading && cards && cards.map(c => (
           <div key={c.code} style={{ display:'flex', gap:12, alignItems:'center', padding:'12px 0', borderBottom:'1px solid #f3f0f5', flexWrap:'wrap' }}>
             <div style={{ flex:1, minWidth:0 }}>
@@ -2176,7 +2176,7 @@ function GiftCardsTab({ token }) {
                   {c.active&&c.balance>0 ? `✓ $${(c.balance||0).toFixed(2)} disponible` : 'Agotada / inactiva'}
                 </span>
               </div>
-              <div style={{ fontSize:11, color:'#aaa', marginTop:4 }}>
+              <div style={{ fontSize:11, color:'#767676', marginTop:4 }}>
                 Valor original: ${(c.amount||0).toFixed(2)} · {c.createdAt||''}
                 {c.note ? ` · ${c.note}` : ''}
               </div>
@@ -2232,29 +2232,29 @@ function LeadsTab({ token }) {
   return (
     <div style={{ maxWidth: 700 }}>
       <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Registros 10% descuento y carritos</div>
-      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida, o que llegaron al checkout con un carrito sin completar la compra. Los carritos sin comprar en 45 min avisan por push — esta tabla queda como respaldo para hacer seguimiento manual (WhatsApp/email).</div>
+      <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida, o que llegaron al checkout con un carrito sin completar la compra. Los carritos sin comprar en 45 min avisan por push — esta tabla queda como respaldo para hacer seguimiento manual (WhatsApp/email).</div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#767676', fontSize: 13 }}>Cargando…</div>}
       {!loading && leads && leads.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '32px 0', color: '#aaa', fontSize: 13 }}>No hay registros aún.</div>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#767676', fontSize: 13 }}>No hay registros aún.</div>
       )}
       {!loading && leads && leads.length > 0 && (
         <div>
-          <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 10 }}>{leads.length} registro{leads.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 10 }}>{leads.length} registro{leads.length !== 1 ? 's' : ''}</div>
           <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#A89AAF', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
               <span>Email</span><span>Carrito</span><span>Idioma</span><span>Fecha</span>
             </div>
             {leads.map((l, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500 }}>{l.email}</span>
-                <span style={{ fontSize: 12, color: l.source === 'cart_checkout_start' ? '#C0336E' : '#A89AAF' }}>
+                <span style={{ fontSize: 12, color: l.source === 'cart_checkout_start' ? '#C0336E' : '#7A6B85' }}>
                   {l.source === 'cart_checkout_start'
                     ? `🛒 $${(l.total || 0).toFixed(2)}${l.cart && l.cart.length ? ' — ' + l.cart.map(c => c.name).slice(0, 2).join(', ') + (l.cart.length > 2 ? '…' : '') : ''}`
                     : '10% bienvenida'}
                 </span>
-                <span style={{ fontSize: 12, color: '#A89AAF' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
-                <span style={{ fontSize: 12, color: '#A89AAF' }}>{fmt(l.date)}</span>
+                <span style={{ fontSize: 12, color: '#7A6B85' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
+                <span style={{ fontSize: 12, color: '#7A6B85' }}>{fmt(l.date)}</span>
               </div>
             ))}
           </div>
@@ -2452,7 +2452,7 @@ function LoversTab({ products = [], token }) {
     setCancelingId(null);
   };
 
-  const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#A89AAF');
+  const estadoColor = e => ({ 'activo': '#22c55e', 'pendiente': '#f59e0b', 'cancelado': '#ef4444', 'pago_fallido': '#dc2626' }[e] || '#7A6B85');
   const estadoLabel = e => ({ 'activo': 'Activo ✓', 'pendiente': 'Pendiente', 'cancelado': 'Cancelado', 'pago_fallido': 'Pago fallido ⚠️' }[e] || e || 'Pendiente');
   const fmt = iso => { try { return new Date(iso).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }); } catch { return iso || '—'; } };
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -2460,14 +2460,14 @@ function LoversTab({ products = [], token }) {
   return (
     <div>
       <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Cacusa Lovers ♡</div>
-      <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Suscriptoras del club mensual $19.99/mes. Datos guardados al momento de procesar el pago.</div>
+      <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Suscriptoras del club mensual $19.99/mes. Datos guardados al momento de procesar el pago.</div>
 
       {/* ── Alta manual (clientas que pagan por transferencia, sin suscripción recurrente en Square) ── */}
       <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>Suscripción manual</div>
-            <div style={{ fontSize: 12, color: '#A89AAF' }}>Para clientas que pagan por transferencia bancaria, sin cobro recurrente en Square.</div>
+            <div style={{ fontSize: 12, color: '#7A6B85' }}>Para clientas que pagan por transferencia bancaria, sin cobro recurrente en Square.</div>
           </div>
           <button
             onClick={() => { setShowNewForm(v => !v); setNewFormError(''); }}
@@ -2480,7 +2480,7 @@ function LoversTab({ products = [], token }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               {[['Nombre *', 'nombre'], ['Apellido', 'apellido']].map(([lbl, key]) => (
                 <div key={key}>
-                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                   <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                 </div>
@@ -2489,7 +2489,7 @@ function LoversTab({ products = [], token }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
               {[['Email *', 'email'], ['Teléfono', 'telefono']].map(([lbl, key]) => (
                 <div key={key}>
-                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                   <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                 </div>
@@ -2497,12 +2497,12 @@ function LoversTab({ products = [], token }) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
               <div>
-                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Dirección</div>
+                <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Dirección</div>
                 <input value={newForm.direccion} onChange={e => nf('direccion', e.target.value)}
                   style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Apto / Suite</div>
+                <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Apto / Suite</div>
                 <input value={newForm.apto} onChange={e => nf('apto', e.target.value)}
                   placeholder="Apt 4B"
                   style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
@@ -2511,7 +2511,7 @@ function LoversTab({ products = [], token }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
               {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
                 <div key={key}>
-                  <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                  <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                   <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                 </div>
@@ -2519,7 +2519,7 @@ function LoversTab({ products = [], token }) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
               <div>
-                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Plan</div>
+                <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Plan</div>
                 <select value={newForm.plan} onChange={e => nf('plan', e.target.value)}
                   style={{ width: '100%', boxSizing: 'border-box', fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', fontFamily: 'inherit', color: '#1A1118', background: 'white' }}>
                   <option value="mensual">Mensual — $19.99/mes</option>
@@ -2527,13 +2527,13 @@ function LoversTab({ products = [], token }) {
                 </select>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
+                <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
                 <input type="date" value={newForm.vence} onChange={e => nf('vence', e.target.value)}
                   style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: '#1A1118' }} />
               </div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
+              <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Notas internas</div>
               <input value={newForm.notas} onChange={e => nf('notas', e.target.value)}
                 placeholder="Ej: pagó por transferencia el 5/sep, confirmar con Robin…"
                 style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
@@ -2545,7 +2545,7 @@ function LoversTab({ products = [], token }) {
                 {savingNew ? 'Creando…' : 'Crear suscripción'}
               </button>
               <button onClick={() => { setShowNewForm(false); setNewForm(NEW_SUB_BLANK); setNewFormError(''); }}
-                style={{ background: 'white', color: '#A89AAF', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ background: 'white', color: '#7A6B85', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Cancelar
               </button>
             </div>
@@ -2556,27 +2556,27 @@ function LoversTab({ products = [], token }) {
       {/* ── Photo management ── */}
       <div style={{ background: 'white', borderRadius: 16, border: '1px solid #EDE8EA', padding: '20px 24px', marginBottom: 28 }}>
         <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118', marginBottom: 4 }}>Productos destacados en la página</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Selecciona un producto de la tienda para cada tarjeta — la imagen se toma automáticamente.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Selecciona un producto de la tienda para cada tarjeta — la imagen se toma automáticamente.</div>
         {['card1','card2','card3'].map((key, i) => {
           const slotLabels = ['Collar del mes', 'Anillo sorpresa', 'Pulsera exclusiva'];
           const chosen = photos[key];
           const filtered = products.filter(p => p.available !== false && (p.name||'').toLowerCase().includes(pickerQ.toLowerCase()));
           return (
             <div key={key} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>{slotLabels[i]}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#7A6B85', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 6 }}>{slotLabels[i]}</div>
               {/* Selected product preview */}
               {chosen?.url ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, border: '1.5px solid #E85D8A', background: '#FFF0F6' }}>
                   <img src={chosen.url} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} onError={e => e.target.style.display='none'} />
                   <div style={{ flex: 1, fontWeight: 600, fontSize: 13, color: '#1A1118' }}>{chosen.label}</div>
                   <button onClick={() => { setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: '', label: slotLabels[i] } })); setOpenPicker(null); }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#A89AAF', padding: '2px 6px' }}>✕</button>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#7A6B85', padding: '2px 6px' }}>✕</button>
                   <button onClick={() => { setOpenPicker(openPicker === key ? null : key); setPickerQ(''); }}
                     style={{ background: 'none', border: '1.5px solid #EDE8EA', borderRadius: 8, cursor: 'pointer', fontSize: 12, color: '#7A6880', padding: '4px 10px' }}>Cambiar</button>
                 </div>
               ) : (
                 <button onClick={() => { setOpenPicker(openPicker === key ? null : key); setPickerQ(''); }}
-                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: '1.5px dashed #D4C8DC', borderRadius: 12, background: 'white', cursor: 'pointer', fontSize: 13, color: '#A89AAF', fontFamily: 'inherit' }}>
+                  style={{ width: '100%', textAlign: 'left', padding: '10px 14px', border: '1.5px dashed #D4C8DC', borderRadius: 12, background: 'white', cursor: 'pointer', fontSize: 13, color: '#7A6B85', fontFamily: 'inherit' }}>
                   + Elegir producto de la tienda
                 </button>
               )}
@@ -2586,7 +2586,7 @@ function LoversTab({ products = [], token }) {
                   <input placeholder="Buscar producto…" value={pickerQ} onChange={e => setPickerQ(e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontFamily: 'inherit', fontSize: 13, color: '#1A1118', outline: 'none', marginBottom: 8 }} />
                   <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-                    {filtered.length === 0 && <div style={{ fontSize: 12, color: '#A89AAF', padding: '8px 4px' }}>Sin resultados</div>}
+                    {filtered.length === 0 && <div style={{ fontSize: 12, color: '#7A6B85', padding: '8px 4px' }}>Sin resultados</div>}
                     {filtered.map(p => (
                       <div key={p.id} onClick={() => { setPhotos(prev => ({ ...prev, [key]: { ...prev[key], url: p.imageUrl || '', label: p.name } })); setOpenPicker(null); setPickerQ(''); }}
                         style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10, cursor: 'pointer', marginBottom: 4,
@@ -2597,13 +2597,13 @@ function LoversTab({ products = [], token }) {
                           : <div style={{ width: 40, height: 40, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1118', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                          <div style={{ fontSize: 11, color: '#A89AAF' }}>{p.category} · ${p.price}</div>
+                          <div style={{ fontSize: 11, color: '#7A6B85' }}>{p.category} · ${p.price}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                   <button onClick={() => { setOpenPicker(null); setPickerQ(''); }}
-                    style={{ marginTop: 8, fontSize: 12, color: '#A89AAF', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ marginTop: 8, fontSize: 12, color: '#7A6B85', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                     Cancelar
                   </button>
                 </div>
@@ -2622,13 +2622,13 @@ function LoversTab({ products = [], token }) {
         </div>
       </div>
 
-      {loading && <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>Cargando…</div>}
+      {loading && <div style={{ textAlign: 'center', padding: '40px 0', color: '#767676', fontSize: 13 }}>Cargando…</div>}
       {!loading && subs && subs.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#aaa', fontSize: 13 }}>No hay suscriptoras aún.</div>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#767676', fontSize: 13 }}>No hay suscriptoras aún.</div>
       )}
       {!loading && subs && subs.length > 0 && (
         <div>
-          <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 12 }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
+          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 12 }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {subs.map(s => (
               <div key={s.id} style={{ background: 'white', borderRadius: 14, border: editingId === s.id ? '1.5px solid #E85D8A' : '1px solid #EDE8EA', overflow: 'hidden' }}>
@@ -2646,15 +2646,15 @@ function LoversTab({ products = [], token }) {
                       📍 {[s.direccion, s.apto, s.ciudad, s.estado, s.zip, s.pais].filter(Boolean).join(', ') || '—'}
                     </div>
                     {s.notas && <div style={{ fontSize: 12, color: '#9B5DE5', marginTop: 4, fontStyle: 'italic' }}>Nota: {s.notas}</div>}
-                    <div style={{ fontSize: 12, color: '#A89AAF', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
+                    <div style={{ fontSize: 12, color: '#7A6B85', marginTop: 6 }}>Inscripción: {fmt(s.fecha)} · {s.plan} · {s.monto}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                     <span style={{ background: estadoColor(s.estado_pago) + '22', color: estadoColor(s.estado_pago), borderRadius: 99, padding: '3px 11px', fontSize: 11, fontWeight: 700, letterSpacing: '.06em' }}>
                       {estadoLabel(s.estado_pago)}
                     </span>
-                    {s.ultimo_pago && <div style={{ fontSize: 11, color: '#A89AAF', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
+                    {s.ultimo_pago && <div style={{ fontSize: 11, color: '#7A6B85', textAlign: 'right' }}>Último pago: {fmt(s.ultimo_pago)}</div>}
                     {s.vence && (
-                      <div style={{ fontSize: 11, textAlign: 'right', fontWeight: s.vence < todayIso && s.estado_pago === 'activo' ? 700 : 400, color: s.vence < todayIso && s.estado_pago === 'activo' ? '#DC2626' : '#A89AAF' }}>
+                      <div style={{ fontSize: 11, textAlign: 'right', fontWeight: s.vence < todayIso && s.estado_pago === 'activo' ? 700 : 400, color: s.vence < todayIso && s.estado_pago === 'activo' ? '#DC2626' : '#7A6B85' }}>
                         {s.vence < todayIso && s.estado_pago === 'activo' ? '⚠ Venció: ' : 'Válido hasta: '}{fmt(s.vence)}
                       </div>
                     )}
@@ -2694,11 +2694,11 @@ function LoversTab({ products = [], token }) {
                 {/* ── Formulario de edición inline ── */}
                 {editingId === s.id && (
                   <div style={{ borderTop: '1px solid #F5EFF8', background: '#FAF7FB', padding: '16px 20px' }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#A89AAF', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>Editar datos de {s.nombre || 'suscriptora'}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#7A6B85', letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>Editar datos de {s.nombre || 'suscriptora'}</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       {[['Nombre', 'nombre'], ['Apellido', 'apellido']].map(([lbl, key]) => (
                         <div key={key}>
-                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                           <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
                             style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                         </div>
@@ -2707,7 +2707,7 @@ function LoversTab({ products = [], token }) {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
                       {[['Email', 'email'], ['Teléfono', 'telefono']].map(([lbl, key]) => (
                         <div key={key}>
-                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                           <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
                             style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                         </div>
@@ -2715,12 +2715,12 @@ function LoversTab({ products = [], token }) {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10, marginBottom: 10 }}>
                       <div>
-                        <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Dirección</div>
+                        <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Dirección</div>
                         <input value={editForm.direccion} onChange={e => ef('direccion', e.target.value)}
                           style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                       </div>
                       <div>
-                        <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Apto / Suite</div>
+                        <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Apto / Suite</div>
                         <input value={editForm.apto} onChange={e => ef('apto', e.target.value)}
                           placeholder="Apt 4B"
                           style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
@@ -2729,7 +2729,7 @@ function LoversTab({ products = [], token }) {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10, marginBottom: 10 }}>
                       {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
                         <div key={key}>
-                          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                          <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                           <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
                             style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
                         </div>
@@ -2740,7 +2740,7 @@ function LoversTab({ products = [], token }) {
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                         {[['Último pago', 'ultimo_pago'], ['Invoice ID', 'square_invoice_id'], ['Subscription ID', 'square_subscription_id']].map(([lbl, key]) => (
                           <div key={key}>
-                            <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>{lbl}</div>
+                            <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
                             <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
                               style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
                           </div>
@@ -2748,12 +2748,12 @@ function LoversTab({ products = [], token }) {
                       </div>
                     </div>
                     <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
+                      <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Válido hasta (si pagó varios meses de una vez)</div>
                       <input type="date" value={editForm.vence} onChange={e => ef('vence', e.target.value)}
                         style={{ boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', color: '#1A1118' }} />
                     </div>
                     <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 4 }}>Notas internas</div>
+                      <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>Notas internas</div>
                       <input value={editForm.notas} onChange={e => ef('notas', e.target.value)}
                         placeholder="Ej: llamar para confirmar dirección, cliente VIP…"
                         style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
@@ -2764,7 +2764,7 @@ function LoversTab({ products = [], token }) {
                         {savingEdit ? 'Guardando…' : 'Guardar cambios'}
                       </button>
                       <button onClick={() => setEditingId(null)}
-                        style={{ background: 'white', color: '#A89AAF', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        style={{ background: 'white', color: '#7A6B85', border: '1.5px solid #EDE8EA', borderRadius: 10, padding: '9px 16px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                         Cancelar
                       </button>
                     </div>
@@ -2850,7 +2850,7 @@ function CouponsTab({ token }) {
   };
 
   const inp = { padding:'10px 13px', border:'1.5px solid #e4e4e4', borderRadius:10, fontSize:14, outline:'none', background:'white' };
-  const lbl = { fontSize:11, fontWeight:600, color:'#999', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:5, display:'block' };
+  const lbl = { fontSize:11, fontWeight:600, color:'#6B6B6B', textTransform:'uppercase', letterSpacing:'.1em', marginBottom:5, display:'block' };
 
   return (
     <div style={{ maxWidth:640, margin:'0 auto', paddingBottom:40 }}>
@@ -2891,7 +2891,7 @@ function CouponsTab({ token }) {
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
           <button onClick={create} disabled={creating}
-            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#E85D8A,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
+            style={{ padding:'11px 28px', background:'linear-gradient(135deg,#C0336E,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
             {creating ? '⏳ Creando…' : '+ Crear cupón'}
           </button>
           {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
@@ -2904,8 +2904,8 @@ function CouponsTab({ token }) {
           <div style={{ fontSize:13, fontWeight:700, color:'#7A6880', letterSpacing:'.1em', textTransform:'uppercase' }}>Cupones creados</div>
           <button onClick={load} style={{ fontSize:12, color:'#9B5DE5', fontWeight:600, cursor:'pointer', background:'none', border:'none' }}>↺ Recargar</button>
         </div>
-        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>Cargando…</div>}
-        {!loading && (!coupons || coupons.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#aaa', fontSize:13 }}>No hay cupones creados aún</div>}
+        {loading && <div style={{ textAlign:'center', padding:'24px 0', color:'#767676', fontSize:13 }}>Cargando…</div>}
+        {!loading && (!coupons || coupons.length===0) && <div style={{ textAlign:'center', padding:'24px 0', color:'#767676', fontSize:13 }}>No hay cupones creados aún</div>}
         {!loading && coupons && coupons.map(c => {
           const expired    = c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date();
           const exhausted  = c.maxUses != null && c.usedCount >= c.maxUses;
@@ -2921,7 +2921,7 @@ function CouponsTab({ token }) {
                 <span style={{ fontSize:13, color:'#333', fontWeight:700 }}>
                   {c.type==='percent' ? `${c.amount}% OFF` : `$${(c.amount||0).toFixed(2)} OFF`}
                 </span>
-                <span style={{ fontSize:11, color:'#aaa' }}>
+                <span style={{ fontSize:11, color:'#767676' }}>
                   Usos: {c.usedCount||0}{c.maxUses!=null?`/${c.maxUses}`:''}
                   {c.expiresAt ? ` · Vence: ${c.expiresAt}` : ''}
                   {c.note ? ` · ${c.note}` : ''}
@@ -2942,7 +2942,7 @@ function CouponsTab({ token }) {
                   </button>
                 )}
                 <button onClick={()=>deleteCoupon(c.code)}
-                  style={{ padding:'5px 12px', borderRadius:8, border:'1.5px solid #eee', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:'#999' }}>
+                  style={{ padding:'5px 12px', borderRadius:8, border:'1.5px solid #eee', background:'white', fontSize:12, fontWeight:600, cursor:'pointer', color:'#6B6B6B' }}>
                   Eliminar
                 </button>
               </div>
@@ -2983,7 +2983,7 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
       />
       <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)', marginBottom: 16 }}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>🚚 Envíos</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Controla el costo de envío y desde qué monto es gratis. Se refleja en el carrito y al finalizar el pedido.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Controla el costo de envío y desde qué monto es gratis. Se refleja en el carrito y al finalizar el pedido.</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
             <label style={lbl}>Envío gratis desde ($)</label>
@@ -3000,7 +3000,7 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
       </div>
       <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)' }}>
         <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118', marginBottom: 4 }}>📝 Textos de la tienda</div>
-        <div style={{ fontSize: 12, color: '#A89AAF', marginBottom: 16 }}>Lo que se muestra en la portada de la tienda.</div>
+        <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 16 }}>Lo que se muestra en la portada de la tienda.</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={lbl}>Etiqueta superior</label>
@@ -3030,7 +3030,7 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
         </div>
       </div>
 
-      <div style={{ fontSize: 12, color: '#A89AAF', textAlign: 'center', marginTop: 12 }}>
+      <div style={{ fontSize: 12, color: '#7A6B85', textAlign: 'center', marginTop: 12 }}>
         💡 Recuerda hacer clic en <strong>"☁️ Publicar cambios"</strong> arriba para que se reflejen en la web.
       </div>
     </div>
@@ -3087,7 +3087,7 @@ function ComboForm({ combo, products, onSave, onClose }) {
               <input type="checkbox" checked={form.items.includes(p.id)} onChange={() => toggleItem(p.id)}
                 style={{ width: 15, height: 15, accentColor: '#E85D8A' }} />
               <span style={{ flex: 1 }}>{p.name}</span>
-              <span style={{ color: '#A89AAF', fontSize: 12 }}>${p.price}</span>
+              <span style={{ color: '#7A6B85', fontSize: 12 }}>${p.price}</span>
             </label>
           ))}
         </div>
@@ -3096,7 +3096,7 @@ function ComboForm({ combo, products, onSave, onClose }) {
       <div style={{ display: 'flex', gap: 10 }}>
         <button onClick={onClose} style={{ flex: 1, padding: 12, border: '1.5px solid #ddd', borderRadius: 99, color: '#666', fontSize: 14, fontWeight: 600, cursor: 'pointer', background: 'white' }}>Cancelar</button>
         <button onClick={save} disabled={!form.name || !form.price || form.items.length < 2}
-          style={{ flex: 2, padding: 12, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, opacity: (!form.name || !form.price || form.items.length < 2) ? .5 : 1, cursor: 'pointer', border: 'none' }}>
+          style={{ flex: 2, padding: 12, background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontSize: 14, fontWeight: 700, opacity: (!form.name || !form.price || form.items.length < 2) ? .5 : 1, cursor: 'pointer', border: 'none' }}>
           {form.id ? '💾 Guardar Combo' : '+ Crear Combo'}
         </button>
       </div>
@@ -3119,12 +3119,12 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
         <div onClick={() => setSection('promos')} style={card}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🏷️</div>
           <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1118', marginBottom: 4 }}>Promociones</div>
-          <div style={{ fontSize: 12, color: '#A89AAF' }}>{activePromos.length} {activePromos.length === 1 ? 'activa' : 'activas'}</div>
+          <div style={{ fontSize: 12, color: '#7A6B85' }}>{activePromos.length} {activePromos.length === 1 ? 'activa' : 'activas'}</div>
         </div>
         <div onClick={() => setSection('combos')} style={card}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🎁</div>
           <div style={{ fontWeight: 800, fontSize: 16, color: '#1A1118', marginBottom: 4 }}>Combos</div>
-          <div style={{ fontSize: 12, color: '#A89AAF' }}>{combos.filter(c => c.available !== false).length} activos · {combos.length} total</div>
+          <div style={{ fontSize: 12, color: '#7A6B85' }}>{combos.filter(c => c.available !== false).length} activos · {combos.length} total</div>
         </div>
       </div>
     );
@@ -3135,9 +3135,9 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
       <div>
         <button onClick={() => setSection(null)} style={backBtn}>← Volver</button>
         <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 16 }}>🏷️ Productos en promoción</div>
-        <div style={{ fontSize: 13, color: '#A89AAF', marginBottom: 20 }}>Para agregar o quitar una promo, edita el producto y activa "Poner en oferta".</div>
+        <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Para agregar o quitar una promo, edita el producto y activa "Poner en oferta".</div>
         {activePromos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#A89AAF' }}>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#7A6B85' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>🏷️</div>
             <div style={{ fontWeight: 600 }}>No hay productos en promoción.</div>
           </div>
@@ -3147,16 +3147,16 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
               <div key={p.id} style={{ background: 'white', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 1px 8px rgba(0,0,0,.06)' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118' }}>{p.name}</div>
-                  <div style={{ fontSize: 12, color: '#A89AAF' }}>{p.category}</div>
+                  <div style={{ fontSize: 12, color: '#7A6B85' }}>{p.category}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    <span style={{ textDecoration: 'line-through', color: '#bbb', fontSize: 13 }}>${p.price}</span>
+                    <span style={{ textDecoration: 'line-through', color: '#707070', fontSize: 13 }}>${p.price}</span>
                     <span style={{ fontWeight: 800, color: '#FF6B00', fontSize: 15 }}>${p.promo.price}</span>
                     {p.promo.label && <span style={{ fontSize: 11, background: '#FFF0E0', color: '#FF6B00', padding: '2px 8px', borderRadius: 99 }}>{p.promo.label}</span>}
                   </div>
-                  {p.promo.endsAt && <div style={{ fontSize: 11, color: '#A89AAF', marginTop: 2 }}>Hasta: {new Date(p.promo.endsAt + 'T12:00:00').toLocaleDateString('es-EC')}</div>}
+                  {p.promo.endsAt && <div style={{ fontSize: 11, color: '#7A6B85', marginTop: 2 }}>Hasta: {new Date(p.promo.endsAt + 'T12:00:00').toLocaleDateString('es-EC')}</div>}
                 </div>
                 <button onClick={() => onEditProduct(p)}
-                  style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  style={{ padding: '8px 16px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   ✏️ Editar
                 </button>
               </div>
@@ -3174,7 +3174,7 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
           <button onClick={() => { setSection(null); setShowComboForm(false); setEditCombo(null); }} style={backBtn}>← Volver</button>
           <div style={{ flex: 1, fontWeight: 800, fontSize: 18, color: '#1A1118' }}>🎁 Combos y Paquetes</div>
           <button onClick={() => { setEditCombo(null); setShowComboForm(true); }}
-            style={{ padding: '9px 18px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>
+            style={{ padding: '9px 18px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>
             + Nuevo Combo
           </button>
         </div>
@@ -3191,7 +3191,7 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
           />
         )}
         {combos.length === 0 && !showComboForm ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#A89AAF' }}>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#7A6B85' }}>
             <div style={{ fontSize: 44, marginBottom: 12 }}>🎁</div>
             <div style={{ fontWeight: 600 }}>No hay combos todavía.</div>
             <div style={{ fontSize: 13, marginTop: 8 }}>Crea tu primer combo con el botón "Nuevo Combo".</div>
@@ -3203,7 +3203,7 @@ function DescuentosTab({ products, combos, setCombos, onEditProduct }) {
                 {c.imageUrl && <img src={c.imageUrl} style={{ width: 52, height: 52, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }} alt={c.name} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 14, color: '#1A1118' }}>{c.name}</div>
-                  <div style={{ fontSize: 11, color: '#A89AAF' }}>{(c.items || []).length} productos · <strong style={{ color: '#E85D8A' }}>${Number(c.price).toFixed(2)}</strong></div>
+                  <div style={{ fontSize: 11, color: '#7A6B85' }}>{(c.items || []).length} productos · <strong style={{ color: '#E85D8A' }}>${Number(c.price).toFixed(2)}</strong></div>
                   {c.available === false && <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600, marginTop: 2 }}>⏸ Desactivado</div>}
                 </div>
                 <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
@@ -3283,7 +3283,7 @@ function MercadoTab({ products, token }) {
   const usCount = prods.filter(p => (markets[p.id]||'both') === 'us').length;
 
   if (fbLoading) return (
-    <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+    <div style={{ textAlign: 'center', padding: '80px 0', color: '#767676' }}>
       <div style={{ fontSize: 44, marginBottom: 12 }}>⏳</div>
       <div style={{ fontSize: 16 }}>Cargando configuración…</div>
     </div>
@@ -3298,8 +3298,8 @@ function MercadoTab({ products, token }) {
           style={{ background: 'white', borderRadius: 20, padding: '24px 14px', boxShadow: '0 2px 16px rgba(232,93,138,.12)', border: '2px solid rgba(232,93,138,.2)', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <div style={{ fontSize: 46 }}>💳</div>
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>Recargo</div>
-          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 6 }}>+4% tarjeta/Square</div>
-          <div style={{ background: surchargeCount > 0 ? '#FFF0F6' : '#f5f5f5', color: surchargeCount > 0 ? '#E85D8A' : '#bbb', borderRadius: 99, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>
+          <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 6 }}>+4% tarjeta/Square</div>
+          <div style={{ background: surchargeCount > 0 ? '#FFF0F6' : '#f5f5f5', color: surchargeCount > 0 ? '#E85D8A' : '#707070', borderRadius: 99, padding: '4px 12px', fontSize: 12, fontWeight: 700 }}>
             {surchargeCount} activo{surchargeCount !== 1 ? 's' : ''}
           </div>
         </button>
@@ -3308,11 +3308,11 @@ function MercadoTab({ products, token }) {
           style={{ background: 'white', borderRadius: 20, padding: '24px 14px', boxShadow: '0 2px 16px rgba(41,128,185,.1)', border: '2px solid rgba(41,128,185,.2)', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <div style={{ fontSize: 46 }}>🌍</div>
           <div style={{ fontWeight: 800, fontSize: 15, color: '#1A1118' }}>Mercados</div>
-          <div style={{ fontSize: 11, color: '#A89AAF', marginBottom: 6 }}>Ecuador / USA</div>
+          <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 6 }}>Ecuador / USA</div>
           <div style={{ display: 'flex', gap: 5, justifyContent: 'center', flexWrap: 'wrap' }}>
             {ecCount > 0 && <span style={{ background: 'rgba(39,174,96,.1)', color: '#1a7a44', borderRadius: 99, padding: '3px 8px', fontSize: 11, fontWeight: 700 }}>🇪🇨 {ecCount}</span>}
             {usCount > 0 && <span style={{ background: 'rgba(41,128,185,.1)', color: '#1a5c8a', borderRadius: 99, padding: '3px 8px', fontSize: 11, fontWeight: 700 }}>🇺🇸 {usCount}</span>}
-            {ecCount === 0 && usCount === 0 && <span style={{ color: '#bbb', fontSize: 11 }}>todos en ambos</span>}
+            {ecCount === 0 && usCount === 0 && <span style={{ color: '#707070', fontSize: 11 }}>todos en ambos</span>}
           </div>
         </button>
 
@@ -3339,16 +3339,16 @@ function MercadoTab({ products, token }) {
 
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: 14 }}>
-        <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 15, pointerEvents: 'none', color: '#bbb' }}>🔍</span>
+        <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 15, pointerEvents: 'none', color: '#707070' }}>🔍</span>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar producto o categoría…"
           style={{ width: '100%', boxSizing: 'border-box', padding: '11px 38px 11px 40px', border: '1.5px solid #EDE8EA', borderRadius: 12, fontSize: 14, outline: 'none', fontFamily: 'inherit', background: 'white' }} />
         {search && <button onClick={() => setSearch('')}
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, color: '#bbb', lineHeight: 1 }}>✕</button>}
+          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15, color: '#707070', lineHeight: 1 }}>✕</button>}
       </div>
 
       {/* Categories */}
       {visibleCats.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 0', color: '#bbb', fontSize: 14 }}>
+        <div style={{ textAlign: 'center', padding: '40px 0', color: '#707070', fontSize: 14 }}>
           {q ? `Sin resultados para "${q}"` : 'No hay productos activos.'}
         </div>
       )}
@@ -3363,7 +3363,7 @@ function MercadoTab({ products, token }) {
               <span style={{ fontWeight: 700, fontSize: 14, color: '#1A1118' }}>{cat}</span>
               <span style={{ background: '#f0ecf0', borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 700, color: '#7A6880' }}>{grouped(cat).length}</span>
             </div>
-            <span style={{ color: '#bbb', fontSize: 12, display: 'inline-block', transform: isOpen(cat) ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>▼</span>
+            <span style={{ color: '#707070', fontSize: 12, display: 'inline-block', transform: isOpen(cat) ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }}>▼</span>
           </button>
 
           {/* Products */}
@@ -3388,7 +3388,7 @@ function MercadoTab({ products, token }) {
                       : <div style={{ width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg,#FCE8F3,#EE6FA8)', flexShrink: 0 }} />}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: 13, color: '#1A1118', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                      <div style={{ fontSize: 11, color: isSurcharge && has ? '#E85D8A' : '#A89AAF' }}>
+                      <div style={{ fontSize: 11, color: isSurcharge && has ? '#E85D8A' : '#7A6B85' }}>
                         ${isSurcharge && has ? adj : Number(p.price).toFixed(2)}
                         {isSurcharge && has && <span style={{ color: '#ddd', marginLeft: 5, textDecoration: 'line-through' }}>${Number(p.price).toFixed(2)}</span>}
                       </div>
@@ -3414,7 +3414,7 @@ function MercadoTab({ products, token }) {
       {/* Save */}
       {msg && <div style={{ borderRadius: 12, padding: '11px 16px', marginBottom: 14, fontSize: 13, fontWeight: 600, background: msg.startsWith('✅') ? '#D1FAE5' : '#FEE2E2', color: msg.startsWith('✅') ? '#065F46' : '#DC2626' }}>{msg}</div>}
       <button onClick={save} disabled={saving}
-        style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 14, fontWeight: 700, fontSize: 15, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? .7 : 1, boxShadow: '0 4px 20px rgba(155,93,229,.3)', marginBottom: 24, fontFamily: 'inherit' }}>
+        style={{ width: '100%', padding: 14, background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 14, fontWeight: 700, fontSize: 15, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? .7 : 1, boxShadow: '0 4px 20px rgba(155,93,229,.3)', marginBottom: 24, fontFamily: 'inherit' }}>
         {saving ? '⏳ Guardando…' : '💾 Guardar cambios'}
       </button>
     </div>
@@ -3741,7 +3741,7 @@ function App() {
       {showMenu && (
         <div style={{ position: 'fixed', top: 63, right: 16, background: 'white', borderRadius: 14, padding: '8px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 300, minWidth: 210, animation: 'fadeIn .2s ease' }}
           onClick={e => e.stopPropagation()}>
-          <div style={{ padding: '8px 12px', fontSize: 12, color: '#aaa', fontWeight: 600, borderBottom: '1px solid #f0f0f0', marginBottom: 4 }}>{USERS[session.username].avatar} {session.name}</div>
+          <div style={{ padding: '8px 12px', fontSize: 12, color: '#767676', fontWeight: 600, borderBottom: '1px solid #f0f0f0', marginBottom: 4 }}>{USERS[session.username].avatar} {session.name}</div>
           {[
             ['🔄 Recargar datos', () => { loadData(); setShowMenu(false); }],
             ['🌐 Ver tienda', () => { window.open(STORE_URL, '_blank'); setShowMenu(false); }],
@@ -3785,7 +3785,7 @@ function App() {
             placeholder="+593 99 999 9999"
             style={{ flex: 1, minWidth: 180, padding: '8px 12px', border: '1.5px solid #e0e0e0', borderRadius: 8, fontSize: 13, outline: 'none', color: '#333' }} />
           <button onClick={publish} disabled={!dirty || syncing}
-            style={{ padding: '10px 22px', background: dirty ? 'linear-gradient(135deg,#1A1124,#2D1B2E)' : '#e0e0e0', color: dirty ? 'white' : '#aaa', borderRadius: 99, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', opacity: syncing ? .7 : 1, transition: 'all .2s', boxShadow: dirty ? '0 4px 12px rgba(0,0,0,.2)' : 'none', border: 'none', cursor: dirty && !syncing ? 'pointer' : 'default' }}>
+            style={{ padding: '10px 22px', background: dirty ? 'linear-gradient(135deg,#1A1124,#2D1B2E)' : '#e0e0e0', color: dirty ? 'white' : '#767676', borderRadius: 99, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', opacity: syncing ? .7 : 1, transition: 'all .2s', boxShadow: dirty ? '0 4px 12px rgba(0,0,0,.2)' : 'none', border: 'none', cursor: dirty && !syncing ? 'pointer' : 'default' }}>
             {syncing ? '⏳ Publicando…' : '☁️ Publicar cambios'}
           </button>
         </div>
@@ -3833,23 +3833,23 @@ function App() {
                 })}
               </div>
               <button onClick={() => { setEditProd(null); setShowModal(true); }}
-                style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 16px rgba(155,93,229,.3)', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
+                style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 16px rgba(155,93,229,.3)', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
                 + Nuevo Producto
               </button>
             </div>
 
             {/* Grid */}
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#767676' }}>
                 <div style={{ fontSize: 44, marginBottom: 12 }}>⏳</div>
                 <div style={{ fontSize: 16 }}>Cargando…</div>
               </div>
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#767676' }}>
                 <div style={{ fontSize: 52, marginBottom: 12 }}>💎</div>
                 <div style={{ fontSize: 16, marginBottom: 8 }}>{search ? `Sin resultados para "${search}"` : 'Sin productos en esta categoría'}</div>
                 {!search && <button onClick={() => { setEditProd(null); setShowModal(true); }}
-                  style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#E85D8A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, marginTop: 8, border: 'none', cursor: 'pointer' }}>
+                  style={{ padding: '10px 24px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, marginTop: 8, border: 'none', cursor: 'pointer' }}>
                   + Agregar primer producto
                 </button>}
               </div>
@@ -3932,7 +3932,7 @@ function App() {
               {/* Vista: Activos */}
               {ordersView === 'active' && (
                 activeOrders.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                  <div style={{ textAlign: 'center', padding: '80px 0', color: '#767676' }}>
                     <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
                     <div style={{ fontSize: 16, marginBottom: 8 }}>No hay pedidos activos</div>
                     <div style={{ fontSize: 13, color: '#ccc', maxWidth: 300, margin: '0 auto' }}>
@@ -3979,10 +3979,10 @@ function App() {
                         style={{ width: '100%', padding: '9px 14px 9px 34px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
                     </div>
                     <input type="date" value={histFrom} onChange={e => setHistFrom(e.target.value)}
-                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histFrom ? '#1A1118' : '#A89AAF' }} />
-                    <span style={{ color: '#A89AAF', fontSize: 13 }}>→</span>
+                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histFrom ? '#1A1118' : '#7A6B85' }} />
+                    <span style={{ color: '#7A6B85', fontSize: 13 }}>→</span>
                     <input type="date" value={histTo} onChange={e => setHistTo(e.target.value)}
-                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histTo ? '#1A1118' : '#A89AAF' }} />
+                      style={{ padding: '9px 12px', border: '1.5px solid #e4e4e4', borderRadius: 10, fontSize: 13, outline: 'none', fontFamily: 'inherit', color: histTo ? '#1A1118' : '#7A6B85' }} />
                     {(histSearch || histFrom || histTo) && (
                       <button onClick={() => { setHistSearch(''); setHistFrom(''); setHistTo(''); }}
                         style={{ padding: '9px 14px', background: '#F3EFF5', color: '#7A6880', border: 'none', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -4004,12 +4004,12 @@ function App() {
                   )}
 
                   {histOrders.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '80px 0', color: '#aaa' }}>
+                    <div style={{ textAlign: 'center', padding: '80px 0', color: '#767676' }}>
                       <div style={{ fontSize: 52, marginBottom: 12 }}>📋</div>
                       <div style={{ fontSize: 16 }}>No hay pedidos completados aún</div>
                     </div>
                   ) : histFiltered.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '60px 0', color: '#aaa', fontSize: 14 }}>
+                    <div style={{ textAlign: 'center', padding: '60px 0', color: '#767676', fontSize: 14 }}>
                       No hay resultados para esa búsqueda.
                     </div>
                   ) : (
