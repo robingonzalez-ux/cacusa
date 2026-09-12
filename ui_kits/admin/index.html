@@ -21,6 +21,10 @@ button{cursor:pointer;border:none;background:none;font-family:inherit}
 input,select,textarea{font-family:inherit;color:inherit}
 a{text-decoration:none;color:inherit}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#d0d0d0;border-radius:3px}
+/* Muchos inputs/botones traen outline:'none' inline (mayor especificidad que
+   cualquier regla externa) — !important es la única forma de devolver un foco
+   visible sin tocar los ~37 puntos uno por uno. Ver auditoría de accesibilidad. */
+*:focus-visible{outline:2px solid #E85D8A!important;outline-offset:2px!important}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 </style>
