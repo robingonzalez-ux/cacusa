@@ -1,7 +1,7 @@
 # CACUSA by Taitus — notas operativas del repo
 
 Joyería y bisutería artesanal personalizada. Ecuador + USA. Sitio estático en
-GitHub Pages, backend en Firebase Realtime Database + 3 Cloudflare Workers,
+GitHub Pages, backend en Firebase Realtime Database + 4 Cloudflare Workers,
 pagos con Square. Sin build step, sin framework — HTML/CSS/JS planos.
 
 Este archivo se carga automático como instrucciones al inicio de cualquier
@@ -22,9 +22,9 @@ Mantenlo actualizado cuando cambie algo importante de la arquitectura.
 - **Base de datos**: Firebase Realtime Database (`cacusa-pos-default-rtdb`) —
   suscriptoras de Cacusa Lovers (`cacusa_lovers`), reseñas (`cacusa_reviews`),
   fotos destacadas de Lovers.
-- **3 Cloudflare Workers** (backend serio: sesiones, pagos, cupones, Firebase
-  con permisos elevados) — código fuente en la rama `workers-src`, **no en
-  `main`** (ver sección dedicada más abajo).
+- **4 Cloudflare Workers** (backend serio: sesiones, pagos, cupones, Firebase
+  con permisos elevados, backups) — código fuente en la rama `workers-src`,
+  **no en `main`** (ver sección dedicada más abajo).
 - **Pagos**: Square (tarjeta/Apple Pay/Google Pay), más Zelle y transferencia
   coordinados por WhatsApp.
 - **Tienda**: `ui_kits/store/index.html` (ES) y `en/ui_kits/store/index.html`
@@ -35,10 +35,12 @@ Mantenlo actualizado cuando cambie algo importante de la arquitectura.
 
 ## Cloudflare Workers — código fuente fuera de `main`
 
-Por seguridad, el código fuente de los 3 Workers **no vive en `main`**, vive
+Por seguridad, el código fuente de los 4 Workers **no vive en `main`**, vive
 en la rama **`workers-src`** (se movió ahí porque cualquier archivo en `main`
 es público, y no había forma de servir el sitio sin exponerlos también a
-ellos):
+ellos — pero ojo, `workers-src` también es públicamente legible vía GitHub
+aunque Pages no la sirva como sitio, porque el repo entero es público; nunca
+guardar ahí nada con datos reales de clientas, ver "Backups" más abajo):
 
 - `admin-worker.js` → Worker `cacusa-admin` (sesiones, cupones, gift cards,
   productos vía GitHub API, pedidos, notificaciones push, referidos)
@@ -47,14 +49,17 @@ ellos):
   borrado de reseñas — todo detrás de `X-Admin-Key`/sesión)
 - `square-payment-worker.js` → Worker `cacusa-square` (genera Payment Links
   de Square, valida montos server-side)
+- `backup-worker.js` → Worker `cacusa-backup` (respaldo diario de Firebase +
+  KV a un bucket privado de Cloudflare R2 — ver sección "Backups y
+  recuperación de desastres" más abajo)
 
 ### Cómo editarlos
 
-Los 3 Workers se despliegan **manualmente**: no hay CI/CD que los suba a
+Los 4 Workers se despliegan **manualmente**: no hay CI/CD que los suba a
 Cloudflare (a diferencia de `data/products.json`, `sitemap.xml` y el JSON-LD
 de producto, que sí se regeneran solos — ver sección de automatizaciones).
 
-Para editar uno de los 3 Workers en una sesión nueva:
+Para editar uno de los 4 Workers en una sesión nueva:
 
 ```bash
 git fetch origin workers-src
@@ -75,12 +80,42 @@ una sesión de Claude) para que lo pegue manualmente en el dashboard de
 Cloudflare y le dé Deploy — el push a `workers-src` por sí solo **no
 despliega nada**, solo lo deja versionado y fuera de la rama pública.
 
-Secreto compartido entre los 3 Workers: `ORDER_INGEST_KEY` (header
+Secreto compartido entre los 4 Workers: `ORDER_INGEST_KEY` (header
 `X-Order-Ingest-Key`) — así se autentican llamadas Worker-a-Worker sin
 depender del Origin del navegador (ej. `cacusa-admin` llama a
 `cacusa-lovers-webhook` para verificar si un teléfono es de una suscriptora
-activa antes de emitir un código de referido). Comparaciones de secretos
+activa antes de emitir un código de referido; `cacusa-backup` lo usa para
+avisarle a `cacusa-admin` que un backup falló). Comparaciones de secretos
 siempre con `safeEqual()` (timing-safe), nunca `===` directo.
+
+`cacusa-backup` además tiene su propio `BACKUP_TRIGGER_KEY`, sin compartir
+con los otros 3 — autentica a un humano llamando `POST /run`/`GET /status`
+a mano, no es Worker-a-Worker como `ORDER_INGEST_KEY`.
+
+## Backups y recuperación de desastres
+
+Ni Firebase (suscriptoras de Cacusa Lovers, reseñas) ni Cloudflare KV
+(pedidos, gift cards, cupones) tienen historial de git como
+`data/products.json` o el código de los Workers — un `delete` o un `put`
+que pisa un valor ahí es irreversible. El Worker `cacusa-backup` es la
+única red de seguridad para esos dos:
+
+- **Qué respalda**: Firebase completo (un solo export) + KV de pedidos,
+  gift cards, cupones, credenciales WebAuthn, y leads/surcharges/markets.
+- **Dónde**: bucket privado de Cloudflare R2 (`cacusa-backups`) — **nunca**
+  en el repo de GitHub, que es público (cualquier rama, incluida
+  `workers-src`, es legible por cualquiera aunque Pages no la sirva como
+  sitio).
+- **Cuándo**: Cron Trigger diario (`0 9 * * *` UTC = 04:00 Ecuador),
+  configurado a mano en Cloudflare → `cacusa-backup` → Triggers.
+- **Retención**: 90 días, vía Object Lifecycle Rule del propio bucket R2
+  (dashboard de Cloudflare, sin tocar código).
+- **Alertas**: si una corrida falla, avisa por push a Tita/Robin (mismo
+  mecanismo que las notificaciones de pedidos/suscriptoras nuevas) —
+  silencio total en las corridas exitosas, para no generar ruido.
+- **Restauración**: deliberadamente manual, nunca automática — el runbook
+  completo (qué llamados hacer a Firebase y a KV para restaurar desde un
+  backup puntual) vive comentado al inicio de `backup-worker.js`.
 
 ## Automatizaciones (GitHub Actions)
 
