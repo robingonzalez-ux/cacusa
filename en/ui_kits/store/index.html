@@ -1095,7 +1095,7 @@ Precious, they make your hand look feminine and delicate</li>
 
 <!-- CART DRAWER -->
 <div id="wish-overlay"></div>
-<div id="wish-drawer">
+<div id="wish-drawer" role="dialog" aria-modal="true" aria-label="Wishlist">
   <div class="wish-head">
     <div class="wish-title">♡ <span class="t-es">Lista de deseos</span><span class="t-en">Wishlist</span></div>
     <button class="wish-close" id="wishClose" aria-label="Cerrar">&#x2715;</button>
@@ -1324,7 +1324,7 @@ Precious, they make your hand look feminine and delicate</li>
 </div>
 
 <!-- VIGNETTE / PROMO -->
-<div id="vignette">
+<div id="vignette" role="dialog" aria-modal="true" aria-label="Exclusive offer">
   <div class="vig-box">
     <div class="vig-visual">
       <button class="vig-close" id="vigClose" aria-label="Cerrar">✕</button>
@@ -1347,7 +1347,7 @@ Precious, they make your hand look feminine and delicate</li>
 <div id="cacusaToast" class="cacusa-toast"></div>
 
 <!-- LIGHTBOX -->
-<div id="lightbox">
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery">
   <button id="lbClose" aria-label="Cerrar">&#x2715;</button>
   <button id="lbWish" aria-label="Guardar en lista de deseos" onclick="toggleWishFromModal()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" id="lbWishPath"/></svg>
@@ -2147,16 +2147,19 @@ function toggleWishFromModal() {
   _saveWish(); _updateWishCount();
   _syncModalWish(); _syncCardWish(id);
 }
+let _wishReleaseTrap = null;
 function openWishlist(sharedIds) {
   document.getElementById('wish-overlay').classList.add('open');
   document.getElementById('wish-drawer').classList.add('open');
   document.body.style.overflow = 'hidden';
   _renderWishlist(sharedIds || null);
+  _wishReleaseTrap = trapFocus(document.getElementById('wish-drawer'), closeWishlist);
 }
 function closeWishlist() {
   document.getElementById('wish-overlay').classList.remove('open');
   document.getElementById('wish-drawer').classList.remove('open');
   document.body.style.overflow = '';
+  if (_wishReleaseTrap) { _wishReleaseTrap(); _wishReleaseTrap = null; }
 }
 function _renderWishlist(sharedIds) {
   const ids = sharedIds ? sharedIds.map(Number) : [..._wish];
@@ -3204,6 +3207,7 @@ function openLightbox(images, idx) {
   if (_lbW) _lbW.classList.toggle('liked', !!_inW);
   if (_lbWp) _lbWp.style.fill = _inW ? 'var(--pink)' : 'none';
   document.getElementById('lightbox').classList.add('open');
+  _lbReleaseTrap = trapFocus(document.getElementById('lightbox'), closeLightbox);
 }
 function renderLbSlide() {
   const _lbI = document.getElementById('lbImg');
@@ -3216,14 +3220,17 @@ function lbGoTo(idx) {
   _lbIdx = ((idx % _lbImages.length) + _lbImages.length) % _lbImages.length;
   renderLbSlide();
 }
-function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+let _lbReleaseTrap = null;
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  if (_lbReleaseTrap) { _lbReleaseTrap(); _lbReleaseTrap = null; }
+}
 document.getElementById('lbClose').addEventListener('click', closeLightbox);
 document.getElementById('lightbox').addEventListener('click', e => {
   if (e.target === document.getElementById('lightbox') || e.target === document.getElementById('lbImg')) closeLightbox();
 });
 document.addEventListener('keydown', e => {
   if (!document.getElementById('lightbox').classList.contains('open')) return;
-  if (e.key === 'Escape') closeLightbox();
   if (e.key === 'ArrowRight') lbGoTo(_lbIdx + 1);
   if (e.key === 'ArrowLeft') lbGoTo(_lbIdx - 1);
 });
@@ -3621,18 +3628,23 @@ window.addEventListener('appinstalled', () => {
   const drawer= document.getElementById('navDrawer');
   const close = document.getElementById('navDrawerClose');
   if (!btn || !drawer) return;
+  let _navReleaseTrap = null;
 
   function openDrawer(){
     drawer.classList.add('open');
     btn.classList.add('open');
     btn.setAttribute('aria-expanded','true');
+    btn.setAttribute('aria-label','Close menu');
     document.body.style.overflow='hidden';
+    _navReleaseTrap = trapFocus(drawer, closeDrawer);
   }
   function closeDrawer(){
     drawer.classList.remove('open');
     btn.classList.remove('open');
     btn.setAttribute('aria-expanded','false');
+    btn.setAttribute('aria-label','Open menu');
     document.body.style.overflow='';
+    if (_navReleaseTrap) { _navReleaseTrap(); _navReleaseTrap = null; }
   }
 
   btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
@@ -3650,13 +3662,21 @@ function registerLead(email, source, cartData, total) {
 }
 
 // ── VIGNETTE (10% descuento) — clave propia, independiente del landing ──
+let _vigReleaseTrap = null;
 (function(){
   const vig = document.getElementById('vignette');
   if (!vig) return;
-  if (!localStorage.getItem('cacusa-vig-store')) setTimeout(() => vig.classList.add('show'), 3500);
-  [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', () => {
-    vig.classList.remove('show'); localStorage.setItem('cacusa-vig-store', '1');
-  }));
+  function openVig() {
+    vig.classList.add('show');
+    _vigReleaseTrap = trapFocus(vig, closeVig);
+  }
+  function closeVig() {
+    vig.classList.remove('show');
+    localStorage.setItem('cacusa-vig-store', '1');
+    if (_vigReleaseTrap) { _vigReleaseTrap(); _vigReleaseTrap = null; }
+  }
+  if (!localStorage.getItem('cacusa-vig-store')) setTimeout(openVig, 3500);
+  [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', closeVig));
   const vigBtn = document.getElementById('vigBtn');
   if (vigBtn) vigBtn.addEventListener('click', () => {
     const emailEl = document.getElementById('vigEmail');
@@ -3667,7 +3687,7 @@ function registerLead(email, source, cartData, total) {
     const num = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
     window.open((num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
     registerLead(email, 'vignette');
-    vig.classList.remove('show'); localStorage.setItem('cacusa-vig-store', '1');
+    closeVig();
   });
 })();
 
