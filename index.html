@@ -187,7 +187,8 @@ section{padding:96px 0}
 /* ── COLLECTIONS ───────────────────────────────────── */
 #collections{background:var(--pearl)}
 .col-grid{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:270px 270px;gap:16px;margin-top:48px}
-.col-card{border-radius:22px;overflow:hidden;position:relative;cursor:none}
+.col-card{border-radius:22px;overflow:hidden;position:relative;cursor:none;display:block;text-decoration:none;color:inherit}
+.col-card:focus-visible{outline:2px solid white;outline-offset:2px}
 .col-card:first-child{grid-row:1/3}
 .col-bg{position:absolute;inset:0;transition:transform .6s cubic-bezier(.4,0,.2,1)}
 .col-card:hover .col-bg{transform:scale(1.06)}
@@ -211,6 +212,7 @@ section{padding:96px 0}
 #products{background:var(--pink-pale,#FCE8F3)}
 .prod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:48px}
 .prod-card{background:white;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(238,111,168,.1);transition:box-shadow .4s,transform .4s;cursor:none;position:relative}
+.prod-card:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
 .prod-card:hover{box-shadow:0 12px 40px rgba(238,111,168,.22);transform:translateY(-6px)}
 .prod-img{height:200px;position:relative;overflow:hidden}
 .prod-quick{position:absolute;bottom:0;left:0;right:0;background:rgba(139,42,90,.75);backdrop-filter:blur(4px);color:white;font-family:var(--fu);font-size:12px;font-weight:500;letter-spacing:.06em;text-align:center;padding:12px;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1)}
@@ -533,7 +535,7 @@ html,body{overflow-x:hidden}
     <div class="reveal"><div class="section-label" data-i18n="landing.collectionsLabel">Nuestras colecciones</div></div>
     <div class="reveal" data-delay="1"><h2 class="section-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
-      <div class="col-card reveal-left" onclick="window.location.href='./ui_kits/store/?cat=Cadenas'">
+      <a class="col-card reveal-left" href="./ui_kits/store/?cat=Cadenas">
         <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content">
@@ -541,27 +543,27 @@ html,body{overflow-x:hidden}
           <div class="col-title" data-i18n="landing.colCadenas">Cadenas</div>
           <div class="col-cta" data-i18n="landing.colExplore">Explorar →</div>
         </div>
-      </div>
-      <div class="col-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/?cat=Anillos'">
+      </a>
+      <a class="col-card reveal" data-delay="2" href="./ui_kits/store/?cat=Anillos">
         <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagFeatured">Destacado</div><div class="col-title" data-i18n="landing.colAnillos">Anillos</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
-      </div>
-      <div class="col-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/?cat=Hombres'">
+      </a>
+      <a class="col-card reveal" data-delay="3" href="./ui_kits/store/?cat=Hombres">
         <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagMen">Para ellos</div><div class="col-title" data-i18n="landing.colHombres">Hombres</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
-      </div>
-      <div class="col-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/?cat=Pulseras'">
+      </a>
+      <a class="col-card reveal" data-delay="4" href="./ui_kits/store/?cat=Pulseras">
         <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagHandmade">Hecho a mano</div><div class="col-title" data-i18n="landing.colPulseras">Pulseras</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
-      </div>
-      <div class="col-card reveal" data-delay="5" onclick="window.location.href='./ui_kits/store/?cat=Aretes'">
+      </a>
+      <a class="col-card reveal" data-delay="5" href="./ui_kits/store/?cat=Aretes">
         <div class="col-bg gC" data-cat="Aretes" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagElegance">Elegancia</div><div class="col-title" data-i18n="landing.colAretes">Aretes</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
-      </div>
+      </a>
     </div>
   </div>
 </section>
@@ -1165,13 +1167,17 @@ function renderFeaturedProducts(){
     card.className = 'prod-card reveal';
     card.dataset.delay = String(i + 1);
     card.setAttribute('onclick', "window.location.href='./ui_kits/store/'");
+    card.setAttribute('role', 'link');
+    card.tabIndex = 0;
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.location.href = './ui_kits/store/'; } });
     card.style.cursor = 'none';
     const _L2 = localStorage.getItem('cacusa-lang') || 'es';
     const _qv = _L2 === 'en' ? 'Quick view →' : 'Vista rápida →';
     const _ab = _L2 === 'en' ? '+ Add' : '+ Añadir';
     const _catLbl = (_L2 === 'en' && __LANDING_EN['cat.' + (p.category||'').toLowerCase()]) || (p.category || '');
     const _nameLbl = (_L2 === 'en' && p.name_en) ? p.name_en : (p.name || '');
-    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(_catLbl)}</div><div class="prod-name">${esc(_nameLbl)}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add">${_ab}</button></div></div>`;
+    card.setAttribute('aria-label', _nameLbl);
+    card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(_catLbl)}</div><div class="prod-name">${esc(_nameLbl)}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add" tabindex="-1" aria-hidden="true">${_ab}</button></div></div>`;
     grid.appendChild(card);
     obs.observe(card);
   });
