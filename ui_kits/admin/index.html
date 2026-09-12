@@ -583,7 +583,7 @@ function compressImage(file, maxPx = 900) {
           fr.onload = e => resolve(e.target.result.split(',')[1]);
           fr.onerror = () => reject(new Error('No se pudo leer la imagen procesada.'));
           fr.readAsDataURL(blob);
-        }, 'image/jpeg', 0.88);
+        }, 'image/webp', 0.82);
       } catch (err) { try { URL.revokeObjectURL(url); } catch(_){} reject(err); }
     };
     img.src = url;
@@ -858,7 +858,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
       setImgPrev(URL.createObjectURL(file));
       const b64 = await compressImage(file);
       const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40) || 'foto';
-      const fname = `${Date.now()}_${slug}.jpg`;
+      const fname = `${Date.now()}_${slug}.webp`;
       const path = `${IMAGES_PATH}/${fname}`;
       const res = await apiUpload(token, path, b64, `Imagen: ${fname}`);
       set('imageUrl', res.url);
@@ -883,7 +883,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     try {
       const b64 = await compressImage(file);
       const slug = file.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase().substring(0, 40) || 'extra';
-      const fname = `${Date.now()}_${slug}.jpg`;
+      const fname = `${Date.now()}_${slug}.webp`;
       const res = await apiUpload(token, `${IMAGES_PATH}/${fname}`, b64, `Imagen galería: ${fname}`);
       setForm(f => ({ ...f, images: [...(f.images || []), res.url] }));
       setGalleryMsg('✅ Foto agregada a la galería');
