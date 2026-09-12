@@ -114,7 +114,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.sec2H2">Tiempo de preparación y entrega</span></h2>
-      <p id="envPrepBody">Como cada joya es personalizada, primero se confecciona especialmente para ti y luego se envía. El tiempo habitual de elaboración es de <strong>5 a 7 días</strong>, según la complejidad del diseño elegido. Una vez confirmado tu pedido por WhatsApp, te mantendremos al tanto del estado de tu pieza y de tu envío.</p>
+      <p id="envPrepBody">Como cada joya es personalizada, primero se confecciona especialmente para ti y luego se envía. El tiempo habitual de elaboración es de <strong>5 a 10 días</strong>, según la complejidad del diseño elegido. Una vez confirmado tu pedido por WhatsApp, te mantendremos al tanto del estado de tu pieza y de tu envío.</p>
     </div>
 
     <div class="sec">
@@ -213,7 +213,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         if(pgEn.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pgEn.servientregaNote;}
         setTxt('envOtros',pgEn.otrosPaisesBody);
         const prepEl=document.getElementById('envPrepBody');
-        if(prepEl)prepEl.innerHTML='Since each piece is personalized, it is first crafted especially for you, then shipped. Standard production time is <strong>5 to 7 business days</strong>, depending on the design chosen. Once your order is confirmed via WhatsApp, we\'ll keep you updated.';
+        if(prepEl)prepEl.innerHTML='Since each piece is personalized, it is first crafted especially for you, then shipped. Standard production time is <strong>5 to 10 business days</strong>, depending on the design chosen. Once your order is confirmed via WhatsApp, we\'ll keep you updated.';
         const usaC=document.getElementById('envUsaCallout');
         if(usaC){const t=pgEn.uspsTime||'2–5 business days';usaC.innerHTML='Estimated delivery time: <strong id="envUSATime">'+t+'</strong>, depending on the destination zone within the US.';}
       }
