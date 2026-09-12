@@ -1465,11 +1465,15 @@ async function submitSubscription(){
     estado_pago: 'pendiente',
   };
 
-  // Guardar datos en Firebase (best-effort — no bloquea el pago si falla)
+  // Guardar datos en Firebase (best-effort — no bloquea el pago si falla).
+  // Key determinística por email (no un ID al azar): si Square manda sus
+  // webhooks casi al mismo tiempo que esto, todos escriben al mismo nodo en
+  // vez de crear copias separadas de la misma suscriptora.
   try {
     if(!_fbIdToken) await _fbSignIn();
-    await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers.json`), {
-      method:  'POST',
+    const subKey = subscriber.email.replace(/[.#$\[\]/]/g, ',');
+    await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${subKey}.json`), {
+      method:  'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(subscriber),
     });
