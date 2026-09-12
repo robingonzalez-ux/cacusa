@@ -65,6 +65,28 @@ De paso, `notifyAdminPush()` ahora deja un log claro si el Worker
 fallaba en silencio sin ningún rastro) — causa más probable de por qué no
 llegó la notificación push de esta alta en particular.
 
+## 2026-09-12 — Auditoría de concurrencia: pedidos en riesgo de perderse
+
+Tras el fix de suscriptoras duplicadas, se auditaron los 3 Workers
+buscando el mismo tipo de problema (escritura no atómica sobre estado
+compartido) y se encontró uno más grave en `admin-worker.js`: todos los
+pedidos vivían en una sola llave de KV (un blob JSON con el array
+completo), y tanto un pedido nuevo entrando (checkout público o webhook
+de Square) como cualquier acción del panel admin sobre un pedido
+(cambiar estado, tracking, carrier, datos de cliente, o borrar) hacían
+"leer todo → modificar → escribir todo de vuelta" sin ningún candado
+entre sí. El panel ya mitigaba parte del riesgo con un refresco
+silencioso cada 30 segundos, pero seguía existiendo una ventana real en
+la que un pedido nuevo podía perderse en silencio si alguien editaba
+cualquier otro pedido en esos segundos.
+
+Se cambió el esquema a una llave de KV por pedido en vez de un blob
+compartido — cada pedido nuevo, cada edición y cada borrado tocan
+únicamente su propia llave, así que ya es estructuralmente imposible que
+una acción sobre un pedido afecte a otro. El panel admin también se
+actualizó para enviar solo el cambio puntual de cada acción en vez de
+reenviar la lista completa de pedidos.
+
 ## 2026-09-05 — Lanzamiento de Cacusa Lovers
 
 Se construyó desde cero el club de suscripción mensual:
