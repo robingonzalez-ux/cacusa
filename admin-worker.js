@@ -171,6 +171,8 @@ export default {
       if (path.endsWith('/surcharge/save')) return await handleSurchargeSave(body, env, allowOrigin);
       if (path.endsWith('/market/save'))    return await handleMarketSave(body, env, allowOrigin);
       if (path.endsWith('/save'))           return await handleSave(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -243,15 +245,14 @@ async function handleLogin(body, env, origin, request) {
 async function handleLoad(env, origin) {
   const products = await ghGetContent(PRODUCTS_PATH, env);
 
-  // Pedidos: leer de KV (privado) — no de GitHub Pages (público)
+  // Pedidos: cada uno en su propia llave de KV (order:<id>) — ver refreshOrdersCache().
+  // handleLoad solo lee la caché ya armada (orders_cache), nunca escanea todo en cada
+  // poll (el panel llama /load cada 30s + en cada focus).
   let ordersText = null;
   if (env.CACUSA_KV) {
-    ordersText = await env.CACUSA_KV.get('orders');
-  }
-  // Fallback a GitHub solo durante la migración (si KV está vacío y hay pedidos en GitHub)
-  if (!ordersText) {
-    const ghOrders = await ghGetContent(ORDERS_PATH, env);
-    ordersText = ghOrders ? ghOrders.text : null;
+    await migrateLegacyOrdersIfNeeded(env);
+    ordersText = await env.CACUSA_KV.get('orders_cache');
+    if (!ordersText) ordersText = JSON.stringify(await refreshOrdersCache(env));
   }
 
   return ok({ products: products ? products.text : null, orders: ordersText }, origin);
@@ -262,10 +263,14 @@ async function handleSave(body, env, origin, session, ctx) {
   if (path !== PRODUCTS_PATH && path !== ORDERS_PATH) return err('Ruta no permitida', 403, origin);
   if (typeof content !== 'string') return err('Contenido inválido', 400, origin);
 
-  // Pedidos van a KV (privado), productos van a GitHub
+  // Pedidos: ya no se guardan acá. Antes esto sobreescribía TODO el blob de pedidos con
+  // lo que tuviera cargado el navegador — si un pedido nuevo entraba mientras alguien
+  // editaba otro pedido en el panel, el nuevo se perdía en silencio. Ahora cada pedido
+  // vive en su propia llave (ver handleOrder/handleOrderUpdate/handleOrderManual) y esta
+  // ruta queda como no-op, solo para no romper a un panel viejo que siga cacheado en
+  // algún navegador durante la ventana de despliegue.
   if (path === ORDERS_PATH) {
-    if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
-    await env.CACUSA_KV.put('orders', content);
+    console.warn('POST /save con path=orders.json ignorado (ruta legada) — usuario:', session.user);
     return ok({ ok: true }, origin);
   }
 
@@ -300,6 +305,108 @@ async function handleUpload(body, env, origin, session) {
   return ok({ ok: true, url: `https://${GH_OWNER}.github.io/${GH_REPO}/${path}` }, origin);
 }
 
+// Sanea un pedido crudo a solo los campos permitidos (nunca spread del body del
+// cliente). strictPago=true (checkout público / webhook de Square, ninguno de los
+// dos es un origen confiable para elegir texto libre) solo deja pasar
+// Zelle/WhatsApp/Tarjeta y colapsa cualquier otra cosa a "Otro". strictPago=false
+// (alta manual desde el admin, ya autenticado con sesión) deja el método de pago tal
+// cual lo eligió Tita/Robin en el modal (acotado a 40 caracteres) — el modal ofrece
+// opciones reales (PayPal, efectivo, etc.) que no tiene sentido colapsar a "Otro".
+function buildOrderCore(order, { strictPago }) {
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
+  const cliente = order.cliente || {};
+  return {
+    id:        Date.now(),
+    fecha:     new Date().toISOString(),
+    numero:    str(order.numero, 30) || undefined,
+    estado:    'Nuevo',
+    pago:      strictPago
+      ? (['Zelle', 'WhatsApp', 'Tarjeta'].includes(order.pago) ? order.pago : 'Otro')
+      : (str(order.pago, 40) || 'Otro'),
+    total:     num(order.total),
+    subtotal:  num(order.subtotal),
+    envio:     num(order.envio),
+    impuesto:  num(order.impuesto),
+    notas:     str(order.notas, 500) || undefined,
+    cliente: {
+      nombre:    str(cliente.nombre,   100),
+      apellido:  str(cliente.apellido, 100),
+      email:     str(cliente.email,     150),
+      telefono:  str(cliente.telefono,  30),
+      direccion: str(cliente.direccion, 200),
+      apto:      str(cliente.apto,       40),
+      ciudad:    str(cliente.ciudad,    100),
+      estado:    str(cliente.estado,     50),
+      zip:       str(cliente.zip,        20),
+      pais:      str(cliente.pais,       10),
+      notas:     str(cliente.notas,     500),
+    },
+    productos: (Array.isArray(order.productos) ? order.productos : []).slice(0, 50).map(p => ({
+      id:              str(p.id,   50),
+      name:            str(p.name || p.nombre, 150),
+      price:           num(p.price || p.precio),
+      qty:             typeof p.qty === 'number' ? Math.max(1, Math.floor(p.qty)) : 1,
+      personalization: str(p.personalization, 300),
+    })),
+  };
+}
+
+function orderKey(id) { return 'order:' + String(id); }
+async function orderGet(env, id) {
+  const raw = await env.CACUSA_KV.get(orderKey(id));
+  return raw ? JSON.parse(raw) : null;
+}
+// Reconstruye la lista completa de pedidos a partir de sus llaves individuales
+// (mismo patrón que handleGcList/handleCouponList) y la deja lista para que
+// handleLoad() la sirva con un solo GET, en vez de escanear todo en cada poll del
+// panel (cada 30s + en cada focus). Se llama después de CADA escritura a una llave
+// order:<id> — nunca lee esta caché para modificarla, siempre recalcula el estado
+// real completo, así que dos escrituras cruzándose en el tiempo nunca la corrompen:
+// en el peor caso queda unos milisegundos atrasada, nunca con datos perdidos.
+async function listAllOrders(env) {
+  const orders = [];
+  let cursor;
+  do {
+    const page = await env.CACUSA_KV.list({ prefix: 'order:', cursor, limit: 1000 });
+    for (const k of page.keys) {
+      const raw = await env.CACUSA_KV.get(k.name);
+      if (raw) { try { orders.push(JSON.parse(raw)); } catch (_) {} }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  orders.sort((a, b) => (b.id || 0) - (a.id || 0));
+  return orders;
+}
+async function refreshOrdersCache(env) {
+  const orders = await listAllOrders(env);
+  const data = { version: '1.0', lastUpdated: new Date().toISOString(), orders };
+  await env.CACUSA_KV.put('orders_cache', JSON.stringify(data));
+  return data;
+}
+// Migración única e idempotente del blob legado `orders` (un solo JSON con todos los
+// pedidos) al esquema de una llave por pedido. Se dispara EXCLUSIVAMENTE por la
+// ausencia de la llave `orders:migrated` — nunca por "¿ya existen llaves order:*?",
+// porque un solo pedido nuevo entrando entre el deploy y el primer /load ya crearía
+// una llave order:* y esa condición dejaría el split sin correr nunca, perdiendo de
+// vista todo el historial. Es segura ante llamadas concurrentes: ambas leerían el
+// mismo blob legado (ya congelado, ver handleSave) y escribirían el mismo resultado.
+async function migrateLegacyOrdersIfNeeded(env) {
+  if (await env.CACUSA_KV.get('orders:migrated')) return;
+  const legacyRaw = await env.CACUSA_KV.get('orders');
+  if (legacyRaw) {
+    let legacy;
+    try { legacy = JSON.parse(legacyRaw); } catch (_) { legacy = null; }
+    if (legacy && Array.isArray(legacy.orders)) {
+      for (const o of legacy.orders) {
+        if (o && o.id != null) await env.CACUSA_KV.put(orderKey(o.id), JSON.stringify(o));
+      }
+    }
+  }
+  await env.CACUSA_KV.put('orders:migrated', '1');
+  await refreshOrdersCache(env);
+}
+
 // ── Pedido desde tienda (o desde cacusa-square, ya confirmado por Square) ────
 async function handleOrder(body, env, origin, ctx, request) {
   const { order } = body;
@@ -325,44 +432,9 @@ async function handleOrder(body, env, origin, ctx, request) {
     await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
   }
 
-  // Construir pedido solo con campos permitidos (nunca hacer spread del body del cliente)
-  const str  = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
-  const num  = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
-  const bool = (v) => v === true;
-
-  const cliente = order.cliente || {};
-  const newOrder = {
-    id:        Date.now(),
-    fecha:     new Date().toISOString(),
-    numero:    str(order.numero, 30) || undefined,
-    estado:    'Nuevo',
-    pago:      ['Zelle', 'WhatsApp', 'Tarjeta'].includes(order.pago) ? order.pago : 'Otro',
-    total:     num(order.total),
-    subtotal:  num(order.subtotal),
-    envio:     num(order.envio),
-    impuesto:  num(order.impuesto),
-    notas:     str(order.notas, 500) || undefined,
-    cliente: {
-      nombre:    str(cliente.nombre,   100),
-      apellido:  str(cliente.apellido, 100),
-      email:     str(cliente.email,     150),
-      telefono:  str(cliente.telefono,  30),
-      direccion: str(cliente.direccion, 200),
-      apto:      str(cliente.apto,       40),
-      ciudad:    str(cliente.ciudad,    100),
-      estado:    str(cliente.estado,     50),
-      zip:       str(cliente.zip,        20),
-      pais:      str(cliente.pais,       10),
-      notas:     str(cliente.notas,     500),
-    },
-    productos: order.productos.slice(0, 50).map(p => ({
-      id:              str(p.id,   50),
-      name:            str(p.name || p.nombre, 150),
-      price:           num(p.price || p.precio),
-      qty:             typeof p.qty === 'number' ? Math.max(1, Math.floor(p.qty)) : 1,
-      personalization: str(p.personalization, 300),
-    })),
-  };
+  const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const newOrder = buildOrderCore(order, { strictPago: true });
 
   // Redención de gift card — fusionada acá (en vez de ser una llamada pública separada a
   // /giftcard/redeem, ver hallazgo de seguridad) para que nunca se pueda vaciar una tarjeta
@@ -380,18 +452,11 @@ async function handleOrder(body, env, origin, ctx, request) {
     }
   }
 
-  // Leer pedidos actuales desde KV
-  let data = { version: '1.0', orders: [] };
-  const existing = await env.CACUSA_KV.get('orders');
-  if (existing) {
-    try { data = JSON.parse(existing); } catch (_) {}
-  }
-  if (!Array.isArray(data.orders)) data.orders = [];
-
-  data.orders.unshift(newOrder);
-  data.lastUpdated = new Date().toISOString();
-
-  await env.CACUSA_KV.put('orders', JSON.stringify(data, null, 2));
+  // Cada pedido en su propia llave — nunca se lee ni se escribe un blob compartido, así
+  // que un pedido nuevo jamás puede pisar ni perder a otro pedido concurrente (ver
+  // auditoría de concurrencia). La lista que consume el panel se recalcula aparte.
+  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
 
   if (env.NTFY_TOPIC) {
     await sendNtfy(newOrder, env);
@@ -407,6 +472,64 @@ async function handleOrder(body, env, origin, ctx, request) {
   }
 
   return ok({ ok: true, id: newOrder.id }, origin);
+}
+
+// ── Alta manual de un pedido desde el admin (Zelle/transferencia/efectivo ya
+// confirmados fuera de línea) — autenticada por sesión, no por rate-limit de IP
+// pública (Tita/Robin pueden cargar varios seguidos sin toparse con el límite de
+// /order). No pasa por redención de gift card: los pedidos manuales no la usan hoy.
+async function handleOrderManual(body, env, origin, session, ctx) {
+  const { order } = body;
+  if (!order || !order.cliente) return err('Pedido inválido', 400, origin);
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+
+  const newOrder = buildOrderCore(order, { strictPago: false });
+  newOrder.createdBy = session.user;
+
+  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+
+  return ok({ ok: true, order: newOrder }, origin);
+}
+
+// ── Editar o borrar UN pedido existente desde el admin (cambiar estado, agregar
+// tracking/carrier, actualizar datos del cliente, o eliminarlo). Reemplaza el patrón
+// viejo de reenviar el array completo de pedidos (saveOrdersNow) — acá se lee y se
+// escribe solo la llave de ESE pedido puntual, así que nunca puede pisar ni perder a
+// un pedido distinto. El allowlist de campos evita que un patch toque productos/total/
+// giftcard de un pedido ya cerrado.
+const ORDER_PATCH_FIELDS = new Set(['estado', 'tracking', 'carrier']);
+const ORDER_CLIENTE_PATCH_FIELDS = ['nombre', 'apellido', 'email', 'telefono', 'direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'notas'];
+async function handleOrderUpdate(body, env, origin, session, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.id;
+  if (id == null) return err('Falta id', 400, origin);
+  const order = await orderGet(env, id);
+  if (!order) return err('Pedido no encontrado', 404, origin);
+
+  if (body.delete === true) {
+    await env.CACUSA_KV.delete(orderKey(id));
+    if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+    return ok({ ok: true, deleted: true }, origin);
+  }
+
+  const patch = body.patch && typeof body.patch === 'object' ? body.patch : {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (k === 'cliente' && v && typeof v === 'object') {
+      order.cliente = order.cliente || {};
+      for (const ck of ORDER_CLIENTE_PATCH_FIELDS) {
+        if (ck in v) order.cliente[ck] = String(v[ck] ?? '').slice(0, 500);
+      }
+      continue;
+    }
+    if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
+  }
+  order.updatedAt = new Date().toISOString();
+  order.updatedBy = session.user;
+
+  await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  return ok({ ok: true, order }, origin);
 }
 
 // ── Square (proxy de solo-lectura para el POS — evita el bloqueo CORS de Square) ──
@@ -809,7 +932,7 @@ async function checkAbandonedCarts(env) {
 
   // Si ya hay un pedido de ese email posterior al lead, no fue abandono — se completó.
   let orderEmails = new Set();
-  const ordersRaw = await env.CACUSA_KV.get('orders');
+  const ordersRaw = await env.CACUSA_KV.get('orders_cache');
   if (ordersRaw) {
     try {
       const od = JSON.parse(ordersRaw);
