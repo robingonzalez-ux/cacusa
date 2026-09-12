@@ -42,7 +42,8 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .wrap{max-width:760px;margin:-40px auto 0;padding:0 24px 80px;position:relative;z-index:2}
 .card{background:white;border-radius:24px;padding:48px 44px;box-shadow:0 12px 48px rgba(238,111,168,.14)}
 .intro{font-family:var(--fe);font-size:19px;font-style:italic;color:var(--ink-mid);line-height:1.7;margin-bottom:32px;padding-bottom:28px;border-bottom:1.5px solid var(--ink-light)}
-.month-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:8px}
+.month-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:0 0 8px}
+.month-name,.month-stone,.month-mean{margin:0}
 .month-card{border:1.5px solid var(--ink-light);border-radius:16px;padding:18px 20px;transition:border-color .2s}
 .month-card:hover{border-color:var(--pink)}
 .month-name{font-family:var(--fu);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px}
@@ -103,20 +104,20 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   <div class="card">
     <p class="intro" data-i18n="sp.intro">Cada mes del año tiene, por tradición, una piedra que lo representa — una costumbre con siglos de historia que hoy sigue siendo una de las formas más lindas de personalizar un regalo. Aquí te contamos qué significa la de cada mes.</p>
 
-    <div class="month-grid">
-      <div class="month-card"><div class="month-name" data-i18n="sp.m1">Enero</div><div class="month-stone"><span class="month-dot" style="background:#7B2D3E"></span><span data-i18n="sp.s1">Granate</span></div><div class="month-mean" data-i18n="sp.d1">Protección y fuerza en nuevos comienzos.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m2">Febrero</div><div class="month-stone"><span class="month-dot" style="background:#9B6FD6"></span><span data-i18n="sp.s2">Amatista</span></div><div class="month-mean" data-i18n="sp.d2">Paz interior y claridad mental.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m3">Marzo</div><div class="month-stone"><span class="month-dot" style="background:#8FD4E8"></span><span data-i18n="sp.s3">Aguamarina</span></div><div class="month-mean" data-i18n="sp.d3">Calma, valentía y viajes seguros.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m4">Abril</div><div class="month-stone"><span class="month-dot" style="background:#E8E4F0;border:1px solid #ddd"></span><span data-i18n="sp.s4">Diamante</span></div><div class="month-mean" data-i18n="sp.d4">Pureza y fuerza eterna — en CACUSA, en microcircones brillantes.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m5">Mayo</div><div class="month-stone"><span class="month-dot" style="background:#3F8F5C"></span><span data-i18n="sp.s5">Esmeralda</span></div><div class="month-mean" data-i18n="sp.d5">Renovación, crecimiento y amor.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m6">Junio</div><div class="month-stone"><span class="month-dot" style="background:#F3ECE4"></span><span data-i18n="sp.s6">Perla</span></div><div class="month-mean" data-i18n="sp.d6">Pureza, sabiduría y elegancia atemporal.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m7">Julio</div><div class="month-stone"><span class="month-dot" style="background:#C0284A"></span><span data-i18n="sp.s7">Rubí</span></div><div class="month-mean" data-i18n="sp.d7">Pasión, vitalidad y coraje.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m8">Agosto</div><div class="month-stone"><span class="month-dot" style="background:#9BB84A"></span><span data-i18n="sp.s8">Peridoto</span></div><div class="month-mean" data-i18n="sp.d8">Fuerza y buena fortuna.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m9">Septiembre</div><div class="month-stone"><span class="month-dot" style="background:#2B5FA8"></span><span data-i18n="sp.s9">Zafiro</span></div><div class="month-mean" data-i18n="sp.d9">Sabiduría, lealtad y verdad.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m10">Octubre</div><div class="month-stone"><span class="month-dot" style="background:#C89BD6"></span><span data-i18n="sp.s10">Ópalo</span></div><div class="month-mean" data-i18n="sp.d10">Creatividad, inspiración y esperanza.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m11">Noviembre</div><div class="month-stone"><span class="month-dot" style="background:#E8B84A"></span><span data-i18n="sp.s11">Topacio / Citrino</span></div><div class="month-mean" data-i18n="sp.d11">Alegría, calidez y buena suerte.</div></div>
-      <div class="month-card"><div class="month-name" data-i18n="sp.m12">Diciembre</div><div class="month-stone"><span class="month-dot" style="background:#3FA8A0"></span><span data-i18n="sp.s12">Turquesa</span></div><div class="month-mean" data-i18n="sp.d12">Protección y buena fortuna en el camino.</div></div>
-    </div>
+    <dl class="month-grid">
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m1">Enero</dt><dd class="month-stone"><span class="month-dot" style="background:#7B2D3E"></span><span data-i18n="sp.s1">Granate</span></dd><dd class="month-mean" data-i18n="sp.d1">Protección y fuerza en nuevos comienzos.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m2">Febrero</dt><dd class="month-stone"><span class="month-dot" style="background:#9B6FD6"></span><span data-i18n="sp.s2">Amatista</span></dd><dd class="month-mean" data-i18n="sp.d2">Paz interior y claridad mental.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m3">Marzo</dt><dd class="month-stone"><span class="month-dot" style="background:#8FD4E8"></span><span data-i18n="sp.s3">Aguamarina</span></dd><dd class="month-mean" data-i18n="sp.d3">Calma, valentía y viajes seguros.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m4">Abril</dt><dd class="month-stone"><span class="month-dot" style="background:#E8E4F0;border:1px solid #ddd"></span><span data-i18n="sp.s4">Diamante</span></dd><dd class="month-mean" data-i18n="sp.d4">Pureza y fuerza eterna — en CACUSA, en microcircones brillantes.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m5">Mayo</dt><dd class="month-stone"><span class="month-dot" style="background:#3F8F5C"></span><span data-i18n="sp.s5">Esmeralda</span></dd><dd class="month-mean" data-i18n="sp.d5">Renovación, crecimiento y amor.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m6">Junio</dt><dd class="month-stone"><span class="month-dot" style="background:#F3ECE4"></span><span data-i18n="sp.s6">Perla</span></dd><dd class="month-mean" data-i18n="sp.d6">Pureza, sabiduría y elegancia atemporal.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m7">Julio</dt><dd class="month-stone"><span class="month-dot" style="background:#C0284A"></span><span data-i18n="sp.s7">Rubí</span></dd><dd class="month-mean" data-i18n="sp.d7">Pasión, vitalidad y coraje.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m8">Agosto</dt><dd class="month-stone"><span class="month-dot" style="background:#9BB84A"></span><span data-i18n="sp.s8">Peridoto</span></dd><dd class="month-mean" data-i18n="sp.d8">Fuerza y buena fortuna.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m9">Septiembre</dt><dd class="month-stone"><span class="month-dot" style="background:#2B5FA8"></span><span data-i18n="sp.s9">Zafiro</span></dd><dd class="month-mean" data-i18n="sp.d9">Sabiduría, lealtad y verdad.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m10">Octubre</dt><dd class="month-stone"><span class="month-dot" style="background:#C89BD6"></span><span data-i18n="sp.s10">Ópalo</span></dd><dd class="month-mean" data-i18n="sp.d10">Creatividad, inspiración y esperanza.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m11">Noviembre</dt><dd class="month-stone"><span class="month-dot" style="background:#E8B84A"></span><span data-i18n="sp.s11">Topacio / Citrino</span></dd><dd class="month-mean" data-i18n="sp.d11">Alegría, calidez y buena suerte.</dd></div>
+      <div class="month-card"><dt class="month-name" data-i18n="sp.m12">Diciembre</dt><dd class="month-stone"><span class="month-dot" style="background:#3FA8A0"></span><span data-i18n="sp.s12">Turquesa</span></dd><dd class="month-mean" data-i18n="sp.d12">Protección y buena fortuna en el camino.</dd></div>
+    </dl>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="sp.sec1H2">¿De dónde viene esta tradición?</span></h2>
@@ -210,8 +211,8 @@ const I18N_EN = {
   const d=new Date();
   document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
-  if(bEs)bEs.className=_L==='es'?'on':'';
-  if(bEn)bEn.className=_L==='en'?'on':'';
+  if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
+  if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
 })();
 window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>

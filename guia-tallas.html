@@ -128,7 +128,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <h2><span class="dot"></span><span data-i18n="gt.sec3H2">Tabla de conversión de tallas de anillo</span></h2>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th data-i18n="gt.thUs">Talla US</th><th data-i18n="gt.thDiam">Diámetro interior (mm)</th><th data-i18n="gt.thCirc">Circunferencia (mm)</th></tr></thead>
+          <thead><tr><th scope="col" data-i18n="gt.thUs">Talla US</th><th scope="col" data-i18n="gt.thDiam">Diámetro interior (mm)</th><th scope="col" data-i18n="gt.thCirc">Circunferencia (mm)</th></tr></thead>
           <tbody>
             <tr><td>5</td><td>15.7</td><td>49.3</td></tr>
             <tr><td>5.5</td><td>16.1</td><td>50.6</td></tr>
@@ -150,7 +150,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <p data-i18n="gt.sec4Body">El largo cambia mucho cómo se ve una cadena puesta. Esta es la referencia estándar de la industria para elegir:</p>
       <div class="tbl-wrap">
         <table>
-          <thead><tr><th data-i18n="gt.thLen">Largo</th><th data-i18n="gt.thStyle">Estilo</th><th data-i18n="gt.thFall">Cómo cae</th></tr></thead>
+          <thead><tr><th scope="col" data-i18n="gt.thLen">Largo</th><th scope="col" data-i18n="gt.thStyle">Estilo</th><th scope="col" data-i18n="gt.thFall">Cómo cae</th></tr></thead>
           <tbody>
             <tr><td>40 cm</td><td data-i18n="gt.len40n">Gargantilla</td><td data-i18n="gt.len40d">Ajustada, a la altura del cuello</td></tr>
             <tr><td>45 cm</td><td data-i18n="gt.len45n">Princesa</td><td data-i18n="gt.len45d">El largo más común — cae sobre la clavícula</td></tr>
@@ -247,8 +247,8 @@ const I18N_EN = {
   const d=new Date();
   document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
-  if(bEs)bEs.className=_L==='es'?'on':'';
-  if(bEn)bEn.className=_L==='en'?'on':'';
+  if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
+  if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
 })();
 window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>
