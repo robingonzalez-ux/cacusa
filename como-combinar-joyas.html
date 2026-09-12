@@ -235,8 +235,8 @@ const I18N_EN = {
   const d=new Date();
   document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
-  if(bEs)bEs.className=_L==='es'?'on':'';
-  if(bEn)bEn.className=_L==='en'?'on':'';
+  if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
+  if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
 })();
 window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
 </script>

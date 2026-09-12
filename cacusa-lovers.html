@@ -372,7 +372,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 
 <!-- SUCCESS SCREEN -->
 <div id="sub-success">
-  <div class="ss-icon">✦</div>
+  <div class="ss-icon" aria-hidden="true">✦</div>
   <h2 class="ss-title">¡Bienvenida al club!</h2>
   <p class="ss-sub">Tu suscripción <strong>Cacusa Lovers</strong> está activa. Recibirás un email de confirmación de Square y tu primera caja llegará en los próximos días. ♡</p>
   <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
@@ -543,7 +543,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./index.html#personalize">Personaliza</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
+    <div class="lang-sw"><button id="lEs" class="on" aria-current="page" onclick="window.location.href='/cacusa-lovers.html'">ES</button><button id="lEn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button></div>
     <button class="nav-cta" onclick="joinNow()">Unirme ahora →</button>
     <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
@@ -599,15 +599,15 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div class="reveal" data-delay="2"><p class="section-sub">Una membresía mensual pensada para mujeres que aman la joyería de alta calidad y quieren vivir esa emoción de recibir una pieza especial, cada mes, sin buscarla.</p></div>
         <div class="what-list">
           <div class="what-item reveal" data-delay="2">
-            <div class="wi-icon">◆</div>
+            <div class="wi-icon" aria-hidden="true">◆</div>
             <div><div class="wi-title">Joyas elegidas para ti</div><div class="wi-desc">Cada mes seleccionamos 2 piezas en acero inoxidable para ti: no se oxidan, no se ponen negras y son tuyas para siempre.</div></div>
           </div>
           <div class="what-item reveal" data-delay="3">
-            <div class="wi-icon">◎</div>
+            <div class="wi-icon" aria-hidden="true">◎</div>
             <div><div class="wi-title">Directamente a tu puerta</div><div class="wi-desc">Envío a domicilio incluido en Ecuador y Estados Unidos. Sin salir de casa.</div></div>
           </div>
           <div class="what-item reveal" data-delay="4">
-            <div class="wi-icon">✦</div>
+            <div class="wi-icon" aria-hidden="true">✦</div>
             <div><div class="wi-title">Piezas exclusivas de suscriptora</div><div class="wi-desc">Diseños que no se venden en tienda. Solo para Cacusa Lovers.</div></div>
           </div>
         </div>
@@ -811,70 +811,70 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
     <div class="cond-grid">
       <div class="cond-item reveal" data-delay="1">
-        <div class="cond-icon">↻</div>
+        <div class="cond-icon" aria-hidden="true">↻</div>
         <div class="cond-text">
           <div class="cond-title">Pago recurrente mensual</div>
           <div class="cond-desc">El cobro de $19.99 se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
-        <div class="cond-icon">◻</div>
+        <div class="cond-icon" aria-hidden="true">◻</div>
         <div class="cond-text">
           <div class="cond-title">Envío tras confirmación de pago</div>
           <div class="cond-desc">Los envíos se realizan durante la <strong>tercera semana de cada mes</strong>, una vez confirmado el pago. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — los envíos aún no han salido.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="3">
-        <div class="cond-icon">✕</div>
+        <div class="cond-icon" aria-hidden="true">✕</div>
         <div class="cond-text">
           <div class="cond-title">Sin devoluciones</div>
           <div class="cond-desc">No se aceptan devoluciones ni reembolsos en esta modalidad de suscripción. Cada pieza es seleccionada y enviada especialmente para ti con dedicación. Excepción: si tu pieza llega con un defecto de fabricación, repórtalo con fotos dentro de las primeras 48 horas y te la reponemos sin costo.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="1">
-        <div class="cond-icon">◇</div>
+        <div class="cond-icon" aria-hidden="true">◇</div>
         <div class="cond-text">
           <div class="cond-title">Selección aleatoria por CACUSA</div>
           <div class="cond-desc">Las joyas son seleccionadas de forma aleatoria por el equipo de CACUSA. La sorpresa y la cuidadosa selección son parte de la experiencia del club.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
-        <div class="cond-icon">◆</div>
+        <div class="cond-icon" aria-hidden="true">◆</div>
         <div class="cond-text">
           <div class="cond-title">Tipos de piezas incluidas</div>
           <div class="cond-desc">Las 2 piezas mensuales pueden ser aretes, anillos, pulseras o collares — elaboradas en <strong>acero inoxidable</strong>: no se oxidan, no se ponen negras y mantienen su brillo con el tiempo.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="3">
-        <div class="cond-icon">◎</div>
+        <div class="cond-icon" aria-hidden="true">◎</div>
         <div class="cond-text">
           <div class="cond-title">Sin cambios por artículos de tienda</div>
           <div class="cond-desc">Las joyas de la suscripción no pueden canjearse ni cambiarse por artículos disponibles en la tienda online. Son piezas exclusivas del club.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="1">
-        <div class="cond-icon">✕</div>
+        <div class="cond-icon" aria-hidden="true">✕</div>
         <div class="cond-text">
           <div class="cond-title">Política de cancelación</div>
           <div class="cond-desc">Puedes cancelar tu suscripción cuando quieras directamente desde el enlace "Manage subscription" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a facturacioncacusa@gmail.com y te ayudamos.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="2">
-        <div class="cond-icon">!</div>
+        <div class="cond-icon" aria-hidden="true">!</div>
         <div class="cond-text">
           <div class="cond-title">Pago fallido</div>
           <div class="cond-desc">Si tu pago no se procesa exitosamente, Square intentará el cobro nuevamente de forma automática. Mientras el pago esté pendiente, el envío del mes quedará suspendido hasta que se regularice la situación.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="3">
-        <div class="cond-icon">◇</div>
+        <div class="cond-icon" aria-hidden="true">◇</div>
         <div class="cond-text">
           <div class="cond-title">Cambios de precio</div>
           <div class="cond-desc">Cualquier modificación en el precio de la suscripción será comunicada con al menos 30 días de anticipación a través del email registrado. Tienes derecho a cancelar sin cargo si no estás de acuerdo con el nuevo precio.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="1">
-        <div class="cond-icon">◎</div>
+        <div class="cond-icon" aria-hidden="true">◎</div>
         <div class="cond-text">
           <div class="cond-title">Datos personales</div>
           <div class="cond-desc">Tu información de envío (nombre, dirección, teléfono) se utiliza exclusivamente para gestionar la entrega de tus joyas. No compartimos tus datos con terceros. El procesamiento del pago lo realiza Square de forma segura.</div>
@@ -1616,12 +1616,14 @@ function toggleFaq(el){
     drawer.classList.add('open');
     btn.classList.add('open');
     btn.setAttribute('aria-expanded','true');
+    btn.setAttribute('aria-label','Cerrar menú');
     document.body.style.overflow='hidden';
   }
   function closeDrawer(){
     drawer.classList.remove('open');
     btn.classList.remove('open');
     btn.setAttribute('aria-expanded','false');
+    btn.setAttribute('aria-label','Abrir menú');
     document.body.style.overflow='';
   }
 

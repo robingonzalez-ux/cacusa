@@ -1137,9 +1137,15 @@ function heroSlideshow(){
   };
   show(0);
   stage.onclick = () => { window.location.href = './ui_kits/store/'; };
-  if (N <= 1) return;
+  if (N <= 1 || _reduceMotion) return;
   let cur = 0;
-  setInterval(() => { cur = (cur + 1) % N; show(cur); }, 4000);
+  let timer = setInterval(() => { cur = (cur + 1) % N; show(cur); }, 4000);
+  const pause = () => { clearInterval(timer); timer = null; };
+  const resume = () => { if (!timer) timer = setInterval(() => { cur = (cur + 1) % N; show(cur); }, 4000); };
+  stage.addEventListener('mouseenter', pause);
+  stage.addEventListener('mouseleave', resume);
+  stage.addEventListener('focusin', pause);
+  stage.addEventListener('focusout', resume);
 }
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────

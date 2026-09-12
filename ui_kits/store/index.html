@@ -1963,6 +1963,7 @@ function getMarketBadge(p) {
 // En vez de recibir a la clienta con los 74 productos de golpe, la primera vista es un
 // selector visual de categorías — menos abrumador, más parecido a Mejuri/Kendra Scott.
 let _catTileTimers = [];
+const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 function _clearCatTileTimers() { _catTileTimers.forEach(clearInterval); _catTileTimers = []; }
 function renderCategoryPicker() {
   _clearCatTileTimers();
@@ -1997,18 +1998,30 @@ function renderCategoryPicker() {
   // Carrusel con crossfade — mismo patrón que el slideshow del hero del landing
   // (2 capas superpuestas, opacidad cruzada), un pequeño desfase por tarjeta para
   // que no cambien todas a la vez.
+  if (_reduceMotion) return;
   tilesData.forEach((d, i) => {
     if (d.images.length <= 1) return;
     const layers = grid.querySelectorAll('.cat-tile-bg[data-tile="' + i + '"]');
+    const tile = grid.querySelectorAll('.cat-tile')[i];
     let front = layers[0], idx = 0;
-    const timer = setInterval(() => {
+    const interval = 3600 + i * 220;
+    const advance = () => {
       idx = (idx + 1) % d.images.length;
       const back = front === layers[0] ? layers[1] : layers[0];
       back.style.backgroundImage = "url('" + d.images[idx].replace(/'/g, '%27') + "')";
       back.classList.add('on'); front.classList.remove('on');
       front = back;
-    }, 3600 + i * 220);
+    };
+    let timer = setInterval(advance, interval);
     _catTileTimers.push(timer);
+    if (tile) {
+      const pause = () => { clearInterval(timer); timer = null; };
+      const resume = () => { if (!timer) { timer = setInterval(advance, interval); _catTileTimers.push(timer); } };
+      tile.addEventListener('mouseenter', pause);
+      tile.addEventListener('mouseleave', resume);
+      tile.addEventListener('focusin', pause);
+      tile.addEventListener('focusout', resume);
+    }
   });
 }
 
