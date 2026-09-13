@@ -3196,7 +3196,7 @@ async function loadReviewSummaries() {
     if (!all || typeof all !== 'object') return;
     Object.entries(all).forEach(([pid, revs]) => {
       if (!revs || typeof revs !== 'object') return;
-      const vals = Object.values(revs).filter(v => v && v.rating);
+      const vals = Object.values(revs).filter(v => v && v.rating && v.approved !== false);
       if (!vals.length) return;
       const avg = vals.reduce((s, v) => s + v.rating, 0) / vals.length;
       _reviewSummaries[+pid] = { avg: Math.round(avg * 10) / 10, count: vals.length };
@@ -3541,7 +3541,9 @@ async function loadProductReviews(productId) {
       list.innerHTML = `<div class="no-reviews">${__LANG === 'en' ? 'No reviews yet. Be the first!' : 'Aún sin reseñas. ¡Sé el primero/a!'}</div>`;
       avgRow.style.display = 'none'; return;
     }
-    const reviews = Object.values(data).filter(v => v && v.comment).sort((a, b) => (b.date||'').localeCompare(a.date||''));
+    // approved !== false: las reseñas anteriores a la moderación no tienen el campo
+    // y siguen visibles; solo se ocultan las nuevas mientras esperan aprobación.
+    const reviews = Object.values(data).filter(v => v && v.comment && v.approved !== false).sort((a, b) => (b.date||'').localeCompare(a.date||''));
     if (!reviews.length) { list.innerHTML = `<div class="no-reviews">${__LANG==='en'?'No reviews yet.':'Aún sin reseñas.'}</div>`; avgRow.style.display='none'; return; }
     const avg = reviews.reduce((s, v) => s + (v.rating || 5), 0) / reviews.length;
     avgRow.style.display = 'flex';
@@ -3584,19 +3586,20 @@ async function submitReview() {
   try {
     const res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${encodeURIComponent(currentProduct.id)}.json`), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, rating, comment, date: new Date().toISOString().slice(0,10) })
+      // approved:false — la reseña no se muestra hasta que Tita o Robin la aprueben
+      // desde el panel. Las reglas de Firebase exigen este valor al crear, así que
+      // nadie puede auto-aprobarse mandando la reseña por fuera del sitio.
+      body: JSON.stringify({ name, rating, comment, approved: false, date: new Date().toISOString().slice(0,10) })
     });
     if (!res.ok) throw new Error();
     localStorage.setItem('cacusa-last-review', String(Date.now()));
     document.getElementById('revName').value = '';
     document.getElementById('revComment').value = '';
     setRevRating(5);
-    showToast(__LANG==='en'?'✓ Review submitted! Thank you.':'✓ ¡Reseña enviada! Gracias.');
-    const prev = _reviewSummaries[currentProduct.id] || { avg: 0, count: 0 };
-    const nc = prev.count + 1;
-    _reviewSummaries[currentProduct.id] = { avg: Math.round(((prev.avg * prev.count + rating) / nc)*10)/10, count: nc };
+    showToast(__LANG==='en'?'✓ Review submitted! It will appear once we review it.':'✓ ¡Reseña enviada! Se publica apenas la revisemos.');
+    // No se toca el promedio local: la reseña todavía no está aprobada, así que
+    // mostrarla ya contada daría una calificación que no es la real.
     await loadProductReviews(currentProduct.id);
-    renderProducts();
   } catch(_) {
     showToast(__LANG==='en'?'Could not submit. Try again.':'No se pudo enviar. Intenta de nuevo.');
   }
