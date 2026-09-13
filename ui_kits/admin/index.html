@@ -900,8 +900,6 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const [dragOver, setDragOver] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translateWarn, setTranslateWarn] = useState('');
-  const [tiktokBusy, setTiktokBusy] = useState(false);
-  const [tiktokMsg, setTiktokMsg] = useState('');
   const fileRef = useRef();
   const galleryFileRef = useRef();
   const nameEnRef = useRef();
@@ -959,30 +957,6 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     } catch (e) {
       setGalleryMsg('❌ Error al subir: ' + e.message);
     } finally { setGalleryUploading(false); }
-  };
-
-  const pushToTikTok = async () => {
-    setTiktokBusy(true); setTiktokMsg('');
-    try {
-      const res = await apiCall('tiktok/push-product', {
-        token,
-        product: {
-          id: form.id, name: form.name, name_en: form.name_en,
-          description: form.description, description_en: form.description_en,
-          price: Number(form.price), category: form.category,
-          imageUrl: form.imageUrl, images: form.images || [],
-        }
-      });
-      if (!res.ok) {
-        setTiktokMsg('❌ ' + (res.error || 'No se pudo subir a TikTok'));
-      } else {
-        setTiktokMsg('✅ Subido — quedó como borrador para revisar en TikTok Seller Center');
-        setForm(f => ({ ...f, tiktokStatus: res.status, tiktokProductId: res.tiktokProductId }));
-      }
-    } catch (e) {
-      setTiktokMsg('❌ ' + (e.message || 'Error al conectar con TikTok'));
-    }
-    setTiktokBusy(false);
   };
 
   const loadReviews = async () => {
@@ -1347,22 +1321,6 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
               ))}
             </div>
           </details>
-        )}
-
-        {!isNew && (
-          <div style={{ marginBottom: 16, background: '#FAF7FB', borderRadius: 12, padding: '12px 14px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#7A6880', marginBottom: 6, letterSpacing: '.04em' }}>🎵 TIKTOK SHOP</div>
-            <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>
-              {form.tiktokStatus === 'pending_review'
-                ? `⏳ Subido — en revisión de TikTok${form.tiktokSyncedAt ? ' · ' + new Date(form.tiktokSyncedAt).toLocaleDateString('es-EC') : ''}`
-                : 'Aún no se ha subido a TikTok Shop'}
-            </div>
-            <button onClick={pushToTikTok} disabled={tiktokBusy || uploading}
-              style={{ padding: '9px 16px', background: tiktokBusy ? '#ccc' : '#1A1118', color: 'white', border: 'none', borderRadius: 99, fontSize: 13, fontWeight: 700, cursor: tiktokBusy ? 'wait' : 'pointer' }}>
-              {tiktokBusy ? '⏳ Subiendo…' : (form.tiktokStatus === 'pending_review' ? '🔄 Volver a subir' : '📱 Subir a TikTok Shop')}
-            </button>
-            {tiktokMsg && <div style={{ fontSize: 12, marginTop: 8, color: tiktokMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{tiktokMsg}</div>}
-          </div>
         )}
 
         <div style={{ display: 'flex', gap: 10 }}>
