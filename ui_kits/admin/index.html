@@ -79,7 +79,16 @@ function _fbUrl(base) { return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base;
 // Valores por defecto (se sobreescriben con lo guardado en products.json → config)
 const DEFAULT_CATEGORIES = ['Cadenas', 'Aretes', 'Anillos', 'Hombres', 'Pulseras'];
 const DEFAULT_MATERIALS  = ['Plata 925', 'Baño de oro 18k', 'Acero inoxidable', 'Gold filled'];
-const DEFAULT_SHIPPING   = { freeThreshold: 90, cost: 10 };
+const DEFAULT_SHIPPING   = {
+  freeThreshold: 90, cost: 10,
+  // Días de preparación (personalización) y de tránsito por país — los usa
+  // el generador de la ficha técnica de producto (JSON-LD) para decirle a
+  // Google cuánto tarda el envío. Antes estaban escritos directo en ese
+  // script, sin poder editarse desde acá; ver CLAUDE.md.
+  handlingDaysMin: 5, handlingDaysMax: 10,
+  transitDaysEcMin: 1, transitDaysEcMax: 2,
+  transitDaysUsMin: 2, transitDaysUsMax: 5,
+};
 const DEFAULT_TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
   heroTitle: 'Nuestra Tienda',
@@ -3142,6 +3151,40 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
         </div>
         <div style={{ fontSize: 12, color: '#7A6880', marginTop: 12, background: '#FAF7FB', borderRadius: 10, padding: '10px 12px' }}>
           Vista previa: compras de <strong>${shipping.freeThreshold || 0}</strong> o más → <strong>envío gratis</strong>. Menos de eso → <strong>${Number(shipping.cost || 0).toFixed(2)}</strong> de envío.
+        </div>
+        <div style={{ borderTop: '1px solid #F0EAF3', marginTop: 18, paddingTop: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1118', marginBottom: 2 }}>Tiempos de envío (para Google)</div>
+          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 14 }}>Estos días son los que le decimos a Google en la ficha de cada producto — no afectan el carrito, solo lo que se muestra en resultados de búsqueda. Deben coincidir con lo que dice envios.html.</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={lbl}>Preparación — mínimo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.handlingDaysMin} onChange={e => setShip('handlingDaysMin', e.target.value)} placeholder="5" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Preparación — máximo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.handlingDaysMax} onChange={e => setShip('handlingDaysMax', e.target.value)} placeholder="10" style={inp} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={lbl}>Tránsito Ecuador — mínimo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.transitDaysEcMin} onChange={e => setShip('transitDaysEcMin', e.target.value)} placeholder="1" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Tránsito Ecuador — máximo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.transitDaysEcMax} onChange={e => setShip('transitDaysEcMax', e.target.value)} placeholder="2" style={inp} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <label style={lbl}>Tránsito USA — mínimo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.transitDaysUsMin} onChange={e => setShip('transitDaysUsMin', e.target.value)} placeholder="2" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Tránsito USA — máximo (días)</label>
+              <input type="number" min="0" step="1" value={shipping.transitDaysUsMax} onChange={e => setShip('transitDaysUsMax', e.target.value)} placeholder="5" style={inp} />
+            </div>
+          </div>
         </div>
       </div>
       <div style={{ background: 'white', borderRadius: 16, padding: '20px 22px', boxShadow: '0 1px 6px rgba(0,0,0,.06)' }}>

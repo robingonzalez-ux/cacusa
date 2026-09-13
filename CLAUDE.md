@@ -129,7 +129,10 @@ cuatro cosas, comiteando de vuelta a `main` si hay cambios:
    `en/ui_kits/store/index.html` entre marcadores
    `STATIC_PRODUCT_SCHEMA:START/END`. Antes solo existía vía JavaScript
    (`_injectProductSchema`, solo al abrir un producto) — un bot que no
-   ejecuta JS nunca lo veía.
+   ejecuta JS nunca lo veía. Los días de preparación/tránsito que le dice a
+   Google (`shippingDetails`) salen de `config.shipping` — editable desde el
+   admin, pestaña Envíos ("Tiempos de envío (para Google)") — antes estaban
+   escritos directo en el script, desconectados de `envios.html`.
 2. **URLs de producto en el sitemap** (`.github/scripts/generate_sitemap_products.py`)
    — una URL por producto (ES+EN, hreflang recíproco) entre marcadores
    `STATIC_PRODUCT_URLS:START/END` en `sitemap.xml`.

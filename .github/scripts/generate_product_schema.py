@@ -37,13 +37,21 @@ TARGETS = [
 ]
 
 # Política de envíos/devoluciones — reales, no inventadas (ver envios.html /
-# devoluciones.html). El flat rate sí viene de config.shipping.cost (mismo dato
-# que ya edita el admin); handling/transit/return window no están en ningún
-# config estructurado hoy, así que quedan acá — si cambian en envios.html o
-# devoluciones.html, hay que actualizarlos acá también a mano.
-def build_shipping_details(shipping_cost):
-    rate = {"@type": "MonetaryAmount", "value": f"{float(shipping_cost):.2f}", "currency": "USD"}
-    handling = {"@type": "QuantitativeValue", "minValue": 5, "maxValue": 10, "unitCode": "DAY"}
+# devoluciones.html). Todos los números vienen de config.shipping (mismo bloque
+# que ya edita el admin en la pestaña "Envíos") — antes handling/transit estaban
+# escritos acá directo, desconectados de lo que el sitio dice de verdad; el 14
+# sep se movieron a config para que sea un solo lugar el que hay que actualizar.
+# Los valores por defecto (si config.shipping no trajera algún campo) son los
+# mismos que ya usa el sitio: 5-10 días de preparación, 1-2 de tránsito en
+# Ecuador, 2-5 en Estados Unidos.
+def build_shipping_details(shipping_cfg):
+    rate = {"@type": "MonetaryAmount", "value": f"{float(shipping_cfg.get('cost', 10)):.2f}", "currency": "USD"}
+    handling = {
+        "@type": "QuantitativeValue",
+        "minValue": int(shipping_cfg.get("handlingDaysMin", 5)),
+        "maxValue": int(shipping_cfg.get("handlingDaysMax", 10)),
+        "unitCode": "DAY",
+    }
     return [
         {
             "@type": "OfferShippingDetails",
@@ -52,7 +60,12 @@ def build_shipping_details(shipping_cost):
             "deliveryTime": {
                 "@type": "ShippingDeliveryTime",
                 "handlingTime": handling,
-                "transitTime": {"@type": "QuantitativeValue", "minValue": 0, "maxValue": 2, "unitCode": "DAY"},
+                "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": int(shipping_cfg.get("transitDaysEcMin", 1)),
+                    "maxValue": int(shipping_cfg.get("transitDaysEcMax", 2)),
+                    "unitCode": "DAY",
+                },
             },
         },
         {
@@ -62,7 +75,12 @@ def build_shipping_details(shipping_cost):
             "deliveryTime": {
                 "@type": "ShippingDeliveryTime",
                 "handlingTime": handling,
-                "transitTime": {"@type": "QuantitativeValue", "minValue": 2, "maxValue": 5, "unitCode": "DAY"},
+                "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": int(shipping_cfg.get("transitDaysUsMin", 2)),
+                    "maxValue": int(shipping_cfg.get("transitDaysUsMax", 5)),
+                    "unitCode": "DAY",
+                },
             },
         },
     ]
@@ -253,8 +271,8 @@ def inject(path: Path, block: str) -> bool:
 def main():
     data = json.loads(PRODUCTS_JSON.read_text(encoding="utf-8"))
     products = data.get("products", [])
-    shipping_cost = data.get("config", {}).get("shipping", {}).get("cost", 10)
-    shipping_details = build_shipping_details(shipping_cost)
+    shipping_cfg = data.get("config", {}).get("shipping", {})
+    shipping_details = build_shipping_details(shipping_cfg)
     reviews_by_product = fetch_reviews_by_product()
     changed_any = False
     for target in TARGETS:

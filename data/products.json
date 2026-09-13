@@ -26,7 +26,13 @@
     ],
     "shipping": {
       "freeThreshold": 90,
-      "cost": 10
+      "cost": 10,
+      "handlingDaysMin": 5,
+      "handlingDaysMax": 10,
+      "transitDaysEcMin": 1,
+      "transitDaysEcMax": 2,
+      "transitDaysUsMin": 2,
+      "transitDaysUsMax": 5
     },
     "texts": {
       "heroLabel": "Joyería artesanal personalizada",
