@@ -50,6 +50,7 @@
  *   DELETE /admin/lovers/{id}           → elimina una suscriptora
  *   PUT    /admin/lovers-photos         → guarda las fotos destacadas de la página pública
  *   DELETE /admin/reviews/{productId}/{reviewId} → elimina una reseña de producto
+ *   POST   /admin/reviews/{productId}/{reviewId}/approve → publica una reseña pendiente
  *   Todas las rutas /admin/* se autentican con el header X-Admin-Key, que lleva el token de
  *   sesión del panel admin (no la firma de Square, y ya no una clave fija).
  *
@@ -435,6 +436,28 @@ export default {
         }
 
         return adminJson({ error: 'Method not allowed' }, 405);
+      }
+
+      // POST /admin/reviews/{productId}/{reviewId}/approve — publicar una reseña
+      // Desde la auditoría del 13 sep, las reseñas nuevas nacen con approved:false y no
+      // se muestran en la tienda ni cuentan para el promedio de estrellas que se publica
+      // en la ficha que lee Google. Esta ruta es la que las hace visibles. Va antes del
+      // match de DELETE porque su path tiene un segmento más.
+      const revApprove = url.pathname.match(/^\/admin\/reviews\/([^/]+)\/([^/]+)\/approve$/);
+      if (revApprove) {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        const productId = decodeURIComponent(revApprove[1]);
+        const reviewId = decodeURIComponent(revApprove[2]);
+        const r = await fetch(`${dbUrl}/cacusa_reviews/${productId}/${reviewId}.json?auth=${fbAuth}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approved: true }),
+        });
+        if (!r.ok) {
+          const errText = await r.text().catch(() => r.status);
+          return adminJson({ error: 'No se pudo aprobar la reseña', detail: errText }, 502);
+        }
+        return adminJson({ ok: true }, 200);
       }
 
       // DELETE /admin/reviews/{productId}/{reviewId} — moderar una reseña
