@@ -1028,7 +1028,7 @@ Precious, they make your hand look feminine and delicate</li>
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
-        <label class="modal-label"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
+        <label class="modal-label" for="modalPersonText"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
         <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…" maxlength="20">
         <div class="modal-hint"><span class="t-es">Máx. 20 caracteres · letras, números y espacios</span><span class="t-en">Max. 20 characters · letters, numbers and spaces</span></div>
       </div>
@@ -1077,8 +1077,8 @@ Precious, they make your hand look feminine and delicate</li>
             <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="4 stars" tabindex="-1" onclick="setRevRating(4)">★</button>
             <button type="button" class="sp-star lit" role="radio" aria-checked="true" aria-label="5 stars" tabindex="0" onclick="setRevRating(5)">★</button>
           </div>
-          <input class="rev-inp" id="revName" maxlength="40" placeholder="Tu nombre / Your name">
-          <textarea class="rev-inp rev-ta" id="revComment" maxlength="300" placeholder="Tu opinión… / Your review…"></textarea>
+          <input class="rev-inp" id="revName" maxlength="40" placeholder="Tu nombre / Your name" aria-label="Tu nombre / Your name">
+          <textarea class="rev-inp rev-ta" id="revComment" maxlength="300" placeholder="Tu opinión… / Your review…" aria-label="Tu opinión / Your review"></textarea>
           <button class="rev-submit" id="revSubmitBtn" onclick="submitReview()"><span class="t-es">Enviar</span><span class="t-en">Submit</span></button>
         </div>
       </div>
@@ -1150,10 +1150,10 @@ Precious, they make your hand look feminine and delicate</li>
         <div class="co-step active" id="coStep1">
         <div class="co-section"><span class="t-es">Información de contacto</span><span class="t-en">Contact Information</span></div>
         <div class="co-row">
-          <div class="co-field"><label class="co-label" for="coNombre"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre" maxlength="40"></div>
+          <div class="co-field"><label class="co-label" for="coNombre"><span class="t-es">Nombre</span><span class="t-en">First Name</span></label><input class="co-input" placeholder="Nombre" id="coNombre" maxlength="40" required aria-required="true"></div>
           <div class="co-field"><label class="co-label" for="coApellido"><span class="t-es">Apellido</span><span class="t-en">Last Name</span></label><input class="co-input" placeholder="Apellido" id="coApellido" maxlength="40"></div>
         </div>
-        <div class="co-field"><label class="co-label" for="coTel"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" placeholder="09X XXX XXXX" maxlength="20"></div>
+        <div class="co-field"><label class="co-label" for="coTel"><span class="t-es">Número móvil</span><span class="t-en">Mobile Number</span></label><input class="co-input" id="coTel" inputmode="tel" placeholder="09X XXX XXXX" maxlength="20" required aria-required="true"></div>
         <div class="co-field"><label class="co-label" for="coEmail"><span class="t-es">Email (opcional)</span><span class="t-en">Email (optional)</span></label><input class="co-input" id="coEmail" type="email" inputmode="email" placeholder="correo@ejemplo.com" maxlength="80"></div>
 
         <div class="co-section"><span class="t-es">Dirección de envío</span><span class="t-en">Shipping Address</span></div>
@@ -1218,7 +1218,7 @@ Precious, they make your hand look feminine and delicate</li>
         <div class="co-field"><label class="co-label" for="coCiudad"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad" maxlength="50"></div>
         <div class="co-field"><label class="co-label" for="coNotas"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas" maxlength="200"></div>
 
-        <div class="co-error" id="coErrorStep1"></div>
+        <div class="co-error" id="coErrorStep1" role="alert" aria-live="assertive"></div>
         <button class="co-step-next" id="coNextBtn"><span class="t-es">Continuar →</span><span class="t-en">Continue →</span></button>
         </div>
 
@@ -1238,28 +1238,28 @@ Precious, they make your hand look feminine and delicate</li>
         <div class="co-wa-note" id="zelleTrustNote" style="display:none"><span class="t-es">Zelle es tan seguro y trazable como pagar con tarjeta — solo cambia el método de cobro, seguimos confirmando tu pedido igual.</span><span class="t-en">Zelle is just as secure and trackable as paying by card — only the payment method changes, we confirm your order the same way.</span></div>
 
         <div class="gc-wrap">
-          <div style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span></div>
+          <label for="gcCodeInput" style="display:block;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span></label>
           <div class="gc-row">
             <input class="gc-inp" id="gcCodeInput" placeholder="CACUSA-XXXX-XXXX" maxlength="18" autocomplete="off" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()">
             <button class="gc-btn" id="gcApplyBtn" onclick="applyGiftCard()">
               <span class="t-es">Aplicar</span><span class="t-en">Apply</span>
             </button>
           </div>
-          <div class="gc-msg" id="gcMsg"></div>
+          <div class="gc-msg" id="gcMsg" role="status" aria-live="polite"></div>
         </div>
 
         <div class="gc-wrap">
-          <div style="font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Cupón de descuento</span><span class="t-en">Discount coupon</span></div>
+          <label for="cpCodeInput" style="display:block;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Cupón de descuento</span><span class="t-en">Discount coupon</span></label>
           <div class="gc-row">
             <input class="gc-inp" id="cpCodeInput" placeholder="CÓDIGO" maxlength="30" autocomplete="off" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()">
             <button class="gc-btn" id="cpApplyBtn" onclick="applyCoupon()">
               <span class="t-es">Aplicar</span><span class="t-en">Apply</span>
             </button>
           </div>
-          <div class="gc-msg" id="cpMsg"></div>
+          <div class="gc-msg" id="cpMsg" role="status" aria-live="polite"></div>
         </div>
 
-        <div class="co-error" id="coError"></div>
+        <div class="co-error" id="coError" role="alert" aria-live="assertive"></div>
 
         <button class="pay-btn" id="payBtn">
           <div class="spinner"></div>
@@ -1336,7 +1336,7 @@ Precious, they make your hand look feminine and delicate</li>
       <div class="vig-label"><span class="t-es">Oferta exclusiva</span><span class="t-en">Exclusive offer</span></div>
       <div class="vig-title"><span class="t-es">Tu primera joya te espera</span><span class="t-en">Your first piece awaits</span></div>
       <div class="vig-desc"><span class="t-es">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</span><span class="t-en">Subscribe and get 10% off your first purchase. Limited time only.</span></div>
-      <input class="vig-email" id="vigEmail" placeholder="tu@email.com">
+      <input class="vig-email" id="vigEmail" type="email" placeholder="tu@email.com" aria-label="Email">
       <button class="vig-btn" id="vigBtn"><span class="t-es">Quiero mi descuento →</span><span class="t-en">I want my discount →</span></button>
       <div class="vig-skip" id="vigSkip"><span class="t-es">No gracias, prefiero pagar precio completo</span><span class="t-en">No thanks, I'll pay full price</span></div>
     </div>
@@ -2681,11 +2681,11 @@ function isValidPhone(tel) {
 }
 // Resalta el/los campo(s) inválidos del checkout con borde rojo y foco, además del mensaje de error genérico
 function _markCoFieldError(ids, errorEl, msg) {
-  document.querySelectorAll('.co-input').forEach(el => el.style.borderColor = '');
+  document.querySelectorAll('.co-input').forEach(el => { el.style.borderColor = ''; el.removeAttribute('aria-invalid'); });
   let first = null;
   (Array.isArray(ids) ? ids : [ids]).forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.style.borderColor = '#C0336E'; if (!first) first = el; }
+    if (el) { el.style.borderColor = '#C0336E'; el.setAttribute('aria-invalid', 'true'); if (!first) first = el; }
   });
   if (first) first.focus();
   if (errorEl) errorEl.textContent = msg;
