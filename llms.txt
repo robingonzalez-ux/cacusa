@@ -5,9 +5,9 @@
 
 ## Sobre la marca / About the brand
 
-CACUSA by Taitus fabrica joyas artesanales únicas hechas a mano con plata 925 (plata de ley), baño de oro 18k, gold filled 18k, baño de rodio y acero inoxidable. Cada pieza puede personalizarse con nombres, iniciales, fechas o mensajes especiales — el cliente escribe por WhatsApp qué quiere y cómo lo quiere, y recibe el precio final por ese medio.
+CACUSA by Taitus fabrica joyas artesanales únicas hechas a mano con <!--LLMS:MATERIALS_BRAND_ES-->plata 925 (plata de ley), baño de oro 18k, gold filled 18k, baño de rodio y acero inoxidable<!--/LLMS:MATERIALS_BRAND_ES-->. Cada pieza puede personalizarse con nombres, iniciales, fechas o mensajes especiales — el cliente escribe por WhatsApp qué quiere y cómo lo quiere, y recibe el precio final por ese medio.
 
-CACUSA by Taitus handcrafts unique jewelry in 925 sterling silver, 18k gold plating, 18k gold filled, rhodium plating, and stainless steel. Each piece can be personalized with names, initials, dates, or special messages — the customer messages CACUSA on WhatsApp with what they want and how, and receives the final price there.
+CACUSA by Taitus handcrafts unique jewelry in <!--LLMS:MATERIALS_BRAND_EN-->925 sterling silver, 18k gold plating, 18k gold filled, rhodium plating, and stainless steel<!--/LLMS:MATERIALS_BRAND_EN-->. Each piece can be personalized with names, initials, dates, or special messages — the customer messages CACUSA on WhatsApp with what they want and how, and receives the final price there.
 
 ## Productos / Products
 
@@ -19,25 +19,30 @@ CACUSA by Taitus handcrafts unique jewelry in 925 sterling silver, 18k gold plat
 
 ## Materiales / Materials
 
+<!--LLMS:MATERIALS_LIST-->
 - Plata 925 (plata de ley genuina) / 925 sterling silver (genuine solid silver)
 - Baño de oro 18k / 18k gold plating
-- Gold filled 18k (más grueso y duradero que el baño de oro) / 18k gold
-  filled (thicker and more durable than gold plating)
+- Gold filled 18k (más grueso y duradero que el baño de oro) / 18k gold filled (thicker and more durable than gold plating)
 - Baño de rodio / Rhodium plating
 - Acero inoxidable hipoalergénico / Hypoallergenic stainless steel
+<!--/LLMS:MATERIALS_LIST-->
 
 ## Precios / Pricing
 
+<!--LLMS:PRICE_RANGE-->
 Desde $20 hasta aproximadamente $125 USD según la pieza y el material.
 From $20 to approximately $125 USD depending on the piece and material.
+<!--/LLMS:PRICE_RANGE-->
 
 ## Envíos / Shipping
 
 - Ecuador: envío a domicilio en todo el país / nationwide delivery
 - Estados Unidos / United States: envío a todos los estados / all states
+<!--LLMS:SHIPPING_FREE-->
 - Envío gratis en compras desde $90 USD; por debajo de ese monto el envío
   cuesta $10 USD / Free shipping on orders from $90 USD; below that,
   shipping costs $10 USD
+<!--/LLMS:SHIPPING_FREE-->
 
 ## Métodos de pago / Payment methods
 
@@ -57,8 +62,8 @@ Personalized orders take 5 to 10 business days to make, plus shipping time.
 
 Cacusa Lovers es un club de suscripción mensual: cada mes se envían 2 joyas en
 acero inoxidable de alta calidad, seleccionadas por Cacusa, directamente a la
-puerta del cliente. Plan mensual: $19.99/mes. Plan anual: $219.89/año (8% de
-descuento vs. pagar mes a mes), con acceso VIP 48h antes que el plan mensual.
+puerta del cliente. <!--LLMS:LOVERS_PRICE_ES-->Plan mensual: $19.99/mes. Plan anual: $219.89/año (8% de
+descuento vs. pagar mes a mes)<!--/LLMS:LOVERS_PRICE_ES-->, con acceso VIP 48h antes que el plan mensual.
 Envíos a Ecuador y Estados Unidos. Las suscriptoras activas pueden referir
 amigas: la amiga referida recibe 10% de descuento en su primera compra en la
 tienda.
@@ -67,8 +72,8 @@ tienda.
 
 Cacusa Lovers is a monthly subscription club: every month, 2 high-quality
 stainless steel jewelry pieces, hand-picked by Cacusa, are shipped straight to
-the customer's door. Monthly plan: $19.99/month. Annual plan: $219.89/year
-(8% off vs. paying month to month), with VIP early access 48h before the
+the customer's door. <!--LLMS:LOVERS_PRICE_EN-->Monthly plan: $19.99/month. Annual plan: $219.89/year
+(8% off vs. paying month to month)<!--/LLMS:LOVERS_PRICE_EN-->, with VIP early access 48h before the
 monthly plan. Ships to Ecuador and the United States. Active subscribers can
 refer friends: the referred friend gets 10% off her first purchase in the
 store.
@@ -148,14 +153,14 @@ Chains, Earrings, Rings, Men, Bracelets, Ear cuff, Couples, Sets, Hand chain.
 **¿Envían a USA?** Sí, enviamos a todos los estados de Estados Unidos.
 **Do you ship to the USA?** Yes, we ship to all US states.
 
-**¿Los materiales son hipoalergénicos?** Sí, trabajamos con plata 925, baño de oro 18k, gold filled 18k, baño de rodio y acero inoxidable, todos hipoalergénicos.
-**Are the materials hypoallergenic?** Yes, we use 925 silver, 18k gold plating, 18k gold filled, rhodium plating, and stainless steel — all hypoallergenic.
+**¿Los materiales son hipoalergénicos?** Sí, trabajamos con <!--LLMS:MATERIALS_FAQ_ES-->plata 925, baño de oro 18k, gold filled 18k, baño de rodio y acero inoxidable<!--/LLMS:MATERIALS_FAQ_ES-->, todos hipoalergénicos.
+**Are the materials hypoallergenic?** Yes, we use <!--LLMS:MATERIALS_FAQ_EN-->925 silver, 18k gold plating, 18k gold filled, rhodium plating, and stainless steel<!--/LLMS:MATERIALS_FAQ_EN--> — all hypoallergenic.
 
-**¿Cuánto cuesta?** Los precios van de $20 a $125 USD aproximadamente.
-**How much does it cost?** Prices range from approximately $20 to $125 USD.
+**¿Cuánto cuesta?** Los precios van de <!--LLMS:PRICE_FAQ_ES-->$20 a $125<!--/LLMS:PRICE_FAQ_ES--> USD aproximadamente.
+**How much does it cost?** Prices range from approximately <!--LLMS:PRICE_FAQ_EN-->$20 to $125<!--/LLMS:PRICE_FAQ_EN--> USD.
 
 **¿Puedo devolver una pieza si cambio de opinión?** No — solo se aceptan devoluciones por defecto de fábrica, dentro de las 48 horas siguientes a la entrega.
 **Can I return a piece if I change my mind?** No — returns are accepted only for factory defects, within 48 hours of delivery.
 
-**¿Cuánto cuesta el envío?** Gratis en compras desde $90 USD; por debajo de ese monto cuesta $10 USD.
-**How much is shipping?** Free on orders from $90 USD; below that, it costs $10 USD.
+**¿Cuánto cuesta el envío?** <!--LLMS:SHIPPING_FAQ_ES-->Gratis en compras desde $90 USD; por debajo de ese monto cuesta $10 USD.<!--/LLMS:SHIPPING_FAQ_ES-->
+**How much is shipping?** <!--LLMS:SHIPPING_FAQ_EN-->Free on orders from $90 USD; below that, it costs $10 USD.<!--/LLMS:SHIPPING_FAQ_EN-->
