@@ -1729,6 +1729,11 @@ let _galleryImages = [], _galleryIdx = 0;
 let _lbImages = [], _lbIdx = 0;
 let _gcCode = null, _gcBalance = 0, _gcApplied = 0;
 let _cpCode = null, _cpType = null, _cpAmount = 0, _cpDiscount = 0;
+// Cupón de envío gratis — beneficio de las suscriptoras de Cacusa Lovers. No descuenta
+// dinero del subtotal (su amount es 0): lo único que hace es anular el costo de envío.
+// El Worker de Square hace exactamente lo mismo del lado del servidor, que es quien
+// decide el cobro real; acá solo se refleja para que el resumen muestre el mismo total.
+function _cpIsFreeShip(){ return !!_cpCode && _cpType === 'freeship'; }
 let _revRating = 5;
 
 // ─── LOAD DATA ──────────────────────────────────────────────
@@ -2451,7 +2456,7 @@ function updateCartUI() {
         </div>
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
-    const free = total >= SHIPPING.freeThreshold;
+    const free = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
     const _cL = localStorage.getItem('cacusa-lang') || 'es';
     document.getElementById('cartShipping').textContent = free
       ? t('store.shippingFree', '¡Envío gratis desbloqueado!')
@@ -2639,7 +2644,7 @@ function renderCheckoutSummary() {
   }
   const adjustedSubtotal = subtotal - zelleDiscount;
 
-  const free       = adjustedSubtotal >= SHIPPING.freeThreshold;
+  const free       = _cpIsFreeShip() || adjustedSubtotal >= SHIPPING.freeThreshold;
   const shippingCost = free ? 0 : SHIPPING.cost;
   const pais       = (document.getElementById('coPais').value || '').toUpperCase();
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
@@ -2663,7 +2668,8 @@ function renderCheckoutSummary() {
   _gcApplied = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
   const afterGc = totalFinal - _gcApplied;
   if (_cpCode && _cpType) {
-    _cpDiscount = _cpType === 'percent'
+    _cpDiscount = _cpIsFreeShip() ? 0
+      : _cpType === 'percent'
       ? parseFloat((afterGc * _cpAmount / 100).toFixed(2))
       : parseFloat(Math.min(_cpAmount, afterGc).toFixed(2));
   } else {
@@ -2834,7 +2840,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const apto      = document.getElementById('coApto').value.trim();
   const notas     = document.getElementById('coNotas').value.trim();
   const zelleSubtotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price) * (i.qty || 1), 0);
-  const free          = zelleSubtotal >= SHIPPING.freeThreshold;
+  const free          = _cpIsFreeShip() || zelleSubtotal >= SHIPPING.freeThreshold;
   const shippingCost  = free ? 0 : SHIPPING.cost;
   let zelleTax = 0;
   if (paisVal === 'EC') {
@@ -2847,7 +2853,7 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
   const zelleGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
   const afterZelleGc = totalFinal - zelleGcDiscount;
   const zelleCpDiscount = (_cpCode && _cpType)
-    ? parseFloat((_cpType==='percent' ? afterZelleGc*_cpAmount/100 : Math.min(_cpAmount, afterZelleGc)).toFixed(2))
+    ? (_cpIsFreeShip() ? 0 : parseFloat((_cpType==='percent' ? afterZelleGc*_cpAmount/100 : Math.min(_cpAmount, afterZelleGc)).toFixed(2)))
     : 0;
   const totalConGC = parseFloat((afterZelleGc - zelleCpDiscount).toFixed(2));
 
@@ -2925,12 +2931,12 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   };
 
   const _subtotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-  const _shippingCost = _subtotal >= SHIPPING.freeThreshold ? 0 : SHIPPING.cost;
+  const _shippingCost = (_cpIsFreeShip() || _subtotal >= SHIPPING.freeThreshold) ? 0 : SHIPPING.cost;
   const _sqBase = _subtotal + _shippingCost;
   const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _sqBase).toFixed(2)) : 0;
   const _sqAfterGc = _sqBase - _sqGcDiscount;
   const _sqCpDiscount = (_cpCode && _cpType)
-    ? parseFloat((_cpType==='percent' ? _sqAfterGc*_cpAmount/100 : Math.min(_cpAmount, _sqAfterGc)).toFixed(2))
+    ? (_cpIsFreeShip() ? 0 : parseFloat((_cpType==='percent' ? _sqAfterGc*_cpAmount/100 : Math.min(_cpAmount, _sqAfterGc)).toFixed(2)))
     : 0;
 
   try {
@@ -2992,7 +2998,7 @@ function buildWhatsAppUrl() {
 
   // Use base price for Zelle (no surcharge), full price for Square
   const total    = cart.reduce((s, i) => s + (isZelle && i.hasSurcharge ? i.basePrice : i.price) * (i.qty || 1), 0);
-  const free     = total >= SHIPPING.freeThreshold;
+  const free     = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
   const envio    = free ? (_waEN ? 'Free' : 'Gratis') : '$' + SHIPPING.cost.toFixed(2);
   const _waShip  = free ? 0 : SHIPPING.cost;
   // Impuesto — misma lógica que renderCheckoutSummary para que el mensaje cuadre con el resumen
@@ -3043,7 +3049,7 @@ function buildWhatsAppUrl() {
   }
   const _waAfterGc = totalFinal - _waGc;
   const _waCp = (_cpCode && _cpType)
-    ? parseFloat((_cpType === 'percent' ? _waAfterGc * _cpAmount / 100 : Math.min(_cpAmount, _waAfterGc)).toFixed(2))
+    ? (_cpIsFreeShip() ? 0 : parseFloat((_cpType === 'percent' ? _waAfterGc * _cpAmount / 100 : Math.min(_cpAmount, _waAfterGc)).toFixed(2)))
     : 0;
   if (_waCp > 0) {
     msg += (_waEN ? '\n*Coupon (' + _cpCode + '):* -$' : '\n*Cupón (' + _cpCode + '):* -$') + _waCp.toFixed(2);
@@ -3098,7 +3104,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const apto       = document.getElementById('coApto').value.trim();
   const notas      = document.getElementById('coNotas').value.trim();
   const total      = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-  const free       = total >= SHIPPING.freeThreshold;
+  const free       = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
   const waShip     = free ? 0 : SHIPPING.cost;
   // Impuesto — misma lógica que renderCheckoutSummary (el total registrado debe cuadrar con lo que vio el cliente)
   const waEstadoV  = (document.getElementById('coEstado').value || '').toUpperCase();
@@ -3114,7 +3120,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
   const waGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, totalFinal).toFixed(2)) : 0;
   const afterWaGc = totalFinal - waGcDiscount;
   const waCpDiscount = (_cpCode && _cpType)
-    ? parseFloat((_cpType==='percent' ? afterWaGc*_cpAmount/100 : Math.min(_cpAmount, afterWaGc)).toFixed(2))
+    ? (_cpIsFreeShip() ? 0 : parseFloat((_cpType==='percent' ? afterWaGc*_cpAmount/100 : Math.min(_cpAmount, afterWaGc)).toFixed(2)))
     : 0;
   const totalConGC   = parseFloat((afterWaGc - waCpDiscount).toFixed(2));
   _currentOrderNum = generateOrderNum();
@@ -3652,7 +3658,8 @@ async function applyCoupon() {
     }
     _cpCode=data.code; _cpType=data.type; _cpAmount=data.amount;
     renderCheckoutSummary();
-    const disc = _cpType==='percent' ? `${_cpAmount}% OFF` : `$${_cpAmount.toFixed(2)} OFF`;
+    const disc = _cpIsFreeShip() ? (__LANG==='en' ? 'FREE SHIPPING' : 'ENVÍO GRATIS')
+      : _cpType==='percent' ? `${_cpAmount}% OFF` : `$${_cpAmount.toFixed(2)} OFF`;
     msgEl.className='gc-msg ok';
     msgEl.textContent=(__LANG==='en' ? `✓ Applied: ${disc}` : `✓ Aplicado: ${disc} — confirma el uso desde el admin después de recibir el pago`);
   } catch(_) {

@@ -719,17 +719,22 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="referral">
   <div class="container">
     <div class="referral-card reveal">
-      <div class="section-label">Share the love</div>
-      <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Invite a <em>friend</em></h2>
-      <p class="referral-desc">Exclusive to active club subscribers. Enter your name and the WhatsApp number you subscribed with, and we'll give you your code to share — your friend gets 10% off her first purchase in the store.</p>
+      <div class="section-label">Club benefits</div>
+      <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Your <em>codes</em></h2>
+      <p class="referral-desc">Exclusive to active club subscribers. Enter your name and the WhatsApp number you subscribed with, and we'll give you both of your codes: your <strong>free shipping</strong> code for the store, and one to share — your friend gets 10% off her first purchase.</p>
       <div class="referral-form" id="referralForm">
         <input class="sub-input" id="refName" type="text" placeholder="Your name" autocomplete="given-name">
         <input class="sub-input" id="refPhone" type="tel" placeholder="Your WhatsApp (+1 000 000 0000)" autocomplete="tel">
-        <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Get my code →</button>
+        <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Get my codes →</button>
         <div class="referral-msg" id="refMsg" role="alert" aria-live="assertive"></div>
       </div>
       <div class="referral-result" id="referralResult">
-        <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your code</div>
+        <div id="shipCodeWrap" style="display:none;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--ink-light)">
+          <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Your free shipping</div>
+          <div class="referral-code" id="shipCode">—</div>
+          <div style="font-family:var(--fe);font-size:13.5px;font-style:italic;color:var(--ink-muted);margin-top:6px">Enter it in the coupon field at checkout, on every store purchase.</div>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">For your friend</div>
         <div class="referral-code" id="refCode">—</div>
         <a class="btn-join" id="refShareBtn" href="#" target="_blank" rel="noopener" style="margin-top:16px">Share on WhatsApp →</a>
       </div>
@@ -1279,6 +1284,20 @@ async function getReferralCode() {
     const data = await r.json().catch(() => ({}));
     if (r.ok && data.ok) {
       document.getElementById('refCode').textContent = data.code;
+      // Same phone, already verified as an active subscriber: we also ask for her
+      // personal free-shipping code. If this one fails, the referral code still
+      // shows — we do not want to lose the result over a secondary benefit.
+      try {
+        const rs = await fetch(ADMIN_WORKER_URL + '/lovers/shipping-code', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone })
+        });
+        const ds = await rs.json().catch(() => ({}));
+        if (rs.ok && ds.ok && ds.code) {
+          document.getElementById('shipCode').textContent = ds.code;
+          document.getElementById('shipCodeWrap').style.display = 'block';
+        }
+      } catch (_) {}
       const shareMsg = `Hi! Here's my code *${data.code}* for 10% off your first purchase at CACUSA by Taitus ✦ https://cacusabytaitus.com/en/ui_kits/store/`;
       document.getElementById('refShareBtn').href = 'https://wa.me/?text=' + encodeURIComponent(shareMsg);
       document.getElementById('referralForm').style.display = 'none';
