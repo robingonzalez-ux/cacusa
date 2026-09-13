@@ -41,7 +41,7 @@
       ]
     },
     "texts_en": {
-      "heroLabel": "Artisanal personalized jewelry",
+      "heroLabel": "Handcrafted, personalized jewelry",
       "heroTitle": "Our Store",
       "heroSubtitle": "by Taitus",
       "instagram": "@cacusabytaitus",
@@ -157,7 +157,7 @@
       "stats": [
         {
           "num": "650",
-          "label": "Parts Created"
+          "label": "Pieces Made"
         },
         {
           "num": "5",
@@ -165,7 +165,7 @@
         },
         {
           "num": "100",
-          "label": "Artisanal"
+          "label": "% Handmade"
         }
       ],
       "person": {
@@ -220,7 +220,7 @@
         }
       ],
       "footer": {
-        "tagline": "we created to make you look more beautiful than you already are",
+        "tagline": "made to help you look even more beautiful than you already are",
         "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
       }
     },
@@ -337,112 +337,112 @@
     "lovers_en": {
       "monthlyPrice": 19.99,
       "annualPrice": 219.89,
-      "heroBadge": "Exclusive Subscription ✦ Club",
-      "heroDesc": "Each month you will receive 2 stainless steel jewels - they do not rust, they do not turn black - hand-selected directly at your door: pieces whose combined value in the store usually exceeds $60, for an always renewed outfit at an affordable price.",
-      "whatDesc": "A monthly membership designed for women who love high quality jewelry and want to experience that thrill of receiving a special piece, every month, without looking for it.",
+      "heroBadge": "Exclusive Subscription Club",
+      "heroDesc": "Every month you'll receive 2 stainless steel pieces — they won't rust or tarnish — hand-picked and delivered straight to your door: pieces whose combined store value often tops $60, for an always-fresh outfit at an accessible price.",
+      "whatDesc": "A monthly membership designed for women who love high-quality jewelry and want to feel the excitement of receiving a special piece every month, without having to look for it.",
       "whatItems": [
         {
           "title": "Jewelry chosen for you",
-          "desc": "Every month we select 2 pieces in stainless steel for you: they do not rust, they do not turn black and they are yours forever."
+          "desc": "Every month we select 2 stainless steel pieces for you: they won't rust, won't tarnish, and are yours to keep forever."
         },
         {
-          "title": "Directly to your door",
+          "title": "Straight to your door",
           "desc": "Home delivery included in Ecuador and the United States. Without leaving home."
         },
         {
-          "title": "Subscriber Exclusive Parts",
-          "desc": "Designs that are not sold in-store. Only for Cacusa Lovers."
+          "title": "Exclusive subscriber pieces",
+          "desc": "Designs not sold in the store. Only for Cacusa Lovers."
         }
       ],
       "planFeatures": [
-        "2 hand-selected stainless steel jewels",
+        "2 stainless steel jewelry pieces hand-picked",
         "Home delivery included — Ecuador and USA",
-        "Free shipping on all your in-store purchases",
+        "Free shipping on all your store purchases",
         "Exclusive discount coupons",
         "Early access to new collections"
       ],
-      "planFeatureAnnualExtra": "Early VIP access — 48h earlier than monthly plan",
+      "planFeatureAnnualExtra": "VIP early access — 48h before the monthly plan",
       "howSteps": [
         {
           "title": "Choose your plan and sign up",
-          "desc": "Choose the plan that best suits you — monthly or yearly — and enter your shipping details. All in seconds."
+          "desc": "Pick the plan that suits you best — monthly or annual — and enter your shipping details. All in seconds."
         },
         {
           "title": "We choose your box",
-          "desc": "Every month we hand-select your pieces with you in mind — surprise guaranteed, quality assured."
+          "desc": "Every month we hand-pick your pieces with you in mind — guaranteed surprise, guaranteed quality."
         },
         {
-          "title": "Arrive at your door",
-          "desc": "Your selected jewelry box comes straight to your door, every month, as a gift you deserve."
+          "title": "Arrives at your door",
+          "desc": "Your selected jewelry box arrives straight to your home, every month, like a gift you deserve."
         }
       ],
       "conditions": [
         {
-          "title": "Recurring monthly",
-          "desc": "Charging is done automatically every month, the same day you joined. The charge will appear on your statement as CACUSA by Taitus."
+          "title": "Recurring monthly payment",
+          "desc": "The charge is processed automatically every month, on the same day you subscribed. The charge will appear on your statement as CACUSA by Taitus."
         },
         {
           "title": "Shipping after payment confirmation",
-          "desc": "Shipments are made during the third week of each month, once payment is confirmed. Delivery time is 5-15 business days depending on the destination country. If you haven't received your box in the first few days of the month, it's not a delay — the shipments haven't left yet."
+          "desc": "Shipments go out during the third week of each month, once payment is confirmed. Delivery time is 5 to 15 business days depending on the destination country. If you haven't received your box in the first few days of the month, it isn't a delay — shipments simply haven't gone out yet."
         },
         {
-          "title": "No refunds",
-          "desc": "No returns or refunds are accepted in this subscription mode. Each piece is selected and sent especially for you with dedication. Exception: If your part arrives with a manufacturing defect, please report it with photos within the first 48 hours and we will replace it free of charge."
+          "title": "No returns",
+          "desc": "Returns and refunds are not accepted under this subscription model. Each piece is selected and shipped especially for you with care. Exception: if your piece arrives with a manufacturing defect, report it with photos within the first 48 hours and we'll replace it at no cost."
         },
         {
-          "title": "Random selection BY CACUSA",
-          "desc": "Jewelry is randomly selected by the CACUSA team. Surprise and careful selection are part of the club experience."
+          "title": "Random selection by CACUSA",
+          "desc": "Jewelry is randomly selected by the CACUSA team. The surprise and the careful selection are part of the club experience."
         },
         {
-          "title": "Included Part Types",
-          "desc": "The 2 monthly pieces can be earrings, rings, bracelets or necklaces — made of stainless steel: they do not rust, do not turn black and maintain their shine over time."
+          "title": "Types of pieces included",
+          "desc": "The 2 monthly pieces can be earrings, rings, bracelets or necklaces — made of stainless steel: it doesn't rust, doesn't tarnish, and keeps its shine over time."
         },
         {
-          "title": "No change for store items",
-          "desc": "Membership jewelry cannot be redeemed or exchanged for items available in the online store. They are exclusive pieces of the club."
+          "title": "No exchanges for store items",
+          "desc": "Subscription jewelry cannot be exchanged or swapped for items available in the online store. These are exclusive club pieces."
         },
         {
-          "title": "Cancellation Policy",
-          "desc": "You can cancel your subscription anytime directly from the \"Manage subscription\" link Square sends you by email when each payment is confirmed — no need to write to us or wait for a reply. Cancellation takes effect starting the next billing cycle: if this month's or year's charge has already been processed, your subscription stays active and you'll receive the box for that period — we do not offer refunds on charges already processed. For the cancellation to apply before your next charge, cancel at least 5 days ahead of your renewal date. If you have trouble finding the link, message us on WhatsApp or at facturacioncacusa@gmail.com and we'll help you."
+          "title": "Cancellation policy",
+          "desc": "You can cancel your subscription anytime directly from the \"Manage subscription\" link that Square emails you when each payment is confirmed — no need to write to us or wait for a reply. Cancellation takes effect starting the next billing cycle: if the current month's or year's charge has already been processed, your subscription remains active and you'll receive the box for that period — we don't offer refunds on charges already processed. For cancellation to apply before your next charge, do it at least 5 days before your renewal date. If you have trouble finding the link, message us on WhatsApp or at facturacioncacusa@gmail.com and we'll help you."
         },
         {
-          "title": "Payment Failed",
-          "desc": "If your payment doesn't process successfully, Square will automatically retry the payout. While the payment is pending, the month's shipment will be suspended until the situation is regularized."
+          "title": "Failed payment",
+          "desc": "If your payment isn't processed successfully, Square will automatically try to charge again. While payment is pending, that month's shipment will be put on hold until the situation is resolved."
         },
         {
-          "title": "Price Changes",
-          "desc": "Any change in the subscription price will be communicated at least 30 days in advance through the registered email. You have the right to cancel without charge if you disagree with the new price."
+          "title": "Price changes",
+          "desc": "Any change to the subscription price will be communicated at least 30 days in advance via your registered email. You have the right to cancel at no charge if you disagree with the new price."
         },
         {
           "title": "Personal data",
-          "desc": "Your shipping information (name, address, phone) is used exclusively to manage the delivery of your jewelry. We do not share your data with third parties. Payment processing is done securely by Square."
+          "desc": "Your shipping information (name, address, phone) is used exclusively to manage delivery of your jewelry. We do not share your data with third parties. Payment processing is handled securely by Square."
         }
       ],
       "shippingNotice": {
         "title": "Important about shipping times",
-        "text": "Subscriptions are sent all together during the third week of the month. This is different than a regular store order. If you join in the middle of the month, your first box will come out in the third week of the following month. If you haven't received your box in the first few days of the month, it's not a delay — it's just not time for monthly shipping yet."
+        "text": "Subscriptions all ship together during the third week of the month. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment."
       },
       "faq": [
         {
           "q": "When will I receive my first box?",
-          "a": "Your first box is shipped within the first 5 business days after your subscription. Starting in the second month, shipments go out during the third week of the month, along with all subscriptions."
+          "a": "Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions."
         },
         {
           "q": "Can I choose the jewelry I receive?",
-          "a": "No — surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you will receive, always taking care of variety and quality, without you having to choose anything."
+          "a": "No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."
         },
         {
-          "q": "Do they ship to the entire Republic of Ecuador and USA?",
-          "a": "Yes. Shipping is included in the membership price for both Ecuador and the United States, at no additional cost."
+          "q": "Do you ship throughout Ecuador and the USA?",
+          "a": "Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost."
         },
         {
-          "q": "What is the monthly payment like?",
-          "a": "Charging is done automatically every month with your card through Square, our secure payment processor. Square sends you an email receipt after each payout."
+          "q": "How does the monthly payment work?",
+          "a": "You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge."
         }
       ],
       "ctaScript": "Ready to join?",
-      "ctaHeading": "Your jewel this month is waiting for you",
-      "ctaSub": "we created to make you look more beautiful than you already are"
+      "ctaHeading": "This month's jewel is waiting for you",
+      "ctaSub": "Made to help you shine even more beautiful than you already are"
     },
     "pages": {
       "envios": {
@@ -469,7 +469,7 @@
     },
     "pages_en": {
       "envios": {
-        "intro": "Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here we explain how, when and how much it costs to receive your jewelry.",
+        "intro": "Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here's what you need to know about shipping times, methods and costs.",
         "servientregaSameCityRate": "from $3.50",
         "servientregaOtherCityRate": "$5.25 – $6.30",
         "servientregaNote": "Same-day delivery if dispatched early within the same city; 1–2 business days to other cities. Saturday shipments are delivered on Monday.",
@@ -478,12 +478,12 @@
       },
       "devoluciones": {
         "intro": "At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized just for you. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.",
-        "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Being unique to each person, they cannot be resold or returned to inventory, so all sales are final.",
+        "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Because each one is unique to the person who ordered it, it cannot be resold or returned to inventory, so all sales are final.",
         "secAntesBody": "We ask you to carefully review all the details before confirming your purchase. If you have any questions, message us on WhatsApp and we'll be glad to advise you.",
         "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost."
       },
       "cuidados": {
-        "intro": "Thank you for your purchase and for supporting Ecuadorian entrepreneurship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
+        "intro": "Thank you for your purchase and for supporting Ecuadorian craftsmanship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
         "sec1Body": "Don't shower, swim or wash dishes while wearing your jewelry. Constant moisture and the chlorine or salt in water dull the plating and weaken the clasps and joints over time. Take it off before showering or going to the pool or sea.",
         "sec2Body": "Avoid direct contact with perfumes, creams, alcohol, lotions and sunscreen. These products contain chemicals that react with the material and speed up tarnishing or color change.",
         "sec3Body": "When not wearing it, store it in its original packaging or in an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.",
@@ -898,7 +898,7 @@
       "color": "rose",
       "tag": null,
       "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
-      "description_en": "It comes into play with tree of life earrings. Stylish carved clip chain with a special clasp and 18k gold plated micro-zircon charm. Tree of Life",
+      "description_en": "Pairs perfectly with our Tree of Life earrings. An elegant carved clip chain with a special clasp and an 18k gold-plated micro zircon Tree of Life charm.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783808978000_134185ba_5433_47d1_a796_ef0f9d2cdac0_jpe.webp",
@@ -946,7 +946,7 @@
       "color": "rose",
       "tag": null,
       "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
-      "description_en": "Gold-plated pellet chain accompanied by a charm full of 18k gold-plated microzircons",
+      "description_en": "Gold-plated ball chain paired with a charm full of 18k gold-plated micro zircons.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815452136_d9924ab9_c9f7_487d_9fe7_b8415255d7ee_jpe.webp",
@@ -955,7 +955,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374,
-      "name_en": "Heart charm pellet chain with zircons",
+      "name_en": "Ball Chain with Heart Charm and Zircons",
       "images": [],
       "promo": null
     },
@@ -1168,7 +1168,7 @@
       "color": "rose",
       "tag": null,
       "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
-      "description_en": "Adjustable ring with a circle of microcircles on a mother-of-pearl background and central stone. Elegance and handcrafted detail in each finish.",
+      "description_en": "Adjustable ring with a circle of micro zircons on a mother-of-pearl background and a central stone. Elegant, handcrafted detail in every finish.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815544186_be2921ad_a5b6_47d3_aed0_440f77267397_jpe.webp",
@@ -1177,7 +1177,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781879127320,
-      "name_en": "Micro-circle with a mother-of-pearl background and a central micro-circle",
+      "name_en": "Circle Ring with Mother-of-Pearl Background and Central Stone",
       "images": [],
       "promo": null
     },
@@ -1374,7 +1374,7 @@
       "color": "rose",
       "tag": null,
       "description": "El acero inoxidable tiene a su vez un baño de oro. ",
-      "description_en": "Stainless steel has a gold plating.",
+      "description_en": "Stainless steel with gold plating.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783866959002_79418ad4_51ec_4de5_916e_f48ac3f097d5_jpe.webp",
@@ -1496,7 +1496,7 @@
       "color": "rose",
       "tag": null,
       "description": "Plata ley 925 con un baño de oro de 18 kilates ",
-      "description_en": "925 sterling silver with an 18-carat gold plating",
+      "description_en": "925 sterling silver with 18k gold plating",
       "personalized": false,
       "available": true,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884824191_img_0937_jpeg.webp",
@@ -1725,7 +1725,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781893045956,
-      "name_en": "ing",
+      "name_en": "Ring",
       "images": [],
       "promo": null
     },
@@ -1841,7 +1841,7 @@
         "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785465854435_img_5247_jpeg.webp"
       ],
       "name_en": "Cross chain with zircons",
-      "description_en": "It is stainless steel with an 18k gold plating, durable for everyday wear and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
+      "description_en": "It's stainless steel with 18k gold plating, durable for everyday wear and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
       "id": 1785466095890,
       "promo": null
     },
@@ -1889,7 +1889,7 @@
         "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469402185_img_5262_jpeg.webp"
       ],
       "name_en": "Greek Eye Bangle",
-      "description_en": "Surgical steel with 18-karat gold plating. The detail of the mother-of-pearl oval eye plus my two blue eyes with the edge of zircons look super elegant. The hollow design makes it lightweight for everyday use but with a lot of statement.",
+      "description_en": "Surgical steel with 18k gold plating. The oval mother-of-pearl eye paired with two blue zircon-rimmed eyes creates an elegant detail. The hollow design keeps it lightweight for everyday wear while still making a statement.",
       "id": 1785469598547,
       "promo": null
     },
@@ -1913,7 +1913,7 @@
         "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1785469948567_img_5266_jpeg.webp"
       ],
       "name_en": "Vintage aventurine ring",
-      "description_en": "Vintage Aventurine Ring - 18K BATHROOM\n\nVintage style double layer ring with 18K gold finish on stainless steel. \nDesign with braided ring and bead detail, center with oval adventurine green natural stone. \nAdjustable, lightweight piece, durable for everyday wear. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect for use alone or stacking with other gold rings.",
+      "description_en": "Vintage Aventurine Ring - 18K Gold Plated\n\nVintage-style double layer ring with an 18K gold finish on stainless steel. \nDesign with a braided ring and bead detail, centered with an oval natural green aventurine stone. \nAdjustable, lightweight piece, durable for everyday wear. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect worn alone or stacked with other gold rings.",
       "id": 1785470275920,
       "promo": null
     },
@@ -1981,7 +1981,7 @@
       "material": "Gold filled",
       "images": [],
       "name_en": "FE Red String Bracelet",
-      "description_en": "Wear your faith every day \nAdjustable net string + 18K goldfilled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
+      "description_en": "Wear your faith every day \nAdjustable net string + 18K gold-filled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
       "id": 1786308585824,
       "promo": null
     },
@@ -2003,7 +2003,7 @@
       "material": "Gold filled",
       "images": [],
       "name_en": "BLUE TURKISH EYE BRACELET + MEDAL + PEARL",
-      "description_en": "Blue Evil Eye Bracelet🤍 \nFaith, protection & elegance in one \nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl \nProtection, faith & good vibes \nMinimalist design | Unisex \n18K Goldfilled | Hypoallergenic \nThe perfect spiritual gift",
+      "description_en": "Blue Evil Eye Bracelet🤍 \nFaith, protection & elegance in one \nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl \nProtection, faith & good vibes \nMinimalist design | Unisex \n18K gold-filled | Hypoallergenic \nThe perfect spiritual gift",
       "id": 1786315591380,
       "promo": null
     },
@@ -2027,7 +2027,7 @@
         "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1786328362026_img_5628_jpeg.webp"
       ],
       "name_en": "Red Turkish Eye Bracelet",
-      "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without pellets",
+      "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without ball chain details.",
       "id": 1786328384393,
       "promo": null
     },
@@ -2170,7 +2170,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "name_en": "Handmade bracelets 🙌🏽",
-      "description_en": "Beautiful adjustable bracelets made with Ecuadorian hands, with style, crystal combinations and 18K gold plated charms",
+      "description_en": "Beautiful adjustable bracelets handmade by Ecuadorian artisans, with style, crystal combinations and 18K gold-plated charms",
       "id": 1788449850640,
       "promo": null
     },
