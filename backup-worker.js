@@ -119,6 +119,18 @@ async function notifyAdminPush(title, body, env) {
   }
 }
 
+// ── Limpia cualquier secreto que pueda venir dentro de un mensaje de error antes de
+// guardarlo en _status.json, loguearlo, o —sobre todo— mandarlo por push al celular de
+// Tita/Robin. exportFirebase() llama a una URL que lleva `?auth=${FB_DB_SECRET}`: si el
+// runtime alguna vez incluye esa URL en el mensaje de la excepción (pasa con varios
+// errores de fetch), el secreto de la base de datos terminaría viajando a un servicio
+// de push de terceros y quedando escrito en el bucket de backups. ────────────────────
+function scrubSecrets(msg) {
+  return String(msg == null ? '' : msg)
+    .replace(/([?&](?:auth|key|token|secret)=)[^&\s"')]+/gi, '$1***')
+    .slice(0, 300);
+}
+
 function safeEqual(a, b) {
   a = String(a); b = String(b);
   if (a.length !== b.length) return false;
@@ -192,7 +204,7 @@ async function readStatus(env) {
 
 async function fail(env, stage, error, startedAt, meta) {
   const result = {
-    ok: false, stage, error: String((error && error.message) || error),
+    ok: false, stage, error: scrubSecrets((error && error.message) || error),
     startedAt, finishedAt: new Date().toISOString(), trigger: meta.trigger,
   };
   console.error('cacusa-backup failed:', stage, result.error);
@@ -237,6 +249,22 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === 'POST' && url.pathname === '/run') {
+      // Límite por IP — mismo patrón que ya usan los endpoints públicos de
+      // admin-worker.js. Este era el único endpoint del sistema sin uno, y cada
+      // llamada exporta Firebase entero + KV y escribe un objeto nuevo en R2: sin
+      // tope, quien tuviera la clave (o cualquiera, a fuerza de intentos) podía
+      // dispararlo en loop y llenar el bucket. 5/hora alcanza de sobra para un
+      // backup manual; el cron diario no pasa por acá.
+      // Va ANTES de isAuthorized() a propósito: así también topea los intentos de
+      // adivinar la clave, no solo las corridas legítimas.
+      if (env.CACUSA_KV) {
+        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        const rlKey = `bkrl:${ip}`;
+        const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+        if (rlCount >= 5) return json({ error: 'Demasiadas solicitudes. Intenta más tarde.' }, 429);
+        await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+      }
+
       if (!isAuthorized(request, env)) return json({ error: 'No permitido' }, 403);
       const result = await runBackup(env, { trigger: 'manual' });
       return json(result, result.ok ? 200 : 500);
