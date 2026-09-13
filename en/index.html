@@ -631,9 +631,9 @@ html,body{overflow-x:hidden}
         <div class="reveal-left" data-delay="2"><div class="story-quote" id="hStoryQuote">"Cada pieza, una historia única"</div></div>
         <div class="reveal-left" data-delay="3"><p class="story-body" id="hStoryBody">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
         <div class="story-stats reveal-left" data-delay="4" id="hStoryStats">
-          <div><div class="stat-num" data-count="500">0</div><div class="stat-label">Piezas creadas</div></div>
-          <div><div class="stat-num" data-count="2">0</div><div class="stat-label">Países</div></div>
-          <div><div class="stat-num" data-count="100">0</div><div class="stat-label">% Artesanal</div></div>
+          <div><div class="stat-num" data-count="500">500</div><div class="stat-label">Piezas creadas</div></div>
+          <div><div class="stat-num" data-count="2">2</div><div class="stat-label">Países</div></div>
+          <div><div class="stat-num" data-count="100">100</div><div class="stat-label">% Artesanal</div></div>
         </div>
       </div>
       <div class="story-visual">
@@ -885,7 +885,7 @@ function loadHomeContent(){
             if (!wraps[i]) return;
             const numEl = wraps[i].querySelector('.stat-num');
             const labEl = wraps[i].querySelector('.stat-label');
-            if (numEl && s.num != null) { numEl.dataset.count = String(s.num).replace(/\D/g, '') || '0'; numEl.textContent = '0'; }
+            if (numEl && s.num != null) { const _digits = String(s.num).replace(/\D/g, '') || '0'; numEl.dataset.count = _digits; numEl.textContent = _digits; }
             if (labEl && s.label) labEl.textContent = s.label;
           });
         }
@@ -1199,7 +1199,11 @@ const cntEls=document.querySelectorAll('[data-count]');
 const cntObs=new IntersectionObserver(es=>{
   es.forEach(e=>{
     if(!e.isIntersecting)return;
-    const el=e.target, target=+el.dataset.count; let start=0;
+    const el=e.target, target=+el.dataset.count;
+    // El texto ya arranca en el valor correcto (SEO/bots que no hacen scroll) —
+    // si ya coincide con la meta no hace falta re-animar desde 0.
+    if(el.textContent===String(target)+(el.dataset.suffix||'')){cntObs.unobserve(el);return;}
+    let start=0;
     const step=ts=>{
       if(!start)start=ts;
       const p=Math.min((ts-start)/1800,1);
