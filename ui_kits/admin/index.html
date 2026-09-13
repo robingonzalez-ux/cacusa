@@ -1023,7 +1023,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             {uploading && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#9B5DE5', fontWeight: 600 }}>⏳ Subiendo foto…</div>}
           </div>
           <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} />
-          {uploadMsg && <div style={{ fontSize: 12, marginTop: 6, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
+          {uploadMsg && <div role="status" aria-live="polite" style={{ fontSize: 12, marginTop: 6, color: uploadMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{uploadMsg}</div>}
           {!uploadMsg && <div style={{ fontSize: 11, color: '#767676', marginTop: 6 }}>💡 La foto se optimiza automáticamente para cargar rápido en la tienda.</div>}
           {imgPrev && !uploading && (
             <div style={{ marginTop: 10, background: '#FAF7FB', borderRadius: 10, padding: '10px 14px' }}>
@@ -1065,46 +1065,46 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
               style={{ width: '100%', padding: '9px', border: '2px dashed #C4A6E8', borderRadius: 10, background: 'white', color: '#9B5DE5', fontSize: 13, fontWeight: 600, cursor: galleryUploading ? 'wait' : 'pointer', opacity: galleryUploading ? 0.6 : 1 }}>
               {galleryUploading ? '⏳ Subiendo…' : '+ Agregar otra foto al carrusel'}
             </button>
-            {galleryMsg && <div style={{ fontSize: 12, marginTop: 6, color: galleryMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{galleryMsg}</div>}
+            {galleryMsg && <div role="status" aria-live="polite" style={{ fontSize: 12, marginTop: 6, color: galleryMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{galleryMsg}</div>}
           </div>
         </details>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={lbl}>Nombre del producto *</label>
-            <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Collar con nombre personalizado" style={inp} />
+            <label htmlFor="pmName" style={lbl}>Nombre del producto *</label>
+            <input id="pmName" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Collar con nombre personalizado" style={inp} />
           </div>
           <div>
-            <label style={lbl}>Categoría</label>
-            <select value={form.category} onChange={e => set('category', e.target.value)} style={inp}>
+            <label htmlFor="pmCategory" style={lbl}>Categoría</label>
+            <select id="pmCategory" value={form.category} onChange={e => set('category', e.target.value)} style={inp}>
               {(cats.includes(form.category) ? cats : [form.category, ...cats]).map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label style={lbl}>Material</label>
-            <select value={form.material || mats[0]} onChange={e => set('material', e.target.value)} style={inp}>
+            <label htmlFor="pmMaterial" style={lbl}>Material</label>
+            <select id="pmMaterial" value={form.material || mats[0]} onChange={e => set('material', e.target.value)} style={inp}>
               {mats.map(m => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div>
-            <label style={lbl}>Etiqueta</label>
-            <select value={form.tag || ''} onChange={e => set('tag', e.target.value || null)} style={inp}>
+            <label htmlFor="pmTag" style={lbl}>Etiqueta</label>
+            <select id="pmTag" value={form.tag || ''} onChange={e => set('tag', e.target.value || null)} style={inp}>
               <option value="">Sin etiqueta</option>
               <option>Bestseller</option>
               <option>Nuevo</option>
             </select>
           </div>
           <div>
-            <label style={lbl}>Precio USD *</label>
-            <input type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45" style={inp} />
+            <label htmlFor="pmPrice" style={lbl}>Precio USD *</label>
+            <input id="pmPrice" type="number" min="0" step="0.01" value={form.price} onChange={e => set('price', e.target.value)} placeholder="45" style={inp} />
           </div>
           <div>
-            <label style={lbl}>Precio anterior (tachado)</label>
-            <input type="number" min="0" step="0.01" value={form.oldPrice || ''} onChange={e => set('oldPrice', e.target.value)} placeholder="60" style={inp} />
+            <label htmlFor="pmOldPrice" style={lbl}>Precio anterior (tachado)</label>
+            <input id="pmOldPrice" type="number" min="0" step="0.01" value={form.oldPrice || ''} onChange={e => set('oldPrice', e.target.value)} placeholder="60" style={inp} />
           </div>
           <div style={{ gridColumn: 'span 2' }}>
-            <label style={lbl}>Descripción</label>
-            <textarea value={form.description || ''} onChange={e => set('description', e.target.value)} rows={3}
+            <label htmlFor="pmDescription" style={lbl}>Descripción</label>
+            <textarea id="pmDescription" value={form.description || ''} onChange={e => set('description', e.target.value)} rows={3}
               placeholder="Describe el material, medidas y detalles especiales…" style={{ ...inp, resize: 'vertical' }} />
           </div>
         </div>
@@ -1116,14 +1116,14 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
           </summary>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 12 }}>
             <div>
-              <label style={lbl}>Ícono de respaldo</label>
-              <select value={form.img} onChange={e => set('img', e.target.value)} style={inp}>
+              <label htmlFor="pmImg" style={lbl}>Ícono de respaldo</label>
+              <select id="pmImg" value={form.img} onChange={e => set('img', e.target.value)} style={inp}>
                 {IMG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label style={lbl}>Color de respaldo</label>
-              <select value={form.color} onChange={e => set('color', e.target.value)} style={inp}>
+              <label htmlFor="pmColor" style={lbl}>Color de respaldo</label>
+              <select id="pmColor" value={form.color} onChange={e => set('color', e.target.value)} style={inp}>
                 {Object.keys(COLORS).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -1175,18 +1175,18 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
           {form.promoEnabled && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
-                <label style={lbl}>Precio de oferta USD *</label>
-                <input type="number" min="0" step="0.01" value={form.promoPrice || ''} onChange={e => set('promoPrice', e.target.value)}
+                <label htmlFor="pmPromoPrice" style={lbl}>Precio de oferta USD *</label>
+                <input id="pmPromoPrice" type="number" min="0" step="0.01" value={form.promoPrice || ''} onChange={e => set('promoPrice', e.target.value)}
                   placeholder="35.00" style={inp} />
               </div>
               <div>
-                <label style={lbl}>Etiqueta de oferta</label>
-                <input value={form.promoLabel || ''} onChange={e => set('promoLabel', e.target.value)}
+                <label htmlFor="pmPromoLabel" style={lbl}>Etiqueta de oferta</label>
+                <input id="pmPromoLabel" value={form.promoLabel || ''} onChange={e => set('promoLabel', e.target.value)}
                   placeholder="Flash · Promo · 2x1" style={inp} />
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <label style={lbl}>Válido hasta (opcional)</label>
-                <input type="date" value={form.promoEndsAt || ''} onChange={e => set('promoEndsAt', e.target.value)} style={inp} />
+                <label htmlFor="pmPromoEndsAt" style={lbl}>Válido hasta (opcional)</label>
+                <input id="pmPromoEndsAt" type="date" value={form.promoEndsAt || ''} onChange={e => set('promoEndsAt', e.target.value)} style={inp} />
               </div>
               {form.price && form.promoPrice && Number(form.promoPrice) < Number(form.price) && (
                 <div style={{ gridColumn: 'span 2', fontSize: 12, color: '#FF6B00', fontWeight: 600 }}>
@@ -1487,6 +1487,9 @@ function NewOrderModal({ open, onClose, onSave }) {
   if (!open) return null;
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const inp = { border: '1.5px solid #e0e0e0', borderRadius: 10, padding: '9px 13px', fontSize: 13, width: '100%', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' };
+  // Diseño usa placeholder como única guía visual — labels visualmente ocultos
+  // para lectores de pantalla, sin cambiar el look actual (ver auditoría a11y).
+  const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 };
   const submit = e => {
     e.preventDefault();
     const order = {
@@ -1511,10 +1514,14 @@ function NewOrderModal({ open, onClose, onSave }) {
         <form onSubmit={submit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1 }}>DATOS DEL CLIENTE</div>
-            <input required placeholder="Nombre completo *" value={form.nombre} onChange={e => set('nombre', e.target.value)} style={inp} />
-            <input required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e => set('telefono', e.target.value)} style={inp} />
-            <input required placeholder="Ciudad, País *" value={form.ciudad} onChange={e => set('ciudad', e.target.value)} style={inp} />
-            <select value={form.pago} onChange={e => set('pago', e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+            <label htmlFor="noNombre" style={srOnly}>Nombre completo</label>
+            <input id="noNombre" required placeholder="Nombre completo *" value={form.nombre} onChange={e => set('nombre', e.target.value)} style={inp} />
+            <label htmlFor="noTelefono" style={srOnly}>WhatsApp / Teléfono</label>
+            <input id="noTelefono" required placeholder="WhatsApp / Teléfono *" value={form.telefono} onChange={e => set('telefono', e.target.value)} style={inp} />
+            <label htmlFor="noCiudad" style={srOnly}>Ciudad, País</label>
+            <input id="noCiudad" required placeholder="Ciudad, País *" value={form.ciudad} onChange={e => set('ciudad', e.target.value)} style={inp} />
+            <label htmlFor="noPago" style={srOnly}>Método de pago</label>
+            <select id="noPago" value={form.pago} onChange={e => set('pago', e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
               <option>Transferencia bancaria</option>
               <option>Zelle</option>
               <option>PayPal Friends and Family</option>
@@ -1524,11 +1531,15 @@ function NewOrderModal({ open, onClose, onSave }) {
               <option>WhatsApp Pay</option>
             </select>
             <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1, marginTop: 4 }}>PRODUCTO</div>
-            <input placeholder="Nombre del producto" value={form.prodNombre} onChange={e => set('prodNombre', e.target.value)} style={inp} />
-            <input placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e => set('prodPersonal', e.target.value)} style={inp} />
-            <input type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e => set('prodPrecio', e.target.value)} style={inp} />
+            <label htmlFor="noProdNombre" style={srOnly}>Nombre del producto</label>
+            <input id="noProdNombre" placeholder="Nombre del producto" value={form.prodNombre} onChange={e => set('prodNombre', e.target.value)} style={inp} />
+            <label htmlFor="noProdPersonal" style={srOnly}>Personalización</label>
+            <input id="noProdPersonal" placeholder="Personalización (nombre, talla...)" value={form.prodPersonal} onChange={e => set('prodPersonal', e.target.value)} style={inp} />
+            <label htmlFor="noProdPrecio" style={srOnly}>Precio</label>
+            <input id="noProdPrecio" type="number" placeholder="Precio $" value={form.prodPrecio} onChange={e => set('prodPrecio', e.target.value)} style={inp} />
             <div style={{ fontWeight: 700, fontSize: 11, color: '#7A6B85', letterSpacing: 1, marginTop: 4 }}>NOTAS</div>
-            <textarea placeholder="Notas adicionales..." value={form.notas} onChange={e => set('notas', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
+            <label htmlFor="noNotas" style={srOnly}>Notas adicionales</label>
+            <textarea id="noNotas" placeholder="Notas adicionales..." value={form.notas} onChange={e => set('notas', e.target.value)} rows={3} style={{ ...inp, resize: 'vertical' }} />
             <button type="submit" style={{ background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, padding: '12px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', marginTop: 4 }}>
               Guardar pedido
             </button>
@@ -2195,7 +2206,7 @@ function GiftCardsTab({ token }) {
             style={{ padding:'11px 28px', background:'linear-gradient(135deg,#C0336E,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
             {creating ? '⏳ Creando…' : '+ Crear tarjeta de regalo'}
           </button>
-          {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
+          {createMsg && <span role="status" aria-live="polite" style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
         </div>
       </div>
 
@@ -2244,7 +2255,7 @@ function GiftCardsTab({ token }) {
                   style={{ padding:'4px 14px', borderRadius:6, border:'1.5px solid #9B5DE5', background:'#F5F0FF', fontSize:12, fontWeight:700, cursor:'pointer', color:'#9B5DE5' }}>
                   Confirmar
                 </button>
-                {adjustMsg[c.code] && <span style={{ fontSize:11, fontWeight:600, color:adjustMsg[c.code].startsWith('✅')?'#065F46':'#DC2626' }}>{adjustMsg[c.code]}</span>}
+                {adjustMsg[c.code] && <span role="status" aria-live="polite" style={{ fontSize:11, fontWeight:600, color:adjustMsg[c.code].startsWith('✅')?'#065F46':'#DC2626' }}>{adjustMsg[c.code]}</span>}
               </div>
             )}
           </div>
@@ -2658,7 +2669,7 @@ function LoversTab({ products = [], token }) {
             style={{ background: 'linear-gradient(135deg,#EE6FA8,#C4A0EC)', color: 'white', border: 'none', borderRadius: 999, padding: '9px 22px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: savingPhotos ? 'not-allowed' : 'pointer', opacity: savingPhotos ? .6 : 1 }}>
             {savingPhotos ? 'Guardando…' : 'Guardar fotos'}
           </button>
-          {photoMsg && <span style={{ fontSize: 12, color: photoMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>{photoMsg}</span>}
+          {photoMsg && <span role="status" aria-live="polite" style={{ fontSize: 12, color: photoMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>{photoMsg}</span>}
         </div>
       </div>
 
@@ -2934,7 +2945,7 @@ function CouponsTab({ token }) {
             style={{ padding:'11px 28px', background:'linear-gradient(135deg,#C0336E,#9B5DE5)', color:'white', border:'none', borderRadius:99, fontSize:14, fontWeight:700, cursor:'pointer', opacity:creating?.6:1 }}>
             {creating ? '⏳ Creando…' : '+ Crear cupón'}
           </button>
-          {createMsg && <span style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
+          {createMsg && <span role="status" aria-live="polite" style={{ fontSize:13, fontWeight:600, color:createMsg.startsWith('✅')?'#065F46':'#DC2626' }}>{createMsg}</span>}
         </div>
       </div>
 
@@ -3812,7 +3823,7 @@ function App() {
 
         {/* ── Sync message ── */}
         {syncMsg && (
-          <div style={{ borderRadius: 12, padding: '11px 16px', marginBottom: 14, fontSize: 13, fontWeight: 600, background: syncMsg.startsWith('✅') ? '#D1FAE5' : syncMsg.startsWith('❌') ? '#FEE2E2' : '#FEF3C7', color: syncMsg.startsWith('✅') ? '#065F46' : syncMsg.startsWith('❌') ? '#DC2626' : '#92400E' }}>
+          <div role="status" aria-live="polite" style={{ borderRadius: 12, padding: '11px 16px', marginBottom: 14, fontSize: 13, fontWeight: 600, background: syncMsg.startsWith('✅') ? '#D1FAE5' : syncMsg.startsWith('❌') ? '#FEE2E2' : '#FEF3C7', color: syncMsg.startsWith('✅') ? '#065F46' : syncMsg.startsWith('❌') ? '#DC2626' : '#92400E' }}>
             {syncMsg}
           </div>
         )}
