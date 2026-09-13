@@ -492,7 +492,7 @@ html,body{overflow-x:hidden}
     <a href="./guias.html" data-i18n="landing.navGuides">Guías</a>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <div class="lang-sw"><button id="lEs" class="on" onclick="window.location.href='./'">ES</button><button id="lEn" onclick="window.location.href='./en/'">EN</button></div>
+    <div class="lang-sw"><button id="lEs" class="on" onclick="localStorage.setItem('cacusa-lang','es');window.location.href='./'">ES</button><button id="lEn" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='./en/'">EN</button></div>
     <button class="nav-cta" id="navCta" onclick="window.location.href='./ui_kits/store/'" data-i18n="landing.navCta">Ver colección →</button>
     <button id="navMenuBtn" aria-label="Abrir menú" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
