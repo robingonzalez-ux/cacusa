@@ -719,17 +719,22 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <section id="referral">
   <div class="container">
     <div class="referral-card reveal">
-      <div class="section-label">Comparte el amor</div>
-      <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Invita a una <em>amiga</em></h2>
-      <p class="referral-desc">Exclusivo para suscriptoras activas del club. Escribe tu nombre y el WhatsApp con el que te suscribiste, te damos tu código para compartir — tu amiga recibe 10% de descuento en su primera compra en la tienda.</p>
+      <div class="section-label">Beneficios del club</div>
+      <h2 class="section-h" style="font-size:clamp(24px,4vw,32px)">Tus <em>códigos</em></h2>
+      <p class="referral-desc">Exclusivo para suscriptoras activas del club. Escribe tu nombre y el WhatsApp con el que te suscribiste y te damos tus dos códigos: el de <strong>tu envío gratis</strong> en la tienda, y uno para compartir — tu amiga recibe 10% de descuento en su primera compra.</p>
       <div class="referral-form" id="referralForm">
         <input class="sub-input" id="refName" type="text" placeholder="Tu nombre" autocomplete="given-name">
         <input class="sub-input" id="refPhone" type="tel" placeholder="Tu WhatsApp (+1 000 000 0000)" autocomplete="tel">
-        <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Obtener mi código →</button>
+        <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Obtener mis códigos →</button>
         <div class="referral-msg" id="refMsg" role="alert" aria-live="assertive"></div>
       </div>
       <div class="referral-result" id="referralResult">
-        <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tu código</div>
+        <div id="shipCodeWrap" style="display:none;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--ink-light)">
+          <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tu envío gratis</div>
+          <div class="referral-code" id="shipCode">—</div>
+          <div style="font-family:var(--fe);font-size:13.5px;font-style:italic;color:var(--ink-muted);margin-top:6px">Úsalo en el cupón al pagar, en todas tus compras de la tienda.</div>
+        </div>
+        <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Para tu amiga</div>
         <div class="referral-code" id="refCode">—</div>
         <a class="btn-join" id="refShareBtn" href="#" target="_blank" rel="noopener" style="margin-top:16px">Compartir por WhatsApp →</a>
       </div>
@@ -1292,6 +1297,20 @@ async function getReferralCode() {
     const data = await r.json().catch(() => ({}));
     if (r.ok && data.ok) {
       document.getElementById('refCode').textContent = data.code;
+      // Mismo teléfono ya verificado como suscriptora activa: pedimos también su
+      // código personal de envío gratis. Si este falla, el de referido igual se
+      // muestra — no queremos perder el resultado por un beneficio secundario.
+      try {
+        const rs = await fetch(ADMIN_WORKER_URL + '/lovers/shipping-code', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone })
+        });
+        const ds = await rs.json().catch(() => ({}));
+        if (rs.ok && ds.ok && ds.code) {
+          document.getElementById('shipCode').textContent = ds.code;
+          document.getElementById('shipCodeWrap').style.display = 'block';
+        }
+      } catch (_) {}
       const shareMsg = `¡Hola! Te comparto mi código *${data.code}* para que tengas 10% de descuento en tu primera compra en CACUSA by Taitus ✦ https://cacusabytaitus.com/ui_kits/store/`;
       document.getElementById('refShareBtn').href = 'https://wa.me/?text=' + encodeURIComponent(shareMsg);
       document.getElementById('referralForm').style.display = 'none';

@@ -2909,8 +2909,11 @@ function CouponsTab({ token }) {
   const create = async () => {
     if (!form.code.trim()) { setCreateMsg('❌ Ingresa un código.'); return; }
     const amount = parseFloat(form.amount);
-    if (!amount || amount <= 0) { setCreateMsg('❌ Monto/porcentaje inválido.'); return; }
-    if (form.type === 'percent' && amount > 100) { setCreateMsg('❌ Máximo 100%.'); return; }
+    // 'freeship' anula el costo de envío; no lleva monto (el Worker lo fuerza a 0).
+    if (form.type !== 'freeship') {
+      if (!amount || amount <= 0) { setCreateMsg('❌ Monto/porcentaje inválido.'); return; }
+      if (form.type === 'percent' && amount > 100) { setCreateMsg('❌ Máximo 100%.'); return; }
+    }
     setCreating(true); setCreateMsg('');
     try {
       const data = await apiCall('coupon/create', {
@@ -2974,12 +2977,19 @@ function CouponsTab({ token }) {
             <select value={form.type} onChange={e=>setF('type',e.target.value)} style={{ ...inp, width:'100%', boxSizing:'border-box' }}>
               <option value="percent">% Porcentaje</option>
               <option value="fixed">$ Monto fijo</option>
+              <option value="freeship">✦ Envío gratis</option>
             </select>
           </div>
           <div>
-            <label style={lbl}>{form.type==='percent'?'Porcentaje (1-100)':'Monto ($)'}</label>
-            <input type="number" min="1" step={form.type==='percent'?'1':'0.01'} value={form.amount} onChange={e=>setF('amount',e.target.value)}
-              style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+            {form.type === 'freeship' ? (
+              <div style={{ ...lbl, fontWeight: 400, lineHeight: 1.5 }}>
+                Anula el costo de envío del pedido. No descuenta dinero del subtotal.
+              </div>
+            ) : (<>
+              <label style={lbl}>{form.type==='percent'?'Porcentaje (1-100)':'Monto ($)'}</label>
+              <input type="number" min="1" step={form.type==='percent'?'1':'0.01'} value={form.amount} onChange={e=>setF('amount',e.target.value)}
+                style={{ ...inp, width:'100%', boxSizing:'border-box' }} />
+            </>)}
           </div>
           <div>
             <label style={lbl}>Usos máximos</label>
@@ -3025,7 +3035,7 @@ function CouponsTab({ token }) {
                   {statusOk ? '✓ Activo' : expired ? 'Vencido' : exhausted ? 'Agotado' : 'Inactivo'}
                 </span>
                 <span style={{ fontSize:13, color:'#333', fontWeight:700 }}>
-                  {c.type==='percent' ? `${c.amount}% OFF` : `$${(c.amount||0).toFixed(2)} OFF`}
+                  {c.type==='freeship' ? 'ENVÍO GRATIS' : c.type==='percent' ? `${c.amount}% OFF` : `$${(c.amount||0).toFixed(2)} OFF`}
                 </span>
                 <span style={{ fontSize:11, color:'#767676' }}>
                   Usos: {c.usedCount||0}{c.maxUses!=null?`/${c.maxUses}`:''}
