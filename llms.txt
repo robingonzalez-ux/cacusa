@@ -25,14 +25,16 @@ CACUSA by Taitus handcrafts unique artisan jewelry in 925 sterling silver, 18k g
 
 ## Precios / Pricing
 
-Desde $15 hasta aproximadamente $80 USD según la pieza y el material.
-From $15 to approximately $80 USD depending on the piece and material.
+Desde $20 hasta aproximadamente $125 USD según la pieza y el material.
+From $20 to approximately $125 USD depending on the piece and material.
 
 ## Envíos / Shipping
 
 - Ecuador: envío a domicilio en todo el país / nationwide delivery
 - Estados Unidos / United States: envío a todos los estados / all states
-- Envío gratis a partir de cierto monto / Free shipping above minimum order
+- Envío gratis en compras desde $90 USD; por debajo de ese monto el envío
+  cuesta $10 USD / Free shipping on orders from $90 USD; below that,
+  shipping costs $10 USD
 
 ## Métodos de pago / Payment methods
 
@@ -49,15 +51,17 @@ Personalized orders take 5 to 10 business days to make, plus shipping time.
 
 Cacusa Lovers es un club de suscripción mensual: cada mes se envían 2 joyas en
 acero inoxidable de alta calidad, seleccionadas por Cacusa, directamente a la
-puerta del cliente. Disponible en plan mensual y plan anual (con descuento).
+puerta del cliente. Plan mensual: $19.99/mes. Plan anual: $219.89/año (8% de
+descuento vs. pagar mes a mes), con acceso VIP 48h antes que el plan mensual.
 Envíos a Ecuador y Estados Unidos.
 - Página / Page: https://cacusabytaitus.com/cacusa-lovers.html (español) —
   https://cacusabytaitus.com/en/cacusa-lovers.html (English)
 
 Cacusa Lovers is a monthly subscription club: every month, 2 high-quality
 stainless steel jewelry pieces, hand-picked by Cacusa, are shipped straight to
-the customer's door. Available as a monthly or annual plan (with a discount).
-Ships to Ecuador and the United States.
+the customer's door. Monthly plan: $19.99/month. Annual plan: $219.89/year
+(8% off vs. paying month to month), with VIP early access 48h before the
+monthly plan. Ships to Ecuador and the United States.
 
 ## Sitio en inglés / English site
 
@@ -75,6 +79,24 @@ en Estados Unidos:
 - Cuidado de joyas y diferencia entre materiales / Jewelry care and material differences: https://cacusabytaitus.com/cuidados.html
 - Significado de las piedras de nacimiento por mes / Birthstone meanings by month: https://cacusabytaitus.com/significado-piedras.html
 - Cómo combinar y apilar joyas / How to combine and stack jewelry: https://cacusabytaitus.com/como-combinar-joyas.html
+
+## Políticas / Policies
+
+Devoluciones: solo se aceptan por defecto de fábrica, dentro de las 48
+horas siguientes a la entrega — no se aceptan por cambio de opinión ni
+siquiera en piezas sin personalizar. Detalle completo:
+https://cacusabytaitus.com/devoluciones.html
+
+Returns: accepted only for factory defects, within 48 hours of delivery
+— not accepted for change of mind, even on non-personalized pieces.
+Full policy: https://cacusabytaitus.com/devoluciones.html
+
+- Envíos — tiempos y costos detallados / Shipping — detailed times and costs: https://cacusabytaitus.com/envios.html
+
+(Estas 2 páginas, junto con las guías de arriba, tienen selector de idioma
+ES/EN en el cliente — una sola URL, no `/en/` separado. / These 2 pages,
+along with the guides above, have a client-side ES/EN language switcher —
+one URL, no separate `/en/` version.)
 
 ## Categorías / Categories
 
@@ -104,5 +126,11 @@ Chains, Earrings, Rings, Men, Bracelets, Ear cuff, Couples, Sets, Hand chain.
 **¿Los materiales son hipoalergénicos?** Sí, trabajamos con plata 925, baño de oro 18k y acero inoxidable, todos hipoalergénicos.
 **Are the materials hypoallergenic?** Yes, we use 925 silver, 18k gold plating, and stainless steel — all hypoallergenic.
 
-**¿Cuánto cuesta?** Los precios van de $15 a $80 USD aproximadamente.
-**How much does it cost?** Prices range from approximately $15 to $80 USD.
+**¿Cuánto cuesta?** Los precios van de $20 a $125 USD aproximadamente.
+**How much does it cost?** Prices range from approximately $20 to $125 USD.
+
+**¿Puedo devolver una pieza si cambio de opinión?** No — solo se aceptan devoluciones por defecto de fábrica, dentro de las 48 horas siguientes a la entrega.
+**Can I return a piece if I change my mind?** No — returns are accepted only for factory defects, within 48 hours of delivery.
+
+**¿Cuánto cuesta el envío?** Gratis en compras desde $90 USD; por debajo de ese monto cuesta $10 USD.
+**How much is shipping?** Free on orders from $90 USD; below that, it costs $10 USD.
