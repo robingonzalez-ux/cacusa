@@ -406,15 +406,15 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         </div>
         <div class="sub-field">
           <label class="sub-field-label" for="sEmail">Email *</label>
-          <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+          <input class="sub-input" id="sEmail" type="email" placeholder="tu@email.com" autocomplete="email" required aria-required="true">
         </div>
         <div class="sub-field">
           <label class="sub-field-label" for="sTel">Teléfono / WhatsApp *</label>
-          <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel">
+          <input class="sub-input" id="sTel" type="tel" placeholder="+1 000 000 0000" autocomplete="tel" required aria-required="true">
         </div>
         <div class="sub-field sub-field--ac">
           <label class="sub-field-label" for="sDireccion">Dirección de envío *</label>
-          <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120">
+          <input class="sub-input" id="sDireccion" type="text" placeholder="Empieza a escribir tu dirección…" autocomplete="off" maxlength="120" required aria-required="true">
           <div class="sub-ac-list" id="sAcList"></div>
         </div>
         <div class="sub-field">
@@ -424,11 +424,11 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div class="sub-field">
             <label class="sub-field-label" for="sCiudad">Ciudad *</label>
-            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad">
+            <input class="sub-input" id="sCiudad" type="text" placeholder="Ciudad" required aria-required="true">
           </div>
           <div class="sub-field">
             <label class="sub-field-label" for="sPais">País *</label>
-            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()">
+            <select class="sub-input" id="sPais" autocomplete="country-name" style="cursor:pointer" onchange="onPaisChange()" required aria-required="true">
               <option value="">Seleccionar…</option>
               <option value="Ecuador">Ecuador</option>
               <option value="USA">USA</option>
@@ -440,7 +440,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div id="sFieldsEC" hidden>
           <div class="sub-field">
             <label class="sub-field-label" for="sProvincia">Provincia *</label>
-            <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer">
+            <select class="sub-input" id="sProvincia" autocomplete="address-level1" style="cursor:pointer" required aria-required="true">
               <option value="">Seleccionar provincia…</option>
               <option>Azuay</option><option>Bolívar</option><option>Cañar</option>
               <option>Carchi</option><option>Chimborazo</option><option>Cotopaxi</option>
@@ -457,7 +457,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="sub-field">
               <label class="sub-field-label" for="sEstadoUSA">Estado *</label>
-              <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer">
+              <select class="sub-input" id="sEstadoUSA" autocomplete="address-level1" style="cursor:pointer" required aria-required="true">
                 <option value="">Seleccionar…</option>
                 <option>Alabama</option><option>Alaska</option><option>Arizona</option><option>Arkansas</option>
                 <option>California</option><option>Colorado</option><option>Connecticut</option><option>Delaware</option>
@@ -476,7 +476,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             </div>
             <div class="sub-field">
               <label class="sub-field-label" for="sZipUSA">ZIP Code *</label>
-              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" inputmode="numeric" maxlength="10">
+              <input class="sub-input" id="sZipUSA" type="text" placeholder="12345" inputmode="numeric" maxlength="10" required aria-required="true">
             </div>
           </div>
         </div>
@@ -492,7 +492,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             </div>
           </div>
         </div>
-        <div class="sub-error" id="sErr1"></div>
+        <div class="sub-error" id="sErr1" role="alert" aria-live="assertive"></div>
         <button class="sub-btn" onclick="goStep2()">Continuar →</button>
       </div>
       <!-- STEP 2: Confirm & pay -->
@@ -517,7 +517,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           <div class="sub-sum-feature">Acceso anticipado a nuevas colecciones</div>
           <div class="sub-sum-row"><span id="sum-period-label">Total mensual</span><span id="sum-price">$19.99</span></div>
         </div>
-        <div class="sub-error" id="sErr2"></div>
+        <div class="sub-error" id="sErr2" role="alert" aria-live="assertive"></div>
         <div class="sub-secure-badge">◎ Pago seguro procesado por Square</div>
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
           Suscribirme · $19.99/mes <span class="spin"></span>
@@ -726,7 +726,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <input class="sub-input" id="refName" type="text" placeholder="Tu nombre" autocomplete="given-name">
         <input class="sub-input" id="refPhone" type="tel" placeholder="Tu WhatsApp (+1 000 000 0000)" autocomplete="tel">
         <button class="btn-join" id="refSubmitBtn" onclick="getReferralCode()" style="border:none">Obtener mi código →</button>
-        <div class="referral-msg" id="refMsg"></div>
+        <div class="referral-msg" id="refMsg" role="alert" aria-live="assertive"></div>
       </div>
       <div class="referral-result" id="referralResult">
         <div style="font-size:12px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Tu código</div>
@@ -1361,12 +1361,12 @@ function closeSub(){
 }
 function _markFieldError(id, err, msg){
   const el = document.getElementById(id);
-  if (el) { el.style.borderColor = '#C0336E'; el.focus(); }
+  if (el) { el.style.borderColor = '#C0336E'; el.setAttribute('aria-invalid', 'true'); el.focus(); }
   if (err) err.textContent = msg;
 }
 function goStep2(){
   const err      = document.getElementById('sErr1');
-  document.querySelectorAll('#sub-step1 .sub-input').forEach(el => el.style.borderColor = '');
+  document.querySelectorAll('#sub-step1 .sub-input').forEach(el => { el.style.borderColor = ''; el.removeAttribute('aria-invalid'); });
   const nombre   = document.getElementById('sNombre').value.trim();
   const email    = document.getElementById('sEmail').value.trim();
   const tel      = document.getElementById('sTel').value.trim();
