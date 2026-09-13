@@ -121,7 +121,7 @@ que pisa un valor ahí es irreversible. El Worker `cacusa-backup` es la
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que
 toque `data/products.json` (o manual con `workflow_dispatch`) y regenera
-dos cosas, comiteando de vuelta a `main` si hay cambios:
+tres cosas, comiteando de vuelta a `main` si hay cambios:
 
 1. **JSON-LD estático de producto** (`.github/scripts/generate_product_schema.py`)
    — bloque `schema.org Product` por cada producto disponible, inyectado
@@ -133,9 +133,20 @@ dos cosas, comiteando de vuelta a `main` si hay cambios:
 2. **URLs de producto en el sitemap** (`.github/scripts/generate_sitemap_products.py`)
    — una URL por producto (ES+EN, hreflang recíproco) entre marcadores
    `STATIC_PRODUCT_URLS:START/END` en `sitemap.xml`.
+3. **Catálogo de respaldo `<noscript>`** (`.github/scripts/generate_noscript_catalog.py`)
+   — el único contenido de producto que ve un bot/IA que no ejecuta JS,
+   agrupado por categoría, entre marcadores
+   `<!--NOSCRIPT_PRODUCTS_START/END-->` en ambos `index.html`. Antes se
+   escribía a mano una sola vez y quedaba desactualizado (llegó a tener
+   68 de 74 productos con el título en español mezclado con el nombre en
+   inglés — "Nombre / Name" — por cómo se generó la primera vez); ahora
+   se regenera solo del catálogo real en cada cambio.
 
-No entra en loop: solo escucha cambios en `data/products.json`, y su propio
-commit nunca toca ese archivo (solo los 2 `index.html` y `sitemap.xml`).
+Los 3 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
+Python, replicando `_slugify`/`_productParam` del JS del cliente) — deben
+coincidir siempre. No entra en loop: solo escucha cambios en
+`data/products.json`, y su propio commit nunca toca ese archivo (solo los
+2 `index.html` y `sitemap.xml`).
 
 Los slugs de URL de producto se generan con la misma lógica que el
 JavaScript del cliente (`_slugify`/`_productParam` en `ui_kits/store/index.html`)
