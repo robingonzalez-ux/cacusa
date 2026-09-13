@@ -121,7 +121,7 @@ que pisa un valor ahí es irreversible. El Worker `cacusa-backup` es la
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que
 toque `data/products.json` (o manual con `workflow_dispatch`) y regenera
-tres cosas, comiteando de vuelta a `main` si hay cambios:
+cuatro cosas, comiteando de vuelta a `main` si hay cambios:
 
 1. **JSON-LD estático de producto** (`.github/scripts/generate_product_schema.py`)
    — bloque `schema.org Product` por cada producto disponible, inyectado
@@ -141,12 +141,25 @@ tres cosas, comiteando de vuelta a `main` si hay cambios:
    68 de 74 productos con el título en español mezclado con el nombre en
    inglés — "Nombre / Name" — por cómo se generó la primera vez); ahora
    se regenera solo del catálogo real en cada cambio.
+4. **Datos numéricos de `llms.txt`** (`.github/scripts/generate_llms_facts.py`)
+   — rango de precios, lista de materiales, umbral/costo de envío gratis y
+   precios mensual/anual de Cacusa Lovers (con el % de descuento anual
+   calculado, no hardcodeado), entre marcadores inline
+   `<!--LLMS:NOMBRE-->...<!--/LLMS:NOMBRE-->` repartidos por el archivo.
+   El resto de `llms.txt` (WhatsApp, redes, guías, políticas, FAQ, y datos
+   que no viven en `products.json` como el 4% de descuento Zelle, el 10%
+   de primera compra/referidos, los 5-10 días de elaboración y las 48h de
+   VIP anual) sigue siendo prosa manual — ver el encabezado del script
+   para el detalle exacto de qué se automatiza y qué no. Si se agrega un
+   material nuevo desde el admin sin traducción registrada en el script,
+   avisa por consola y usa el texto en español como respaldo en inglés
+   hasta que se agregue al diccionario `MATERIAL_LABELS`.
 
-Los 3 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
+Los 4 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
 Python, replicando `_slugify`/`_productParam` del JS del cliente) — deben
 coincidir siempre. No entra en loop: solo escucha cambios en
 `data/products.json`, y su propio commit nunca toca ese archivo (solo los
-2 `index.html` y `sitemap.xml`).
+2 `index.html`, `sitemap.xml` y `llms.txt`).
 
 Los slugs de URL de producto se generan con la misma lógica que el
 JavaScript del cliente (`_slugify`/`_productParam` en `ui_kits/store/index.html`)
