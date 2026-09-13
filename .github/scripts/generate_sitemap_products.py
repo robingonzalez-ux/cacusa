@@ -70,7 +70,12 @@ def inject(path: Path, block: str) -> bool:
 
 def main():
     data = json.loads(PRODUCTS_JSON.read_text(encoding="utf-8"))
-    products = [p for p in data.get("products", []) if p.get("available") is not False]
+    # Antes se excluía acá un producto agotado — su URL desaparecía del
+    # sitemap y, con el tiempo, del índice de Google, perdiendo el historial
+    # de esa página aunque el producto vuelva a estar disponible después.
+    # Ahora la URL persiste siempre; solo cambia su lastmod como cualquier
+    # otro producto (el JSON-LD es quien marca OutOfStock, no el sitemap).
+    products = data.get("products", [])
     lastmod = date.today().isoformat()
     block = build_block(products, lastmod)
     changed = inject(SITEMAP, block)

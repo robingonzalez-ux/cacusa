@@ -176,7 +176,7 @@ def build_product_entry(p, lang, store_path, shipping_details, reviews_by_produc
             "@type": "Offer",
             "priceCurrency": "USD",
             "price": str(p.get("price", "")),
-            "availability": "https://schema.org/InStock",
+            "availability": ("https://schema.org/OutOfStock" if p.get("available") is False else "https://schema.org/InStock"),
             "url": url,
             "shippingDetails": shipping_details,
             "hasMerchantReturnPolicy": RETURN_POLICY,
@@ -216,10 +216,14 @@ def json_for_script_tag(obj):
 
 
 def build_schema_block(products, lang, store_path, shipping_details, reviews_by_product):
+    # Antes se excluían acá los productos agotados (available:False) — el
+    # producto desaparecía por completo de Google, no solo de la tienda. Ahora
+    # se incluyen todos, con availability OutOfStock en vez de InStock (ver
+    # build_product_entry) — el producto sigue indexado, solo cambia el
+    # estado de stock, tal como espera schema.org.
     entries = [
         build_product_entry(p, lang, store_path, shipping_details, reviews_by_product)
         for p in products
-        if p.get("available") is not False
     ]
     graph = {"@context": "https://schema.org", "@graph": entries}
     payload = json_for_script_tag(graph)

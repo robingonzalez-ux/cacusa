@@ -127,7 +127,8 @@ def build_catalog_block(products, categories_order, target):
             desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")
             href = "?p=" + product_param(p, lang)
             price = p.get("price", "")
-            bits = f'<li><a href="{esc(href)}">{esc(name)}</a> — ${esc(price)}.'
+            soldout = " (Sold out)" if (lang == "en" and p.get("available") is False) else                       " (Agotado)" if p.get("available") is False else ""
+            bits = f'<li><a href="{esc(href)}">{esc(name)}</a>{soldout} — ${esc(price)}.'
             if desc:
                 bits += f" {esc(desc)}"
             bits += "</li>"
@@ -154,7 +155,10 @@ def inject(path: Path, block: str) -> bool:
 
 def main():
     data = json.loads(PRODUCTS_JSON.read_text(encoding="utf-8"))
-    products = [p for p in data.get("products", []) if p.get("available") is not False]
+    # Antes se excluía acá un producto agotado, así que un bot que no ejecuta
+    # JS ni se enteraba de que existió. Ahora se incluyen todos, marcados
+    # "(Agotado)"/"(Sold out)" junto al nombre (ver build_catalog_block).
+    products = data.get("products", [])
     categories_order = data.get("config", {}).get("categories", [])
     changed_any = False
     for target in TARGETS:
