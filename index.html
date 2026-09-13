@@ -680,7 +680,14 @@ html,body{overflow-x:hidden}
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
     <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center"><span class="t-es">Ellas <em>confían</em> en CACUSA</span><span class="t-en">They <em>trust</em> CACUSA</span></h2></div>
   </div>
-  <div class="testi-wrap"><div class="testi-track" id="tTrack2"></div></div>
+  <div class="testi-wrap"><div class="testi-track" id="tTrack2">
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."</div><div class="tcard-name">Valentina M.</div><div class="tcard-loc">Quito, Ecuador</div></div>
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"El anillo de mi esposa es una obra de arte. Quedó enamorada desde el primer momento."</div><div class="tcard-name">Carlos R.</div><div class="tcard-loc">Miami, USA</div></div>
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"La calidad es increíble. Llevo mi pulsera todos los días y recibe muchos cumplidos."</div><div class="tcard-name">Sofía L.</div><div class="tcard-loc">Guayaquil, Ecuador</div></div>
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"Pedí un collar para mi mamá. Lloró de emoción al verlo. Gracias CACUSA."</div><div class="tcard-name">Isabella T.</div><div class="tcard-loc">Nueva York, USA</div></div>
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"Diseño único, atención increíble. Sin duda volvería a comprar. ¡Los mejores!"</div><div class="tcard-name">Camila V.</div><div class="tcard-loc">Cuenca, Ecuador</div></div>
+    <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"Recibí mi anillo en tiempo récord. Hermoso, delicado y exactamente lo que pedí."</div><div class="tcard-name">Andrea P.</div><div class="tcard-loc">Los Ángeles, USA</div></div>
+  </div></div>
 </section>
 
 <!-- INSTAGRAM -->
@@ -1248,9 +1255,11 @@ function renderTestimonials(){
   const tt2=document.getElementById('tTrack2');
   if (!tt2) return;
   const escHtml = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  cfgTestis.forEach(t=>{
-    tt2.innerHTML+=`<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${escHtml(t.t)}</div><div class="tcard-name">${escHtml(t.n)}</div><div class="tcard-loc">${escHtml(t.l)}</div></div>`;
-  });
+  // El HTML ya trae testimonios reales estáticos (para bots/IA que no ejecutan JS) —
+  // se reemplazan, no se acumulan, para no duplicarlos.
+  tt2.innerHTML = cfgTestis.map(t=>
+    `<div class="tcard"><div class="tcard-stars">${Array(5).fill('<div class="tcard-star"></div>').join('')}</div><div class="tcard-text">${escHtml(t.t)}</div><div class="tcard-name">${escHtml(t.n)}</div><div class="tcard-loc">${escHtml(t.l)}</div></div>`
+  ).join('');
 }
 
 // ── INSTAGRAM GRID (placeholder hasta conectar feed real) ───
