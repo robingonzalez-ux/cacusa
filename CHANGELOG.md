@@ -41,6 +41,47 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-13 — Accesibilidad WCAG 2.1 AA en todo el sitio y el panel admin
+
+Se auditó el sitio completo (home, tienda, Cacusa Lovers, las 8 páginas
+de guías/políticas) y el panel admin contra WCAG 2.1 Nivel A y AA, y se
+corrigieron los ~70 hallazgos encontrados, organizados en 8 paquetes:
+
+- **Idioma**: `<html lang>` ahora se actualiza de verdad al cambiar a
+  inglés en las 8 páginas de guías (antes quedaba fijo en español aunque
+  todo el contenido visible cambiara).
+- **Teclado**: selector de método de pago y estrellas de reseña en la
+  tienda, el FAQ de Cacusa Lovers, las tarjetas de categoría/producto del
+  home y la tienda, y el selector de fotos/checkboxes del admin — todo lo
+  que antes solo respondía a click de mouse ahora se opera completo con
+  Tab/Enter/Espacio.
+- **Modales**: wishlist, aviso de descuento y galería de fotos de la
+  tienda ahora atrapan el foco y cierran con Escape igual que el
+  checkout/carrito. El panel admin estrena un componente `Modal`
+  compartido (foco atrapado, cierre con Escape, retorno de foco) que
+  reemplaza los 3 overlays manuales que tenía antes.
+- **Foco visible**: se ve un contorno de foco claro al navegar con
+  teclado en toda la tienda y el admin (antes el admin lo tenía
+  desactivado en ~37 lugares).
+- **Textos alternativos**: botones de solo-ícono (cerrar, mover, borrar,
+  zoom, notificaciones, etc.) ganaron `aria-label` en home y admin.
+- **Contraste de color**: textos rosa claro sobre fondo blanco en guías,
+  Cacusa Lovers, tienda, home y admin se oscurecieron donde no llegaban
+  al mínimo de legibilidad (4.5:1).
+- **Formularios**: labels reales o accesibles en campos que antes solo
+  tenían placeholder (tienda, Cacusa Lovers, y los 2 formularios más
+  usados del admin), mensajes de error/estado que ahora se anuncian solos
+  a un lector de pantalla, y campos obligatorios marcados como tales.
+- **Detalles finales**: los carruseles del home y la tienda respetan
+  "reducir movimiento" del sistema operativo y se pausan al pasar el
+  mouse o el foco por encima; íconos puramente decorativos se ocultan de
+  lectores de pantalla; tablas y el listado de piedras de nacimiento
+  quedaron con la estructura semántica correcta.
+
+Nada de esto cambia cómo se ve el sitio a simple vista — es exactamente
+el mismo diseño, ahora también operable por teclado y compatible con
+lectores de pantalla.
+
 ## 2026-09-12 — Fix: suscriptoras de Cacusa Lovers duplicadas
 
 Se detectó (con una suscriptora registrada 3 veces el mismo día) que el

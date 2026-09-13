@@ -241,6 +241,49 @@ elegibles por quien llama:
     resuelto):
     `https://claude.ai/code/artifact/8448c651-61d8-4be3-a439-fd46721dffea`
 
+## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
+
+Sitio público y panel admin auditados y corregidos contra WCAG 2.1 AA
+(ver `CHANGELOG.md` 2026-09-13). Patrones a reusar en trabajo nuevo en
+vez de reinventarlos:
+
+- **Modales/overlays**: la tienda tiene `trapFocus(modalEl, onClose)` en
+  `ui_kits/store/index.html` — atrapa Tab dentro del overlay, cierra con
+  Escape, devuelve el foco al elemento que lo abrió. Todo overlay nuevo
+  (`role="dialog" aria-modal="true"`) debe engancharse a esa función, como
+  ya hacen el modal de producto, carrito, checkout, wishlist, vignette,
+  lightbox y el drawer de menú móvil.
+- **Admin (React)**: componente `Modal` compartido (mismo algoritmo que
+  `trapFocus()`, adaptado con `useEffect`/`useRef`) — props `onClose`,
+  `label`/`labelledBy`, `overlayStyle`/`boxStyle` opcionales para
+  personalizar tamaño, `closeOnOverlayClick`. Todo modal nuevo del panel
+  debe envolver su contenido en `<Modal>` en vez de armar su propio
+  `position:fixed` a mano — ver `NtfyModal`, `ProductModal`,
+  `NewOrderModal` como ejemplo.
+- **Mensajes de estado** (éxito/error de una acción — subir foto, crear
+  cupón, guardar cambios, etc.): siempre `role="status" aria-live="polite"`
+  (o `role="alert" aria-live="assertive"` si el mensaje bloquea continuar,
+  como los errores de validación de un formulario) en el `<div>`/`<span>`
+  condicional que ya se usa en todo el sitio — no hace falta ningún
+  componente nuevo, solo agregar esos 2 atributos al contenedor del
+  mensaje.
+- **Formularios sin `<label>` visible** (diseño que usa solo
+  `placeholder`, como `NewOrderModal` del admin): agregar un `<label>`
+  con `htmlFor`/`id` visualmente oculto (`position:absolute;width:1px;
+  height:1px;overflow:hidden;clip:rect(0,0,0,0)` — ver `srOnly` en
+  `NewOrderModal`) en vez de cambiar el diseño visual.
+- **Tarjetas/elementos clicables sin control nativo** (`<div onClick>`):
+  preferir convertir a `<a href>` real si ya existe una URL de destino
+  (más simple, gratis en teclado/SEO/semántica — ver `.col-card` del
+  home). Si no hay URL real, agregar `role="button" tabIndex={0}` +
+  `onKeyDown`/`onkeydown` que dispare la misma acción en Enter/Espacio —
+  ver `activateOnKey()` en la tienda (JS plano) o el patrón de
+  `CategoryProductPicker` en el admin (React).
+- **Carruseles automáticos**: deben respetar
+  `prefers-reduced-motion` (mostrar 1 solo frame estático si el usuario
+  lo pidió) y pausarse en `mouseenter`/`focusin` — ver `heroSlideshow()`
+  del home y la rotación de `.cat-tile` en la tienda.
+
 ## Seguridad — ya auditado y cerrado
 
 - CSP vía `<meta http-equiv>` en cada página (GitHub Pages no permite
