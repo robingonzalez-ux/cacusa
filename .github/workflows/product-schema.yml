@@ -2,7 +2,7 @@ name: Regenerar JSON-LD y sitemap de productos
 
 # Cada vez que data/products.json cambia en main (ej. una edición desde el panel
 # admin, que comitea directo por la API de GitHub — alta, edición o eliminación
-# de un producto), regenera dos cosas y las comitea de vuelta:
+# de un producto), regenera tres cosas y las comitea de vuelta:
 #   1. El bloque estático de JSON-LD (schema.org Product) en
 #      ui_kits/store/index.html y en/ui_kits/store/index.html — así el HTML que
 #      sirve GitHub Pages siempre trae el schema actualizado, sin depender de
@@ -10,6 +10,10 @@ name: Regenerar JSON-LD y sitemap de productos
 #   2. Una URL propia por producto (ES + EN) en sitemap.xml — así cada
 #      producto nuevo entra solo al sitemap, y uno eliminado se quita solo,
 #      sin que nadie tenga que acordarse de tocarlo a mano.
+#   3. El catálogo de respaldo dentro de <noscript> en ambos index.html — el
+#      único contenido de producto que ve un bot/IA que no ejecuta JS. Antes
+#      se escribía a mano y quedaba desactualizado; ahora se regenera del
+#      catálogo real cada vez, agrupado por categoría.
 #
 # No entra en loop: este workflow solo mira cambios en data/products.json, y su
 # propio commit únicamente toca los index.html y sitemap.xml — nunca
@@ -38,6 +42,9 @@ jobs:
       - name: Generar URLs de producto en el sitemap
         run: python3 .github/scripts/generate_sitemap_products.py
 
+      - name: Regenerar catálogo <noscript>
+        run: python3 .github/scripts/generate_noscript_catalog.py
+
       - name: Commitear si hubo cambios
         run: |
           git config user.name "cacusa-bot"
@@ -47,5 +54,5 @@ jobs:
             exit 0
           fi
           git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml
-          git commit -m "Regenerar JSON-LD y sitemap de productos [skip ci]"
+          git commit -m "Regenerar JSON-LD, sitemap y catálogo noscript de productos [skip ci]"
           git push
