@@ -55,8 +55,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script>(function(){var _l='en';document.documentElement.className='lang-'+_l;document.documentElement.lang=_l;})();</script>
 <style>
-.lang-en .t-es{display:none!important}
-.lang-es .t-en{display:none!important}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -679,11 +677,41 @@ html,body{overflow-x:hidden}
   </div>
 </section>
 
+<!-- WHY CACUSA -->
+<section id="why-cacusa">
+  <div class="container" style="text-align:center">
+    <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.whyLabel">Calidad que se nota</div></div>
+    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
+    <div class="wc-grid">
+      <div class="wc-card reveal" data-delay="1">
+        <div class="wc-symbol">✦</div>
+        <div class="wc-title" data-i18n="landing.wcSilverTitle">Plata 925</div>
+        <div class="wc-text" data-i18n="landing.wcSilverText">Autenticidad y durabilidad en cada pieza.</div>
+      </div>
+      <div class="wc-card reveal" data-delay="2">
+        <div class="wc-symbol">✧</div>
+        <div class="wc-title" data-i18n="landing.wcGoldTitle">Baño de oro 18k</div>
+        <div class="wc-text" data-i18n="landing.wcGoldText">Acabado elegante que se cuida con el tiempo.</div>
+      </div>
+      <div class="wc-card reveal" data-delay="3">
+        <div class="wc-symbol">✓</div>
+        <div class="wc-title" data-i18n="landing.wcSteelTitle">Acero inoxidable</div>
+        <div class="wc-text" data-i18n="landing.wcSteelText">Resistente para el uso diario, sin perder el brillo.</div>
+      </div>
+      <div class="wc-card reveal" data-delay="4">
+        <div class="wc-symbol">♡</div>
+        <div class="wc-title" data-i18n="landing.wcHandmadeTitle">Hecho a mano</div>
+        <div class="wc-text" data-i18n="landing.wcHandmadeText">Cada pieza se revisa a mano antes de enviarse.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- TESTIMONIALS -->
 <section id="testimonials">
   <div class="container" style="text-align:center">
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center"><span class="t-es">Ellas <em>confían</em> en CACUSA</span><span class="t-en">They <em>trust</em> CACUSA</span></h2></div>
+    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
   </div>
   <div class="testi-wrap"><div class="testi-track" id="tTrack2">
     <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"My necklace arrived perfectly, exactly as I dreamed it. CACUSA made it happen."</div><div class="tcard-name">Valentina M.</div><div class="tcard-loc">Quito, Ecuador</div></div>
@@ -813,6 +841,11 @@ const __LANDING_EN = {
   "landing.formMaterialLabel":"Material","landing.formMaterialPh":"Silver, gold…",
   "landing.formDetailLabel":"Personalization","landing.formDetailPh":"Name, date, message…",
   "landing.formBtn":"Send via WhatsApp →","landing.testiLabel":"What they say",
+  "landing.whyLabel":"Quality you can feel",
+  "landing.wcSilverTitle":"925 Silver","landing.wcSilverText":"Authenticity and durability in every piece.",
+  "landing.wcGoldTitle":"18k Gold Plating","landing.wcGoldText":"Elegant finish that lasts with proper care.",
+  "landing.wcSteelTitle":"Stainless Steel","landing.wcSteelText":"Built to last daily wear without losing its shine.",
+  "landing.wcHandmadeTitle":"Handmade","landing.wcHandmadeText":"Each piece is hand-checked before it ships.",
   "landing.igLabel":"Follow us on Instagram",
   "landing.igBody":"Check out the latest creations, stories and personalized pieces",
   "landing.igBtn":"Follow @cacusabytaitus","landing.ctaScript":"Ready for your piece?",
@@ -1395,6 +1428,8 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
     if (bH2) bH2.innerHTML = "This week's<br><em>favorites</em>";
     const tH2 = document.getElementById('testiH2');
     if (tH2) tH2.innerHTML = 'They <em>trust</em> CACUSA';
+    const whyH2 = document.getElementById('whyH2');
+    if (whyH2) whyH2.innerHTML = 'Why <em>CACUSA</em>?';
     const ctaP = document.getElementById('ctaP');
     if (ctaP) ctaP.innerHTML = '"we create to make you look<br>more beautiful than you already are"';
     // Ticker EN
