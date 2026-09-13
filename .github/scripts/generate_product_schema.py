@@ -185,6 +185,28 @@ def build_product_entry(p, lang, store_path, shipping_details, reviews_by_produc
     return entry
 
 
+def json_for_script_tag(obj):
+    """Serializa a JSON seguro para incrustar dentro de <script>.
+
+    El parser HTML corta el <script> en el primer `</script>` que ve, sin
+    importar que esté dentro de una cadena JSON. Como acá entra texto que
+    escribe cualquier persona desde internet (el nombre y el comentario de
+    una reseña, que se guardan en Firebase sin moderación previa), una
+    reseña con `</script><script>…</script>` cerraría este bloque e
+    inyectaría código ejecutable en la tienda — y el Action lo comitearía a
+    `main`, que GitHub Pages sirve de inmediato.
+
+    `\\u003c` / `\\u003e` / `\\u0026` son escapes JSON válidos: el dato que
+    lee Google es idéntico, pero el parser HTML ya no ve `</script>`.
+    """
+    return (
+        json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+
+
 def build_schema_block(products, lang, store_path, shipping_details, reviews_by_product):
     entries = [
         build_product_entry(p, lang, store_path, shipping_details, reviews_by_product)
@@ -192,7 +214,7 @@ def build_schema_block(products, lang, store_path, shipping_details, reviews_by_
         if p.get("available") is not False
     ]
     graph = {"@context": "https://schema.org", "@graph": entries}
-    payload = json.dumps(graph, ensure_ascii=False, separators=(",", ":"))
+    payload = json_for_script_tag(graph)
     return (
         f'{MARKER_START}\n'
         f'<!-- Generado automáticamente desde data/products.json — no editar a mano, ver .github/workflows/product-schema.yml -->\n'
