@@ -289,14 +289,30 @@ const apiUpload = (token, path, contentBase64, message) => apiCall('upload', { t
 const apiOrderManual = (token, order)     => apiCall('order/manual', { token, order });
 const apiOrderUpdate  = (token, id, patch) => apiCall('order/update', { token, id, patch });
 const apiOrderDelete  = (token, id)        => apiCall('order/update', { token, id, delete: true });
-// Traduce texto de español a inglés vía MyMemory (gratis, sin API key)
-async function translateToEn(text) {
-  if (!text || !text.trim()) return '';
+// Traduce texto de español a inglés vía MyMemory (gratis, sin API key).
+// MyMemory (plan gratuito) tiene un límite duro de ~500 caracteres por
+// consulta — cuando se supera, responde HTTP 200 pero con el string de
+// error dentro de translatedText (ej. "QUERY LENGTH LIMIT EXCEEDED. MAX
+// ALLOWED QUERY : 500 CHARS"), que antes se guardaba tal cual como si fuera
+// la traducción real (pasó con 7 productos + 1 condición de Lovers, ver
+// CHANGELOG). translateToEnDetailed() nunca deja pasar eso — devuelve
+// {text, ok:false} y el texto original en vez del error, para que quien
+// llama pueda avisar y dejar corregir a mano.
+const MYMEMORY_ERROR_RE = /LIMIT EXCEEDED|INVALID (SOURCE|TARGET)?\s?LANGUAGE|NO QUERY SPECIFIED|AMOUNT OF WORDS/i;
+async function translateToEnDetailed(text) {
+  if (!text || !text.trim()) return { text: '', ok: true };
+  const trimmed = text.trim();
+  if (trimmed.length > 480) return { text: trimmed, ok: false };
   try {
-    const res = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text.trim()) + '&langpair=es|en');
+    const res = await fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(trimmed) + '&langpair=es|en');
     const data = await res.json();
-    return data?.responseData?.translatedText || text;
-  } catch (_) { return text; }
+    const translated = data?.responseData?.translatedText;
+    if (!translated || MYMEMORY_ERROR_RE.test(translated)) return { text: trimmed, ok: false };
+    return { text: translated, ok: true };
+  } catch (_) { return { text: trimmed, ok: false }; }
+}
+async function translateToEn(text) {
+  return (await translateToEnDetailed(text)).text;
 }
 // Traduce el bloque "texts" (cabecera de la tienda) al inglés
 async function translateTextsBlock(texts) {
@@ -851,7 +867,7 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const mats = (materials && materials.length) ? materials : DEFAULT_MATERIALS;
   const isNew = !product?.id;
   const initMkt = product ? (fbMarkets[product.id] || 'both') : 'both';
-  const blank = { name: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true, promoEnabled: false, promoPrice: '', promoLabel: 'Oferta', promoEndsAt: '', images: [] };
+  const blank = { name: '', name_en: '', category: cats[0], price: '', oldPrice: '', img: 'collar', color: 'rose', tag: '', description: '', description_en: '', personalized: false, available: true, imageUrl: '', focalX: 50, focalY: 50, zoom: 1, material: mats[0], surcharge: false, marketEC: true, marketUS: true, promoEnabled: false, promoPrice: '', promoLabel: 'Oferta', promoEndsAt: '', images: [] };
   const [form, setForm] = useState(product
     ? { ...product, images: product.images || [], tag: product.tag || '', oldPrice: product.oldPrice || '', surcharge: !!fbSurcharges[product.id], marketEC: initMkt !== 'us', marketUS: initMkt !== 'ec', promoEnabled: !!(product.promo && product.promo.price), promoPrice: (product.promo && product.promo.price) || '', promoLabel: (product.promo && product.promo.label) || 'Oferta', promoEndsAt: (product.promo && product.promo.endsAt) || '' }
     : blank);
@@ -874,8 +890,11 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
   const [uploadMsg, setUploadMsg] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [translateWarn, setTranslateWarn] = useState('');
   const fileRef = useRef();
   const galleryFileRef = useRef();
+  const nameEnRef = useRef();
+  const descEnRef = useRef();
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [galleryMsg, setGalleryMsg] = useState('');
@@ -958,16 +977,30 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
 
   const save = async () => {
     if (!form.name.trim() || !form.price) return;
-    setTranslating(true);
-    let name_en = form.name_en || '';
-    let description_en = form.description_en || '';
-    try {
-      [name_en, description_en] = await Promise.all([
-        translateToEn(form.name),
-        translateToEn(form.description || '')
-      ]);
-    } catch (_) {}
-    setTranslating(false);
+    setTranslateWarn('');
+    let name_en = (form.name_en || '').trim();
+    let description_en = (form.description_en || '').trim();
+    // Solo auto-traduce lo que esté vacío — si el admin ya escribió/corrigió
+    // el inglés a mano, esa versión nunca se pisa con una nueva traducción.
+    const needName = !name_en, needDesc = !description_en;
+    if (needName || needDesc) {
+      setTranslating(true);
+      try {
+        const [nRes, dRes] = await Promise.all([
+          needName ? translateToEnDetailed(form.name) : Promise.resolve({ text: name_en, ok: true }),
+          needDesc ? translateToEnDetailed(form.description || '') : Promise.resolve({ text: description_en, ok: true })
+        ]);
+        name_en = nRes.text; description_en = dRes.text;
+        if (!nRes.ok || !dRes.ok) {
+          setTranslating(false);
+          setForm(f => ({ ...f, name_en, description_en }));
+          setTranslateWarn('⚠️ No se pudo traducir automáticamente al inglés (probablemente el texto es muy largo para el traductor gratuito). Revisa o escribe el texto en inglés abajo y vuelve a pulsar Guardar.');
+          setTimeout(() => (!dRes.ok ? descEnRef : nameEnRef).current?.focus(), 0);
+          return;
+        }
+      } catch (_) {}
+      setTranslating(false);
+    }
     const market = (form.marketEC && form.marketUS) || (!form.marketEC && !form.marketUS) ? 'both' : form.marketEC ? 'ec' : 'us';
     const promo = form.promoEnabled && form.promoPrice
       ? { price: Number(form.promoPrice), label: form.promoLabel || 'Oferta', endsAt: form.promoEndsAt || null }
@@ -1108,6 +1141,28 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
               placeholder="Describe el material, medidas y detalles especiales…" style={{ ...inp, resize: 'vertical' }} />
           </div>
         </div>
+
+        {/* Nombre/descripción en inglés — se traducen solos al guardar si se
+            dejan vacíos; si la traducción automática falla (texto muy largo
+            para el traductor gratuito, o error de red), se avisa acá en vez
+            de guardar el error como si fuera la traducción real. */}
+        <details open={!!translateWarn} style={{ marginTop: 16, background: translateWarn ? '#FEF3C7' : '#FAF7FB', borderRadius: 12, padding: '10px 14px' }}>
+          <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: translateWarn ? '#92400E' : '#7A6880', listStyle: 'none' }}>
+            🌐 Nombre y descripción en inglés (opcional — se traducen solos si los dejas vacíos)
+          </summary>
+          {translateWarn && <div role="alert" aria-live="assertive" style={{ marginTop: 10, marginBottom: 4, fontSize: 12.5, color: '#92400E', background: '#FEF3C7', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 12px' }}>{translateWarn}</div>}
+          <div style={{ display: 'grid', gap: 12, marginTop: 12 }}>
+            <div>
+              <label htmlFor="pmNameEn" style={lbl}>Nombre en inglés</label>
+              <input id="pmNameEn" ref={nameEnRef} value={form.name_en || ''} onChange={e => set('name_en', e.target.value)} placeholder="Se traduce automáticamente si lo dejas vacío" style={inp} />
+            </div>
+            <div>
+              <label htmlFor="pmDescriptionEn" style={lbl}>Descripción en inglés</label>
+              <textarea id="pmDescriptionEn" ref={descEnRef} value={form.description_en || ''} onChange={e => set('description_en', e.target.value)} rows={3}
+                placeholder="Se traduce automáticamente si la dejas vacía" style={{ ...inp, resize: 'vertical' }} />
+            </div>
+          </div>
+        </details>
 
         {/* Fallback appearance — only used when there is no photo */}
         <details style={{ marginTop: 16, background: '#FAF7FB', borderRadius: 12, padding: '10px 14px' }}>
@@ -3669,19 +3724,24 @@ function App() {
       // Rellena traducciones de productos que aún no las tengan (las nuevas ya se traducen al guardar)
       let prodsOut = products;
       const needTr = products.filter(p => p.name && (!p.name_en || !p.description_en));
+      const failedTr = [];
       if (needTr.length) {
         setSyncMsg('🌐 Traduciendo productos al inglés…');
         prodsOut = [];
         for (const p of products) {
           if (p.name && (!p.name_en || !p.description_en)) {
-            const [ne, de] = await Promise.all([
-              p.name_en ? Promise.resolve(p.name_en) : translateToEn(p.name),
-              p.description_en ? Promise.resolve(p.description_en) : translateToEn(p.description || '')
+            const [nRes, dRes] = await Promise.all([
+              p.name_en ? Promise.resolve({ text: p.name_en, ok: true }) : translateToEnDetailed(p.name),
+              p.description_en ? Promise.resolve({ text: p.description_en, ok: true }) : translateToEnDetailed(p.description || '')
             ]);
-            prodsOut.push({ ...p, name_en: ne, description_en: de });
+            if (!nRes.ok || !dRes.ok) failedTr.push(p.name);
+            prodsOut.push({ ...p, name_en: nRes.text, description_en: dRes.text });
           } else prodsOut.push(p);
         }
         setProducts(prodsOut);
+      }
+      if (failedTr.length) {
+        alert('⚠️ No se pudo traducir automáticamente al inglés (texto muy largo para el traductor gratuito) en estos productos — quedaron con el texto en español como respaldo, revísalos y corrígelos a mano en "Nombre/descripción en inglés":\n\n' + failedTr.join('\n'));
       }
       setSyncMsg('☁️ Guardando de forma segura…');
       const json = JSON.stringify({
