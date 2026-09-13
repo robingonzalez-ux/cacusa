@@ -42,9 +42,21 @@ Disallow: /ui_kits/admin/
 Disallow: /data/orders.json
 Disallow: /preview/
 Disallow: /.github/
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
 
 # Perplexity
 User-agent: PerplexityBot
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
+User-agent: Perplexity-User
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /data/orders.json
@@ -64,6 +76,26 @@ Disallow: /ui_kits/admin/
 Disallow: /data/orders.json
 Disallow: /preview/
 Disallow: /.github/
+User-agent: Claude-User
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
+
+# Amazon (Alexa+ / Rufus)
+User-agent: Amazonbot
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
 
 # Meta (Facebook/Instagram — vista previa de links y Meta AI)
 User-agent: FacebookBot
@@ -73,6 +105,14 @@ Disallow: /data/orders.json
 Disallow: /preview/
 Disallow: /.github/
 User-agent: Meta-ExternalAgent
+Allow: /
+Disallow: /ui_kits/admin/
+Disallow: /data/orders.json
+Disallow: /preview/
+Disallow: /.github/
+
+# Pinterest (descubrimiento visual — muy relevante para joyería)
+User-agent: Pinterestbot
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /data/orders.json
