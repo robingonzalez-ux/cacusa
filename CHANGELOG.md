@@ -41,6 +41,74 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-13 — Auditoría de seguridad y de confiabilidad de información
+
+Segunda auditoría de seguridad (la primera fue el 7 de septiembre) más una
+auditoría nueva: si el sitio cuenta la misma información de forma coherente
+en todos los lugares donde la repite.
+
+### Lo más grave: cualquiera podía dejar código malicioso en la tienda
+
+Una cadena de cinco piezas que por separado parecían inofensivas: el
+formulario de reseñas escribe directo en la base de datos sin moderación;
+un script automático levantaba esas reseñas y las metía en la ficha técnica
+que lee Google sin limpiar el texto; el navegador corta un bloque de código
+en el primer cierre que encuentra, aunque esté dentro de un texto. Resultado:
+una reseña con el texto justo quedaba incrustada **como código ejecutable**
+en las dos tiendas, se comiteaba sola y se publicaba — en la misma página
+donde la clienta llena dirección y teléfono del checkout.
+
+Se reprodujo con una reseña de prueba antes de tocar nada, se corrigió
+escapando los símbolos, y se verificó que Google siga leyendo exactamente el
+mismo texto. También se revisaron los otros cinco bloques que el sitio genera
+mientras navegás: ninguno tenía esa vía.
+
+### Envío gratis de Cacusa Lovers: de promesa a beneficio real
+
+La página del club prometía "envíos gratis en todas tus compras en tienda"
+en seis lugares, pero eso **no existía en el código**: la tienda aplicaba el
+umbral de $90 a todo el mundo por igual, así que una suscriptora pagaba
+envío igual que cualquiera. Ahora cada suscriptora obtiene su propio código
+desde la página del club, verificado contra la base de suscriptoras activas
+y derivado por firma criptográfica para que no se pueda adivinar. El
+servidor de pagos aplica la exención por su cuenta, así que el total que se
+cobra es el mismo que se muestra.
+
+### Reseñas: ahora pasan por aprobación
+
+Cualquiera podía publicar reseñas sin haber comprado, y esas reseñas
+alimentaban el promedio de estrellas que se publica para Google. Las nuevas
+nacen ocultas y se muestran recién cuando Tita o Robin las aprueban desde el
+panel; las que ya estaban publicadas siguen visibles.
+
+### Datos que el sitio contaba de dos formas distintas
+
+- **Precios**: el FAQ y su ficha técnica decían "desde $15 hasta $80". El
+  catálogo real va de $20 a $125 — ningún producto cuesta $15.
+- **Estadísticas del home**: una persona veía 650 piezas y 5 países; Google
+  y cualquiera sin JavaScript veían 500 y 2.
+- **Preguntas frecuentes**: 5 de las 7 estaban redactadas distinto en la
+  ficha técnica que en la página. Ahora se generan del texto visible.
+- **Materiales**: se venden 6, el FAQ contaba 3. Faltaban gold filled y baño
+  de rodio, que sí están a la venta.
+- **Envío gratis**: 20 lugares dicen "$90", pero el FAQ decía "a partir de
+  cierto monto" justo donde una IA busca la cifra.
+- Un botón que decía "Escríbenos por WhatsApp" llevaba a Instagram en las 8
+  guías, y la home en inglés tenía 9 textos en español.
+
+### Otros arreglos de seguridad
+
+- El Worker de respaldos podía filtrar el secreto de la base de datos dentro
+  de una notificación al celular si un backup fallaba.
+- Ese mismo Worker era el único endpoint del sistema sin límite de uso.
+- Las 8 páginas de guías tenían una política de seguridad vacía; ahora tienen
+  la completa, verificada con un navegador real.
+
+Quedan anotados 5 hallazgos de seguridad menores y 5 de información que
+necesitan una decisión de negocio (entre ellos, que la página de envíos
+muestra dos precios distintos para el mismo envío nacional). Los informes
+completos están publicados como documentos aparte.
+
 ## 2026-09-13 — Inglés no nativo corregido en todo el sitio
 
 Se revisó el contenido en inglés de las páginas públicas completas (home,

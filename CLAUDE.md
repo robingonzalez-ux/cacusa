@@ -166,6 +166,28 @@ JavaScript del cliente (`_slugify`/`_productParam` en `ui_kits/store/index.html`
 replicada en Python (`slugify`/`product_param` en
 `generate_product_schema.py`) — deben coincidir siempre.
 
+### Regla de escape: nada crudo dentro de un `<script>`
+
+Estos scripts escriben dentro de `<script>` en HTML público, y algunos de
+los datos que insertan **los escribe cualquiera desde internet** (el nombre
+y el comentario de una reseña, que se guardan en Firebase sin moderación
+previa). La auditoría del 13 sep encontró ahí un XSS almacenado real: una
+reseña con `</script><script>…` quedaba incrustada como código ejecutable en
+las dos tiendas, se comiteaba sola y GitHub Pages la publicaba.
+
+`json.dumps()` **no alcanza**: no escapa `<`, `>` ni `/`, y el parser HTML
+corta el `<script>` en el primer `</script>` que ve, aunque esté en medio de
+una cadena JSON. Implementación de referencia:
+`json_for_script_tag()` en `generate_product_schema.py`, que además escapa
+`<`, `>` y `&` como `\u003c` / `\u003e` / `\u0026` — son escapes JSON
+válidos, así que el dato que lee Google es byte a byte el mismo.
+
+Cualquier generador nuevo que inyecte datos dentro de un `<script>` tiene que
+usar esa función (o una equivalente). Los bloques JSON-LD que el sitio arma
+en runtime no tienen este problema porque usan `el.textContent`, que el
+navegador no re-parsea como HTML — si alguna vez se cambia eso por
+`innerHTML`, vuelve el agujero.
+
 ## Patrón de idiomas (ES/EN)
 
 Dos patrones distintos conviven en el sitio:
@@ -221,6 +243,32 @@ elegibles por quien llama:
   admin ve en la pestaña Cupones quién refirió a quién (queda en `note`) y
   Tita/Robin le mandan la recompensa manual. Alcance intencional, no bug.
 
+## Envío gratis de Cacusa Lovers (`freeship`)
+
+Mismo patrón que los referidos, agregado el 13 sep: la página del club
+prometía "envíos gratis en todas tus compras en tienda" pero eso no existía
+en el código — la tienda aplicaba el umbral de $90 a todo el mundo por igual.
+
+- `POST /lovers/shipping-code` en `admin-worker.js` — público pero
+  origin-restringido, 10/hora por IP, y verifica el teléfono contra Firebase
+  con `isActiveLoversPhone()` antes de emitir nada. Falla cerrado.
+- Tipo de cupón nuevo **`freeship`**: `amount: 0`, no descuenta dinero del
+  subtotal; su único efecto es anular el envío. Lo aplica
+  `square-payment-worker.js` sobre `serverShipping` **antes** de armar la
+  línea de envío — ese Worker recalcula el envío ignorando lo que manda el
+  cliente, así que si el cupón no se aplica ahí, la tienda mostraría envío
+  gratis y Square cobraría igual.
+- En la tienda, el helper `_cpIsFreeShip()` cubre las 6 rutas de cálculo de
+  envío y las 5 de descuento en dinero (las 4 formas de pagar: resumen,
+  Square, Zelle y WhatsApp).
+
+**Diferencia deliberada con el código de referido:** `AMIGA` + los últimos 6
+dígitos del teléfono es **deducible** por cualquiera que conozca ese número
+(hallazgo bajo de la auditoría, todavía abierto). El de envío se deriva por
+HMAC con `SESSION_SECRET` — sigue siendo determinístico, pero no adivinable.
+Cualquier código nuevo por-clienta debe seguir el segundo patrón, no el
+primero.
+
 ## SEO — estado y patrones
 
 - **Categorías con URL propia**: cada categoría de la tienda tiene
@@ -259,8 +307,12 @@ elegibles por quien llama:
   misma URL) para que actualice en el mismo lugar en vez de crear uno nuevo:
   - **SEO/UX/Comercial** (68/76 resueltos, no tocada en sesiones recientes):
     `https://claude.ai/code/artifact/45c105ed-9fad-4615-9856-1d1a3fce21f3`
-  - **Seguridad** (9/10 resuelto, 1 nota informativa sin acción):
+  - **Seguridad** (2 rondas: 7 sep y 13 sep — 20 hallazgos, 13 resueltos,
+    5 pendientes, 2 notas):
     `https://claude.ai/code/artifact/6872c756-df31-4134-bf6b-b16219a461ca`
+  - **Confiabilidad de información** (13 hallazgos, 8 corregidos, 5
+    anotados — el mismo dato contado distinto en distintos lugares):
+    `https://claude.ai/code/artifact/beb77ccc-a4a6-4238-93ef-1d5e8f9e682b`
   - **Benchmark Mundial** vs. Mejuri/Kendra Scott/Pandora/etc. (10/26
     resuelto):
     `https://claude.ai/code/artifact/8448c651-61d8-4be3-a439-fd46721dffea`
@@ -308,7 +360,7 @@ vez de reinventarlos:
   lo pidió) y pausarse en `mouseenter`/`focusin` — ver `heroSlideshow()`
   del home y la rotación de `.cat-tile` en la tienda.
 
-## Seguridad — ya auditado y cerrado
+## Seguridad — auditado en 2 rondas (quedan 5 pendientes)
 
 - CSP vía `<meta http-equiv>` en cada página (GitHub Pages no permite
   headers HTTP reales, y el dominio no está en Cloudflare — confirmado, no
@@ -322,6 +374,28 @@ vez de reinventarlos:
 - Reglas de Firebase RTDB: ya verificadas contra el payload real de cada
   formulario público (reseñas, alta de Lovers) — solo permiten crear, no
   leer/editar/borrar sin `FB_DB_SECRET`.
+- **Moderación de reseñas** (13 sep): las reseñas nuevas nacen con
+  `approved: false` y no se muestran hasta que el admin las apruebe
+  (`POST /admin/reviews/:producto/:id/approve` en `lovers-webhook-worker.js`).
+  El filtro en los 4 consumidores es `approved !== false`, **no**
+  `=== true`, a propósito: las reseñas anteriores al cambio no tienen el
+  campo y deben seguir visibles. Importa porque esas reseñas alimentan el
+  `aggregateRating` que se publica para Google.
+
+### Pasos manuales pendientes (no se pueden hacer desde el repo)
+
+1. **Desplegar los 3 Workers** que están en `workers-src` sin desplegar:
+   `cacusa-admin` y `cacusa-square` (envío gratis Lovers — van juntos y
+   **antes** de entregarle el código a ninguna suscriptora, si no la tienda
+   muestra envío gratis y Square cobra igual), y `cacusa-lovers-webhook`
+   (aprobar reseñas).
+2. **Regla de Firebase**: exigir que una reseña nueva traiga
+   `approved === false`, para que nadie pueda auto-aprobarse mandando la
+   reseña por fuera del sitio.
+3. **Verificar en el dashboard de Cloudflare** que el bucket R2
+   `cacusa-backups` siga sin acceso público — es un solo JSON con todas las
+   suscriptoras, todos los pedidos con dirección y teléfono, y las
+   credenciales de Face ID. No se puede verificar desde el código.
 
 ## Historial de cambios
 
