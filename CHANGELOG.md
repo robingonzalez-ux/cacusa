@@ -41,6 +41,42 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-13 — Inglés no nativo corregido en todo el sitio
+
+Se revisó el contenido en inglés de las páginas públicas completas (home,
+tienda, Cacusa Lovers, guías) buscando traducciones literales del español
+que un hablante nativo no escribiría — a partir del ejemplo puntual
+"artisanal jewelry" (debería ser "handcrafted jewelry"), que resultó ser
+parte de un patrón más amplio.
+
+- **"Artisanal" → "Handcrafted"**: aparecía en el título de la tienda,
+  meta description, Open Graph, JSON-LD, palabras clave y el label del
+  hero — en home, tienda y `llms.txt`. Reemplazado consistentemente.
+- **Calco recurrente** "we create to make you look more beautiful than
+  you already are" (traducción palabra por palabra del español, sin
+  sujeto) corregido en home, tienda y Cacusa Lovers.
+- **`config.lovers_en`** (el bloque de Cacusa Lovers en inglés que edita
+  el admin) tenía errores de traducción automática en ~15 campos:
+  "turn black" en vez de "tarnish", "jewels" en vez de "pieces", títulos
+  con mayúsculas sueltas ("Random selection BY CACUSA"), frases
+  entrecortadas — todo reescrito a mano.
+- **13 descripciones de producto** con errores de traducción literal:
+  el nombre de un producto literalmente decía "18K BATHROOM" (por "baño
+  de oro"), "pellet" en vez de "ball chain", un nombre truncado ("ing"
+  en vez de "Ring"), frases sin sentido tipo "my two blue eyes" o "made
+  with Ecuadorian hands".
+- Alt text en español ("joyería artesanal personalizada CACUSA") que
+  aparecía hasta en las páginas `/en/` — traducido.
+- Sección de combos de la tienda sin rama en inglés (dormida hoy porque
+  no hay combos activos, pero se hubiera visto en español si se agrega
+  uno) — se le agregó traducción.
+- 3 calcos menores en las páginas de guías (envíos, devoluciones,
+  cuidados) y un título de tarjeta en el hub de guías que rompía el
+  paralelismo con las demás.
+
+El catálogo `<noscript>` de la tienda se regeneró automáticamente para
+reflejar las descripciones de producto corregidas.
+
 ## 2026-09-13 — Accesibilidad WCAG 2.1 AA en todo el sitio y el panel admin
 
 Se auditó el sitio completo (home, tienda, Cacusa Lovers, las 8 páginas
