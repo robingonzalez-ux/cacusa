@@ -963,6 +963,20 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
     setRevLoading(false);
   };
 
+  // Aprobar una reseña la hace visible en la tienda y la suma al promedio de
+  // estrellas que se publica en la ficha que lee Google. Hasta entonces, la reseña
+  // existe en Firebase pero no se muestra en ningún lado.
+  const approveReview = async key => {
+    try {
+      const r = await fetch(`${LOVERS_WEBHOOK_URL}/admin/reviews/${encodeURIComponent(product.id)}/${encodeURIComponent(key)}/approve`, {
+        method: 'POST',
+        headers: { 'X-Admin-Key': token },
+      });
+      if (!r.ok) { alert('Error al aprobar la reseña'); return; }
+      setReviews(rs => rs.map(x => x.key === key ? { ...x, approved: true } : x));
+    } catch(_) { alert('Error al aprobar la reseña'); }
+  };
+
   const deleteReview = async key => {
     try {
       // Borrar una reseña requiere el secret de Firebase — pasa por el worker, igual que Lovers
@@ -1258,6 +1272,11 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
             onToggle={e => { if (e.target.open && reviews === null) loadReviews(); }}>
             <summary style={{ cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#7A6880', listStyle: 'none' }}>
               ⭐ Reseñas de clientes{reviews !== null ? ` (${reviews.length})` : ''}
+              {reviews && reviews.some(r => r.approved === false) && (
+                <span style={{ marginLeft: 8, background: '#FEF3C7', color: '#92400E', borderRadius: 8, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
+                  {reviews.filter(r => r.approved === false).length} sin aprobar
+                </span>
+              )}
             </summary>
             <div style={{ marginTop: 12 }}>
               {revLoading && <div style={{ fontSize: 13, color: '#9B5DE5', textAlign: 'center', padding: '12px 0' }}>Cargando reseñas…</div>}
@@ -1265,19 +1284,30 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
                 <div style={{ fontSize: 13, color: '#767676', textAlign: 'center', padding: '8px 0' }}>No hay reseñas aún para este producto</div>
               )}
               {!revLoading && reviews && reviews.map(r => (
-                <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f0e8f8' }}>
+                <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f0e8f8', background: r.approved === false ? '#FFFBEB' : 'transparent' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{r.name || 'Anónimo'}</span>
+                      {r.approved === false && (
+                        <span style={{ background: '#FEF3C7', color: '#92400E', borderRadius: 6, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>Sin aprobar</span>
+                      )}
                       <span style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>{'★'.repeat(r.rating || 0)}{'☆'.repeat(5 - (r.rating || 0))}</span>
                       <span style={{ fontSize: 11, color: '#767676', marginLeft: 'auto' }}>{r.date || ''}</span>
                     </div>
                     {r.comment && <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>{r.comment}</div>}
                   </div>
-                  <button onClick={() => deleteReview(r.key)}
-                    style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FFB3C1', background: 'white', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                    Eliminar
-                  </button>
+                  <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {r.approved === false && (
+                      <button onClick={() => approveReview(r.key)}
+                        style={{ padding: '4px 10px', borderRadius: 8, border: '1.5px solid #86EFAC', background: 'white', color: '#15803D', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                        Aprobar
+                      </button>
+                    )}
+                    <button onClick={() => deleteReview(r.key)}
+                      style={{ padding: '4px 10px', borderRadius: 8, border: '1.5px solid #FFB3C1', background: 'white', color: '#DC2626', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+                      Eliminar
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

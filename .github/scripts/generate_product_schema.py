@@ -101,11 +101,19 @@ def build_review_fields(product_id, reviews_by_product):
     reviews = reviews_by_product.get(str(product_id))
     if not isinstance(reviews, dict) or not reviews:
         return None
-    ratings = [float(rv.get("rating", 5)) for rv in reviews.values() if isinstance(rv, dict)]
+    # Solo reseñas aprobadas. `approved is not False` en vez de `is True` a propósito:
+    # las reseñas anteriores a la moderación no tienen el campo y deben seguir contando.
+    # Esto es lo que publica las estrellas que Google puede mostrar en sus resultados,
+    # así que no puede alimentarse de reseñas que todavía nadie revisó.
+    approved = [rv for rv in reviews.values()
+                if isinstance(rv, dict) and rv.get("approved") is not False]
+    if not approved:
+        return None
+    ratings = [float(rv.get("rating", 5)) for rv in approved]
     if not ratings:
         return None
     avg = sum(ratings) / len(ratings)
-    items = sorted(reviews.values(), key=lambda rv: rv.get("date", ""), reverse=True)
+    items = sorted(approved, key=lambda rv: rv.get("date", ""), reverse=True)
     review_list = [
         {
             "@type": "Review",
