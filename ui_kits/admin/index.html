@@ -3933,7 +3933,7 @@ function App() {
           <span style={{ fontSize: 18 }}>📱</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#555', whiteSpace: 'nowrap' }}>WhatsApp para pedidos:</span>
           <input value={whatsappNum} onChange={e => { setWhatsappNum(e.target.value); setDirty(true); }}
-            placeholder="+593 99 999 9999"
+            placeholder="+1 786 555 0123"
             style={{ flex: 1, minWidth: 180, padding: '8px 12px', border: '1.5px solid #e0e0e0', borderRadius: 8, fontSize: 13, outline: 'none', color: '#333' }} />
           <button onClick={publish} disabled={!dirty || syncing}
             style={{ padding: '10px 22px', background: dirty ? 'linear-gradient(135deg,#1A1124,#2D1B2E)' : '#e0e0e0', color: dirty ? 'white' : '#767676', borderRadius: 99, fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', opacity: syncing ? .7 : 1, transition: 'all .2s', boxShadow: dirty ? '0 4px 12px rgba(0,0,0,.2)' : 'none', border: 'none', cursor: dirty && !syncing ? 'pointer' : 'default' }}>
