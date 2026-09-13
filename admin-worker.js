@@ -124,6 +124,14 @@ export default {
         return await handleReferralCode(body, env, allowOrigin, request);
       }
 
+      // Envío gratis de Cacusa Lovers — mismas reglas fijas que /referral/code:
+      // pública, origin-restringida, rate-limited, y solo para suscriptoras activas
+      // verificadas contra Firebase. Nunca deja que el llamador elija el beneficio.
+      if (path.endsWith('/lovers/shipping-code')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversShippingCode(body, env, allowOrigin, request);
+      }
+
       // Cupones — validación pública (origin-restringida, rate-limited)
       if (path.endsWith('/coupon/validate')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
@@ -825,6 +833,62 @@ async function handleReferralCode(body, env, origin, request) {
   return ok({ ok: true, code: coupon.code, type: coupon.type, amount: coupon.amount }, origin);
 }
 
+// ── Envío gratis para suscriptoras de Cacusa Lovers ────────────────────────────────────
+// La página de Lovers promete "envíos gratis en todas tus compras en tienda". Hasta la
+// auditoría del 13 sep eso no existía en ninguna parte del código: la tienda aplicaba el
+// umbral de envío gratis ($90) a todo el mundo por igual, así que una suscriptora pagaba
+// envío igual que cualquiera. Esto lo implementa.
+//
+// Un código único compartido entre todas se filtraría el primer día (basta que una lo
+// reenvíe), así que se emite uno POR SUSCRIPTORA, con el mismo patrón que ya usa
+// handleReferralCode: se verifica el teléfono contra Firebase antes de emitir nada.
+//
+// A diferencia del código de referido — que es 'AMIGA' + los últimos 6 dígitos del
+// teléfono, y por lo tanto lo puede deducir cualquiera que conozca ese número — este se
+// deriva por HMAC con SESSION_SECRET. Sigue siendo determinístico (mismo teléfono →
+// mismo código, así pedirlo dos veces no crea dos cupones) pero no es adivinable.
+async function loversShippingCode(phoneDigits, env) {
+  const sig = await hmac('lovers-shipping:' + phoneDigits, env.SESSION_SECRET);
+  // b64url → solo A-Z 0-9 para que entre en el formato de código de cupón.
+  const clean = sig.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return 'ENVIO' + clean.slice(0, 8);
+}
+
+async function handleLoversShippingCode(body, env, origin, request) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  if (!env.SESSION_SECRET) return err('No disponible', 500, origin);
+
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `shiprl:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+
+  const name = String(body.name || '').trim().slice(0, 100);
+  const phoneDigits = String(body.phone || '').replace(/\D/g, '');
+  if (!name || phoneDigits.length < 7) {
+    return err('Faltan nombre o teléfono válido', 400, origin);
+  }
+  if (!(await isActiveLoversPhone(phoneDigits, env))) {
+    return err('Este beneficio es exclusivo para suscriptoras activas de Cacusa Lovers.', 403, origin);
+  }
+
+  const code = await loversShippingCode(phoneDigits, env);
+  let coupon = await couponGet(env, code);
+  if (!coupon) {
+    coupon = {
+      code, type: 'freeship', amount: 0, kind: 'lovers-shipping',
+      // Sin tope de usos ni vencimiento: el beneficio dura mientras dure la suscripción.
+      // Si una suscriptora se da de baja, se desactiva el cupón desde el panel.
+      maxUses: null, usedCount: 0, active: true, expiresAt: null,
+      note: `Envío gratis Lovers — ${name}${body.phone ? ' (' + String(body.phone).slice(0, 30) + ')' : ''}`,
+      createdAt: new Date().toISOString(), createdBy: 'lovers-system',
+    };
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  }
+  return ok({ ok: true, code: coupon.code, type: coupon.type }, origin);
+}
+
 async function handleCouponValidate(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   // Rate limit por IP (20/hr)
@@ -1022,9 +1086,11 @@ async function handleCouponCreate(body, env, origin, session) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   const code = (body.code || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!code || code.length < 3 || code.length > 30) return err('Código inválido (3-30 chars, A-Z 0-9 - _)', 400, origin);
-  const type = body.type === 'fixed' ? 'fixed' : 'percent';
-  const amount = Number(body.amount);
-  if (!(amount > 0)) return err('Monto inválido', 400, origin);
+  // 'freeship' = anula el costo de envío, sin descontar dinero del subtotal (por eso
+  // su amount es 0 y no se le pide monto). Es el beneficio de Cacusa Lovers.
+  const type = body.type === 'fixed' ? 'fixed' : (body.type === 'freeship' ? 'freeship' : 'percent');
+  const amount = type === 'freeship' ? 0 : Number(body.amount);
+  if (type !== 'freeship' && !(amount > 0)) return err('Monto inválido', 400, origin);
   if (type === 'percent' && amount > 100) return err('Porcentaje máximo: 100', 400, origin);
   const maxUses = (body.maxUses != null && body.maxUses !== '') ? Math.floor(Number(body.maxUses)) : null;
   const expiresAt = body.expiresAt ? String(body.expiresAt).slice(0, 10) : null;

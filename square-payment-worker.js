@@ -266,14 +266,26 @@ async function gcPeekCents(env, code) {
 }
 
 function couponKey(code) { return 'coupon:' + String(code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, ''); }
-async function couponPeekCents(env, code, totalCents) {
-  if (!env.CACUSA_KV) return 0;
+// Devuelve el cupón solo si está vigente, o null. Antes esta validación vivía duplicada
+// dentro de couponPeekCents; se extrajo porque el envío gratis necesita consultar el tipo
+// del cupón antes de armar la línea de envío.
+async function couponLoadValid(env, code) {
+  if (!env.CACUSA_KV) return null;
   const raw = await env.CACUSA_KV.get(couponKey(code));
-  if (!raw) return 0;
-  let c; try { c = JSON.parse(raw); } catch { return 0; }
-  if (!c || !c.active) return 0;
-  if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return 0;
-  if (c.maxUses != null && c.usedCount >= c.maxUses) return 0;
+  if (!raw) return null;
+  let c; try { c = JSON.parse(raw); } catch { return null; }
+  if (!c || !c.active) return null;
+  if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return null;
+  if (c.maxUses != null && c.usedCount >= c.maxUses) return null;
+  return c;
+}
+
+async function couponPeekCents(env, code, totalCents) {
+  const c = await couponLoadValid(env, code);
+  if (!c) return 0;
+  // 'freeship' no descuenta dinero del subtotal: su efecto es anular el envío, y eso
+  // se resuelve antes, sobre serverShipping. Explícito para que nunca haga las dos cosas.
+  if (c.type === 'freeship') return 0;
   if (c.type === 'percent') return Math.round(totalCents * c.amount / 100);
   return Math.min(Math.round(c.amount * 100), totalCents);
 }
@@ -453,6 +465,19 @@ async function handleCreatePaymentLink(body, env, allowed) {
       }
     };
   });
+
+  // ── Cupón de envío gratis (beneficio de Cacusa Lovers) ────────────────
+  // Va ANTES de armar la línea de envío. El envío se recalcula siempre en el servidor
+  // ignorando lo que mande el cliente, así que este es el único punto donde el cupón
+  // puede anularlo de verdad: si esto no estuviera, la tienda mostraría "envío gratis"
+  // y Square igual cobraría los $10 — la clienta pagaría más de lo que vio.
+  if (serverShipping > 0) {
+    const cpEarly = (body.couponCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+    if (cpEarly) {
+      const c = await couponLoadValid(env, cpEarly);
+      if (c && c.type === 'freeship') serverShipping = 0;
+    }
+  }
 
   // ── Shipping line item (server-calculated) ────────────────────────────
   if (serverShipping > 0) {
