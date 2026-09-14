@@ -463,7 +463,8 @@
         "intro": "En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para ti. Si tu pieza llega con un defecto de fabricación, la reparamos o reemplazamos sin costo dentro de las primeras 48 horas. Por tratarse de piezas hechas a medida y bajo pedido, no podemos aceptar devoluciones o cambios por otros motivos.",
         "secPorQueBody": "Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.",
         "secAntesBody": "Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.",
-        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional."
+        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional.",
+        "secPostBody": "Pasadas las 48 horas, esa cobertura por defecto de fábrica ya no aplica — pero eso no significa que te quedes sin ayuda. Si tu joya necesita limpieza, se opacó o el baño se desgastó con el uso, escríbenos por WhatsApp: te orientamos sobre cómo cuidarla y qué opciones tienes."
       },
       "cuidados": {
         "intro": "Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.",
@@ -486,7 +487,8 @@
         "intro": "At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized just for you. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.",
         "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Because each one is unique to the person who ordered it, it cannot be resold or returned to inventory, so all sales are final.",
         "secAntesBody": "We ask you to carefully review all the details before confirming your purchase. If you have any questions, message us on WhatsApp and we'll be glad to advise you.",
-        "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost."
+        "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost.",
+        "secPostBody": "After the first 48 hours, that manufacturing-defect coverage no longer applies — but that doesn't mean you're on your own. If your piece needs cleaning, has tarnished, or the plating has worn with use, message us on WhatsApp: we'll guide you on how to care for it and what your options are."
       },
       "cuidados": {
         "intro": "Thank you for your purchase and for supporting Ecuadorian craftsmanship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
@@ -598,6 +600,8 @@
         "dev.sec2Li5": "The personalization details: name, date, message or exact spelling",
         "dev.sec2Callout": "Once the order is confirmed, the personalization details <strong>cannot be modified</strong>. Make sure everything is correct before completing your purchase.",
         "dev.sec3H2": "Manufacturing defect",
+        "dev.sec4H2": "What if you need help after the 48 hours?",
+        "dev.sec4Link": "See our jewelry care guide →",
         "dev.contact": "Have questions before buying? We're here to help.",
         "cui.hTitle": "Caring for Your Jewelry",
         "cui.sec1H2": "Avoid contact with water",
