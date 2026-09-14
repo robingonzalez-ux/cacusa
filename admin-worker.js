@@ -208,6 +208,7 @@ export default {
       if (path.endsWith('/coupon/delete'))     return await handleCouponDelete(body, env, allowOrigin);
       if (path.endsWith('/coupon/use'))        return await handleCouponUse(body, env, allowOrigin);
       if (path.endsWith('/lead/list'))         return await handleLeadList(env, allowOrigin);
+      if (path.endsWith('/lead/delete'))       return await handleLeadDelete(body, env, allowOrigin);
       if (path.endsWith('/ntfy-info')) {
         if (!env.NTFY_TOPIC) return ok({ configured: false }, allowOrigin);
         return ok({ configured: true, topic: env.NTFY_TOPIC, url: 'https://ntfy.sh/' + env.NTFY_TOPIC }, allowOrigin);
@@ -1148,6 +1149,23 @@ async function handleLeadList(env, origin) {
   let data = { leads: [] };
   if (raw) try { data = JSON.parse(raw); } catch {}
   return ok({ leads: Array.isArray(data.leads) ? data.leads : [] }, origin);
+}
+
+// Borra un lead (registro del 10% o carrito abandonado) del panel — hay un solo
+// registro por email (handleLeadRegister nunca duplica), así que el email lo
+// identifica sin ambigüedad.
+async function handleLeadDelete(body, env, origin) {
+  if (!env.CACUSA_KV) return ok({ ok: true }, origin);
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email) return err('Falta email', 400, origin);
+  const raw = await env.CACUSA_KV.get('leads');
+  let data = { leads: [] };
+  if (raw) try { data = JSON.parse(raw); } catch {}
+  if (!Array.isArray(data.leads)) data.leads = [];
+  data.leads = data.leads.filter(l => l.email !== email);
+  data.lastUpdated = new Date().toISOString();
+  await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  return ok({ ok: true }, origin);
 }
 
 // Se llama al confirmar un pedido — pública para WhatsApp/Zelle (origin-restringida),
