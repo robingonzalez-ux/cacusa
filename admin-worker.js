@@ -782,13 +782,25 @@ function couponIsValid(c) {
 
 const LOVERS_WORKER_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
 
+// Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
+// su URL *.workers.dev (error 1042, "This request could not be routed"). El Service Binding
+// LOVERS_WEBHOOK (Cloudflare → cacusa-admin → Settings → Bindings → Add → Service binding →
+// apunta a cacusa-lovers-webhook) enruta la llamada directo entre Workers sin pasar por ese
+// límite. Si el binding todavía no está configurado, cae de vuelta al fetch() normal — que
+// es justamente el que dispara el 1042, así que hasta configurarlo estas llamadas siguen
+// fallando. Mismo patrón que adminFetch() en square-payment-worker.js.
+function loversFetch(env, path, options) {
+  const url = `${LOVERS_WORKER_URL}${path}`;
+  return env.LOVERS_WEBHOOK ? env.LOVERS_WEBHOOK.fetch(url, options) : fetch(url, options);
+}
+
 // ── Verifica contra cacusa-lovers-webhook (Worker-a-Worker, ORDER_INGEST_KEY) si un
 // teléfono pertenece a una suscriptora activa de Cacusa Lovers. Falla cerrado: cualquier
 // error de red o de configuración se trata como "no activa", nunca como "activa".
 async function isActiveLoversPhone(phoneDigits, env) {
   if (!env.ORDER_INGEST_KEY) return false;
   try {
-    const r = await fetch(`${LOVERS_WORKER_URL}/internal/lovers/active?phone=${encodeURIComponent(phoneDigits)}`, {
+    const r = await loversFetch(env, `/internal/lovers/active?phone=${encodeURIComponent(phoneDigits)}`, {
       headers: { 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     });
     if (!r.ok) return false;
@@ -938,7 +950,7 @@ async function handleLoversNotifyPending(body, env, origin, request) {
   // Falla cerrado: si el hop interno no responde o dice que no, no suena nada.
   let claim = { notify: false };
   try {
-    const r = await fetch(`${LOVERS_WORKER_URL}/internal/lovers/claim-pending`, {
+    const r = await loversFetch(env, '/internal/lovers/claim-pending', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: JSON.stringify({ email }),

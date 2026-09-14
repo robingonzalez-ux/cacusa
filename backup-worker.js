@@ -100,6 +100,18 @@
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 const STATUS_KEY = '_status.json'; // raíz del bucket, fuera de backups/ — la lifecycle rule no lo toca
 
+// Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
+// su URL *.workers.dev (error 1042, "This request could not be routed"). El Service Binding
+// ADMIN_WORKER (Cloudflare → cacusa-backup → Settings → Bindings → Add → Service binding →
+// apunta a cacusa-admin) enruta la llamada directo entre Workers sin pasar por ese límite.
+// Si el binding todavía no está configurado, cae de vuelta al fetch() normal — que es
+// justamente el que dispara el 1042, así que hasta configurarlo estas llamadas siguen
+// fallando. Mismo patrón que adminFetch() en square-payment-worker.js.
+function adminFetch(env, path, options) {
+  const url = `${ADMIN_WORKER_URL}${path}`;
+  return env.ADMIN_WORKER ? env.ADMIN_WORKER.fetch(url, options) : fetch(url, options);
+}
+
 // ── Avisa a cacusa-admin para que mande la notificación push — best-effort, nunca
 // bloquea el flujo si falla. Copiado tal cual del mismo patrón en lovers-webhook-worker.js.
 async function notifyAdminPush(title, body, env) {
@@ -108,7 +120,7 @@ async function notifyAdminPush(title, body, env) {
     return;
   }
   try {
-    const r = await fetch(`${ADMIN_WORKER_URL}/push/notify`, {
+    const r = await adminFetch(env, '/push/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag: 'cacusa-backup', urgency: 'high' }),
