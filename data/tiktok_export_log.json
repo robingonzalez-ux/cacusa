@@ -1,0 +1,388 @@
+{
+  "1": {
+    "hash": "62b74f4b4d4e0e49",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "3": {
+    "hash": "62e5884347135aca",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1780369728627": {
+    "hash": "c6054c776631c83d",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781387820250": {
+    "hash": "2330e57cc131e765",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781399974669": {
+    "hash": "37d23857d4564464",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781400451404": {
+    "hash": "b24bb97f6cc90c36",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781460544331": {
+    "hash": "3b28a4e200d37c6a",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781472855605": {
+    "hash": "359633aef3fdb83a",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781473015877": {
+    "hash": "741a01ae4045a452",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781473438388": {
+    "hash": "3737cf0ae7a60362",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781473526943": {
+    "hash": "4dbd5be0f6a67422",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781473627668": {
+    "hash": "5b8cf62c0d7e4ba2",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781875334358": {
+    "hash": "76309d606ba59260",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781877227517": {
+    "hash": "f33645563a646e2d",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781877358815": {
+    "hash": "c71eeb5afe2263f6",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781877568374": {
+    "hash": "127341a769f4cebc",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781877838074": {
+    "hash": "283f7f52a6f004fb",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781877944864": {
+    "hash": "b37c50826c8c4d3e",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878011948": {
+    "hash": "2280a733f6ec302b",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878104655": {
+    "hash": "5b79361ab86ef951",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878207350": {
+    "hash": "89ed76eb178bd900",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878296526": {
+    "hash": "d0b90c0da67f73b2",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878427634": {
+    "hash": "5b88e0e533eecf27",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878560407": {
+    "hash": "91c3a883657ad91c",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878646387": {
+    "hash": "38225c0ed8cca4d0",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781878707797": {
+    "hash": "5aa2236f1eb13ca7",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781879127320": {
+    "hash": "ded5c8e50f80fdb1",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781879189744": {
+    "hash": "951bccbdaf401547",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781879577380": {
+    "hash": "30750b3c76cb49ea",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781879659210": {
+    "hash": "1673298b88aead10",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781879917484": {
+    "hash": "773ddbe01bfef0d3",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781880053907": {
+    "hash": "8963647696d37276",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781880127649": {
+    "hash": "d77e45d41e5f25d0",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781880268274": {
+    "hash": "058af6379449ed92",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781880340918": {
+    "hash": "3babcf87be6ca91a",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781880466753": {
+    "hash": "ef67a89a1d0bbf65",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781881478183": {
+    "hash": "e196f88f22a4e6cc",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781881544132": {
+    "hash": "10ebac33c62625a0",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781884615354": {
+    "hash": "9474934feeab56df",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781884804624": {
+    "hash": "41a6b2fc66594def",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781884881874": {
+    "hash": "c0874b2ea4792a05",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781884932644": {
+    "hash": "4e7837d7a0a2d6e6",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781884983133": {
+    "hash": "0906a0a2bc964435",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781885024731": {
+    "hash": "b280642dba430a0e",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781885110437": {
+    "hash": "773dd3f2001a3e86",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781885197196": {
+    "hash": "283f2dcbdd28bc97",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781885271521": {
+    "hash": "97b1bdaa207fc34e",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781885393238": {
+    "hash": "ef88ec29eace96cf",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781891993137": {
+    "hash": "244c50ad16fc93b4",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781892443591": {
+    "hash": "36106558b882168f",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781892913830": {
+    "hash": "0c4eb9342249db73",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781893045956": {
+    "hash": "e2450800fb7cff9f",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1781977774245": {
+    "hash": "e2d52873da95013a",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1782055740145": {
+    "hash": "eb3b8f57768a66d4",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1782309956499": {
+    "hash": "010d6bb3440a8a25",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1783440355036": {
+    "hash": "70ea99d106008c02",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1785466095890": {
+    "hash": "a86de60d22ac6b9f",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1785469196142": {
+    "hash": "6cfe0f5264a4b925",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1785469598547": {
+    "hash": "c11c3e1f3881d88c",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1785470275920": {
+    "hash": "9693c2359046158d",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1785470725921": {
+    "hash": "0b29758fa449cfc6",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786303032752": {
+    "hash": "aefefa3782528dae",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786308585824": {
+    "hash": "556ed2ef3225c593",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786315591380": {
+    "hash": "ee4e709198810299",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786328384393": {
+    "hash": "792ef6a8cce28432",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786329172109": {
+    "hash": "9e203d600d14410b",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786329660348": {
+    "hash": "3394c4279713cade",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1786330341098": {
+    "hash": "7a2d1afc6cc1747f",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788107242835": {
+    "hash": "fe42808ecb0de3ab",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788107453046": {
+    "hash": "bc116ba9b75accbf",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788449850640": {
+    "hash": "1a0e0468daf089d9",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788540460219": {
+    "hash": "4fb7cb58a50b0aef",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788921701764": {
+    "hash": "332db0b1562c3518",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788922298558": {
+    "hash": "9392c43d3a775f38",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788922634845": {
+    "hash": "8c1ecae857aef2f7",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "1788923140476": {
+    "hash": "8cba5966a499d6c4",
+    "exportedAt": "2026-09-14T01:45:26.670887+00:00"
+  },
+  "_meta": {
+    "lastGeneratedAt": "2026-09-14T01:45:26.670887+00:00",
+    "lastCount": 76,
+    "lastProducts": [
+      "CACUSA-1: Anillo doble GG",
+      "CACUSA-3: Argollas de estrella con circones ",
+      "CACUSA-1780369728627: Pulsera de mano con anillo",
+      "CACUSA-1781387820250: Cadena jersey Ecuador ",
+      "CACUSA-1781399974669: Cadena San Benito con Cruz ",
+      "CACUSA-1781400451404: Pulsera tejida macramé con dije y perlas ",
+      "CACUSA-1781460544331: Collar negro con ojo turco ",
+      "CACUSA-1781472855605: Pulsera Tiffy",
+      "CACUSA-1781473015877: Pulsera triple con dije de corazón ",
+      "CACUSA-1781473438388: Cadena con dije de corazón y pelota ",
+      "CACUSA-1781473526943: Cadena con ángel de la guarda circular ",
+      "CACUSA-1781473627668: Cadena con dije de Luna y corazón turquesa ",
+      "CACUSA-1781875334358: Collar de perla ",
+      "CACUSA-1781877227517: Cadena clip con dije de árbol de vida ",
+      "CACUSA-1781877358815: Cadena con dije de gato y panza de corazón con circones ",
+      "CACUSA-1781877568374: Cadena de balines con dije de corazón con circones ",
+      "CACUSA-1781877838074: Anillo ajustable color plateado ",
+      "CACUSA-1781877944864: Anillo ajustable de circones e inicial ",
+      "CACUSA-1781878011948: Anillo dorado ajustable de hoja ",
+      "CACUSA-1781878104655: Anillo ajustable con microcircones en degrade ",
+      "CACUSA-1781878207350: Anillo dorado ajustable de circones fucsia ",
+      "CACUSA-1781878296526: Anillo talla 7 con tres microcircones de colores ",
+      "CACUSA-1781878427634: Anillo TIFFY ajustable con microcircones ",
+      "CACUSA-1781878560407: Ear cuff ancho plateado ",
+      "CACUSA-1781878646387: Entorchado dorado con piedra azul zafiro",
+      "CACUSA-1781878707797: Triple línea de circones con 3 piedras ",
+      "CACUSA-1781879127320: Círculo de microcircones con un fondo de nácar y un microcircones central ",
+      "CACUSA-1781879189744: Ajustable. Anillo chuncky con circones verdes ",
+      "CACUSA-1781879577380: Entorchado ajustable ",
+      "CACUSA-1781879659210: Doble estrella de microcircon. Ajustable ",
+      "CACUSA-1781879917484: Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
+      "CACUSA-1781880053907: Anillo ajustable con 3 circones ",
+      "CACUSA-1781880127649: Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable ",
+      "CACUSA-1781880268274: Anillo ajustable de circones ",
+      "CACUSA-1781880340918: Anillos ajustable con trébol negro ",
+      "CACUSA-1781880466753: Anillo dorado ajustable ",
+      "CACUSA-1781881478183: Anillo ajustable con circones blancos ",
+      "CACUSA-1781881544132: Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón ",
+      "CACUSA-1781884615354: Cadena con dije de Cruz grande con piedras color esmeralda ",
+      "CACUSA-1781884804624: Cadena delicada con dije de corazón nacarado ",
+      "CACUSA-1781884881874: Cadena veneciana con un dije de Cruz de circones ",
+      "CACUSA-1781884932644: 3 corazónes de nácar y dos llanos ",
+      "CACUSA-1781884983133: San Benito con cruz ",
+      "CACUSA-1781885024731: Corazón de perla con una silueta de corazón de circon ",
+      "CACUSA-1781885110437: Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
+      "CACUSA-1781885197196: Cadena de circon rosado bajo",
+      "CACUSA-1781885271521: Dije de balletista con inicial ",
+      "CACUSA-1781885393238: Cadena con placa grabada a láser ",
+      "CACUSA-1781891993137: Anillo de doble infinito uno con microcircones y otro llano ",
+      "CACUSA-1781892443591: Anillo de aquamarina ",
+      "CACUSA-1781892913830: Anillo ajustable de ojo turco ",
+      "CACUSA-1781893045956: Anillo",
+      "CACUSA-1781977774245: Pulseras de pareja Ying y el yang",
+      "CACUSA-1782055740145: Aretes con circones ",
+      "CACUSA-1782309956499: GG ",
+      "CACUSA-1783440355036: Pulsera triple 💛💙❤️",
+      "CACUSA-1785466095890: Cadena de cruz con circones ",
+      "CACUSA-1785469196142: Bangel Evil eye ",
+      "CACUSA-1785469598547: Bangle Greek Eye ",
+      "CACUSA-1785470275920: Anillo vintage aventurine ",
+      "CACUSA-1785470725921: Anillo Pulpo Glossy",
+      "CACUSA-1786303032752: Aretes de perla tejidos a mano ",
+      "CACUSA-1786308585824: FE Red String Bracelet",
+      "CACUSA-1786315591380: PULSERA OJO TURCO AZUL + MEDALLA + PERLA",
+      "CACUSA-1786328384393: Pulsera de ojo turco rojo",
+      "CACUSA-1786329172109: Collar Lazo Dorado con Zirconias",
+      "CACUSA-1786329660348: Aretes letra dorados minimalistas ",
+      "CACUSA-1786330341098: Heart Chinoiserie Earrings",
+      "CACUSA-1788107242835: Set aretes y cadena ",
+      "CACUSA-1788107453046: Hand chain ",
+      "CACUSA-1788449850640: Pulseras hechas a mano 🙌🏽 ",
+      "CACUSA-1788540460219: Hand chain ",
+      "CACUSA-1788921701764: Anillo Conchas Doradas",
+      "CACUSA-1788922298558: Anillo Golden Stars",
+      "CACUSA-1788922634845: Anillo Lumière",
+      "CACUSA-1788923140476: Cadena Golden Silk"
+    ]
+  }
+}

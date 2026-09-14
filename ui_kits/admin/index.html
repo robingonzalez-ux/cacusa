@@ -3664,6 +3664,10 @@ function App() {
   const [fbSurcharges, setFbSurcharges]     = useState({});
   const [fbMarkets, setFbMarkets]           = useState({});
   const [combos, setCombos]                 = useState([]);
+  const [tiktokExportBusy, setTiktokExportBusy] = useState(false);
+  const [tiktokExportMsg, setTiktokExportMsg]   = useState('');
+  const [tiktokMeta, setTiktokMeta]             = useState(null);
+  const [tiktokDownloadUrl, setTiktokDownloadUrl] = useState('');
   // Bloques en inglés cargados del JSON (se preservan/regeneran al publicar)
   const enRef   = React.useRef({ translations: null, texts_en: null, home_en: null, pages_en: null, lovers_en: null });
   // Snapshot del español al cargar, para detectar cambios y re-traducir solo lo editado
@@ -3681,6 +3685,32 @@ function App() {
       } catch (_) {}
     })();
   }, []);
+
+  // TikTok Shop: carga masiva nocturna (sin API — no hay Account Manager en
+  // TikTok Partner Center). Un GitHub Action genera exports/tiktok_bulk_latest.xlsx
+  // cada noche con los productos nuevos/cambiados; el archivo se sube a mano en
+  // Seller Center → Bulk actions → Upload in bulk (TikTok exige resolver un
+  // captcha ahí, no se puede saltar).
+  const loadTiktokStatus = async () => {
+    if (!session?.token) return;
+    try {
+      const res = await apiCall('tiktok/export-status', { token: session.token });
+      if (res.ok) { setTiktokMeta(res.meta); setTiktokDownloadUrl(res.downloadUrl || ''); }
+    } catch (_) {}
+  };
+  useEffect(() => { loadTiktokStatus(); }, [session?.token]);
+  const triggerTiktokExport = async () => {
+    setTiktokExportBusy(true); setTiktokExportMsg('');
+    try {
+      const res = await apiCall('tiktok/trigger-export', { token: session.token });
+      setTiktokExportMsg(res.ok
+        ? '✅ Disparado — tarda ~1 min, dale a "🔄 Actualizar" para ver el resultado'
+        : '❌ ' + (res.error || 'No se pudo disparar la exportación'));
+    } catch (e) {
+      setTiktokExportMsg('❌ ' + (e.message || 'Error al conectar'));
+    }
+    setTiktokExportBusy(false);
+  };
 
   useEffect(() => {
     if (session) {
@@ -4065,6 +4095,33 @@ function App() {
                 style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#C0336E,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, boxShadow: '0 4px 16px rgba(155,93,229,.3)', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer' }}>
                 + Nuevo Producto
               </button>
+            </div>
+
+            {/* TikTok Shop: carga masiva */}
+            <div style={{ background: '#FAF7FB', borderRadius: 12, padding: '12px 14px', marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#7A6880', marginBottom: 6, letterSpacing: '.04em' }}>🎵 TIKTOK SHOP — CARGA MASIVA</div>
+              <div style={{ fontSize: 12, color: '#555', marginBottom: 8 }}>
+                {tiktokMeta
+                  ? `Última exportación: ${tiktokMeta.lastCount} producto(s) · ${new Date(tiktokMeta.lastGeneratedAt).toLocaleString('es-EC')}`
+                  : 'Se genera automáticamente cada noche (solo productos nuevos/cambiados). Descárgalo y súbelo a mano en Seller Center → Bulk actions → Upload in bulk.'}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button onClick={triggerTiktokExport} disabled={tiktokExportBusy}
+                  style={{ padding: '8px 16px', background: tiktokExportBusy ? '#ccc' : '#1A1118', color: 'white', border: 'none', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: tiktokExportBusy ? 'wait' : 'pointer' }}>
+                  {tiktokExportBusy ? '⏳ Disparando…' : '🚀 Generar ahora'}
+                </button>
+                <button onClick={loadTiktokStatus}
+                  style={{ padding: '8px 16px', background: 'white', color: '#555', border: '1.5px solid #ddd', borderRadius: 99, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                  🔄 Actualizar
+                </button>
+                {tiktokDownloadUrl && (
+                  <a href={tiktokDownloadUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ padding: '8px 16px', background: 'white', color: '#9B5DE5', border: '1.5px solid #9B5DE5', borderRadius: 99, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+                    ⬇️ Descargar Excel
+                  </a>
+                )}
+              </div>
+              {tiktokExportMsg && <div style={{ fontSize: 12, marginTop: 8, color: tiktokExportMsg.startsWith('✅') ? '#065F46' : '#DC2626', fontWeight: 500 }}>{tiktokExportMsg}</div>}
             </div>
 
             {/* Grid */}
