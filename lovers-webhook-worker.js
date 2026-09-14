@@ -312,6 +312,8 @@ export default {
 
       const key = subscriberKey(email);
       const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+      console.log('claim-pending:', email, '→ key:', key, 'existing:',
+        existing ? { estado_pago: existing.estado_pago, push_pendiente: !!existing.push_pendiente } : null);
       // Falla cerrado: sin registro real, o que no esté pendiente, o que ya se haya
       // avisado, no se notifica nada.
       if (!existing || existing.estado_pago !== 'pendiente' || existing.push_pendiente) {
