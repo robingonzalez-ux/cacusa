@@ -2425,6 +2425,103 @@ function LeadsTab({ token }) {
   );
 }
 
+// ── Carritos abandonados ─────────────────────────────────────────────────────
+// Pestaña dedicada (a diferencia de LeadsTab, que mezcla esto con los emails
+// del 10% en una tabla estática cargada una sola vez). Se actualiza sola con el
+// mismo patrón de polling que usa App (30s + al volver a la pestaña/foco), y
+// marca "Recuperado" cruzando el email contra `orders` — ya cargado en el
+// componente padre, sin pedirlo de nuevo al servidor.
+function AbandonedCartsTab({ token, orders }) {
+  const [leads, setLeads] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [deletingEmail, setDeletingEmail] = useState(null);
+
+  const load = () => {
+    apiCall('lead/list', { token })
+      .then(d => setLeads(Array.isArray(d.leads) ? d.leads.filter(l => l.source === 'cart_checkout_start') : []))
+      .catch(() => setLeads(prev => prev || []))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    load();
+    const onVisible = () => { if (!document.hidden) load(); };
+    const iv = setInterval(load, 30000);
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', load);
+    return () => {
+      clearInterval(iv);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', load);
+    };
+  }, []);
+
+  const purchasedEmails = new Set((orders || []).map(o => (o.cliente && o.cliente.email || '').toLowerCase()).filter(Boolean));
+
+  const fmt = iso => { try { return new Date(iso).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch { return iso; } };
+  const relTime = iso => {
+    try {
+      const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+      if (mins < 1) return 'recién';
+      if (mins < 60) return `hace ${mins} min`;
+      const hrs = Math.round(mins / 60);
+      if (hrs < 24) return `hace ${hrs}h`;
+      return `hace ${Math.round(hrs / 24)}d`;
+    } catch { return ''; }
+  };
+
+  const handleDelete = async (email) => {
+    if (!confirm(`¿Eliminar el registro de ${email}? Esta acción no se puede deshacer.`)) return;
+    setDeletingEmail(email);
+    try {
+      await apiCall('lead/delete', { token, email });
+      setLeads(prev => (prev || []).filter(l => l.email !== email));
+    } catch (_) {}
+    setDeletingEmail(null);
+  };
+
+  const pending = (leads || []).filter(l => !purchasedEmails.has((l.email || '').toLowerCase()));
+
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>🛒 Carritos abandonados</div>
+      <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Personas que llegaron al checkout de la tienda con un carrito y no completaron la compra. Se actualiza solo cada 30 segundos y marca "Recuperado" en cuanto esa persona aparece en Pedidos con el mismo email.</div>
+
+      {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#767676', fontSize: 13 }}>Cargando…</div>}
+      {!loading && leads && leads.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#767676', fontSize: 13 }}>No hay carritos abandonados por ahora.</div>
+      )}
+      {!loading && leads && leads.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 10 }}>{pending.length} sin recuperar de {leads.length} en total</div>
+          <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.6fr 90px 110px 70px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <span>Email</span><span>Carrito</span><span>Hace</span><span>Estado</span><span></span>
+            </div>
+            {leads.map(l => {
+              const recovered = purchasedEmails.has((l.email || '').toLowerCase());
+              return (
+                <div key={l.email} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.6fr 90px 110px 70px', padding: '12px 16px', borderBottom: '1px solid #F3EEF1', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500, wordBreak: 'break-word' }}>{l.email}</span>
+                  <span style={{ fontSize: 12, color: '#C0336E' }}>
+                    ${(l.total || 0).toFixed(2)}{l.cart && l.cart.length ? ' — ' + l.cart.map(c => c.name).slice(0, 2).join(', ') + (l.cart.length > 2 ? '…' : '') : ''}
+                  </span>
+                  <span style={{ fontSize: 12, color: '#7A6B85' }} title={fmt(l.date)}>{relTime(l.date)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: recovered ? '#2C6149' : '#9C6A18' }}>{recovered ? '🟢 Recuperado' : '🟡 Pendiente'}</span>
+                  <button onClick={() => handleDelete(l.email)} disabled={deletingEmail === l.email}
+                    style={{ fontSize: 11, color: '#B7362A', background: 'none', border: 'none', cursor: deletingEmail === l.email ? 'default' : 'pointer', textDecoration: 'underline', padding: 0, opacity: deletingEmail === l.email ? .5 : 1 }}>
+                    {deletingEmail === l.email ? '…' : 'Eliminar'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Cacusa Lovers Tab ────────────────────────────────────────────────────────
 function LoversTab({ products = [], token }) {
   const [subs, setSubs] = useState(null);
@@ -4063,6 +4160,7 @@ function App() {
             ['giftcards',  '🎁 Gift Cards',  0],
             ['cupones',    '🏷️ Cupones',    0],
             ['leads',      '📋 Leads 10%',  0],
+            ['carts',      '🛒 Carritos abandonados', 0],
             ['lovers',     '🌸 Cacusa Lovers', loversCount],
             ['lovers-page','💌 Lovers (página)', 0],
             ['settings',   '⚙️ Ajustes',    0]
@@ -4361,6 +4459,9 @@ function App() {
 
         {/* ── Leads 10% tab ── */}
         {activeTab === 'leads' && <LeadsTab token={session.token} />}
+
+        {/* ── Carritos abandonados tab ── */}
+        {activeTab === 'carts' && <AbandonedCartsTab token={session.token} orders={orders} />}
 
         {/* ── Cacusa Lovers tab ── */}
         {activeTab === 'lovers' && <LoversTab products={products} token={session.token} />}
