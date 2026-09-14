@@ -288,6 +288,40 @@ export default {
       return adminJson({ active }, 200);
     }
 
+    // ── POST /internal/lovers/claim-pending — Worker-a-Worker, autenticado con
+    // ORDER_INGEST_KEY. Lo llama cacusa-admin cuando el formulario de la página de
+    // Lovers acaba de escribir una suscriptora en estado 'pendiente', para decidir si
+    // corresponde mandar el push de "nueva suscripción pendiente".
+    //
+    // Por qué existe: el formulario escribe directo en Firebase desde el navegador y
+    // se va a Square, sin pasar por ningún Worker. Si la clienta abandona el pago,
+    // Square nunca manda un webhook y nadie se entera jamás de esa pendiente — por eso
+    // el aviso tiene que dispararse desde el formulario, no desde un webhook.
+    //
+    // "claim" y no "check": marca push_pendiente en el mismo llamado, así el dedup vive
+    // en el propio dato (recargar la página o reintentar el pago no vuelve a sonar) y
+    // subscription.created sabe después que ese aviso ya sonó.
+    if (url.pathname === '/internal/lovers/claim-pending') {
+      if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+      if (!isInternalIngest(request, env)) return adminJson({ error: 'Unauthorized' }, 401);
+      if (!fbAuth) return adminJson({ error: 'FB_DB_SECRET no está configurado en el worker' }, 500);
+
+      const b = await request.json().catch(() => ({}));
+      const email = String(b.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) return adminJson({ notify: false }, 200);
+
+      const key = subscriberKey(email);
+      const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+      // Falla cerrado: sin registro real, o que no esté pendiente, o que ya se haya
+      // avisado, no se notifica nada.
+      if (!existing || existing.estado_pago !== 'pendiente' || existing.push_pendiente) {
+        return adminJson({ notify: false }, 200);
+      }
+      await updateSubscriber(key, null, { push_pendiente: true }, dbUrl, fbAuth);
+      const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+      return adminJson({ notify: true, nombre, plan: existing.plan || 'Cacusa Lovers' }, 200);
+    }
+
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
@@ -556,11 +590,17 @@ export default {
           // en Firebase antes de que Square mande este webhook, así que
           // `existing` casi siempre es verdadero — si el aviso solo viviera en
           // la rama `!existing`, nunca sonaría (ese fue el bug reportado).
-          await notifyAdminPush(
-            'CACUSA · Nueva suscriptora Lovers',
-            `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
-            env
-          );
+          //
+          // Excepción: si el aviso de "suscripción pendiente" ya sonó cuando
+          // llenó el formulario (push_pendiente), no se repite acá — esa misma
+          // clienta recibiría su segundo aviso recién al confirmarse el pago.
+          if (!existing?.push_pendiente) {
+            await notifyAdminPush(
+              'CACUSA · Nueva suscriptora Lovers',
+              `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+              env
+            );
+          }
         }
       }
 
