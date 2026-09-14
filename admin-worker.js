@@ -115,6 +115,16 @@ export default {
         return await handleLeadRegister(body, env, allowOrigin, request, ctx);
       }
 
+      // Cancela un lead de carrito abandonado cuando el cliente lo vacía sin comprar (no
+      // el de compra — ese se limpia solo en handleOrder). Pública igual que /lead/register
+      // (mismo modelo: cualquiera puede registrar o cancelar un lead con su propio email,
+      // no hay nada sensible en juego — en el peor caso, alguien se cancela a sí mismo del
+      // seguimiento de abandono).
+      if (path.endsWith('/lead/cancel')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleLeadCancel(body, env, allowOrigin, request);
+      }
+
       // Referidos — genera (o recupera) el código de descuento de una clienta que quiere
       // invitar a una amiga. Pública, origin-restringida + rate-limit. Reusa el sistema de
       // cupones existente (couponKey/couponGet), pero con reglas fijas (no elegidas por quien
@@ -505,6 +515,10 @@ async function handleOrder(body, env, origin, ctx, request) {
   // auditoría de concurrencia). La lista que consume el panel se recalcula aparte.
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  // Si esta clienta tenía un carrito marcado como abandonado, ya no lo está — compró.
+  // Best-effort: nunca debe afectar la respuesta del pedido si falla.
+  const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
+  if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
 
   if (env.NTFY_TOPIC) {
     await sendNtfy(newOrder, env);
@@ -544,6 +558,8 @@ async function handleOrderManual(body, env, origin, session, ctx) {
 
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
+  if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
 
   return ok({ ok: true, order: newOrder }, origin);
 }
@@ -1084,6 +1100,39 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
     await env.CACUSA_KV.put('leads', JSON.stringify(data));
   }
   if (ctx && env.VAPID_PRIVATE_KEY_JWK) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
+  return ok({ ok: true }, origin);
+}
+
+// ── Quita el lead de carrito abandonado de una clienta — best-effort, nunca revienta
+// el flujo que lo llama. Lo usan tanto handleOrder (cuando compra de verdad) como
+// handleLeadCancel (cuando vacía el carrito sin comprar). Nunca toca leads 'vignette'
+// (el 10% de bienvenida no se cancela por vaciar un carrito).
+async function removeCartLead(email, env) {
+  if (!env.CACUSA_KV || !email) return;
+  const raw = await env.CACUSA_KV.get('leads');
+  let data = { leads: [] };
+  if (raw) try { data = JSON.parse(raw); } catch {}
+  if (!Array.isArray(data.leads)) return;
+  const before = data.leads.length;
+  data.leads = data.leads.filter(l => !(l.email === email && l.source === 'cart_checkout_start'));
+  if (data.leads.length !== before) {
+    data.lastUpdated = new Date().toISOString();
+    await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  }
+}
+
+// Ruta pública (mismo molde que /lead/register): la tienda la llama cuando el cliente
+// vacía el carrito sin llegar a comprar, para que ese lead deje de aparecer en el
+// panel como "carrito abandonado" — ya no hay carrito que recuperar.
+async function handleLeadCancel(body, env, origin, request) {
+  if (!env.CACUSA_KV) return ok({ ok: true }, origin);
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `leadcancelrl:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= 10) return ok({ ok: true }, origin);
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
+  if (email) await removeCartLead(email, env);
   return ok({ ok: true }, origin);
 }
 
