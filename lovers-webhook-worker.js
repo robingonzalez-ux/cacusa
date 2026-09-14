@@ -521,6 +521,7 @@ export default {
           const isAnnual = (sub.price_money?.amount || 0) > 5000;
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
           if (!existing) {
             await updateSubscriber(key, 'pendiente', {
               email: email.toLowerCase(),
@@ -538,12 +539,6 @@ export default {
               square_subscription_id: sub.id || '',
             }, dbUrl, fbAuth);
             console.log('Created subscriber record (subscription.created):', email, '→', key);
-            const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
-            await notifyAdminPush(
-              'CACUSA · Nueva suscriptora Lovers',
-              `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
-              env
-            );
           } else {
             // Ya existe (vino del formulario): solo adjuntar la referencia de Square,
             // sin tocar sus datos ni su estado_pago actual.
@@ -552,6 +547,16 @@ export default {
             }, dbUrl, fbAuth);
             console.log('Attached square_subscription_id to existing record (subscription.created):', email);
           }
+          // El push va siempre que llega este evento, exista o no el registro
+          // todavía: en el flujo real el formulario ya escribió el 'pendiente'
+          // en Firebase antes de que Square mande este webhook, así que
+          // `existing` casi siempre es verdadero — si el aviso solo viviera en
+          // la rama `!existing`, nunca sonaría (ese fue el bug reportado).
+          await notifyAdminPush(
+            'CACUSA · Nueva suscriptora Lovers',
+            `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+            env
+          );
         }
       }
 
@@ -632,6 +637,8 @@ export default {
           if (existing) {
             await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
             console.log('Marked pago_fallido:', email);
+            const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+            await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env);
           } else {
             console.warn('invoice.scheduled_charge_failed: no matching subscriber for', email);
           }
