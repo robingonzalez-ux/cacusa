@@ -41,6 +41,37 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-14 — Revisión a fondo de las notificaciones push del admin
+
+- **La notificación push de nueva suscripción a Cacusa Lovers no sonaba
+  nunca** — ni al llegar pendiente ni al confirmarse el pago. El aviso
+  solo se mandaba cuando el registro en la base de datos "todavía no
+  existía", pero en el flujo real siempre existe ya (el formulario del
+  sitio lo crea antes de mandar a la clienta a pagar). Corregido para las
+  3 etapas: pendiente, pago confirmado, pago fallido (este último no
+  avisaba nada antes, en ninguna rama).
+- **Auditoría completa del sistema de push** (panel admin + los 3 Workers
+  que pueden dispararlo — pedidos, Lovers, backup):
+  - Cada tipo de aviso ahora manda su propio identificador — antes todos
+    compartían uno solo y un aviso nuevo podía tapar en silencio a otro
+    que todavía no se había leído (ej. una suscriptora nueva ocultando un
+    pedido sin revisar).
+  - Bug real en pedidos nuevos: si el envío del push fallaba, el pedido
+    igual quedaba guardado pero el sistema respondía como si todo el
+    pedido hubiera fallado — riesgo de pedidos duplicados por reintento
+    del cliente o del soporte.
+  - Condición de carrera en el aviso de carrito abandonado (se disparaba
+    desde 2 lugares a la vez y podía duplicar el aviso o perder un lead)
+    — corregida, ahora un solo disparador.
+  - En iPhone, si Safari no tenía el panel instalado en la pantalla de
+    inicio, no se veía ni el botón de activar notificaciones ni la
+    explicación de qué hacer — el aviso existía en el código pero estaba
+    en una rama inalcanzable justo para ese caso.
+  - El Service Worker del panel ahora se actualiza solo (antes podía
+    quedar en una versión vieja mientras el panel siguiera abierto, que es
+    lo normal) y se vuelve a suscribir solo si el navegador invalida la
+    suscripción sin avisar.
+
 ## 2026-09-13 — Auditoría de seguridad y de confiabilidad de información
 
 Segunda auditoría de seguridad (la primera fue el 7 de septiembre) más una
