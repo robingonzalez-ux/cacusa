@@ -132,6 +132,16 @@ export default {
         return await handleLoversShippingCode(body, env, allowOrigin, request);
       }
 
+      // Aviso de "nueva suscripción pendiente" — lo llama el formulario de la página de
+      // Lovers justo antes de irse a Square. Es el único momento en que se puede avisar:
+      // si la clienta abandona el pago, Square nunca manda un webhook y nadie se entera.
+      // Mismas reglas que las de arriba: origin-restringida, rate-limited, y el texto del
+      // push lo arma este Worker con datos de Firebase — nunca lo elige quien llama.
+      if (path.endsWith('/lovers/notify-pending')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversNotifyPending(body, env, allowOrigin, request);
+      }
+
       // Cupones — validación pública (origin-restringida, rate-limited)
       if (path.endsWith('/coupon/validate')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
@@ -905,6 +915,55 @@ async function handleLoversShippingCode(body, env, origin, request) {
     await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
   }
   return ok({ ok: true, code: coupon.code, type: coupon.type }, origin);
+}
+
+// ── Aviso de "nueva suscripción pendiente" de Cacusa Lovers ───────────────────
+// Quien llama solo manda un email; todo lo demás (si corresponde avisar, con qué
+// nombre, una sola vez) lo decide cacusa-lovers-webhook leyendo Firebase con su
+// propio secreto. Así nadie puede escribir el texto de un push al celular de
+// Tita/Robin ni hacer sonar avisos de suscriptoras que no existen.
+async function handleLoversNotifyPending(body, env, origin, request) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  if (!env.ORDER_INGEST_KEY) return ok({ ok: true, notified: false }, origin);
+
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `pendrl:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= 5) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+
+  const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
+  if (!email.includes('@')) return ok({ ok: true, notified: false }, origin);
+
+  // Falla cerrado: si el hop interno no responde o dice que no, no suena nada.
+  let claim = { notify: false };
+  try {
+    const r = await fetch(`${LOVERS_WORKER_URL}/internal/lovers/claim-pending`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ email }),
+    });
+    if (r.ok) claim = await r.json().catch(() => ({ notify: false }));
+  } catch (e) {
+    console.error('claim-pending error:', e.message);
+  }
+  if (!claim.notify) return ok({ ok: true, notified: false }, origin);
+
+  if (env.VAPID_PRIVATE_KEY_JWK) {
+    try {
+      const esAnual = String(claim.plan || '').toLowerCase().includes('anual');
+      await sendWebPushAll(env, {
+        title: 'CACUSA · Nueva suscripción pendiente',
+        body:  `🕐 ${claim.nombre} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que complete el pago`,
+        url:   'https://cacusabytaitus.com/ui_kits/admin/',
+        tag: 'cacusa-lovers',
+        urgency: 'normal',
+      });
+    } catch (e) {
+      console.error('push suscripción pendiente falló:', e.message);
+    }
+  }
+  return ok({ ok: true, notified: true }, origin);
 }
 
 async function handleCouponValidate(body, env, origin, request) {
