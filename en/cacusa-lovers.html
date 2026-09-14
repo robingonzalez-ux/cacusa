@@ -1486,6 +1486,21 @@ async function submitSubscription(){
     });
   } catch(e){ console.warn('[fb-save]', e); }
 
+  // Avisar por push que entró una suscripción pendiente. Tiene que ser acá y no en
+  // el webhook de Square: si la clienta abandona el pago, Square nunca manda ningún
+  // webhook y nadie se entera jamás de esta pendiente. El Worker decide si
+  // corresponde avisar (verifica el registro en Firebase) y arma el texto; acá solo
+  // va el email. keepalive:true es imprescindible porque el redirect a Square ocurre
+  // en la línea siguiente y sin eso el navegador cancela la petición.
+  try {
+    await fetch(`${ADMIN_WORKER_URL}/lovers/notify-pending`, {
+      method:    'POST',
+      headers:   { 'Content-Type': 'application/json' },
+      body:      JSON.stringify({ email: subscriber.email }),
+      keepalive: true,
+    });
+  } catch(e){ console.warn('[notify-pending]', e); }
+
   const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
   window.location.href = link;
 }
