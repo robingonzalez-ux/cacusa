@@ -599,6 +599,8 @@ export default {
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
             console.log('Marked activo:', email);
+            const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+            await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
           } else {
             // Subscriber not in Firebase yet — create minimal record
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
