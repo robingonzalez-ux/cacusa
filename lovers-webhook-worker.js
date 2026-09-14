@@ -162,7 +162,14 @@ function subscriberKey(email) {
 // query indexada (más confiable, no depende de que Firebase tenga .indexOn) ──
 async function getSubscriberByKey(key, dbUrl, fbAuth) {
   const r = await fetch(`${dbUrl}/cacusa_lovers/${key}.json?auth=${fbAuth}`);
-  if (!r.ok) return null;
+  if (!r.ok) {
+    // Antes esto era indistinguible de "esa key no existe" — un 401/500 real de
+    // Firebase (ej. FB_DB_SECRET mal configurado) quedaba en completo silencio, porque
+    // quien llama a esta función es procesamiento en segundo plano (webhooks de Square,
+    // claim-pending), nadie mirando una respuesta HTTP en el momento.
+    console.error(`Firebase GET falló (${r.status}) para cacusa_lovers/${key}`);
+    return null;
+  }
   return await r.json(); // null si esa key no existe todavía
 }
 
