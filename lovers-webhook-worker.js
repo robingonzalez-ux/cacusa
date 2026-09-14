@@ -76,7 +76,11 @@ const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 
 // ── Avisa a cacusa-admin para que mande la notificación push (best-effort — nunca
 // bloquea ni rompe el procesamiento del webhook de Square si falla) ──────────────
-async function notifyAdminPush(title, body, env) {
+// tag='cacusa-lovers' agrupa todos los eventos de Lovers bajo un mismo tipo (pero
+// distinto del de pedidos) para que no se tapen entre sí en el centro de
+// notificaciones; urgency='high' en pago fallido para que el dispositivo lo
+// despierte más agresivo que un simple "se unió al club".
+async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
   if (!env.ORDER_INGEST_KEY) {
     console.error('notifyAdminPush: ORDER_INGEST_KEY no está configurado en este Worker — la notificación no se envía. Revisar Cloudflare → cacusa-lovers-webhook → Settings → Variables.');
     return;
@@ -85,7 +89,7 @@ async function notifyAdminPush(title, body, env) {
     const r = await fetch(`${ADMIN_WORKER_URL}/push/notify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/' }),
+      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag: 'cacusa-lovers', urgency }),
     });
     if (!r.ok) console.error('push/notify failed:', r.status, await r.text().catch(() => ''));
   } catch (e) {
@@ -640,7 +644,7 @@ export default {
             await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
             console.log('Marked pago_fallido:', email);
             const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-            await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env);
+            await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
           } else {
             console.warn('invoice.scheduled_charge_failed: no matching subscriber for', email);
           }

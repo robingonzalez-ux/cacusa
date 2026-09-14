@@ -111,7 +111,7 @@ async function notifyAdminPush(title, body, env) {
     const r = await fetch(`${ADMIN_WORKER_URL}/push/notify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/' }),
+      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag: 'cacusa-backup', urgency: 'high' }),
     });
     if (!r.ok) console.error('push/notify failed:', r.status, await r.text().catch(() => ''));
   } catch (e) {

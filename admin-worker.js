@@ -150,10 +150,16 @@ export default {
       if (path.endsWith('/push/notify')) {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
-        const title = (body.title || 'CACUSA').toString().slice(0, 100);
-        const text  = (body.body  || '').toString().slice(0, 200);
-        const url   = (body.url   || 'https://cacusabytaitus.com/ui_kits/admin/').toString().slice(0, 300);
-        const stats = await sendWebPushAll(env, { title, body: text, url });
+        const title   = (body.title || 'CACUSA').toString().slice(0, 100);
+        const text    = (body.body  || '').toString().slice(0, 200);
+        const url     = (body.url   || 'https://cacusabytaitus.com/ui_kits/admin/').toString().slice(0, 300);
+        // tag: agrupa notificaciones del mismo tipo de evento — así una nueva
+        // suscriptora Lovers no tapa un pedido que todavía no se ha leído (antes
+        // todo compartía un único tag y la más reciente reemplazaba a la anterior
+        // en el centro de notificaciones sin dejar rastro).
+        const tag     = (body.tag  || 'cacusa').toString().slice(0, 40);
+        const urgency = ['very-low', 'low', 'normal', 'high'].includes(body.urgency) ? body.urgency : 'normal';
+        const stats = await sendWebPushAll(env, { title, body: text, url, tag, urgency });
         return ok({ ok: true, ...stats }, allowOrigin);
       }
 
@@ -204,6 +210,8 @@ export default {
           title: 'CACUSA · Notificación de prueba',
           body:  'Si ves esto, las notificaciones están funcionando ✅',
           url:   'https://cacusabytaitus.com/ui_kits/admin/',
+          tag:   'cacusa-test',
+          urgency: 'normal',
         });
         return ok({ ok: true, ...stats }, allowOrigin);
       }
@@ -275,6 +283,8 @@ async function notifyNgrokSyncFailure(err, env) {
     title: 'CACUSA · Falló la sincronización con Excel/POS',
     body:  `El servidor local (ngrok) no respondió: ${err.message}. Revisa que siga corriendo — no vas a recibir otro aviso por 6h aunque siga fallando.`,
     url:   'https://cacusabytaitus.com/ui_kits/admin/',
+    tag: 'cacusa-system',
+    urgency: 'normal',
   }).catch(() => {});
 }
 
@@ -490,12 +500,20 @@ async function handleOrder(body, env, origin, ctx, request) {
   }
   if (env.VAPID_PRIVATE_KEY_JWK) {
     const icon = newOrder.pago === 'WhatsApp' ? '📱' : '💳';
-    await sendWebPushAll(env, {
-      title: 'CACUSA · Nuevo pedido',
-      body:  `${icon} ${newOrder.pago} · ${newOrder.cliente?.nombre || 'Cliente'} · $${newOrder.total}`,
-      url:   'https://cacusabytaitus.com/ui_kits/admin/',
-    });
-    if (ctx) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
+    // El pedido YA se guardó arriba — un fallo del push nunca debe convertirse en un
+    // 500 para quien llamó (la tienda, o cacusa-square reenviando tras cobrar), o se
+    // ve como que el pedido no se creó y se reintenta duplicado.
+    try {
+      await sendWebPushAll(env, {
+        title: 'CACUSA · Nuevo pedido',
+        body:  `${icon} ${newOrder.pago} · ${newOrder.cliente?.nombre || 'Cliente'} · $${newOrder.total}`,
+        url:   'https://cacusabytaitus.com/ui_kits/admin/',
+        tag: 'cacusa-order',
+        urgency: 'high',
+      });
+    } catch (e) {
+      console.error('push nuevo pedido falló:', e.message);
+    }
   }
 
   return ok({ ok: true, id: newOrder.id }, origin);
@@ -1036,6 +1054,8 @@ async function checkAbandonedCarts(env) {
       title: 'CACUSA · Carrito abandonado',
       body: `🛒 ${lead.email}${totalTxt}${itemNames ? ' — ' + itemNames : ''}`,
       url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      tag: 'cacusa-cart',
+      urgency: 'low',
     });
   }
   if (changed) {
@@ -1247,10 +1267,18 @@ async function encryptPushPayload(payloadBytes, p256dhB64, authB64) {
 }
 
 async function sendWebPushOne(sub, env, payload) {
-  const headers = { TTL: '86400', Authorization: await vapidAuthHeader(sub.endpoint, env) };
+  // `urgency` (RFC 8030) va como header en claro — el push service lo usa para decidir
+  // qué tan agresivo despertar al dispositivo (útil en low-power mode); no es secreto,
+  // así que no entra al payload cifrado. El resto (title/body/url/tag) sí va cifrado.
+  const { urgency, ...pushPayload } = payload || {};
+  const headers = {
+    TTL: '86400',
+    Urgency: urgency || 'normal',
+    Authorization: await vapidAuthHeader(sub.endpoint, env),
+  };
   let body;
   if (payload) {
-    body = await encryptPushPayload(new TextEncoder().encode(JSON.stringify(payload)), sub.keys.p256dh, sub.keys.auth);
+    body = await encryptPushPayload(new TextEncoder().encode(JSON.stringify(pushPayload)), sub.keys.p256dh, sub.keys.auth);
     headers['Content-Type']     = 'application/octet-stream';
     headers['Content-Encoding'] = 'aes128gcm';
     headers['Content-Length']   = String(body.length);
