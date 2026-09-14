@@ -41,6 +41,37 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-14 — La causa real: Cloudflare bloqueaba la llamada entre Workers
+
+Después de los dos arreglos de más abajo, el usuario probó de nuevo con logs
+en vivo de Cloudflare abiertos y apareció la causa de fondo real:
+`claim-pending respondió 404 error code: 1042`. Ese código no es un bug de
+la lógica de este repo — es una restricción propia de la plataforma:
+**Cloudflare bloquea que un Worker le haga `fetch()` a otro Worker de la
+misma cuenta usando su URL pública `*.workers.dev`** (antiabuso, para evitar
+loops entre Workers gratuitos). Como `cacusa-admin` y `cacusa-lovers-webhook`
+se llamaban entre sí con `fetch()` directo, esa llamada nunca pudo funcionar
+— ninguno de los dos arreglos anteriores (el de ayer ni el de más abajo)
+podía tener efecto mientras siguiera siendo un `fetch()` plano.
+
+- **Ya estaba resuelto una vez, en otro Worker, y nunca se replicó**:
+  `square-payment-worker.js` ya tenía, desde antes, exactamente este mismo
+  problema documentado y resuelto con un *Service Binding* (una forma de
+  Worker-a-Worker que Cloudflare sí permite, sin pasar por la restricción).
+  Ese arreglo nunca se copió a los otros 3 Workers.
+- Se replicó el mismo patrón en `admin-worker.js`, `lovers-webhook-worker.js`
+  y `backup-worker.js`. Requiere agregar 3 Service Bindings nuevos a mano en
+  el dashboard de Cloudflare (Settings → Bindings de cada Worker) — sin eso,
+  el código sigue cayendo al `fetch()` que dispara el error.
+- Se verificó primero (con una captura del dashboard) que el Service Binding
+  de `cacusa-square` → `cacusa-admin` sí estaba configurado — los pedidos
+  pagados con tarjeta nunca estuvieron en riesgo, este problema afectaba
+  solo a las llamadas relacionadas con Cacusa Lovers.
+- Esto también explica por qué el programa de referidos
+  (`/referral/code`) y el código de envío gratis para suscriptoras
+  (`/lovers/shipping-code`) probablemente nunca funcionaron — ambos
+  dependen de la misma llamada bloqueada.
+
 ## 2026-09-14 — El aviso de suscripción pendiente, en el momento real
 
 Después del arreglo de más abajo entró otra suscripción pendiente (Mery
