@@ -2429,7 +2429,24 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
 });
 
 // ─── CART ───────────────────────────────────────────────────
-function saveCart() { localStorage.setItem('cacusa-cart', JSON.stringify(cart)); }
+// Email del lead de carrito abandonado que se registró en ESTA sesión (si se registró
+// alguno) — lo pone registerLead() cuando el carrito llega al checkout, y saveCart() lo
+// usa para saber a quién avisarle si el carrito termina vacío sin haber comprado.
+let _abandonLeadEmail = null;
+function saveCart() {
+  localStorage.setItem('cacusa-cart', JSON.stringify(cart));
+  // El carrito quedó en cero sin pasar por un pedido (esos casos limpian el lead solos,
+  // del lado del servidor, al crear el pedido) — avisar para que deje de figurar como
+  // "carrito abandonado" en el panel. Best-effort, no bloquea nada si falla.
+  if (cart.length === 0 && _abandonLeadEmail) {
+    const email = _abandonLeadEmail;
+    _abandonLeadEmail = null;
+    fetch(ADMIN_WORKER_URL + '/lead/cancel', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+  }
+}
 // square-payment-worker.js valida/factura un item por unidad (sin campo qty) — al agrupar
 // cantidades en una sola línea del carrito, hay que expandirlas de vuelta antes de mandarlas
 // a Square para no subcobrar (ej. qty:3 en una línea → 3 items separados, como antes).
@@ -3781,6 +3798,7 @@ window.addEventListener('appinstalled', () => {
 // ── Captura de lead (compartida por el vignette y el checkout) ──
 function registerLead(email, source, cartData, total) {
   if (!email) return;
+  if (source === 'cart_checkout_start') _abandonLeadEmail = email;
   fetch(ADMIN_WORKER_URL + '/lead/register', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, lang: __LANG, source, cart: cartData, total })
