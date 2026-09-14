@@ -943,10 +943,17 @@ async function handleLoversNotifyPending(body, env, origin, request) {
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
       body: JSON.stringify({ email }),
     });
-    if (r.ok) claim = await r.json().catch(() => ({ notify: false }));
+    if (r.ok) {
+      claim = await r.json().catch(() => ({ notify: false }));
+    } else {
+      // Antes esto quedaba mudo — un 401/500 del hop interno se veía IDÉNTICO en los
+      // logs a un simple "no correspondía avisar", sin ninguna pista de qué falló.
+      console.error('claim-pending respondió', r.status, await r.text().catch(() => ''));
+    }
   } catch (e) {
     console.error('claim-pending error:', e.message);
   }
+  console.log('lovers/notify-pending:', email, '→', JSON.stringify(claim));
   if (!claim.notify) return ok({ ok: true, notified: false }, origin);
 
   if (env.VAPID_PRIVATE_KEY_JWK) {
