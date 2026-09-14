@@ -188,7 +188,8 @@ const DEFAULT_PAGES = {
     intro: 'En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para ti. Si tu pieza llega con un defecto de fabricación, la reparamos o reemplazamos sin costo dentro de las primeras 48 horas. Por tratarse de piezas hechas a medida y bajo pedido, no podemos aceptar devoluciones o cambios por otros motivos.',
     secPorQueBody: 'Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti. Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.',
     secAntesBody: 'Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.',
-    secDefectoBody: 'Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto.'
+    secDefectoBody: 'Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto.',
+    secPostBody: 'Pasadas las 48 horas, esa cobertura por defecto de fábrica ya no aplica — pero eso no significa que te quedes sin ayuda. Si tu joya necesita limpieza, se opacó o el baño se desgastó con el uso, escríbenos por WhatsApp: te orientamos sobre cómo cuidarla y qué opciones tienes.'
   },
   cuidados: {
     intro: 'Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.',
@@ -2204,6 +2205,7 @@ function PagesTab({ pages, setPages, setDirty }) {
         <div style={sec}><label style={lbl}>¿Por qué no aceptamos devoluciones?</label><textarea rows={3} value={dev.secPorQueBody||''} onChange={e=>set('devoluciones','secPorQueBody',e.target.value)} style={ta} /></div>
         <div style={sec}><label style={lbl}>Antes de comprar, cerciórate de tu pedido</label><textarea rows={2} value={dev.secAntesBody||''} onChange={e=>set('devoluciones','secAntesBody',e.target.value)} style={ta} /></div>
         <div style={sec}><label style={lbl}>Pieza con defecto de fábrica</label><textarea rows={3} value={dev.secDefectoBody||''} onChange={e=>set('devoluciones','secDefectoBody',e.target.value)} style={ta} /></div>
+        <div style={sec}><label style={lbl}>¿Y si necesita ayuda después de las 48 horas?</label><textarea rows={3} value={dev.secPostBody||''} onChange={e=>set('devoluciones','secPostBody',e.target.value)} style={ta} /></div>
       </div>
 
       {/* ── Cuidados ── */}

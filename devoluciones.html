@@ -124,6 +124,12 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <p id="devDefectoBody">Tu satisfacción nos importa. Si tu pieza llegara con un <strong>defecto de fabricación</strong> o hubiera un error atribuible a nosotros, contáctanos dentro de las <strong>48 horas</strong> posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la <strong>reparación o reposición</strong> de tu pieza sin costo adicional. Esta excepción no aplica a cambios por gusto, talla o datos de personalización ingresados por el cliente.</p>
     </div>
 
+    <div class="sec">
+      <h2><span class="dot"></span><span data-i18n="dev.sec4H2">¿Y si necesitas ayuda después de las 48 horas?</span></h2>
+      <p id="devPostBody">Pasadas las 48 horas, esa cobertura por defecto de fábrica ya no aplica — pero eso no significa que te quedes sin ayuda. Si tu joya necesita limpieza, se opacó o el baño se desgastó con el uso, escríbenos por WhatsApp: te orientamos sobre cómo cuidarla y qué opciones tienes.</p>
+      <p style="margin-top:8px"><a href="cuidados.html" data-i18n="dev.sec4Link">Ver guía de cuidado de joyas →</a></p>
+    </div>
+
     <div class="contact">
       <p data-i18n="dev.contact">¿Tienes dudas antes de comprar? Estamos para ayudarte.</p>
       <a id="waBtn" href="https://wa.me/17867375336" target="_blank" rel="noopener" class="wa-btn">
@@ -176,6 +182,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       st('devPorQueBody',pg.secPorQueBody);
       st('devAntesBody',pg.secAntesBody);
       st('devDefectoBody',pg.secDefectoBody);
+      st('devPostBody',pg.secPostBody);
       if(_L==='en'){
         const T=(cfg.translations&&cfg.translations.en)||{};
         const pgEn=(cfg.pages_en&&cfg.pages_en.devoluciones)||{};
@@ -188,6 +195,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         st('devAntesBody',pgEn.secAntesBody||'We ask you to carefully review all details before confirming your purchase. If you have any questions, message us on WhatsApp:');
         const devD=document.getElementById('devDefectoBody');
         if(devD)devD.innerHTML=pgEn.secDefectoBody||'Your satisfaction matters to us. If your piece arrives with a <strong>manufacturing defect</strong> or an error on our part, contact us within <strong>48 hours</strong> of receiving your order with clear photos. We\'ll evaluate the case and, where applicable, proceed with <strong>repair or replacement</strong> at no extra charge.';
+        st('devPostBody',pgEn.secPostBody||'After the first 48 hours, that manufacturing-defect coverage no longer applies — but that doesn\'t mean you\'re on your own. If your piece needs cleaning, has tarnished, or the plating has worn with use, message us on WhatsApp: we\'ll guide you on how to care for it and what your options are.');
       }
     }
   }catch(e){}
