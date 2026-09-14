@@ -41,6 +41,32 @@ con el que empieza el detalle de abajo.
 
 ---
 
+## 2026-09-14 — El aviso de suscripción pendiente, en el momento real
+
+Después del arreglo de más abajo entró otra suscripción pendiente (Mery
+Allauca) y tampoco sonó. Revisando el flujo completo apareció una causa más
+de fondo que ningún arreglo del lado de los webhooks podía cubrir:
+
+- **El formulario de la página de Cacusa Lovers nunca hablaba con el
+  servidor.** Guardaba la suscriptora directo en la base de datos desde el
+  navegador y mandaba a la clienta a pagar a Square. El único código capaz
+  de mandar una notificación vivía en el Worker que escucha a Square, y ese
+  solo corre cuando la clienta **completa el pago**.
+- Consecuencia: si alguien llenaba el formulario y abandonaba el pago, el
+  registro quedaba "pendiente" para siempre y **nadie se enteraba jamás** —
+  no había ninguna notificación posible. Se confirmó revisando el registro
+  de Mery: no tiene Subscription ID, o sea que Square nunca llegó a crear la
+  suscripción.
+- **Ahora el aviso se dispara al enviar el formulario**, que es el momento
+  real en que ocurre. El servidor verifica contra la base de datos que la
+  suscripción exista de verdad antes de avisar (nadie puede hacer sonar
+  notificaciones falsas), arma el texto él mismo, y marca la suscriptora
+  para no volver a avisar por la misma persona aunque recargue la página o
+  reintente el pago.
+- Resultado por clienta: un aviso al llenar el formulario y otro al
+  confirmarse el pago. Si abandona el pago, queda el primero — que es
+  justamente el que servía para hacer seguimiento por WhatsApp.
+
 ## 2026-09-14 — Revisión a fondo de las notificaciones push del admin
 
 - **La notificación push de nueva suscripción a Cacusa Lovers no sonaba
