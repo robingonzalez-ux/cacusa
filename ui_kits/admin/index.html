@@ -467,19 +467,33 @@ function PushSection({ token }) {
     setBusy(false);
   };
 
-  if (!supported) return null;
+  const iosInstallNotice = isIOS && !isStandalone && (
+    <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '12px 14px', fontSize: 12.5, color: '#92400E', lineHeight: 1.5 }}>
+      En iPhone, Safari solo permite notificaciones si este panel está instalado en tu
+      pantalla de inicio. Toca <strong>Compartir → Agregar a inicio</strong> y abre la
+      app desde ese ícono nuevo (no desde la pestaña de Safari) para poder activarlas.
+    </div>
+  );
+
+  // En iOS/iPadOS Safari sin instalar como app, WebKit no expone PushManager en
+  // absoluto — `supported` da false justo en el caso para el que existe este
+  // aviso. Antes el `return null` cortaba acá mismo, así que en un iPhone sin
+  // instalar Tita/Robin no veían ni el botón ni la explicación de qué hacer.
+  if (!supported) {
+    if (!iosInstallNotice) return null;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18, paddingBottom: 18, borderBottom: '1.5px solid #F3EFF5' }}>
+        <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700 }}>📲 Notificación nativa (recomendado)</div>
+        {iosInstallNotice}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 18, paddingBottom: 18, borderBottom: '1.5px solid #F3EFF5' }}>
       <div style={{ fontSize: 13, color: '#1A1118', fontWeight: 700 }}>📲 Notificación nativa (recomendado)</div>
 
-      {isIOS && !isStandalone && (
-        <div style={{ background: '#FEF3C7', borderRadius: 12, padding: '12px 14px', fontSize: 12.5, color: '#92400E', lineHeight: 1.5 }}>
-          En iPhone, Safari solo permite notificaciones si este panel está instalado en tu
-          pantalla de inicio. Toca <strong>Compartir → Agregar a inicio</strong> y abre la
-          app desde ese ícono nuevo (no desde la pestaña de Safari) para poder activarlas.
-        </div>
-      )}
+      {iosInstallNotice}
 
       {(!isIOS || isStandalone) && !subscribed && (
         <button onClick={activate} disabled={busy}
@@ -3683,6 +3697,27 @@ function App() {
     }
   }, [session]);
 
+  // Auto-sync de la suscripción push apenas hay sesión — no solo cuando alguien
+  // abre el modal de 🔔 (PushSection ya hace este mismo re-sync, pero solo al
+  // montarse). También escucha al Service Worker: si pushsubscriptionchange
+  // renueva la suscripción sola en segundo plano (sw.js), este mensaje es la
+  // única forma de que ese dato nuevo llegue al servidor, porque el propio
+  // Service Worker no tiene acceso al token de sesión guardado en la página.
+  useEffect(() => {
+    if (!session || !('serviceWorker' in navigator && 'PushManager' in window)) return;
+    navigator.serviceWorker.ready
+      .then(reg => reg.pushManager.getSubscription())
+      .then(sub => { if (sub) apiCall('push/subscribe', { token: session.token, subscription: sub.toJSON() }).catch(() => {}); })
+      .catch(() => {});
+    const onSwMessage = (e) => {
+      if (e.data && e.data.type === 'cacusa-push-resubscribed' && e.data.subscription) {
+        apiCall('push/subscribe', { token: session.token, subscription: e.data.subscription }).catch(() => {});
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onSwMessage);
+  }, [session]);
+
   useEffect(() => {
     if (!session) return;
     const silent = () => loadData(true);
@@ -4316,7 +4351,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App />);
 // Service worker para Web Push (notificaciones de pedidos nuevas, sin apps de terceros).
 // Scope explícito a esta carpeta para no chocar con el /sw.js (solo caché) de la tienda.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/ui_kits/admin/sw.js', { scope: '/ui_kits/admin/' }).catch(() => {});
+  navigator.serviceWorker.register('/ui_kits/admin/sw.js', { scope: '/ui_kits/admin/' })
+    .catch(err => console.error('No se pudo registrar el Service Worker de push:', err));
 }
 </script>
 </body>
