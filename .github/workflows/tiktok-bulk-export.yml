@@ -1,0 +1,48 @@
+name: "TikTok Shop: exportar carga masiva"
+
+# Genera cada noche (y bajo demanda desde el botón del panel admin) la hoja de
+# carga masiva de TikTok Shop Seller Center con los productos nuevos o
+# modificados desde la última exportación. No sube nada a TikTok — eso lo
+# sigue haciendo un humano a mano (Seller Center → Bulk actions → Upload in
+# bulk), porque TikTok exige resolver un captcha que no se puede automatizar.
+#
+# Si no hay productos nuevos/cambiados, no genera archivo ni comitea nada.
+on:
+  schedule:
+    - cron: "0 8 * * *" # 03:00 hora Ecuador (UTC-5), todas las noches
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [tiktok-export]
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar openpyxl
+        run: pip install openpyxl
+
+      - name: Generar carga masiva
+        run: python3 scripts/generate_tiktok_bulk.py
+
+      - name: Commitear si hubo cambios
+        run: |
+          git config user.name "cacusa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- exports/ data/tiktok_export_log.json; then
+            echo "Sin productos nuevos o modificados."
+            exit 0
+          fi
+          git add exports/ data/tiktok_export_log.json
+          git commit -m "[TikTok] Exportación automática de carga masiva [skip ci]"
+          git push
