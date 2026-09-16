@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:48:17.358Z",
+  "lastUpdated": "2026-09-16T01:48:39.002Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1668,7 +1668,7 @@
       "description": "Romántico anillo con símbolo de doble infinito: uno decorado con microcircones y otro en diseño liso, en baño de oro 18k.",
       "description_en": "Romantic ring featuring a double infinity symbol: one adorned with micro zirconia and one in a plain design, in 18k gold plating.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781891767767_image_jpg.webp",
       "focalX": 36.89143435339291,
       "focalY": 44.692340924520124,
