@@ -108,6 +108,27 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
     console.error('push/notify error:', e.message);
   }
 }
+
+// ── Activa/desactiva el cupón exclusivo del 5% de Lovers en cacusa-admin ───────────
+// Mismo patrón best-effort que notifyAdminPush() — nunca bloquea ni rompe el
+// procesamiento del webhook de Square si falla. pais se usa solo para elegir el
+// idioma del correo (Ecuador → es, cualquier otro → en); no hay un campo de idioma
+// real guardado en Firebase para suscriptoras, así que es una aproximación
+// razonable dado el dato que sí tenemos siempre a mano.
+async function notifyExclusiveCoupon(action, email, pais, env) {
+  if (!env.ORDER_INGEST_KEY || !email) return;
+  const lang = pais === 'Ecuador' ? 'es' : 'en';
+  try {
+    const r = await adminFetch(env, '/internal/lovers/exclusive-coupon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ action, email, lang }),
+    });
+    if (!r.ok) console.error('exclusive-coupon failed:', r.status, await r.text().catch(() => ''));
+  } catch (e) {
+    console.error('exclusive-coupon error:', e.message);
+  }
+}
 const ADMIN_CORS = {
   'Access-Control-Allow-Origin': ADMIN_ORIGIN,
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
@@ -439,6 +460,7 @@ export default {
           const key = subscriberKey(email);
           const ok = await updateSubscriber(key, null, record, dbUrl, fbAuth);
           if (!ok) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
+          await notifyExclusiveCoupon('activate', email, record.pais, env);
           return adminJson({ ok: true, id: key, subscriber: record }, 200);
         }
 
@@ -666,6 +688,7 @@ export default {
             console.log('Marked activo:', email);
             const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
             await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
+            await notifyExclusiveCoupon('activate', email, existing.pais, env);
           } else {
             // Subscriber not in Firebase yet — create minimal record
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
@@ -687,6 +710,7 @@ export default {
               `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
               env
             );
+            await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
           }
         }
       }
@@ -726,6 +750,7 @@ export default {
                 fecha_cancelacion: new Date().toISOString().slice(0, 10),
               }, dbUrl, fbAuth);
               console.log('Marked cancelado:', email);
+              await notifyExclusiveCoupon('deactivate', email, existing.pais, env);
             } else {
               console.warn('subscription.updated CANCELED: no matching subscriber for', email);
             }
