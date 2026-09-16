@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:48:56.600Z",
+  "lastUpdated": "2026-09-16T01:49:23.103Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1688,7 +1688,7 @@
       "description": "Sereno anillo ajustable con piedra de aguamarina en vibrante tono azul sobre base dorada de 18k. Frescura y elegancia en tu mano.",
       "description_en": "Serene adjustable ring with an aquamarine stone in a vibrant blue tone on an 18k gold base. Freshness and elegance on your hand.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892367817_image_jpg.webp",
       "focalX": 40.44585987261145,
       "focalY": 54.24242424242421,
