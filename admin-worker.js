@@ -1221,6 +1221,11 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
     already.date = new Date().toISOString(); already.notified = false;
     data.lastUpdated = new Date().toISOString();
     await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  } else if (source === 'vignette' && !already.welcomeSent && ctx) {
+    // El email ya existía por otra razón (ej. un carrito abandonado de antes) y ahora pide
+    // el 10% — el correo se manda igual, sin tocar el resto del registro (no le pisamos el
+    // source ni el carrito: ambas cosas pueden ser ciertas al mismo tiempo para un email).
+    ctx.waitUntil(sendWelcomeCode(email, lang, env).catch(e => console.error('welcome10 automático falló:', e.message)));
   }
   if (ctx && env.VAPID_PRIVATE_KEY_JWK) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
   return ok({ ok: true }, origin);
