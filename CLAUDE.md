@@ -116,6 +116,18 @@ que pisa un valor ahí es irreversible. El Worker `cacusa-backup` es la
 - **Restauración**: deliberadamente manual, nunca automática — el runbook
   completo (qué llamados hacer a Firebase y a KV para restaurar desde un
   backup puntual) vive comentado al inicio de `backup-worker.js`.
+- **Privacidad del bucket — verificada el 16 sep.** Un bucket de R2 nace
+  privado y solo se vuelve público por 3 vías; las 3 quedaron comprobadas:
+  (a) **Public Development URL** (`*.r2.dev`) deshabilitada y (b) **sin
+  dominio propio** asignado — las dos en el dashboard, bucket → Settings →
+  Public access, que es el único lugar donde se ven; y (c) **ningún Worker
+  sirve objetos del bucket**: `backup-worker.js` expone solo `POST /run` y
+  `GET /status`, ambas detrás de `isAuthorized()` (`safeEqual()` contra
+  `BACKUP_TRIGGER_KEY`), `/status` devuelve únicamente `_status.json` y
+  todo lo demás cae en 404. En el repo tampoco hay ninguna referencia a
+  `r2.dev`. Si alguna vez se agrega una ruta nueva al Worker que lea de
+  `BACKUP_R2`, hay que revisar (c) de nuevo — es la única de las tres que
+  se puede romper desde el código.
 
 ## Automatizaciones (GitHub Actions)
 
@@ -592,15 +604,13 @@ vez de reinventarlos:
 
 Los 4 Workers están desplegados y al día (confirmado 16 sep) con todo lo de
 `workers-src` hasta el commit `2bc5896` — leads por llave, seguridad del
-correo/cupón de envío, consolidación del escaneo. Quedan pendientes:
+correo/cupón de envío, consolidación del escaneo. La privacidad del bucket
+R2 `cacusa-backups` también quedó verificada ese día (ver "Backups y
+recuperación de desastres" más arriba). Queda pendiente uno solo:
 
 1. **Regla de Firebase**: exigir que una reseña nueva traiga
    `approved === false`, para que nadie pueda auto-aprobarse mandando la
    reseña por fuera del sitio.
-2. **Verificar en el dashboard de Cloudflare** que el bucket R2
-   `cacusa-backups` siga sin acceso público — es un solo JSON con todas las
-   suscriptoras, todos los pedidos con dirección y teléfono, y las
-   credenciales de Face ID. No se puede verificar desde el código.
 
 ## Historial de cambios
 
