@@ -27,7 +27,15 @@ self.addEventListener('fetch', e => {
   if (e.request.mode === 'navigate') {
     e.respondWith(
       fetch(e.request)
-        .then(r => { caches.open(CACHE_V).then(c => c.put(e.request, r.clone())); return r; })
+        .then(r => {
+          // Clonar ANTES de devolver r — si se clona dentro del .then() de
+          // caches.open() (async), el navegador ya puede haber empezado a leer
+          // el body de r para pintar la página, y clonar un body ya consumido
+          // revienta con "Response body is already used".
+          const copy = r.clone();
+          caches.open(CACHE_V).then(c => c.put(e.request, copy));
+          return r;
+        })
         .catch(() => caches.match(e.request))
     );
     return;
@@ -39,7 +47,8 @@ self.addEventListener('fetch', e => {
       caches.match(e.request).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(r => {
-          caches.open(CACHE_V).then(c => c.put(e.request, r.clone()));
+          const copy = r.clone();
+          caches.open(CACHE_V).then(c => c.put(e.request, copy));
           return r;
         });
       })
@@ -52,7 +61,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       caches.match(e.request).then(cached => {
         const network = fetch(e.request).then(r => {
-          caches.open(CACHE_V).then(c => c.put(e.request, r.clone()));
+          const copy = r.clone();
+          caches.open(CACHE_V).then(c => c.put(e.request, copy));
           return r;
         });
         return cached || network;
