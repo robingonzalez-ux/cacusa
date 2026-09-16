@@ -79,16 +79,17 @@
  *       body = backup.firebase
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
- *    .webauthnCredentials:
+ *    .webauthnCredentials / .leads:
  *       env.CACUSA_KV.put(key, JSON.stringify(value))
- *    (la key ya viene completa, ej. "order:1042" — poner tal cual).
- *    Para leads/surcharges/markets:
- *       env.CACUSA_KV.put('leads', JSON.stringify(backup.kv.leads)), etc.
+ *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
+ *    tal cual). Para surcharges/markets (siguen siendo un solo blob cada uno):
+ *       env.CACUSA_KV.put('surcharges', JSON.stringify(backup.kv.surcharges)), etc.
  *
- *    IMPORTANTE: si se restauran keys order:*, borrar después la key orders_cache
- *    (env.CACUSA_KV.delete('orders_cache')) — si no, el panel admin sigue sirviendo la
- *    caché vieja hasta que algo la reconstruya (handleLoad en admin-worker.js solo
- *    reconstruye la caché cuando orders_cache NO existe).
+ *    IMPORTANTE: si se restauran keys order:* o lead:*, borrar después la caché
+ *    correspondiente (env.CACUSA_KV.delete('orders_cache') / .delete('leads_cache')) —
+ *    si no, el panel admin sigue sirviendo la caché vieja hasta que algo la reconstruya
+ *    (handleLoad/handleLeadList en admin-worker.js solo reconstruyen la caché cuando
+ *    orders_cache/leads_cache NO existen).
  *
  *    El dashboard de Cloudflare permite editar keys de KV una por una (Workers → KV →
  *    namespace → buscar key) — para restaurar muchas de una, considerar un endpoint
@@ -184,17 +185,19 @@ async function getKvValue(env, key) {
   try { return JSON.parse(raw); } catch (_) { return raw; }
 }
 
-// Prefijos/llaves respaldadas: pedidos, gift cards, cupones, credenciales WebAuthn, y
-// las 3 llaves sueltas de config/leads. Deliberadamente excluido: orders_cache (se
-// reconstruye solo) y todo lo que es rate-limit/challenge de TTL corto (loginrl:,
-// cpused:, wac:, walc:, refmonth:, push:) — ruido regenerable, no datos de negocio.
+// Prefijos/llaves respaldadas: pedidos, gift cards, cupones, credenciales WebAuthn,
+// leads (10% del popup + carritos abandonados — una llave por email, mismo esquema que
+// pedidos desde el 16 sep), y las 2 llaves sueltas de config. Deliberadamente excluido:
+// orders_cache/leads_cache (se reconstruyen solas) y todo lo que es rate-limit/challenge
+// de TTL corto (loginrl:, leadrl:, leadcancelrl:, cpused:, wac:, walc:, refmonth:,
+// push:) — ruido regenerable, no datos de negocio.
 async function exportKv(env) {
   const [orders, giftcards, coupons, webauthnCredentials, leads, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
     listKvPrefix(env, 'wacred:'),
-    getKvValue(env, 'leads'),
+    listKvPrefix(env, 'lead:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
