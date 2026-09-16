@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:41:40.106Z",
+  "lastUpdated": "2026-09-16T01:42:14.698Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1020,7 +1020,7 @@
       "description": "Delicado anillo ajustable con diseño de hoja en baño de oro 18k. Perfecto para un toque natural y elegante.",
       "description_en": "Delicate adjustable ring with a leaf design in 18k gold plating. Perfect for a natural and elegant touch.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877979684_image_jpg.webp",
       "focalX": 50,
       "focalY": 50,
