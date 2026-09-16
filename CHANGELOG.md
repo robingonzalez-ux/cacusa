@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Leads: un solo escaneo por request en vez de hasta 3
+
+Revisión de confiabilidad sobre el refactor de leads de más arriba. El
+sistema nuevo era correcto, pero cada registro del popup del 10% podía
+disparar hasta 3 escaneos completos de todos los leads guardados (uno al
+guardar, otro al mandar el correo, otro al revisar carritos abandonados),
+cada uno reescribiendo la misma caché. Con la cantidad de leads de hoy no
+pasaba nada, pero era trabajo de más sin necesidad, y a futuro se acercaba
+antes de lo esperado a un límite técnico de Cloudflare. Ahora es un solo
+escaneo por registro — mismo comportamiento visible, menos trabajo real
+detrás.
+
 ## 2026-09-16 — Barrido de seguridad: correo blindado y envío gratis atado a su dueña
 
 Revisión de seguridad sobre todo lo construido hoy. Salieron dos cosas

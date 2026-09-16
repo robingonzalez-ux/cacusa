@@ -372,6 +372,20 @@ quien escribe primero en silencio.
   detalle al agregar un campo nuevo por-lead en el futuro, el backup diario
   seguiría funcionando solo, pero cualquier prefijo NUEVO que no sea
   `lead:` quedaría fuera silenciosamente.
+- **Un solo escaneo por request (fix del mismo día)**: la primera versión del
+  refactor llamaba a `listAllLeads()` hasta 3 veces dentro de un solo
+  `/lead/register` (al refrescar la caché tras escribir el lead, dentro de
+  `markLeadWelcomeSent()` si mandaba el correo, y dentro de
+  `checkAbandonedCarts()`), cada una con su propio `PUT leads_cache`. Ahora
+  `checkAbandonedCarts()` y `markLeadWelcomeSent()` aceptan
+  `{ refreshCache: false }` para saltarse su refresco propio, y
+  `handleLeadRegister` hace un único `listAllLeads()` (correo primero, para
+  que `welcomeSent` ya esté escrito cuando se escanea) y un único
+  `writeLeadsCache()` al final. `handleLeadSendWelcome` (el botón manual del
+  panel) no cambió — sigue refrescando por su cuenta, es de baja frecuencia.
+  Cualquier función nueva que toque leads en un flujo automático de alta
+  frecuencia debe seguir este mismo patrón (recibir el array ya escaneado en
+  vez de volver a listar) en vez de llamar a `refreshLeadsCache()` a ciegas.
 
 ## Código de bienvenida del 10% por correo (`welcome10`)
 
