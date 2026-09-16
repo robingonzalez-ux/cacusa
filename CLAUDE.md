@@ -590,15 +590,14 @@ vez de reinventarlos:
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-1. **Desplegar los 3 Workers** que están en `workers-src` sin desplegar:
-   `cacusa-admin` y `cacusa-square` (envío gratis Lovers — van juntos y
-   **antes** de entregarle el código a ninguna suscriptora, si no la tienda
-   muestra envío gratis y Square cobra igual), y `cacusa-lovers-webhook`
-   (aprobar reseñas).
-2. **Regla de Firebase**: exigir que una reseña nueva traiga
+Los 4 Workers están desplegados y al día (confirmado 16 sep) con todo lo de
+`workers-src` hasta el commit `2bc5896` — leads por llave, seguridad del
+correo/cupón de envío, consolidación del escaneo. Quedan pendientes:
+
+1. **Regla de Firebase**: exigir que una reseña nueva traiga
    `approved === false`, para que nadie pueda auto-aprobarse mandando la
    reseña por fuera del sitio.
-3. **Verificar en el dashboard de Cloudflare** que el bucket R2
+2. **Verificar en el dashboard de Cloudflare** que el bucket R2
    `cacusa-backups` siga sin acceso público — es un solo JSON con todas las
    suscriptoras, todos los pedidos con dirección y teléfono, y las
    credenciales de Face ID. No se puede verificar desde el código.
