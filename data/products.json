@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:48:39.002Z",
+  "lastUpdated": "2026-09-16T01:48:56.600Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1708,7 +1708,7 @@
       "description": "Protector anillo ajustable con el ojo turco en base dorada de 18k. Un símbolo de protección y buena energía que luce hermoso en tu mano.",
       "description_en": "Protective adjustable ring featuring the evil eye on an 18k gold base. A symbol of protection and good energy that looks beautiful on your hand.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892857275_image_jpg.webp",
       "focalX": 57.855626326963915,
       "focalY": 47.87878787878785,
