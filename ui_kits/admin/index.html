@@ -2612,6 +2612,8 @@ function LoversTab({ products = [], token }) {
   const [newFormError, setNewFormError] = useState('');
   const [sendingExclusive, setSendingExclusive] = useState(false);
   const [exclusiveMsg, setExclusiveMsg] = useState('');
+  const [sendingExclusiveId, setSendingExclusiveId] = useState(null);
+  const [exclusiveRowMsg, setExclusiveRowMsg] = useState({});
 
   // Todas las lecturas/escrituras de suscriptoras pasan por el worker, que usa el
   // secret de Firebase — el navegador ya no habla directo con cacusa_lovers.
@@ -2675,6 +2677,24 @@ function LoversTab({ products = [], token }) {
       setExclusiveMsg(`⚠ Error: ${e.message}`);
     }
     setSendingExclusive(false);
+  };
+
+  // Para probar con una sola suscriptora (ej. antes de mandarle al resto), o para
+  // reenviarle a alguien puntual que dice que no le llegó.
+  const sendExclusiveToOne = async (s) => {
+    setSendingExclusiveId(s.id);
+    setExclusiveRowMsg(prev => ({ ...prev, [s.id]: null }));
+    try {
+      const d = await apiCall('lovers/exclusive-coupon/bulk', {
+        token,
+        subscribers: [{ email: s.email, lang: s.pais === 'Ecuador' ? 'es' : 'en' }],
+      });
+      const text = d.sent === 1 ? '✓ Enviado' : d.alreadyActive === 1 ? '✓ Ya lo tenía (activo)' : '⚠ No se pudo enviar';
+      setExclusiveRowMsg(prev => ({ ...prev, [s.id]: text }));
+    } catch (e) {
+      setExclusiveRowMsg(prev => ({ ...prev, [s.id]: `⚠ Error: ${e.message}` }));
+    }
+    setSendingExclusiveId(null);
   };
 
   const updateEstado = async (sub, nuevoEstado) => {
@@ -3031,6 +3051,20 @@ function LoversTab({ products = [], token }) {
                       style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #EDE8EA', background: editingId === s.id ? '#FFF0F6' : 'white', color: editingId === s.id ? '#E85D8A' : '#7A6880', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
                       {editingId === s.id ? 'Cancelar' : 'Editar datos'}
                     </button>
+                    {s.estado_pago === 'activo' && (
+                      <button
+                        onClick={() => sendExclusiveToOne(s)}
+                        disabled={sendingExclusiveId === s.id}
+                        title="Manda (o reenvía) el cupón exclusivo del 5% solo a esta suscriptora"
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 8, border: '1.5px solid #C0336E', background: 'white', color: '#C0336E', cursor: sendingExclusiveId === s.id ? 'default' : 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: sendingExclusiveId === s.id ? .5 : 1 }}>
+                        {sendingExclusiveId === s.id ? 'Enviando…' : '✦ Cupón exclusivo'}
+                      </button>
+                    )}
+                    {exclusiveRowMsg[s.id] && (
+                      <div role="status" aria-live="polite" style={{ fontSize: 11, textAlign: 'right', color: exclusiveRowMsg[s.id].startsWith('⚠') ? '#B3261E' : '#2C6149' }}>
+                        {exclusiveRowMsg[s.id]}
+                      </div>
+                    )}
                     {s.estado_pago !== 'cancelado' && (
                       <button
                         onClick={() => cancelInSquare(s)}
