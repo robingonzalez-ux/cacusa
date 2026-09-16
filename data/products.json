@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:46:34.362Z",
+  "lastUpdated": "2026-09-16T01:47:13.879Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1346,7 +1346,7 @@
       "description": "Singular anillo ajustable con dos peces: uno liso y otro con microcircones, ambos con el ojo turco protector. Bañado en oro 18k.",
       "description_en": "Unique adjustable ring featuring two fish: one plain and one with micro zirconia, both with the protective evil eye. 18k gold plated.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880075134_image_jpg.webp",
       "focalX": 45.48832271762209,
       "focalY": 40.71969696969693,
