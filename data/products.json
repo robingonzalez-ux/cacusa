@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:43:49.772Z",
+  "lastUpdated": "2026-09-16T01:44:11.657Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1180,7 +1180,7 @@
       "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
       "description_en": "Adjustable ring with a circle of micro zircons on a mother-of-pearl background and a central stone. Elegant, handcrafted detail in every finish.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815544186_be2921ad_a5b6_47d3_aed0_440f77267397_jpe.webp",
       "focalX": 34.45480755119743,
       "focalY": 46.78701475035486,
