@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:41:13.050Z",
+  "lastUpdated": "2026-09-16T01:41:40.106Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -664,7 +664,7 @@
       "description": "Argollas de circones en forma de estrella ",
       "description_en": "Star-shaped zirconia hoop earrings",
       "personalized": false,
-      "available": true,
+      "available": false,
       "oldPrice": null,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781460742072_img_3335_jpeg.webp",
       "focalX": 49.34922014520391,
