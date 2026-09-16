@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:43:30.916Z",
+  "lastUpdated": "2026-09-16T01:43:49.772Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1160,7 +1160,7 @@
       "description": "Anillo de triple banda con elegantes circones y tres piedras centrales en baño de oro 18k. Diseño sofisticado y moderno.",
       "description_en": "Triple band ring with elegant zirconia and three central stones in 18k gold plating. Sophisticated and modern design.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878676074_image_jpg.webp",
       "focalX": 61.52810028495943,
       "focalY": 60.6153181509597,
