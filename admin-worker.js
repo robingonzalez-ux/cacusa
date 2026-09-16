@@ -894,11 +894,25 @@ async function couponGet(env, code) {
 // email: opcional — solo lo exige un cupón con restrictToEmail (ver welcome10 más abajo).
 // Los cupones normales (sin ese campo) ignoran el parámetro, así que esto es
 // retrocompatible con todos los cupones creados antes de que existiera.
-function couponIsValid(c, email) {
+// Compara 2 teléfonos por sus últimos 7 dígitos — misma normalización laxa que usa
+// isActiveLoversPhone() contra Firebase. A propósito no es comparación exacta: la
+// misma clienta escribe su número con o sin código de país según el formulario, y
+// exigir coincidencia byte a byte la dejaría fuera de su propio beneficio.
+function samePhone(a, b) {
+  const da = String(a || '').replace(/\D/g, '');
+  const db = String(b || '').replace(/\D/g, '');
+  return da.length >= 7 && db.length >= 7 && da.slice(-7) === db.slice(-7);
+}
+function couponIsValid(c, email, phone) {
   if (!c || !c.active) return false;
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return false;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return false;
   if (c.restrictToEmail && (!email || email.toLowerCase() !== c.restrictToEmail.toLowerCase())) return false;
+  // restrictToPhone ata el cupón de envío gratis a la suscriptora que lo pidió. Sin
+  // esto el código ENVIO… servía para cualquiera que lo tuviera, sin vencimiento —
+  // y como no tiene tope de usos (el beneficio es "envío gratis en TODA compra"),
+  // compartirlo una vez lo regalaba para siempre.
+  if (c.restrictToPhone && !samePhone(phone, c.restrictToPhone)) return false;
   return true;
 }
 
@@ -1088,16 +1102,24 @@ function loversExclusiveEmailContent(code, lang) {
 async function handleLoversExclusiveCoupon(body, env) {
   if (!env.CACUSA_KV) return;
   const email = String(body.email || '').toLowerCase().trim();
-  if (!email.includes('@')) return;
-  const code = await loversExclusiveCode(email, env);
-  const coupon = await couponGet(env, code);
+  const phoneDigits = String(body.phone || '').replace(/\D/g, '');
+
   if (body.action === 'deactivate') {
-    if (coupon && coupon.active) {
-      coupon.active = false;
-      await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+    // Cancelar apaga los DOS beneficios de la suscripción, no solo el 5%: el cupón
+    // exclusivo (atado al email) y el de envío gratis (atado al teléfono). El de
+    // envío se busca por índice porque su código es un HMAC de una sola vía — con
+    // el teléfono que guarda Firebase no siempre se puede recalcular igual.
+    if (isValidEmail(email)) await setCouponActive(env, await loversExclusiveCode(email, env), false);
+    if (phoneDigits.length >= 7) {
+      const shipCode = await env.CACUSA_KV.get(loversShipIndexKey(phoneDigits));
+      if (shipCode) await setCouponActive(env, shipCode, false);
     }
     return;
   }
+
+  if (!isValidEmail(email)) return;
+  const code = await loversExclusiveCode(email, env);
+  const coupon = await couponGet(env, code);
   if (!coupon) {
     const fresh = {
       code, type: 'percent', amount: 5, kind: 'lovers-exclusive',
@@ -1124,7 +1146,7 @@ async function handleLoversExclusiveBulk(body, env, origin) {
   const results = { sent: 0, alreadyActive: 0, failed: 0 };
   for (const s of body.subscribers.slice(0, 500)) {
     const email = String((s && s.email) || '').toLowerCase().trim();
-    if (!email.includes('@')) { results.failed++; continue; }
+    if (!isValidEmail(email)) { results.failed++; continue; }
     try {
       const code = await loversExclusiveCode(email, env);
       const existing = await couponGet(env, code);
@@ -1246,6 +1268,18 @@ async function handleReferralCode(body, env, origin, request) {
 // teléfono, y por lo tanto lo puede deducir cualquiera que conozca ese número — este se
 // deriva por HMAC con SESSION_SECRET. Sigue siendo determinístico (mismo teléfono →
 // mismo código, así pedirlo dos veces no crea dos cupones) pero no es adivinable.
+// Índice teléfono → código del cupón de envío. Los últimos 7 dígitos, por la misma
+// razón que samePhone(): el número guardado en Firebase y el que la clienta teclea
+// en el formulario no siempre traen el código de país.
+function loversShipIndexKey(phoneDigits) {
+  return 'loversship:' + String(phoneDigits || '').replace(/\D/g, '').slice(-7);
+}
+async function setCouponActive(env, code, active) {
+  const coupon = await couponGet(env, code);
+  if (!coupon || coupon.active === active) return;
+  coupon.active = active;
+  await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+}
 async function loversShippingCode(phoneDigits, env) {
   const sig = await hmac('lovers-shipping:' + phoneDigits, env.SESSION_SECRET);
   // b64url → solo A-Z 0-9 para que entre en el formato de código de cupón.
@@ -1278,13 +1312,28 @@ async function handleLoversShippingCode(body, env, origin, request) {
     coupon = {
       code, type: 'freeship', amount: 0, kind: 'lovers-shipping',
       // Sin tope de usos ni vencimiento: el beneficio dura mientras dure la suscripción.
-      // Si una suscriptora se da de baja, se desactiva el cupón desde el panel.
+      // Lo que lo acota no es un contador sino restrictToPhone (solo lo usa quien lo
+      // pidió) + la desactivación automática al cancelar (ver loversShipIndexKey abajo).
       maxUses: null, usedCount: 0, active: true, expiresAt: null,
+      restrictToPhone: phoneDigits,
       note: `Envío gratis Lovers — ${name}${body.phone ? ' (' + String(body.phone).slice(0, 30) + ')' : ''}`,
       createdAt: new Date().toISOString(), createdBy: 'lovers-system',
     };
     await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  } else if (!coupon.active || !coupon.restrictToPhone) {
+    // Para llegar acá ya pasó isActiveLoversPhone(), o sea que hoy está activa: si su
+    // cupón estaba apagado (canceló y se volvió a suscribir) se reenciende. De paso se
+    // le agrega restrictToPhone a los cupones emitidos antes de que el campo existiera.
+    coupon.active = true;
+    coupon.restrictToPhone = coupon.restrictToPhone || phoneDigits;
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
   }
+  // Índice teléfono → código, reescrito siempre (es idempotente). Hace falta porque el
+  // código es un HMAC de una sola vía: al cancelar, el webhook solo tiene el teléfono
+  // guardado en Firebase, que puede no coincidir dígito a dígito con el que la clienta
+  // tecleó al pedirlo, así que no se puede recalcular. Escribirlo en cada pedido, y no
+  // solo al crear, deja indexados también los cupones anteriores a este cambio.
+  await env.CACUSA_KV.put(loversShipIndexKey(phoneDigits), code);
   return ok({ ok: true, code: coupon.code, type: coupon.type }, origin);
 }
 
@@ -1304,7 +1353,7 @@ async function handleLoversNotifyPending(body, env, origin, request) {
   await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
 
   const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
-  if (!email.includes('@')) return ok({ ok: true, notified: false }, origin);
+  if (!isValidEmail(email)) return ok({ ok: true, notified: false }, origin);
 
   // Falla cerrado: si el hop interno no responde o dice que no, no suena nada.
   let claim = { notify: false };
@@ -1371,7 +1420,7 @@ async function handleCouponValidate(body, env, origin, request) {
   const codeKey = `cpvrl:c:${rawCode}`;
   const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
   if (codeCount >= 8) return ok({ valid: false }, origin);
-  let valid = couponIsValid(coupon, rawEmail);
+  let valid = couponIsValid(coupon, rawEmail, rawPhone);
   // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
   if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
   if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
@@ -1424,7 +1473,7 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
   if (rlCount >= 3) return ok({ ok: true }, origin);
   await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
   const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
-  if (!email.includes('@')) return ok({ ok: true }, origin);
+  if (!isValidEmail(email)) return ok({ ok: true }, origin);
   const lang = body.lang === 'en' ? 'en' : 'es';
   const source = ['vignette', 'cart_checkout_start'].includes(body.source) ? body.source : undefined;
   const cart = Array.isArray(body.cart)
@@ -1574,7 +1623,7 @@ async function handleLeadDelete(body, env, origin) {
 async function handleLeadSendWelcome(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   const email = String(body.email || '').toLowerCase().trim();
-  if (!email.includes('@')) return err('Email inválido', 400, origin);
+  if (!isValidEmail(email)) return err('Email inválido', 400, origin);
   const lang = body.lang === 'en' ? 'en' : 'es';
   try {
     const code = await sendWelcomeCode(email, lang, env);
@@ -1611,9 +1660,11 @@ async function handleCouponBurnPublic(body, env, origin, request) {
     if (rawEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${rawEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
   }
   // Incrementar usedCount del cupón — defensa en profundidad: si tiene restrictToEmail
-  // y el email no coincide, no se cuenta como uso (el checkout ya no debería haber
-  // dejado pasar esto en /coupon/validate, pero /coupon/burn no vuelve a validar nada).
-  if (coupon && (!coupon.restrictToEmail || rawEmail === coupon.restrictToEmail.toLowerCase())) {
+  // o restrictToPhone y no coinciden, no se cuenta como uso (el checkout ya no debería
+  // haber dejado pasar esto en /coupon/validate, pero /coupon/burn no vuelve a validar).
+  if (coupon
+      && (!coupon.restrictToEmail || rawEmail === coupon.restrictToEmail.toLowerCase())
+      && (!coupon.restrictToPhone || samePhone(rawPhone, coupon.restrictToPhone))) {
     coupon.usedCount = (coupon.usedCount || 0) + 1;
     await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
     if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
@@ -1872,6 +1923,22 @@ async function ghPut(path, base64content, sha, message, env) {
   return r.json();
 }
 
+// ── Validación de email ────────────────────────────────────────────────────────
+// Estricta a propósito, y el `\s` de la clase negada es lo importante: cubre \r y
+// \n. El destinatario termina crudo dentro de una cabecera MIME en sendGmail(), así
+// que un CRLF acá permitía inyectar cabeceras nuevas (Bcc:, Reply-To:) o cerrar el
+// bloque de cabeceras y escribir el cuerpo — es decir, mandar correo arbitrario
+// desde facturacioncacusa@gmail.com, con DKIM y SPF válidos de Gmail. La validación
+// vieja era `.includes('@')`, que deja pasar todo eso.
+// Ojo: NO usar esto en /coupon/validate ni /coupon/burn — ahí el email solo arma una
+// llave de KV y se compara contra restrictToEmail; endurecerlo podría dejar fuera del
+// checkout a una clienta con un correo válido pero raro, sin ganar nada de seguridad.
+const EMAIL_RE = /^[^\s@<>"',;:\\]+@[^\s@<>"',;:\\]+\.[a-z]{2,}$/i;
+function isValidEmail(v) {
+  const s = String(v || '').trim();
+  return s.length <= 120 && EMAIL_RE.test(s);
+}
+
 // ── Correo de bienvenida (código 10%) vía Gmail API ─────────────────────────────
 // Manda literalmente desde facturacioncacusa@gmail.com (OAuth2, no SMTP con
 // contraseña) — ver el runbook al inicio del archivo para obtener los 3 secrets.
@@ -1895,6 +1962,12 @@ async function gmailAccessToken(env) {
 
 async function sendGmail(env, { to, subject, html }) {
   if (!env.GMAIL_REFRESH_TOKEN) throw new Error('GMAIL_REFRESH_TOKEN no configurado');
+  // Última barrera antes de armar el MIME: `to` se concatena crudo en la cabecera To:.
+  // Se valida acá además de en cada punto de entrada porque este es el cuello de
+  // botella por donde pasa TODO correo del sistema — incluidos los que traen la
+  // dirección desde Firebase (el cupón exclusivo), que la escribe el formulario
+  // público de suscripción. Cualquier ruta de envío nueva queda cubierta sola.
+  if (!isValidEmail(to)) throw new Error('Destinatario inválido');
   const accessToken = await gmailAccessToken(env);
   const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
   const mime =

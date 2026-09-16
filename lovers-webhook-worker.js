@@ -117,16 +117,18 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
 // dato (suscriptora de antes de este campo, o alta manual desde el admin sin
 // idioma capturado), un nombre de país como aproximación (Ecuador → es, cualquier
 // otro → en).
-async function notifyExclusiveCoupon(action, email, langOrPais, env) {
+async function notifyExclusiveCoupon(action, email, langOrPais, env, phone) {
   if (!env.ORDER_INGEST_KEY || !email) return;
   const lang = langOrPais === 'es' || langOrPais === 'en'
     ? langOrPais
     : (langOrPais === 'Ecuador' ? 'es' : 'en');
   try {
+    // El teléfono solo se usa al desactivar: cancelar apaga los DOS beneficios, el
+    // 5% (que se ubica por email) y el envío gratis (que se ubica por teléfono).
     const r = await adminFetch(env, '/internal/lovers/exclusive-coupon', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ action, email, lang }),
+      body: JSON.stringify({ action, email, lang, phone: phone || '' }),
     });
     if (!r.ok) console.error('exclusive-coupon failed:', r.status, await r.text().catch(() => ''));
   } catch (e) {
@@ -754,7 +756,7 @@ export default {
                 fecha_cancelacion: new Date().toISOString().slice(0, 10),
               }, dbUrl, fbAuth);
               console.log('Marked cancelado:', email);
-              await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env);
+              await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
             } else {
               console.warn('subscription.updated CANCELED: no matching subscriber for', email);
             }
