@@ -269,7 +269,14 @@ function couponKey(code) { return 'coupon:' + String(code || '').toUpperCase().r
 // Devuelve el cupón solo si está vigente, o null. Antes esta validación vivía duplicada
 // dentro de couponPeekCents; se extrajo porque el envío gratis necesita consultar el tipo
 // del cupón antes de armar la línea de envío.
-async function couponLoadValid(env, code) {
+//
+// email: obligatorio de pasar cuando el cupón tiene restrictToEmail (welcome10) — esta es
+// una copia independiente de couponIsValid() de admin-worker.js (Workers separados, sin
+// binding de servicio para esto), y hasta este fix nunca revisaba ese campo: cualquiera
+// con el código de bienvenida de OTRA clienta podía cobrarlo pagando con tarjeta vía
+// Square, aunque /coupon/validate en admin-worker.js sí lo hubiera rechazado — el pago
+// con tarjeta no pasa por esa ruta, arma el link de pago directo desde acá.
+async function couponLoadValid(env, code, email) {
   if (!env.CACUSA_KV) return null;
   const raw = await env.CACUSA_KV.get(couponKey(code));
   if (!raw) return null;
@@ -277,11 +284,12 @@ async function couponLoadValid(env, code) {
   if (!c || !c.active) return null;
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return null;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return null;
+  if (c.restrictToEmail && (!email || String(email).toLowerCase() !== c.restrictToEmail.toLowerCase())) return null;
   return c;
 }
 
-async function couponPeekCents(env, code, totalCents) {
-  const c = await couponLoadValid(env, code);
+async function couponPeekCents(env, code, totalCents, email) {
+  const c = await couponLoadValid(env, code, email);
   if (!c) return 0;
   // 'freeship' no descuenta dinero del subtotal: su efecto es anular el envío, y eso
   // se resuelve antes, sobre serverShipping. Explícito para que nunca haga las dos cosas.
@@ -474,7 +482,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   if (serverShipping > 0) {
     const cpEarly = (body.couponCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
     if (cpEarly) {
-      const c = await couponLoadValid(env, cpEarly);
+      const c = await couponLoadValid(env, cpEarly, customer?.email);
       if (c && c.type === 'freeship') serverShipping = 0;
     }
   }
@@ -538,7 +546,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   const cpCode = (body.couponCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (cpCode) {
     const totalAfterGc = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0) - gcDiscountCents;
-    if (totalAfterGc > 0) cpDiscountCents = await couponPeekCents(env, cpCode, totalAfterGc);
+    if (totalAfterGc > 0) cpDiscountCents = await couponPeekCents(env, cpCode, totalAfterGc, customer?.email);
   }
 
   // ── Build customer note ────────────────────────────────────────────────
