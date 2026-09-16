@@ -111,13 +111,17 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
 
 // ── Activa/desactiva el cupón exclusivo del 5% de Lovers en cacusa-admin ───────────
 // Mismo patrón best-effort que notifyAdminPush() — nunca bloquea ni rompe el
-// procesamiento del webhook de Square si falla. pais se usa solo para elegir el
-// idioma del correo (Ecuador → es, cualquier otro → en); no hay un campo de idioma
-// real guardado en Firebase para suscriptoras, así que es una aproximación
-// razonable dado el dato que sí tenemos siempre a mano.
-async function notifyExclusiveCoupon(action, email, pais, env) {
+// procesamiento del webhook de Square si falla. langOrPais acepta 2 formas:
+// 'es'/'en' directo (viene de existing.idioma, el idioma real de la página donde
+// se suscribió — ver cacusa-lovers.html/en/cacusa-lovers.html) o, si no hay ese
+// dato (suscriptora de antes de este campo, o alta manual desde el admin sin
+// idioma capturado), un nombre de país como aproximación (Ecuador → es, cualquier
+// otro → en).
+async function notifyExclusiveCoupon(action, email, langOrPais, env) {
   if (!env.ORDER_INGEST_KEY || !email) return;
-  const lang = pais === 'Ecuador' ? 'es' : 'en';
+  const lang = langOrPais === 'es' || langOrPais === 'en'
+    ? langOrPais
+    : (langOrPais === 'Ecuador' ? 'es' : 'en');
   try {
     const r = await adminFetch(env, '/internal/lovers/exclusive-coupon', {
       method: 'POST',
@@ -688,7 +692,7 @@ export default {
             console.log('Marked activo:', email);
             const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
             await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
-            await notifyExclusiveCoupon('activate', email, existing.pais, env);
+            await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
           } else {
             // Subscriber not in Firebase yet — create minimal record
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
@@ -750,7 +754,7 @@ export default {
                 fecha_cancelacion: new Date().toISOString().slice(0, 10),
               }, dbUrl, fbAuth);
               console.log('Marked cancelado:', email);
-              await notifyExclusiveCoupon('deactivate', email, existing.pais, env);
+              await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env);
             } else {
               console.warn('subscription.updated CANCELED: no matching subscriber for', email);
             }
