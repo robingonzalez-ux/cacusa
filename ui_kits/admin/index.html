@@ -2610,6 +2610,8 @@ function LoversTab({ products = [], token }) {
   const [newForm, setNewForm] = useState(NEW_SUB_BLANK);
   const [savingNew, setSavingNew] = useState(false);
   const [newFormError, setNewFormError] = useState('');
+  const [sendingExclusive, setSendingExclusive] = useState(false);
+  const [exclusiveMsg, setExclusiveMsg] = useState('');
 
   // Todas las lecturas/escrituras de suscriptoras pasan por el worker, que usa el
   // secret de Firebase — el navegador ya no habla directo con cacusa_lovers.
@@ -2654,6 +2656,26 @@ function LoversTab({ products = [], token }) {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Rollout único del cupón exclusivo del 5% a quienes ya estaban activas antes de
+  // que este beneficio existiera — de ahí en adelante se activa solo con cada pago
+  // confirmado (ver lovers-webhook-worker.js), esto es solo para no dejarlas
+  // esperando hasta su próximo cobro.
+  const sendExclusiveToAllActive = async () => {
+    const activas = (subs || []).filter(s => s.estado_pago === 'activo');
+    if (!activas.length) { setExclusiveMsg('No hay suscriptoras activas ahora mismo.'); return; }
+    if (!confirm(`¿Enviar el cupón exclusivo del 5% a las ${activas.length} suscriptoras activas? Las que ya lo tengan se saltan solas.`)) return;
+    setSendingExclusive(true);
+    setExclusiveMsg('');
+    try {
+      const subscribers = activas.map(s => ({ email: s.email, lang: s.pais === 'Ecuador' ? 'es' : 'en' }));
+      const d = await apiCall('lovers/exclusive-coupon/bulk', { token, subscribers });
+      setExclusiveMsg(`✓ Enviado a ${d.sent} · ya lo tenían ${d.alreadyActive}${d.failed ? ` · fallaron ${d.failed}` : ''}`);
+    } catch (e) {
+      setExclusiveMsg(`⚠ Error: ${e.message}`);
+    }
+    setSendingExclusive(false);
+  };
 
   const updateEstado = async (sub, nuevoEstado) => {
     setUpdating(u => ({ ...u, [sub.id]: true }));
@@ -2953,7 +2975,17 @@ function LoversTab({ products = [], token }) {
       )}
       {!loading && subs && subs.length > 0 && (
         <div>
-          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 12 }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#7A6B85' }}>{subs.length} suscriptora{subs.length !== 1 ? 's' : ''}</div>
+            <button
+              onClick={sendExclusiveToAllActive}
+              disabled={sendingExclusive}
+              style={{ fontSize: 12, padding: '6px 14px', borderRadius: 999, border: '1px solid #C0336E', background: 'white', color: '#C0336E', fontWeight: 700, cursor: sendingExclusive ? 'default' : 'pointer', opacity: sendingExclusive ? .6 : 1 }}
+              title="Manda el cupón exclusivo del 5% a todas las suscriptoras activas que todavía no lo tengan">
+              {sendingExclusive ? 'Enviando…' : '✦ Enviar cupón exclusivo a todas las activas'}
+            </button>
+            {exclusiveMsg && <span role="status" aria-live="polite" style={{ fontSize: 12, color: exclusiveMsg.startsWith('⚠') ? '#B3261E' : '#2C6149' }}>{exclusiveMsg}</span>}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {subs.map(s => (
               <div key={s.id} style={{ background: 'white', borderRadius: 14, border: editingId === s.id ? '1.5px solid #E85D8A' : '1px solid #EDE8EA', overflow: 'hidden' }}>
