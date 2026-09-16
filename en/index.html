@@ -325,6 +325,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .vig-btn{width:100%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.05em;border:none;border-radius:999px;padding:13px;cursor:none;box-shadow:0 4px 20px rgba(238,111,168,.4)}
 .vig-skip{font-family:var(--fu);font-size:11px;color:var(--ink-muted);text-align:center;margin-top:10px;cursor:none}
 .vig-fine{font-family:var(--fu);font-size:10px;color:var(--ink-muted);opacity:.65;text-align:center;margin-top:10px;line-height:1.4}
+.vig-msg{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink);text-align:center;padding:13px 0;line-height:1.4}
 .lang-sw{display:flex;align-items:center;gap:2px}
 .lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:rgba(139,42,90,.8);padding:4px 8px;border-radius:6px;cursor:none;transition:all .2s;letter-spacing:.04em}
 nav.scrolled .lang-sw button{color:var(--ink-muted)}
@@ -809,6 +810,7 @@ html,body{overflow-x:hidden}
       <div class="vig-desc" data-i18n="landing.vigDesc">Subscribe and get 10% off your first purchase. Limited time only.</div>
       <input class="vig-email" id="vigEmail" placeholder="tu@email.com">
       <button class="vig-btn" id="vigBtn" data-i18n="landing.vigBtn">I want my discount →</button>
+      <div class="vig-msg" id="vigMsg" role="status" aria-live="polite" hidden></div>
       <div class="vig-skip" id="vigSkip" data-i18n="landing.vigSkip">No gracias, prefiero pagar precio completo</div>
       <div class="vig-fine" data-i18n="landing.vigFine">Valid only for purchases at CACUSA by Taitus. Does not apply to Cacusa Gold products.</div>
     </div>
@@ -1399,12 +1401,16 @@ document.getElementById('vigBtn').addEventListener('click',()=>{
   const email=(emailEl?emailEl.value:'').trim();
   const _vigL = localStorage.getItem('cacusa-lang') === 'en';
   if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder=_vigL?'Enter your email first':'Escribe tu correo primero'; emailEl.focus();} return; }
-  let msg=_vigL?'✦ *I want my 10% discount*\n*CACUSA by Taitus*\n\n':'✦ *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
-  msg+=_vigL?'*Email:* '+email+'\n\nHi, I saw the 10% offer on my first purchase and would love to use it.':'*Email:* '+email+'\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla.';
-  const num=(CACUSA_WHATSAPP||'').replace(/\D/g,'');
-  window.open((num?'https://wa.me/'+num:'https://wa.me/')+'?text='+encodeURIComponent(msg),'_blank');
-  fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es'})}).catch(()=>{});
-  vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
+  // El código de bienvenida ahora llega solo por correo (Gmail API, admin-worker.js) —
+  // ya no hace falta coordinar por WhatsApp, así que solo registramos el lead.
+  fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es',source:'vignette'})}).catch(()=>{});
+  const btnEl=document.getElementById('vigBtn'), skipEl=document.getElementById('vigSkip'), msgEl=document.getElementById('vigMsg');
+  if(emailEl) emailEl.style.display='none';
+  if(btnEl) btnEl.style.display='none';
+  if(skipEl) skipEl.style.display='none';
+  if(msgEl){ msgEl.textContent=_vigL?'✓ Check your email — we just sent your 10% code.':'✓ Revisa tu correo — te acabamos de enviar tu código de 10%.'; msgEl.hidden=false; }
+  localStorage.setItem('cacusa-vig2','1');
+  setTimeout(()=>{ vig.classList.remove('show'); },2400);
 });
 
 // ── LANG SWITCHER ──────────────────────────────────────────────
