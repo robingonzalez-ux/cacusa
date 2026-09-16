@@ -2379,6 +2379,8 @@ function GiftCardsTab({ token }) {
 function LeadsTab({ token }) {
   const [leads, setLeads] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState(null);
+  const [sendMsg, setSendMsg] = useState({});
 
   useEffect(() => {
     apiCall('lead/list', { token })
@@ -2390,10 +2392,25 @@ function LeadsTab({ token }) {
   const inp = { padding: '8px 12px', borderRadius: 8, border: '1.5px solid #e0e0e0', fontSize: 13, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' };
   const fmt = iso => { try { return new Date(iso).toLocaleDateString('es-EC', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); } catch { return iso; } };
 
+  // Solo los leads del 10% (no los carritos abandonados, que ya tienen su propia
+  // pestaña y su propio push automático) pueden recibir el código de bienvenida.
+  const sendWelcome = async (l) => {
+    setSendingEmail(l.email);
+    setSendMsg(prev => ({ ...prev, [l.email]: null }));
+    try {
+      const d = await apiCall('lead/send-welcome', { token, email: l.email, lang: l.lang });
+      setLeads(prev => prev.map(x => x.email === l.email ? { ...x, welcomeSent: true, welcomeCode: d.code, welcomeSentAt: new Date().toISOString() } : x));
+      setSendMsg(prev => ({ ...prev, [l.email]: { ok: true, text: `✓ Enviado (${d.code})` } }));
+    } catch (e) {
+      setSendMsg(prev => ({ ...prev, [l.email]: { ok: false, text: e.message || 'No se pudo enviar' } }));
+    }
+    setSendingEmail(null);
+  };
+
   return (
-    <div style={{ maxWidth: 700 }}>
+    <div style={{ maxWidth: 780 }}>
       <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118', marginBottom: 4 }}>Registros 10% descuento y carritos</div>
-      <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida, o que llegaron al checkout con un carrito sin completar la compra. Los carritos sin comprar en 45 min avisan por push — esta tabla queda como respaldo para hacer seguimiento manual (WhatsApp/email).</div>
+      <div style={{ fontSize: 13, color: '#7A6B85', marginBottom: 20 }}>Personas que ingresaron su email en el popup de bienvenida, o que llegaron al checkout con un carrito sin completar la compra. Los carritos sin comprar en 45 min avisan por push — esta tabla queda como respaldo para hacer seguimiento manual (WhatsApp/email). Los leads del 10% nuevos ya reciben su código por correo solos (facturacioncacusa@gmail.com); el botón "Enviar código" es para los que se registraron antes de que eso existiera.</div>
 
       {loading && <div style={{ textAlign: 'center', padding: '32px 0', color: '#767676', fontSize: 13 }}>Cargando…</div>}
       {!loading && leads && leads.length === 0 && (
@@ -2403,11 +2420,11 @@ function LeadsTab({ token }) {
         <div>
           <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 10 }}>{leads.length} registro{leads.length !== 1 ? 's' : ''}</div>
           <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
-              <span>Email</span><span>Carrito</span><span>Idioma</span><span>Fecha</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 130px 170px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <span>Email</span><span>Carrito</span><span>Idioma</span><span>Fecha</span><span>Código 10%</span>
             </div>
             {leads.map((l, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 150px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 70px 130px 170px', padding: '12px 16px', borderBottom: i < leads.length - 1 ? '1px solid #F3EEF1' : 'none', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500 }}>{l.email}</span>
                 <span style={{ fontSize: 12, color: l.source === 'cart_checkout_start' ? '#C0336E' : '#7A6B85' }}>
                   {l.source === 'cart_checkout_start'
@@ -2416,6 +2433,26 @@ function LeadsTab({ token }) {
                 </span>
                 <span style={{ fontSize: 12, color: '#7A6B85' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
                 <span style={{ fontSize: 12, color: '#7A6B85' }}>{fmt(l.date)}</span>
+                <span>
+                  {l.source === 'cart_checkout_start' ? (
+                    <span style={{ fontSize: 12, color: '#ccc' }}>—</span>
+                  ) : l.welcomeSent ? (
+                    <span style={{ fontSize: 12, color: '#2E7D32' }}>✓ Enviado</span>
+                  ) : (
+                    <button
+                      onClick={() => sendWelcome(l)}
+                      disabled={sendingEmail === l.email}
+                      style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '1px solid #C0336E', background: 'white', color: '#C0336E', cursor: sendingEmail === l.email ? 'default' : 'pointer', opacity: sendingEmail === l.email ? .6 : 1 }}
+                    >
+                      {sendingEmail === l.email ? 'Enviando…' : 'Enviar código'}
+                    </button>
+                  )}
+                  {sendMsg[l.email] && (
+                    <div role="status" aria-live="polite" style={{ fontSize: 11, marginTop: 4, color: sendMsg[l.email].ok ? '#2E7D32' : '#B3261E' }}>
+                      {sendMsg[l.email].text}
+                    </div>
+                  )}
+                </span>
               </div>
             ))}
           </div>
