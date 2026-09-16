@@ -1470,6 +1470,7 @@ async function submitSubscription(){
     fecha:       new Date().toISOString().slice(0, 10),
     metodo_pago: 'square',
     estado_pago: 'pendiente',
+    idioma:      'en', // en qué página se suscribió — usado para el idioma del cupón exclusivo
   };
 
   // Guardar datos en Firebase (best-effort — no bloquea el pago si falla).

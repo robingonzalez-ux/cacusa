@@ -344,9 +344,17 @@ exclusivos", que ya estaba anunciado en los 2 planes de
   panel → `POST /lovers/exclusive-coupon/bulk` (sesión de admin) — salta
   solo a quien ya lo tenga, se puede apretar más de una vez sin duplicar
   nada.
-- El idioma del correo se decide por `pais === 'Ecuador' ? 'es' : 'en'` —
-  no hay un campo de idioma real guardado para suscriptoras en Firebase,
-  es la mejor aproximación con el dato que sí hay siempre a mano.
+- **Idioma del correo (16 sep, fix)**: `cacusa-lovers.html`/
+  `en/cacusa-lovers.html` guardan `idioma: 'es'`/`'en'` en el registro de
+  Firebase al momento de suscribirse (según qué archivo lo llenó) —
+  `notifyExclusiveCoupon()` en `lovers-webhook-worker.js` usa
+  `existing.idioma || existing.pais` para decidir el idioma del correo.
+  Antes se adivinaba solo por `pais === 'Ecuador' ? 'es' : 'en'`, lo cual
+  fallaba para cualquier suscriptora que vive en un país distinto al de su
+  idioma real (ej. alguien en USA que se suscribió desde la página en
+  español). El heurístico por país se mantiene como fallback solo para
+  registros sin `idioma` guardado (suscriptoras de antes de este campo, o
+  alta manual desde el panel — ese formulario no pregunta idioma).
 
 ## SEO — estado y patrones
 

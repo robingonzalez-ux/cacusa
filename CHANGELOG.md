@@ -12,6 +12,25 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Fix: el correo del cupón exclusivo de Lovers ya no adivina el idioma por país
+
+El correo del 5% (ver entrada de abajo) elegía español o inglés según el
+país de envío de la suscriptora — fallaba para cualquiera que vive en un
+país distinto al de su idioma real (ej. alguien en Estados Unidos que se
+suscribió desde la versión en español del sitio). Ahora
+`cacusa-lovers.html`/`en/cacusa-lovers.html` guardan el idioma real de la
+página donde se suscribió, y el correo usa ese dato en vez de adivinar.
+Para suscriptoras de antes de este cambio (que no tienen ese dato guardado),
+sigue cayendo al heurístico por país como antes — no se pierde nada, solo
+deja de ser la única fuente para las suscriptoras nuevas.
+
+## 2026-09-16 — Rediseño visual de los correos automáticos (10% y cupón exclusivo)
+
+Los dos correos automáticos (código de bienvenida del 10% y cupón
+exclusivo de Lovers) salían en texto plano, sin ningún parecido con la
+marca. Ahora usan una plantilla HTML compartida con los colores y
+tipografía de CACUSA, pensada para verse bien en Gmail/Outlook/Apple Mail.
+
 ## 2026-09-16 — Cupón exclusivo de Cacusa Lovers: 5% real en toda compra
 
 Los planes de Cacusa Lovers prometían "Cupones de descuento exclusivos"
