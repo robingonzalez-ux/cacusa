@@ -1396,21 +1396,36 @@ document.addEventListener('keydown', e => {
     vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
   }
 });
-document.getElementById('vigBtn').addEventListener('click',()=>{
+document.getElementById('vigBtn').addEventListener('click',async ()=>{
   const emailEl=document.getElementById('vigEmail');
   const email=(emailEl?emailEl.value:'').trim();
   const _vigL = localStorage.getItem('cacusa-lang') === 'en';
   if(!email){ if(emailEl){emailEl.style.borderColor='#C0336E'; emailEl.placeholder=_vigL?'Enter your email first':'Escribe tu correo primero'; emailEl.focus();} return; }
+  const btnEl=document.getElementById('vigBtn'), skipEl=document.getElementById('vigSkip'), msgEl=document.getElementById('vigMsg');
+  // Deshabilita de inmediato — evita doble envío mientras se espera la respuesta real
+  // (antes se mostraba "listo" apenas se disparaba el fetch, sin esperar nada: un
+  // error de red le mentía a la clienta que ya tenía su código, sin forma de reintentar).
+  btnEl.disabled = true;
+  if(emailEl) emailEl.disabled = true;
   // El código de bienvenida ahora llega solo por correo (Gmail API, admin-worker.js) —
   // ya no hace falta coordinar por WhatsApp, así que solo registramos el lead.
-  fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es',source:'vignette'})}).catch(()=>{});
-  const btnEl=document.getElementById('vigBtn'), skipEl=document.getElementById('vigSkip'), msgEl=document.getElementById('vigMsg');
-  if(emailEl) emailEl.style.display='none';
-  if(btnEl) btnEl.style.display='none';
-  if(skipEl) skipEl.style.display='none';
-  if(msgEl){ msgEl.textContent=_vigL?'✓ Check your email — we just sent your 10% code.':'✓ Revisa tu correo — te acabamos de enviar tu código de 10%.'; msgEl.hidden=false; }
-  localStorage.setItem('cacusa-vig2','1');
-  setTimeout(()=>{ vig.classList.remove('show'); },2400);
+  let sent = false;
+  try {
+    const r = await fetch('https://cacusa-admin.facturacioncacusa.workers.dev/lead/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,lang:_vigL?'en':'es',source:'vignette'})});
+    sent = r.ok;
+  } catch(e) { sent = false; }
+  if(sent){
+    if(emailEl) emailEl.style.display='none';
+    btnEl.style.display='none';
+    if(skipEl) skipEl.style.display='none';
+    if(msgEl){ msgEl.setAttribute('role','status'); msgEl.setAttribute('aria-live','polite'); msgEl.textContent=_vigL?'✓ Check your email — we just sent your 10% code.':'✓ Revisa tu correo — te acabamos de enviar tu código de 10%.'; msgEl.hidden=false; }
+    localStorage.setItem('cacusa-vig2','1');
+    setTimeout(()=>{ vig.classList.remove('show'); },2400);
+  } else {
+    btnEl.disabled = false;
+    if(emailEl) emailEl.disabled = false;
+    if(msgEl){ msgEl.setAttribute('role','alert'); msgEl.setAttribute('aria-live','assertive'); msgEl.textContent=_vigL?'✕ Something went wrong — try again.':'✕ Algo falló — intenta de nuevo.'; msgEl.hidden=false; }
+  }
 });
 
 // ── LANG SWITCHER ──────────────────────────────────────────────
