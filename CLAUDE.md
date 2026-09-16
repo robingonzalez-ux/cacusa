@@ -282,6 +282,40 @@ sola persona por diseño: `restrictToEmail` presente, o `kind ===
 'lovers-shipping'`. Cualquier cupón nuevo pensado para reusarse debe caer
 en una de esas dos condiciones o va a toparse con el mismo bug.
 
+## Leads (10% del popup + carritos abandonados) — una llave por email
+
+Igual que los pedidos (`order:<id>`), cada lead vive en su propia llave de
+KV `lead:<email>` — no en un blob único como antes del 16 sep. El cambio
+salió de una auditoría del sistema de push que encontró una condición de
+carrera real: con todos los leads en un solo blob JSON, cualquier escritura
+leía TODO el array, lo modificaba y volvía a escribir TODO — dos requests
+concurrentes tocando leads DISTINTOS (ej. `checkAbandonedCarts()` marcando
+`notified` en el lead A mientras `removeCartLead()` borraba el lead B, de
+dos visitantes al mismo tiempo) podían pisarse, perdiendo el cambio de
+quien escribe primero en silencio.
+
+- `leadKey(email)` / `listAllLeads()` / `refreshLeadsCache()` en
+  `admin-worker.js`, mismo patrón que `orderKey`/`listAllOrders`/
+  `refreshOrdersCache()`. `leads_cache` es lo que sirve `/lead/list` (así
+  el panel no escanea todas las llaves en cada poll de 30s) — pero
+  `checkAbandonedCarts()` sigue escaneando las llaves `lead:*` directo, no
+  la caché, porque necesita el estado más reciente para decidir a quién
+  marcar `notified` (igual que las mutaciones de pedidos nunca confían en
+  `orders_cache`).
+- `migrateLegacyLeadsIfNeeded()` — migración única e idempotente del blob
+  legado `leads`, disparada desde `/lead/list`. Diferencia importante con
+  la migración de pedidos: acá **nunca se pisa una llave que ya exista**.
+  Un id de pedido siempre es fresco y nunca choca con uno legado, pero un
+  email SÍ puede coincidir con un registro legado — si un write en vivo
+  (ej. el correo de bienvenida ya se mandó de verdad) se adelanta a la
+  migración para ese mismo email, la migración lo deja intacto en vez de
+  pisarlo con la versión vieja del blob.
+- `backup-worker.js` respalda `lead:*` con `listKvPrefix()` (igual que
+  `order:*`), no con un solo `getKvValue('leads')` — si se te olvida este
+  detalle al agregar un campo nuevo por-lead en el futuro, el backup diario
+  seguiría funcionando solo, pero cualquier prefijo NUEVO que no sea
+  `lead:` quedaría fuera silenciosamente.
+
 ## Código de bienvenida del 10% por correo (`welcome10`)
 
 Agregado el 16 sep. Antes de esto, el popup del 10% (`registerLead(email,

@@ -12,6 +12,20 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Fix: los leads (10% + carritos abandonados) ya no comparten un blob único
+
+Una auditoría del sistema de notificaciones push encontró una condición de
+carrera real en cómo se guardaban los leads (registros del popup del 10% y
+de carritos abandonados): todos vivían en un solo bloque de datos, así que
+dos clientas distintas actuando al mismo tiempo (una completando su carrito
+mientras a otra se le marcaba un aviso de abandono) podían pisarse el
+cambio una a la otra en silencio. Ahora cada lead vive en su propio
+registro independiente — mismo esquema que ya usan los pedidos desde
+antes — así que dos leads distintos nunca compiten por la misma escritura.
+El respaldo diario a R2 también se actualizó para seguir cubriendo los
+leads con el nuevo esquema. Sin cambios visibles para Tita/Robin en el
+panel — mismo comportamiento, guardado de forma más segura por dentro.
+
 ## 2026-09-16 — Fix: el correo del cupón exclusivo de Lovers ya no adivina el idioma por país
 
 El correo del 5% (ver entrada de abajo) elegía español o inglés según el
