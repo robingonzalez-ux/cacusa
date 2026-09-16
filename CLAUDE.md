@@ -272,6 +272,32 @@ HMAC con `SESSION_SECRET` — sigue siendo determinístico, pero no adivinable.
 Cualquier código nuevo por-clienta debe seguir el segundo patrón, no el
 primero.
 
+## Código de bienvenida del 10% por correo (`welcome10`)
+
+Agregado el 16 sep. Antes de esto, el popup del 10% (`registerLead(email,
+'vignette')`) solo abría WhatsApp — el descuento real lo daba alguien del
+equipo a mano, coordinando por chat, sin ningún cupón de verdad detrás.
+
+- `welcomeCouponCode()`/`ensureWelcomeCoupon()` en `admin-worker.js` — mismo
+  patrón no-adivinable que el envío gratis de Lovers (HMAC del email con
+  `SESSION_SECRET`, prefijo `BIENVENIDA`). Cupón `maxUses: 1`, vigencia de 3
+  meses desde que se genera, y un campo nuevo **`restrictToEmail`** que
+  `couponIsValid()`/`handleCouponBurnPublic()` hacen cumplir — nadie más que
+  la clienta que se registró puede usarlo en el checkout, aunque conociera
+  el código.
+- Se manda por **Gmail API (OAuth2)**, no SMTP con contraseña — sale
+  literalmente de `facturacioncacusa@gmail.com` (helpers `gmailAccessToken()`
+  / `sendGmail()`). Runbook completo de cómo generar los 3 secrets
+  (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`, vía
+  Google Cloud Console + OAuth Playground) en el encabezado de
+  `admin-worker.js`.
+- **Automático** para leads nuevos (`handleLeadRegister`, solo cuando
+  `source === 'vignette'`, nunca para carritos abandonados). **Manual** vía
+  `POST /lead/send-welcome` (sesión de admin) — botón "Enviar código" en
+  `LeadsTab` del panel, para los leads que ya existían antes de esto.
+  Idempotente: reenviar a la misma clienta reusa el mismo código en vez de
+  generar uno nuevo o resetear la vigencia.
+
 ## SEO — estado y patrones
 
 - **Categorías con URL propia**: cada categoría de la tienda tiene

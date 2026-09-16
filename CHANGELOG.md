@@ -12,6 +12,20 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Código de bienvenida del 10% de verdad, por correo
+
+El popup del 10% ("quiero mi descuento") solo abría WhatsApp — el
+descuento lo daba alguien del equipo a mano, coordinando por chat, sin
+ningún cupón real detrás. Ahora se manda un correo automático desde
+`facturacioncacusa@gmail.com` (vía Gmail API) con un código real:
+
+- Un solo uso, vence a los 3 meses, y solo lo puede usar el email que se
+  registró (aunque alguien más lo conociera, el checkout lo rechaza).
+- Automático para quien se registra de ahora en adelante. Para los ~70
+  leads que ya estaban guardados antes de esto, nuevo botón "Enviar
+  código" en el panel (pestaña Leads).
+- Un carrito abandonado nunca dispara este correo — son flujos separados.
+
 ## Antes del 9 de agosto de 2026 — sin historial verificable
 
 El sitio (home, tienda, panel admin, todo el diseño) ya existía completo y
