@@ -2467,6 +2467,8 @@ function AbandonedCartsTab({ token, orders }) {
   const [leads, setLeads] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deletingEmail, setDeletingEmail] = useState(null);
+  const [sendingEmail, setSendingEmail] = useState(null);
+  const [sendMsg, setSendMsg] = useState({});
 
   const load = () => {
     apiCall('lead/list', { token })
@@ -2512,6 +2514,21 @@ function AbandonedCartsTab({ token, orders }) {
     setDeletingEmail(null);
   };
 
+  // Un carrito abandonado también puede recibir el código de bienvenida del 10% — las
+  // dos cosas son independientes (welcomeSent no tiene nada que ver con source).
+  const sendWelcome = async (l) => {
+    setSendingEmail(l.email);
+    setSendMsg(prev => ({ ...prev, [l.email]: null }));
+    try {
+      const d = await apiCall('lead/send-welcome', { token, email: l.email, lang: l.lang });
+      setLeads(prev => prev.map(x => x.email === l.email ? { ...x, welcomeSent: true, welcomeCode: d.code } : x));
+      setSendMsg(prev => ({ ...prev, [l.email]: { ok: true, text: `✓ Enviado (${d.code})` } }));
+    } catch (e) {
+      setSendMsg(prev => ({ ...prev, [l.email]: { ok: false, text: e.message || 'No se pudo enviar' } }));
+    }
+    setSendingEmail(null);
+  };
+
   const pending = (leads || []).filter(l => !purchasedEmails.has((l.email || '').toLowerCase()));
 
   return (
@@ -2527,19 +2544,37 @@ function AbandonedCartsTab({ token, orders }) {
         <div>
           <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 10 }}>{pending.length} sin recuperar de {leads.length} en total</div>
           <div style={{ background: 'white', borderRadius: 12, border: '1px solid #EDE8EA', overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.6fr 90px 110px 70px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
-              <span>Email</span><span>Carrito</span><span>Hace</span><span>Estado</span><span></span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 80px 100px 160px 60px', padding: '10px 16px', background: '#F9F5F7', borderBottom: '1px solid #EDE8EA', fontSize: 11, fontWeight: 700, color: '#7A6B85', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <span>Email</span><span>Carrito</span><span>Hace</span><span>Estado</span><span>Código 10%</span><span></span>
             </div>
             {leads.map(l => {
               const recovered = purchasedEmails.has((l.email || '').toLowerCase());
               return (
-                <div key={l.email} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.6fr 90px 110px 70px', padding: '12px 16px', borderBottom: '1px solid #F3EEF1', alignItems: 'center' }}>
+                <div key={l.email} style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 80px 100px 160px 60px', padding: '12px 16px', borderBottom: '1px solid #F3EEF1', alignItems: 'center' }}>
                   <span style={{ fontSize: 13, color: '#1A1118', fontWeight: 500, wordBreak: 'break-word' }}>{l.email}</span>
                   <span style={{ fontSize: 12, color: '#C0336E' }}>
                     ${(l.total || 0).toFixed(2)}{l.cart && l.cart.length ? ' — ' + l.cart.map(c => c.name).slice(0, 2).join(', ') + (l.cart.length > 2 ? '…' : '') : ''}
                   </span>
                   <span style={{ fontSize: 12, color: '#7A6B85' }} title={fmt(l.date)}>{relTime(l.date)}</span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: recovered ? '#2C6149' : '#9C6A18' }}>{recovered ? '🟢 Recuperado' : '🟡 Pendiente'}</span>
+                  <span>
+                    {l.welcomeSent ? (
+                      <span style={{ fontSize: 12, color: '#2E7D32' }}>✓ Enviado</span>
+                    ) : (
+                      <button
+                        onClick={() => sendWelcome(l)}
+                        disabled={sendingEmail === l.email}
+                        style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '1px solid #C0336E', background: 'white', color: '#C0336E', cursor: sendingEmail === l.email ? 'default' : 'pointer', opacity: sendingEmail === l.email ? .6 : 1 }}
+                      >
+                        {sendingEmail === l.email ? 'Enviando…' : 'Enviar código'}
+                      </button>
+                    )}
+                    {sendMsg[l.email] && (
+                      <div role="status" aria-live="polite" style={{ fontSize: 11, marginTop: 4, color: sendMsg[l.email].ok ? '#2E7D32' : '#B3261E' }}>
+                        {sendMsg[l.email].text}
+                      </div>
+                    )}
+                  </span>
                   <button onClick={() => handleDelete(l.email)} disabled={deletingEmail === l.email}
                     style={{ fontSize: 11, color: '#B7362A', background: 'none', border: 'none', cursor: deletingEmail === l.email ? 'default' : 'pointer', textDecoration: 'underline', padding: 0, opacity: deletingEmail === l.email ? .5 : 1 }}>
                     {deletingEmail === l.email ? '…' : 'Eliminar'}
