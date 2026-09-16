@@ -272,6 +272,16 @@ HMAC con `SESSION_SECRET` — sigue siendo determinístico, pero no adivinable.
 Cualquier código nuevo por-clienta debe seguir el segundo patrón, no el
 primero.
 
+**Bug encontrado y corregido el 16 sep**: `/coupon/validate` y
+`/coupon/burn` en `admin-worker.js` bloqueaban con `cpused:ph:*`/`cpused:em:*`
+a cualquiera que ya hubiera usado un código antes — aplicado sin distinción,
+esto rompía en silencio este mismo envío gratis en la **segunda** compra de
+cualquier suscriptora (el código está pensado para reusarse en cada compra,
+no de un solo uso). Ahora ese bloqueo se salta para cupones atados a una
+sola persona por diseño: `restrictToEmail` presente, o `kind ===
+'lovers-shipping'`. Cualquier cupón nuevo pensado para reusarse debe caer
+en una de esas dos condiciones o va a toparse con el mismo bug.
+
 ## Código de bienvenida del 10% por correo (`welcome10`)
 
 Agregado el 16 sep. Antes de esto, el popup del 10% (`registerLead(email,
@@ -304,6 +314,39 @@ equipo a mano, coordinando por chat, sin ningún cupón de verdad detrás.
   `LeadsTab` del panel, para los leads que ya existían antes de esto.
   Idempotente: reenviar a la misma clienta reusa el mismo código en vez de
   generar uno nuevo o resetear la vigencia.
+
+## Cupón exclusivo de Cacusa Lovers (`lovers-exclusive`)
+
+Agregado el 16 sep — es el beneficio real detrás de "Cupones de descuento
+exclusivos", que ya estaba anunciado en los 2 planes de
+`cacusa-lovers.html` (mensual y anual) desde antes, sin nada implementado.
+
+- **5% de descuento, en toda compra, mientras la suscripción siga activa**
+  — a propósito muy distinto de `welcome10`: `maxUses: null` (sin límite
+  de usos, se reusa en cada compra) y sin `expiresAt` (no vence por
+  calendario, vence cuando cancela). `loversExclusiveCode()` en
+  `admin-worker.js`, mismo patrón HMAC no-adivinable que
+  `loversShippingCode()`, con `restrictToEmail` para que nadie más que esa
+  suscriptora lo use.
+- **Activación/desactivación 100% automática**, sin que nadie del equipo
+  tenga que acordarse: `lovers-webhook-worker.js` avisa a `admin-worker.js`
+  (ruta interna `/internal/lovers/exclusive-coupon`, Worker-a-Worker con
+  `ORDER_INGEST_KEY`, mismo Service Binding `ADMIN_WORKER` que ya usa
+  `notifyAdminPush()`) desde el mismo punto donde ya marca a alguien
+  `'activo'` (`invoice.payment_made`, alta manual desde el panel) o
+  `'cancelado'` (`subscription.updated` con `status=CANCELED`).
+  `handleLoversExclusiveCoupon()` es idempotente — activar a alguien que ya
+  tenía el cupón activo no hace nada (y sobre todo, no le reenvía el correo
+  en cada cobro mensual/anual); solo manda correo la primera vez que se le
+  crea.
+- **Rollout a las que ya estaban activas antes de que esto existiera**:
+  botón "✦ Enviar cupón exclusivo a todas las activas" en `LoversTab` del
+  panel → `POST /lovers/exclusive-coupon/bulk` (sesión de admin) — salta
+  solo a quien ya lo tenga, se puede apretar más de una vez sin duplicar
+  nada.
+- El idioma del correo se decide por `pais === 'Ecuador' ? 'es' : 'en'` —
+  no hay un campo de idioma real guardado para suscriptoras en Firebase,
+  es la mejor aproximación con el dato que sí hay siempre a mano.
 
 ## SEO — estado y patrones
 

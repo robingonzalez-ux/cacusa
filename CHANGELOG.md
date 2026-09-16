@@ -12,6 +12,21 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Cupón exclusivo de Cacusa Lovers: 5% real en toda compra
+
+Los planes de Cacusa Lovers prometían "Cupones de descuento exclusivos"
+desde hace tiempo, pero no había nada real detrás. Ahora cada suscriptora
+activa recibe por correo un código de **5% de descuento, sin límite de
+usos, válido mientras siga activa** — se activa solo al confirmarse el
+primer pago y se desactiva sola si cancela, sin que nadie del equipo
+tenga que acordarse. Para las que ya estaban activas antes de esto, hay
+un botón en el panel (pestaña Cacusa Lovers) para mandárselo ya mismo.
+
+De paso se corrigió un bug real que ya existía: el sistema bloqueaba por
+error a cualquier suscriptora que intentara usar su código de **envío
+gratis** más de una vez — se rompía en silencio desde la segunda compra.
+Ya no le pasa a ningún cupón pensado para reusarse.
+
 ## 2026-09-16 — Fix: pagos con tarjeta no revisaban a quién pertenecía el código 10%
 
 `square-payment-worker.js` (pagos con tarjeta/Apple Pay/Google Pay vía
