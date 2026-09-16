@@ -193,6 +193,16 @@ export default {
         return await handleCouponBurnPublic(body, env, allowOrigin, request);
       }
 
+      // Activar/desactivar el cupón exclusivo de Lovers (5% permanente) — llamada desde
+      // lovers-webhook-worker.js en el mismo momento en que marca a alguien 'activo' o
+      // 'cancelado' (pago confirmado, cancelación, o alta manual). Igual que /push/notify,
+      // autenticada con ORDER_INGEST_KEY compartido, no con sesión de admin.
+      if (path.endsWith('/internal/lovers/exclusive-coupon')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        await handleLoversExclusiveCoupon(body, env).catch(e => console.error('exclusive-coupon interno falló:', e.message));
+        return ok({ ok: true }, allowOrigin);
+      }
+
       // Notificación push disparada desde OTRO Worker (hoy: cacusa-lovers-webhook, cuando
       // nace una suscriptora nueva) — autenticada con el mismo ORDER_INGEST_KEY compartido,
       // no con un token de sesión de admin (este Worker no tiene sesión iniciada).
@@ -249,6 +259,7 @@ export default {
       if (path.endsWith('/lead/list'))         return await handleLeadList(env, allowOrigin);
       if (path.endsWith('/lead/delete'))       return await handleLeadDelete(body, env, allowOrigin);
       if (path.endsWith('/lead/send-welcome')) return await handleLeadSendWelcome(body, env, allowOrigin);
+      if (path.endsWith('/lovers/exclusive-coupon/bulk')) return await handleLoversExclusiveBulk(body, env, allowOrigin);
       if (path.endsWith('/ntfy-info')) {
         if (!env.NTFY_TOPIC) return ok({ configured: false }, allowOrigin);
         return ok({ configured: true, topic: env.NTFY_TOPIC, url: 'https://ntfy.sh/' + env.NTFY_TOPIC }, allowOrigin);
@@ -913,6 +924,100 @@ async function sendWelcomeCode(email, lang, env) {
   return code;
 }
 
+// ── Cupón exclusivo de Cacusa Lovers (5% permanente, en toda compra) ───────────────
+// A diferencia de welcome10 (un solo uso, 3 meses): este NO tiene maxUses ni
+// expiresAt — vive mientras la suscripción siga activa. lovers-webhook-worker.js
+// avisa cuándo activar/desactivar (vía Service Binding, ORDER_INGEST_KEY) desde el
+// mismo lugar donde ya marca a alguien 'activo'/'cancelado' — nadie del equipo tiene
+// que acordarse de hacerlo a mano. Idempotente: activar de nuevo a alguien que ya
+// tenía el cupón activo no hace nada (y sobre todo, no le reenvía el correo) — así
+// es seguro llamarlo en cada cobro mensual/anual, no solo la primera vez.
+async function loversExclusiveCode(email, env) {
+  const sig = await hmac('lovers-exclusive:' + email, env.SESSION_SECRET);
+  const clean = sig.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return 'LOVERS5' + clean.slice(0, 6);
+}
+function loversExclusiveEmailContent(code, lang) {
+  const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
+  if (lang === 'en') {
+    return {
+      subject: 'Your exclusive Cacusa Lovers coupon — 5% off, always',
+      html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
+<h2 style="margin:0 0 12px">Your exclusive Lovers coupon ✦</h2>
+<p>As an active Cacusa Lovers member, use this code on every purchase in the store — no expiration, no limit on how many times you use it:</p>
+<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
+<p style="font-size:13px;color:#6b6058">5% off, valid only for this email address, for as long as your subscription stays active. Does not apply to Cacusa Gold products.</p>
+<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Shop now →</a></p>
+</div>`,
+    };
+  }
+  return {
+    subject: 'Tu cupón exclusivo de Cacusa Lovers — 5% siempre',
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
+<h2 style="margin:0 0 12px">Tu cupón exclusivo de Lovers ✦</h2>
+<p>Como suscriptora activa de Cacusa Lovers, usa este código en cada compra que hagas en la tienda — sin vencimiento, sin límite de veces que lo uses:</p>
+<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
+<p style="font-size:13px;color:#6b6058">5% de descuento, válido solo para este correo, mientras tu suscripción siga activa. No aplica en productos de Cacusa Gold.</p>
+<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Ir a la tienda →</a></p>
+</div>`,
+  };
+}
+// action: 'activate' (default) | 'deactivate'. Nunca lanza — quien la llama (la ruta
+// interna, o el envío masivo) decide si loguea el error.
+async function handleLoversExclusiveCoupon(body, env) {
+  if (!env.CACUSA_KV) return;
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email.includes('@')) return;
+  const code = await loversExclusiveCode(email, env);
+  const coupon = await couponGet(env, code);
+  if (body.action === 'deactivate') {
+    if (coupon && coupon.active) {
+      coupon.active = false;
+      await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+    }
+    return;
+  }
+  if (!coupon) {
+    const fresh = {
+      code, type: 'percent', amount: 5, kind: 'lovers-exclusive',
+      maxUses: null, usedCount: 0, active: true, expiresAt: null,
+      restrictToEmail: email,
+      note: `Cupón exclusivo Lovers — ${email}`,
+      createdAt: new Date().toISOString(), createdBy: 'lovers-system',
+    };
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(fresh));
+    const lang = body.lang === 'en' ? 'en' : 'es';
+    await sendGmail(env, { to: email, ...loversExclusiveEmailContent(code, lang) });
+  } else if (!coupon.active) {
+    coupon.active = true;
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  }
+}
+
+// Envío masivo manual — para las suscriptoras que ya estaban activas antes de que
+// este beneficio existiera (las nuevas lo reciben solas, ver /internal/lovers/exclusive-coupon).
+// La lista de quiénes están activas la decide el panel (ya la tiene cargada desde
+// Firebase vía lovers-webhook-worker.js); este Worker no habla con Firebase.
+async function handleLoversExclusiveBulk(body, env, origin) {
+  if (!Array.isArray(body.subscribers)) return err('Falta la lista de suscriptoras', 400, origin);
+  const results = { sent: 0, alreadyActive: 0, failed: 0 };
+  for (const s of body.subscribers.slice(0, 500)) {
+    const email = String((s && s.email) || '').toLowerCase().trim();
+    if (!email.includes('@')) { results.failed++; continue; }
+    try {
+      const code = await loversExclusiveCode(email, env);
+      const existing = await couponGet(env, code);
+      if (existing && existing.active) { results.alreadyActive++; continue; }
+      await handleLoversExclusiveCoupon({ action: 'activate', email, lang: s && s.lang }, env);
+      results.sent++;
+    } catch (e) {
+      console.error('exclusive bulk falló para', email, ':', e.message);
+      results.failed++;
+    }
+  }
+  return ok({ ok: true, ...results }, origin);
+}
+
 const LOVERS_WORKER_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
 
 // Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
@@ -1129,15 +1234,22 @@ async function handleCouponValidate(body, env, origin, request) {
   // Rate limit por código: max 8 intentos fallidos/hr — silencioso
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ valid: false }, origin);
-  // Bloquear si teléfono o email ya usó este cupón
   const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
-  if (rawPhone.length >= 7 && await env.CACUSA_KV.get(`cpused:ph:${rawPhone}:${rawCode}`)) return ok({ valid: false }, origin);
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
-  if (rawEmail.includes('@') && await env.CACUSA_KV.get(`cpused:em:${rawEmail}:${rawCode}`)) return ok({ valid: false }, origin);
+  const coupon = await couponGet(env, rawCode);
+  // Bloquear si teléfono o email ya usó este cupón — pero NUNCA para uno pensado para
+  // que la MISMA persona lo reuse en cada compra (restrictToEmail, o el envío gratis
+  // de Lovers). Aplicado sin distinción, esto rompía en silencio el envío gratis de
+  // Lovers en la segunda compra de cualquier suscriptora — nunca se detectó porque
+  // /coupon/validate solo dice { valid:false }, no por qué.
+  const repeatableByDesign = !!(coupon && (coupon.restrictToEmail || coupon.kind === 'lovers-shipping'));
+  if (!repeatableByDesign) {
+    if (rawPhone.length >= 7 && await env.CACUSA_KV.get(`cpused:ph:${rawPhone}:${rawCode}`)) return ok({ valid: false }, origin);
+    if (rawEmail.includes('@') && await env.CACUSA_KV.get(`cpused:em:${rawEmail}:${rawCode}`)) return ok({ valid: false }, origin);
+  }
   const codeKey = `cpvrl:c:${rawCode}`;
   const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
   if (codeCount >= 8) return ok({ valid: false }, origin);
-  const coupon = await couponGet(env, rawCode);
   let valid = couponIsValid(coupon, rawEmail);
   // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
   if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
@@ -1378,15 +1490,19 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   }
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ ok: true }, origin);
-  // Registrar uso por teléfono y email (1 año)
   const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
-  if (rawPhone.length >= 7) await env.CACUSA_KV.put(`cpused:ph:${rawPhone}:${rawCode}`, '1', { expirationTtl: 31536000 });
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
-  if (rawEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${rawEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
+  const coupon = await couponGet(env, rawCode);
+  // Registrar uso por teléfono y email (1 año) — salvo en cupones pensados para que
+  // la misma persona los reuse (ver mismo comentario en handleCouponValidate).
+  const repeatableByDesign = !!(coupon && (coupon.restrictToEmail || coupon.kind === 'lovers-shipping'));
+  if (!repeatableByDesign) {
+    if (rawPhone.length >= 7) await env.CACUSA_KV.put(`cpused:ph:${rawPhone}:${rawCode}`, '1', { expirationTtl: 31536000 });
+    if (rawEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${rawEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
+  }
   // Incrementar usedCount del cupón — defensa en profundidad: si tiene restrictToEmail
   // y el email no coincide, no se cuenta como uso (el checkout ya no debería haber
   // dejado pasar esto en /coupon/validate, pero /coupon/burn no vuelve a validar nada).
-  const coupon = await couponGet(env, rawCode);
   if (coupon && (!coupon.restrictToEmail || rawEmail === coupon.restrictToEmail.toLowerCase())) {
     coupon.usedCount = (coupon.usedCount || 0) + 1;
     await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
