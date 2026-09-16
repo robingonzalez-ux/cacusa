@@ -533,7 +533,15 @@ async function listAllLeads(env) {
   return leads;
 }
 async function refreshLeadsCache(env) {
-  const leads = await listAllLeads(env);
+  return writeLeadsCache(env, await listAllLeads(env));
+}
+// Variante que NO vuelve a escanear KV — para cuando quien llama ya tiene el array
+// completo en memoria (ver handleLeadRegister, que antes disparaba hasta 3 escaneos
+// completos de lead:* en un solo request: uno al refrescar la caché tras el alta, otro
+// dentro de markLeadWelcomeSent si mandaba el correo, y un tercero dentro de
+// checkAbandonedCarts). Ahora ese flujo hace un solo listAllLeads() y reusa el mismo
+// array para todo, terminando con un solo PUT a leads_cache.
+async function writeLeadsCache(env, leads) {
   const data = { version: '1.0', lastUpdated: new Date().toISOString(), leads };
   await env.CACUSA_KV.put('leads_cache', JSON.stringify(data));
   return data;
@@ -1029,7 +1037,10 @@ function welcomeEmailContent(code, lang) {
   };
 }
 
-async function markLeadWelcomeSent(email, env, code) {
+// refreshCache=false para cuando quien llama (handleLeadRegister) va a hacer un solo
+// refresh consolidado al final, con un array que ya incluye este cambio — evita que
+// esto dispare su propio escaneo completo de lead:* además del de quien llama.
+async function markLeadWelcomeSent(email, env, code, { refreshCache = true } = {}) {
   const key = leadKey(email);
   const raw = await env.CACUSA_KV.get(key);
   if (!raw) return;
@@ -1038,16 +1049,16 @@ async function markLeadWelcomeSent(email, env, code) {
   lead.welcomeCode = code;
   lead.welcomeSentAt = new Date().toISOString();
   await env.CACUSA_KV.put(key, JSON.stringify(lead));
-  await refreshLeadsCache(env).catch(() => {});
+  if (refreshCache) await refreshLeadsCache(env).catch(() => {});
 }
 
 // Punto único que usan tanto el disparo automático (handleLeadRegister) como el botón
 // manual del panel (handleLeadSendWelcome) — nunca revienta el flujo que lo llama.
-async function sendWelcomeCode(email, lang, env) {
+async function sendWelcomeCode(email, lang, env, opts) {
   const code = await ensureWelcomeCoupon(email, env);
   const content = welcomeEmailContent(code, lang);
   await sendGmail(env, { to: email, ...content });
-  await markLeadWelcomeSent(email, env, code);
+  await markLeadWelcomeSent(email, env, code, opts);
   return code;
 }
 
@@ -1484,31 +1495,45 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
   const existingRaw = await env.CACUSA_KV.get(key);
   let already = null;
   if (existingRaw) { try { already = JSON.parse(existingRaw); } catch { already = null; } }
+  let sendWelcome = false;
   if (!already) {
     const lead = { email, lang, date: new Date().toISOString(), source, cart, total, notified: false };
     await env.CACUSA_KV.put(key, JSON.stringify(lead));
-    if (ctx) ctx.waitUntil(refreshLeadsCache(env).catch(() => {}));
     // Solo el 10% de bienvenida (popup) dispara el correo automático — un carrito
     // abandonado no es un registro de "quiero mi descuento", y el envío manual
     // desde el panel (handleLeadSendWelcome) cubre los leads que ya existían antes
     // de que esto existiera.
-    if (source === 'vignette' && ctx) {
-      ctx.waitUntil(sendWelcomeCode(email, lang, env).catch(e => console.error('welcome10 automático falló:', e.message)));
-    }
+    if (source === 'vignette') sendWelcome = true;
   } else if (source === 'cart_checkout_start' && already.source !== 'cart_checkout_start') {
     // Ya era lead del 10% — si ahora llega al checkout con carrito, upgradeamos el registro
     // para que sí entre en la revisión de abandono (sin duplicar la entrada).
     already.source = source; already.cart = cart; already.total = total;
     already.date = new Date().toISOString(); already.notified = false;
     await env.CACUSA_KV.put(key, JSON.stringify(already));
-    if (ctx) ctx.waitUntil(refreshLeadsCache(env).catch(() => {}));
-  } else if (source === 'vignette' && !already.welcomeSent && ctx) {
+  } else if (source === 'vignette' && !already.welcomeSent) {
     // El email ya existía por otra razón (ej. un carrito abandonado de antes) y ahora pide
     // el 10% — el correo se manda igual, sin tocar el resto del registro (no le pisamos el
     // source ni el carrito: ambas cosas pueden ser ciertas al mismo tiempo para un email).
-    ctx.waitUntil(sendWelcomeCode(email, lang, env).catch(e => console.error('welcome10 automático falló:', e.message)));
+    sendWelcome = true;
   }
-  if (ctx && env.VAPID_PRIVATE_KEY_JWK) ctx.waitUntil(checkAbandonedCarts(env).catch(() => {}));
+  // Un solo trabajo de fondo para todo lo que sigue, con un único escaneo completo de
+  // lead:* — antes esto eran hasta 3 escaneos por request (uno al refrescar la caché
+  // recién escrito el lead, otro dentro del envío del correo, otro dentro de
+  // checkAbandonedCarts), cada uno con su propio PUT a leads_cache. El orden importa:
+  // el correo se manda primero para que su escritura (welcomeSent) ya esté en KV cuando
+  // se haga el único listAllLeads() de abajo.
+  if (ctx) {
+    ctx.waitUntil((async () => {
+      if (sendWelcome) {
+        try { await sendWelcomeCode(email, lang, env, { refreshCache: false }); }
+        catch (e) { console.error('welcome10 automático falló:', e.message); }
+      }
+      const leads = env.VAPID_PRIVATE_KEY_JWK
+        ? await checkAbandonedCarts(env, { refreshCache: false }).catch(() => null)
+        : null;
+      await writeLeadsCache(env, leads || await listAllLeads(env)).catch(() => {});
+    })());
+  }
   return ok({ ok: true }, origin);
 }
 
@@ -1550,18 +1575,25 @@ async function handleLeadCancel(body, env, origin, request) {
 // request nuevo, el aviso espera al próximo. Para timing exacto haría falta
 // agregar un Cron Trigger en Cloudflare → Workers → cacusa-admin → Triggers.
 const ABANDON_MINUTES = 45;
-async function checkAbandonedCarts(env) {
-  if (!env.CACUSA_KV) return;
-  // Escanea las llaves directo (no leads_cache) — necesita ver el estado real más
-  // reciente para decidir a quién marcar notified, igual que las mutaciones de pedidos
-  // siempre leen su propia llave order:<id> en vez de confiar en orders_cache.
-  const leads = await listAllLeads(env);
+// opts.leads: si quien llama ya escaneó lead:* (ver handleLeadRegister), lo reusa en vez
+// de volver a escanear — antes esta función SIEMPRE hacía su propio listAllLeads(),
+// aunque el llamador acabara de hacer el mismo escaneo momentos antes.
+// opts.refreshCache: en false cuando el llamador va a escribir leads_cache él mismo con
+// el array que le devolvemos (ya con los notified al día), para no duplicar el PUT.
+// Devuelve el array completo de leads (mutado in-place si hubo cambios), o null si
+// env.CACUSA_KV no está configurado.
+async function checkAbandonedCarts(env, { leads: preloaded, refreshCache = true } = {}) {
+  if (!env.CACUSA_KV) return null;
+  // Sin caché involucrada: necesita ver el estado real más reciente para decidir a quién
+  // marcar notified, igual que las mutaciones de pedidos siempre leen su propia llave
+  // order:<id> en vez de confiar en orders_cache.
+  const leads = preloaded || await listAllLeads(env);
   const pending = leads.filter(l => l.source === 'cart_checkout_start' && !l.notified);
-  if (!pending.length) return;
+  if (!pending.length) return leads;
 
   const cutoff = Date.now() - ABANDON_MINUTES * 60 * 1000;
   const stale = pending.filter(l => new Date(l.date).getTime() <= cutoff);
-  if (!stale.length) return;
+  if (!stale.length) return leads;
 
   // Si ya hay un pedido de ese email posterior al lead, no fue abandono — se completó.
   let orderEmails = new Set();
@@ -1577,8 +1609,8 @@ async function checkAbandonedCarts(env) {
 
   let changed = false;
   for (const lead of stale) {
-    lead.notified = true; // se marca sí o sí para no re-evaluarlo cada vez
-    changed = true;
+    lead.notified = true; // se marca sí o sí para no re-evaluarlo cada vez — muta el
+    changed = true;        // objeto dentro de `leads` también, son la misma referencia.
     await env.CACUSA_KV.put(leadKey(lead.email), JSON.stringify(lead));
     if (orderEmails.has(lead.email)) continue; // compró — no es abandono real
     const itemNames = (lead.cart || []).map(i => i.name).filter(Boolean).slice(0, 3).join(', ');
@@ -1591,7 +1623,8 @@ async function checkAbandonedCarts(env) {
       urgency: 'low',
     });
   }
-  if (changed) await refreshLeadsCache(env).catch(() => {});
+  if (changed && refreshCache) await writeLeadsCache(env, leads).catch(() => {});
+  return leads;
 }
 
 async function handleLeadList(env, origin) {
