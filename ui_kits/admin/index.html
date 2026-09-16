@@ -2434,9 +2434,7 @@ function LeadsTab({ token }) {
                 <span style={{ fontSize: 12, color: '#7A6B85' }}>{l.lang === 'en' ? '🇺🇸 EN' : '🇪🇸 ES'}</span>
                 <span style={{ fontSize: 12, color: '#7A6B85' }}>{fmt(l.date)}</span>
                 <span>
-                  {l.source === 'cart_checkout_start' ? (
-                    <span style={{ fontSize: 12, color: '#ccc' }}>—</span>
-                  ) : l.welcomeSent ? (
+                  {l.welcomeSent ? (
                     <span style={{ fontSize: 12, color: '#2E7D32' }}>✓ Enviado</span>
                   ) : (
                     <button
