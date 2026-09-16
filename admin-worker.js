@@ -506,6 +506,66 @@ async function migrateLegacyOrdersIfNeeded(env) {
   await refreshOrdersCache(env);
 }
 
+// ── Leads (10% del popup + carritos abandonados): una llave por email ──────────────
+// Antes vivían todos en un solo blob JSON bajo la llave 'leads' — cualquier escritura
+// (registrar uno nuevo, marcar notified, borrar uno) leía TODO el array, lo modificaba
+// en memoria y volvía a escribir TODO el array. Dos requests concurrentes que tocaran
+// leads DISTINTOS (ej. checkAbandonedCarts marcando notified en el lead A mientras
+// removeCartLead borraba el lead B, disparados por dos visitantes distintos al mismo
+// tiempo) podían pisarse: el que escribe último gana, y el cambio del otro se pierde en
+// silencio — mismo problema de fondo que ya se había resuelto para pedidos (ver
+// refreshOrdersCache arriba). Mismo arreglo acá: cada lead en su propia llave
+// (lead:<email>), así que dos leads distintos nunca compiten por la misma escritura.
+function leadKey(email) { return 'lead:' + String(email || '').toLowerCase().trim(); }
+// Mismo patrón de paginación por prefijo que listAllOrders().
+async function listAllLeads(env) {
+  const leads = [];
+  let cursor;
+  do {
+    const page = await env.CACUSA_KV.list({ prefix: 'lead:', cursor, limit: 1000 });
+    for (const k of page.keys) {
+      const raw = await env.CACUSA_KV.get(k.name);
+      if (raw) { try { leads.push(JSON.parse(raw)); } catch (_) {} }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  leads.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+  return leads;
+}
+async function refreshLeadsCache(env) {
+  const leads = await listAllLeads(env);
+  const data = { version: '1.0', lastUpdated: new Date().toISOString(), leads };
+  await env.CACUSA_KV.put('leads_cache', JSON.stringify(data));
+  return data;
+}
+// Migración única e idempotente del blob legado 'leads' al esquema de una llave por
+// lead — mismo patrón que migrateLegacyOrdersIfNeeded(). Diferencia importante: acá SÍ
+// puede pasar que un lead nuevo entre (o uno existente reciba el correo de bienvenida)
+// en la ventana entre el deploy y esta migración, usando el email como llave — a
+// diferencia de un pedido nuevo (que siempre tiene un id fresco y nunca choca con uno
+// legado), un email SÍ puede coincidir con un registro legado. Por eso, a diferencia de
+// la versión de pedidos, acá NUNCA se pisa una llave que ya exista: si ya hay algo en
+// lead:<email> (porque ya se migró, o porque un request en vivo se adelantó), se salta
+// ese lead y se deja tal cual — nunca se sobreescribe con la versión vieja del blob.
+async function migrateLegacyLeadsIfNeeded(env) {
+  if (await env.CACUSA_KV.get('leads:migrated')) return;
+  const legacyRaw = await env.CACUSA_KV.get('leads');
+  if (legacyRaw) {
+    let legacy;
+    try { legacy = JSON.parse(legacyRaw); } catch (_) { legacy = null; }
+    if (legacy && Array.isArray(legacy.leads)) {
+      for (const l of legacy.leads) {
+        if (!l || !l.email) continue;
+        const key = leadKey(l.email);
+        if (await env.CACUSA_KV.get(key)) continue; // ya existe — no lo pisamos
+        await env.CACUSA_KV.put(key, JSON.stringify(l));
+      }
+    }
+  }
+  await env.CACUSA_KV.put('leads:migrated', '1');
+  await refreshLeadsCache(env);
+}
+
 // ── Pedido desde tienda (o desde cacusa-square, ya confirmado por Square) ────
 async function handleOrder(body, env, origin, ctx, request) {
   const { order } = body;
@@ -956,17 +1016,15 @@ function welcomeEmailContent(code, lang) {
 }
 
 async function markLeadWelcomeSent(email, env, code) {
-  const raw = await env.CACUSA_KV.get('leads');
+  const key = leadKey(email);
+  const raw = await env.CACUSA_KV.get(key);
   if (!raw) return;
-  let data; try { data = JSON.parse(raw); } catch { return; }
-  if (!Array.isArray(data.leads)) return;
-  const lead = data.leads.find(l => l.email === email);
-  if (!lead) return;
+  let lead; try { lead = JSON.parse(raw); } catch { return; }
   lead.welcomeSent = true;
   lead.welcomeCode = code;
   lead.welcomeSentAt = new Date().toISOString();
-  data.lastUpdated = new Date().toISOString();
-  await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  await env.CACUSA_KV.put(key, JSON.stringify(lead));
+  await refreshLeadsCache(env).catch(() => {});
 }
 
 // Punto único que usan tanto el disparo automático (handleLeadRegister) como el botón
@@ -1373,15 +1431,14 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
     ? body.cart.slice(0, 20).map(i => ({ name: String(i.name || '').slice(0, 150), price: (typeof i.price === 'number' && isFinite(i.price)) ? i.price : 0 }))
     : undefined;
   const total = (typeof body.total === 'number' && isFinite(body.total)) ? body.total : undefined;
-  let data = { leads: [] };
-  const existing = await env.CACUSA_KV.get('leads');
-  if (existing) try { data = JSON.parse(existing); } catch {}
-  if (!Array.isArray(data.leads)) data.leads = [];
-  const already = data.leads.find(l => l.email === email);
+  const key = leadKey(email);
+  const existingRaw = await env.CACUSA_KV.get(key);
+  let already = null;
+  if (existingRaw) { try { already = JSON.parse(existingRaw); } catch { already = null; } }
   if (!already) {
-    data.leads.unshift({ email, lang, date: new Date().toISOString(), source, cart, total, notified: false });
-    data.lastUpdated = new Date().toISOString();
-    await env.CACUSA_KV.put('leads', JSON.stringify(data));
+    const lead = { email, lang, date: new Date().toISOString(), source, cart, total, notified: false };
+    await env.CACUSA_KV.put(key, JSON.stringify(lead));
+    if (ctx) ctx.waitUntil(refreshLeadsCache(env).catch(() => {}));
     // Solo el 10% de bienvenida (popup) dispara el correo automático — un carrito
     // abandonado no es un registro de "quiero mi descuento", y el envío manual
     // desde el panel (handleLeadSendWelcome) cubre los leads que ya existían antes
@@ -1394,8 +1451,8 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
     // para que sí entre en la revisión de abandono (sin duplicar la entrada).
     already.source = source; already.cart = cart; already.total = total;
     already.date = new Date().toISOString(); already.notified = false;
-    data.lastUpdated = new Date().toISOString();
-    await env.CACUSA_KV.put('leads', JSON.stringify(data));
+    await env.CACUSA_KV.put(key, JSON.stringify(already));
+    if (ctx) ctx.waitUntil(refreshLeadsCache(env).catch(() => {}));
   } else if (source === 'vignette' && !already.welcomeSent && ctx) {
     // El email ya existía por otra razón (ej. un carrito abandonado de antes) y ahora pide
     // el 10% — el correo se manda igual, sin tocar el resto del registro (no le pisamos el
@@ -1412,16 +1469,13 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
 // (el 10% de bienvenida no se cancela por vaciar un carrito).
 async function removeCartLead(email, env) {
   if (!env.CACUSA_KV || !email) return;
-  const raw = await env.CACUSA_KV.get('leads');
-  let data = { leads: [] };
-  if (raw) try { data = JSON.parse(raw); } catch {}
-  if (!Array.isArray(data.leads)) return;
-  const before = data.leads.length;
-  data.leads = data.leads.filter(l => !(l.email === email && l.source === 'cart_checkout_start'));
-  if (data.leads.length !== before) {
-    data.lastUpdated = new Date().toISOString();
-    await env.CACUSA_KV.put('leads', JSON.stringify(data));
-  }
+  const key = leadKey(email);
+  const raw = await env.CACUSA_KV.get(key);
+  if (!raw) return;
+  let lead; try { lead = JSON.parse(raw); } catch { return; }
+  if (lead.source !== 'cart_checkout_start') return;
+  await env.CACUSA_KV.delete(key);
+  await refreshLeadsCache(env).catch(() => {});
 }
 
 // Ruta pública (mismo molde que /lead/register): la tienda la llama cuando el cliente
@@ -1449,13 +1503,11 @@ async function handleLeadCancel(body, env, origin, request) {
 const ABANDON_MINUTES = 45;
 async function checkAbandonedCarts(env) {
   if (!env.CACUSA_KV) return;
-  const raw = await env.CACUSA_KV.get('leads');
-  if (!raw) return;
-  let data;
-  try { data = JSON.parse(raw); } catch { return; }
-  if (!Array.isArray(data.leads)) return;
-
-  const pending = data.leads.filter(l => l.source === 'cart_checkout_start' && !l.notified);
+  // Escanea las llaves directo (no leads_cache) — necesita ver el estado real más
+  // reciente para decidir a quién marcar notified, igual que las mutaciones de pedidos
+  // siempre leen su propia llave order:<id> en vez de confiar en orders_cache.
+  const leads = await listAllLeads(env);
+  const pending = leads.filter(l => l.source === 'cart_checkout_start' && !l.notified);
   if (!pending.length) return;
 
   const cutoff = Date.now() - ABANDON_MINUTES * 60 * 1000;
@@ -1478,6 +1530,7 @@ async function checkAbandonedCarts(env) {
   for (const lead of stale) {
     lead.notified = true; // se marca sí o sí para no re-evaluarlo cada vez
     changed = true;
+    await env.CACUSA_KV.put(leadKey(lead.email), JSON.stringify(lead));
     if (orderEmails.has(lead.email)) continue; // compró — no es abandono real
     const itemNames = (lead.cart || []).map(i => i.name).filter(Boolean).slice(0, 3).join(', ');
     const totalTxt = typeof lead.total === 'number' ? ` · $${lead.total.toFixed(2)}` : '';
@@ -1489,17 +1542,16 @@ async function checkAbandonedCarts(env) {
       urgency: 'low',
     });
   }
-  if (changed) {
-    data.lastUpdated = new Date().toISOString();
-    await env.CACUSA_KV.put('leads', JSON.stringify(data));
-  }
+  if (changed) await refreshLeadsCache(env).catch(() => {});
 }
 
 async function handleLeadList(env, origin) {
   if (!env.CACUSA_KV) return ok({ leads: [] }, origin);
-  const raw = await env.CACUSA_KV.get('leads');
+  await migrateLegacyLeadsIfNeeded(env);
+  let raw = await env.CACUSA_KV.get('leads_cache');
+  if (!raw) raw = JSON.stringify(await refreshLeadsCache(env));
   let data = { leads: [] };
-  if (raw) try { data = JSON.parse(raw); } catch {}
+  try { data = JSON.parse(raw); } catch {}
   return ok({ leads: Array.isArray(data.leads) ? data.leads : [] }, origin);
 }
 
@@ -1510,13 +1562,8 @@ async function handleLeadDelete(body, env, origin) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
   const email = String(body.email || '').toLowerCase().trim();
   if (!email) return err('Falta email', 400, origin);
-  const raw = await env.CACUSA_KV.get('leads');
-  let data = { leads: [] };
-  if (raw) try { data = JSON.parse(raw); } catch {}
-  if (!Array.isArray(data.leads)) data.leads = [];
-  data.leads = data.leads.filter(l => l.email !== email);
-  data.lastUpdated = new Date().toISOString();
-  await env.CACUSA_KV.put('leads', JSON.stringify(data));
+  await env.CACUSA_KV.delete(leadKey(email));
+  await refreshLeadsCache(env).catch(() => {});
   return ok({ ok: true }, origin);
 }
 
