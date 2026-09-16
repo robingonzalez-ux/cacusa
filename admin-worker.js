@@ -24,6 +24,35 @@
  *   VAPID_PUBLIC_KEY      (text)    llave pública VAPID (mismo valor que VAPID_PUB_KEY
  *                                   en ui_kits/admin/index.html) — Web Push nativo de Safari
  *   VAPID_PRIVATE_KEY_JWK (secret)  JWK privado del mismo par de llaves VAPID, en JSON
+ *   GMAIL_CLIENT_ID       (secret)  Correo de bienvenida (código 10%) — ver runbook abajo
+ *   GMAIL_CLIENT_SECRET   (secret)  ídem
+ *   GMAIL_REFRESH_TOKEN   (secret)  ídem — autoriza a este Worker a mandar correos como
+ *                                   facturacioncacusa@gmail.com sin guardar su contraseña
+ *
+ * ──────────────────────────────────────────────────────────────────────────────────
+ * RUNBOOK — cómo obtener los 3 secrets de Gmail (una sola vez, ~15 min):
+ * 1. https://console.cloud.google.com → crear proyecto (ej. "cacusa-mailer").
+ * 2. APIs & Services → Library → buscar "Gmail API" → Enable.
+ * 3. APIs & Services → OAuth consent screen → External → nombre de la app, tu email
+ *    de contacto → en "Test users" agregar facturacioncacusa@gmail.com (mientras la
+ *    app esté en modo "Testing" no hace falta verificación de Google).
+ * 4. APIs & Services → Credentials → Create Credentials → OAuth client ID → tipo
+ *    "Web application" → en "Authorized redirect URIs" agregar
+ *    https://developers.google.com/oauthplayground → Create. Copiar el Client ID y
+ *    el Client Secret (= GMAIL_CLIENT_ID / GMAIL_CLIENT_SECRET).
+ * 5. Ir a https://developers.google.com/oauthplayground → ícono de engranaje (arriba
+ *    a la derecha) → marcar "Use your own OAuth credentials" → pegar el Client ID y
+ *    Client Secret del paso 4.
+ * 6. En el panel izquierdo, en el campo de scopes, escribir
+ *    https://www.googleapis.com/auth/gmail.send → Authorize APIs → iniciar sesión
+ *    con facturacioncacusa@gmail.com (Google va a avisar que la app no está
+ *    verificada — "Advanced" → "Go to [app] (unsafe)", es tu propia app, es seguro).
+ * 7. "Exchange authorization code for tokens" → copiar el "Refresh token" (=
+ *    GMAIL_REFRESH_TOKEN). Este token no expira solo (a diferencia del access token,
+ *    que dura 1h y este Worker renueva automáticamente en cada envío).
+ * 8. Pegar los 3 valores en Cloudflare → cacusa-admin → Settings → Variables and
+ *    secrets, tipo "Secret".
+ * ──────────────────────────────────────────────────────────────────────────────────
  *
  * KV Namespace (Cloudflare → Settings → Bindings):
  *   CACUSA_KV  — almacena pedidos de forma privada (no expuesto en GitHub Pages)
@@ -219,6 +248,7 @@ export default {
       if (path.endsWith('/coupon/use'))        return await handleCouponUse(body, env, allowOrigin);
       if (path.endsWith('/lead/list'))         return await handleLeadList(env, allowOrigin);
       if (path.endsWith('/lead/delete'))       return await handleLeadDelete(body, env, allowOrigin);
+      if (path.endsWith('/lead/send-welcome')) return await handleLeadSendWelcome(body, env, allowOrigin);
       if (path.endsWith('/ntfy-info')) {
         if (!env.NTFY_TOPIC) return ok({ configured: false }, allowOrigin);
         return ok({ configured: true, topic: env.NTFY_TOPIC, url: 'https://ntfy.sh/' + env.NTFY_TOPIC }, allowOrigin);
@@ -790,11 +820,97 @@ async function couponGet(env, code) {
   const raw = await env.CACUSA_KV.get(couponKey(code));
   return raw ? JSON.parse(raw) : null;
 }
-function couponIsValid(c) {
+// email: opcional — solo lo exige un cupón con restrictToEmail (ver welcome10 más abajo).
+// Los cupones normales (sin ese campo) ignoran el parámetro, así que esto es
+// retrocompatible con todos los cupones creados antes de que existiera.
+function couponIsValid(c, email) {
   if (!c || !c.active) return false;
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return false;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return false;
+  if (c.restrictToEmail && (!email || email.toLowerCase() !== c.restrictToEmail.toLowerCase())) return false;
   return true;
+}
+
+// ── Cupón de bienvenida (10% al registrarse con el email en la tienda) ─────────────
+// Antes de esto, el popup del 10% solo abría WhatsApp — el descuento real lo daba
+// alguien del equipo a mano, coordinando por chat. Este código es real, automático,
+// y (a diferencia de AMIGA+teléfono en el referido) no es adivinable: se deriva por
+// HMAC del email igual que loversShippingCode(), así que pedirlo dos veces da el
+// mismo código sin duplicar cupones, pero nadie más que esa clienta puede reconstruirlo
+// a partir de su propio email — y aunque lo adivinara, restrictToEmail igual lo bloquea
+// para cualquier otro comprador en /coupon/validate.
+async function welcomeCouponCode(email, env) {
+  const sig = await hmac('welcome10:' + email, env.SESSION_SECRET);
+  const clean = sig.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return 'BIENVENIDA' + clean.slice(0, 6);
+}
+async function ensureWelcomeCoupon(email, env) {
+  const code = await welcomeCouponCode(email, env);
+  let coupon = await couponGet(env, code);
+  if (!coupon) {
+    const expires = new Date();
+    expires.setMonth(expires.getMonth() + 3);
+    coupon = {
+      code, type: 'percent', amount: 10, kind: 'welcome10',
+      maxUses: 1, usedCount: 0, active: true,
+      expiresAt: expires.toISOString().slice(0, 10),
+      restrictToEmail: email,
+      note: `Bienvenida 10% — ${email}`,
+      createdAt: new Date().toISOString(), createdBy: 'welcome-system',
+    };
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
+  }
+  return code;
+}
+
+function welcomeEmailContent(code, lang) {
+  const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
+  if (lang === 'en') {
+    return {
+      subject: 'Your 10% off code — CACUSA by Taitus',
+      html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
+<h2 style="margin:0 0 12px">Here's your 10% off code ✦</h2>
+<p>Use it on your first purchase at CACUSA by Taitus:</p>
+<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
+<p style="font-size:13px;color:#6b6058">Valid for 3 months, one-time use, only for this email address. Does not apply to Cacusa Gold products.</p>
+<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Shop now →</a></p>
+</div>`,
+    };
+  }
+  return {
+    subject: 'Tu código de 10% de descuento — CACUSA by Taitus',
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
+<h2 style="margin:0 0 12px">Aquí tienes tu código de 10% ✦</h2>
+<p>Úsalo en tu primera compra en CACUSA by Taitus:</p>
+<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
+<p style="font-size:13px;color:#6b6058">Válido por 3 meses, un solo uso, solo para este correo. No aplica en productos de Cacusa Gold.</p>
+<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Ir a la tienda →</a></p>
+</div>`,
+  };
+}
+
+async function markLeadWelcomeSent(email, env, code) {
+  const raw = await env.CACUSA_KV.get('leads');
+  if (!raw) return;
+  let data; try { data = JSON.parse(raw); } catch { return; }
+  if (!Array.isArray(data.leads)) return;
+  const lead = data.leads.find(l => l.email === email);
+  if (!lead) return;
+  lead.welcomeSent = true;
+  lead.welcomeCode = code;
+  lead.welcomeSentAt = new Date().toISOString();
+  data.lastUpdated = new Date().toISOString();
+  await env.CACUSA_KV.put('leads', JSON.stringify(data));
+}
+
+// Punto único que usan tanto el disparo automático (handleLeadRegister) como el botón
+// manual del panel (handleLeadSendWelcome) — nunca revienta el flujo que lo llama.
+async function sendWelcomeCode(email, lang, env) {
+  const code = await ensureWelcomeCoupon(email, env);
+  const content = welcomeEmailContent(code, lang);
+  await sendGmail(env, { to: email, ...content });
+  await markLeadWelcomeSent(email, env, code);
+  return code;
 }
 
 const LOVERS_WORKER_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
@@ -1022,7 +1138,7 @@ async function handleCouponValidate(body, env, origin, request) {
   const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
   if (codeCount >= 8) return ok({ valid: false }, origin);
   const coupon = await couponGet(env, rawCode);
-  let valid = couponIsValid(coupon);
+  let valid = couponIsValid(coupon, rawEmail);
   // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
   if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
   if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
@@ -1091,6 +1207,13 @@ async function handleLeadRegister(body, env, origin, request, ctx) {
     data.leads.unshift({ email, lang, date: new Date().toISOString(), source, cart, total, notified: false });
     data.lastUpdated = new Date().toISOString();
     await env.CACUSA_KV.put('leads', JSON.stringify(data));
+    // Solo el 10% de bienvenida (popup) dispara el correo automático — un carrito
+    // abandonado no es un registro de "quiero mi descuento", y el envío manual
+    // desde el panel (handleLeadSendWelcome) cubre los leads que ya existían antes
+    // de que esto existiera.
+    if (source === 'vignette' && ctx) {
+      ctx.waitUntil(sendWelcomeCode(email, lang, env).catch(e => console.error('welcome10 automático falló:', e.message)));
+    }
   } else if (source === 'cart_checkout_start' && already.source !== 'cart_checkout_start') {
     // Ya era lead del 10% — si ahora llega al checkout con carrito, upgradeamos el registro
     // para que sí entre en la revisión de abandono (sin duplicar la entrada).
@@ -1217,6 +1340,24 @@ async function handleLeadDelete(body, env, origin) {
   return ok({ ok: true }, origin);
 }
 
+// Botón manual del panel — para los leads que ya existían antes de que el envío
+// automático existiera (o para reenviar si la clienta dice que no le llegó). Idempotente:
+// ensureWelcomeCoupon() reusa el mismo código si ya se había generado, nunca crea dos
+// cupones ni resetea la vigencia de 3 meses de uno que ya se había mandado antes.
+async function handleLeadSendWelcome(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!email.includes('@')) return err('Email inválido', 400, origin);
+  const lang = body.lang === 'en' ? 'en' : 'es';
+  try {
+    const code = await sendWelcomeCode(email, lang, env);
+    return ok({ ok: true, code }, origin);
+  } catch (e) {
+    console.error('lead/send-welcome falló:', e.message);
+    return err('No se pudo enviar el correo: ' + e.message, 500, origin);
+  }
+}
+
 // Se llama al confirmar un pedido — pública para WhatsApp/Zelle (origin-restringida),
 // o interna desde cacusa-square (ORDER_INGEST_KEY) tras confirmar el pago con tarjeta.
 async function handleCouponBurnPublic(body, env, origin, request) {
@@ -1237,9 +1378,11 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   if (rawPhone.length >= 7) await env.CACUSA_KV.put(`cpused:ph:${rawPhone}:${rawCode}`, '1', { expirationTtl: 31536000 });
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
   if (rawEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${rawEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
-  // Incrementar usedCount del cupón
+  // Incrementar usedCount del cupón — defensa en profundidad: si tiene restrictToEmail
+  // y el email no coincide, no se cuenta como uso (el checkout ya no debería haber
+  // dejado pasar esto en /coupon/validate, pero /coupon/burn no vuelve a validar nada).
   const coupon = await couponGet(env, rawCode);
-  if (coupon) {
+  if (coupon && (!coupon.restrictToEmail || rawEmail === coupon.restrictToEmail.toLowerCase())) {
     coupon.usedCount = (coupon.usedCount || 0) + 1;
     await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
     if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
@@ -1496,6 +1639,47 @@ async function ghPut(path, base64content, sha, message, env) {
   });
   if (!r.ok) throw new Error('GitHub PUT ' + r.status + ': ' + (await r.text()).slice(0, 200));
   return r.json();
+}
+
+// ── Correo de bienvenida (código 10%) vía Gmail API ─────────────────────────────
+// Manda literalmente desde facturacioncacusa@gmail.com (OAuth2, no SMTP con
+// contraseña) — ver el runbook al inicio del archivo para obtener los 3 secrets.
+// El access token dura 1h; como este Worker no guarda estado entre invocaciones,
+// simplemente lo pide de nuevo en cada envío (volumen bajo, no vale la pena cachearlo).
+async function gmailAccessToken(env) {
+  const r = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: env.GMAIL_CLIENT_ID,
+      client_secret: env.GMAIL_CLIENT_SECRET,
+      refresh_token: env.GMAIL_REFRESH_TOKEN,
+      grant_type: 'refresh_token',
+    }),
+  });
+  if (!r.ok) throw new Error(`Gmail token refresh falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  const d = await r.json();
+  return d.access_token;
+}
+
+async function sendGmail(env, { to, subject, html }) {
+  if (!env.GMAIL_REFRESH_TOKEN) throw new Error('GMAIL_REFRESH_TOKEN no configurado');
+  const accessToken = await gmailAccessToken(env);
+  const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+  const mime =
+    `From: CACUSA by Taitus <facturacioncacusa@gmail.com>\r\n` +
+    `To: ${to}\r\n` +
+    `Subject: ${subjectEncoded}\r\n` +
+    `MIME-Version: 1.0\r\n` +
+    `Content-Type: text/html; charset=UTF-8\r\n\r\n` +
+    html;
+  const raw = b64url(new TextEncoder().encode(mime));
+  const r = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw }),
+  });
+  if (!r.ok) throw new Error(`Gmail send falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
 }
 
 // ── Token (HMAC-SHA256) ────────────────────────────────────────────────────────
