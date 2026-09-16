@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:42:36.236Z",
+  "lastUpdated": "2026-09-16T01:42:49.746Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1100,7 +1100,7 @@
       "description": "Delicado anillo ajustable estilo Tiffy con brillantes microcircones en baño de oro 18k. Elegancia y brillo en su forma más pura.",
       "description_en": "Delicate adjustable Tiffy-style ring with sparkling micro zirconia in 18k gold plating. Elegance and brilliance in their purest form.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878391322_image_jpg.webp",
       "focalX": 50.955414012738856,
       "focalY": 57.57575757575761,
