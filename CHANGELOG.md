@@ -12,6 +12,31 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Barrido de seguridad: correo blindado y envío gratis atado a su dueña
+
+Revisión de seguridad sobre todo lo construido hoy. Salieron dos cosas
+serias, las dos ya corregidas:
+
+**El correo automático se podía usar para mandar correo ajeno.** El sistema
+armaba el mensaje pegando la dirección tal cual la escribía la persona en el
+popup del 10%. Alguien podía escribir ahí algo preparado y hacer que el
+correo saliera *desde la cuenta real del negocio*
+(`facturacioncacusa@gmail.com`) hacia terceros — phishing usando la marca, y
+riesgo de que Gmail terminara bloqueando o suspendiendo la cuenta. Se
+confirmó con una prueba real antes de arreglarlo. Ahora toda dirección pasa
+por una validación de verdad, y además hay una segunda barrera justo antes
+de enviar, para que ninguna función futura se salte el control por olvido.
+
+**El código de envío gratis de Cacusa Lovers servía para cualquiera, para
+siempre.** No estaba atado a la suscriptora que lo pedía, no vencía, y nunca
+se apagaba al cancelar (estaba anotado como "se desactiva desde el panel",
+pero eso no existía). Compartirlo una vez era regalarlo de por vida. Ahora
+queda atado al teléfono de quien lo pidió —funcionando igual si escribe su
+número con o sin código de país— y se apaga solo cuando cancela, junto con
+el cupón del 5%. Si vuelve a suscribirse y lo pide de nuevo, se reactiva.
+Los códigos entregados antes de este cambio quedan atados la próxima vez que
+su dueña los pida.
+
 ## 2026-09-16 — Fix: los leads (10% + carritos abandonados) ya no comparten un blob único
 
 Una auditoría del sistema de notificaciones push encontró una condición de

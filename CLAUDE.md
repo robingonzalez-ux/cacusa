@@ -282,6 +282,63 @@ sola persona por diseño: `restrictToEmail` presente, o `kind ===
 'lovers-shipping'`. Cualquier cupón nuevo pensado para reusarse debe caer
 en una de esas dos condiciones o va a toparse con el mismo bug.
 
+**Hallazgo de seguridad del 16 sep (barrido) — `restrictToPhone`**: quitar
+ese bloqueo dejó al descubierto que el cupón de envío no estaba atado a
+nadie: se creaba sin `restrictToEmail`, sin vencimiento y sin tope de usos,
+y su desactivación al cancelar nunca se implementó (el comentario decía "se
+desactiva desde el panel"; nadie lo hacía). Quien tuviera el código `ENVIO…`
+viajaba gratis para siempre, fuera o no suscriptora. Ahora:
+
+- El cupón guarda **`restrictToPhone`**, que hacen cumplir `couponIsValid()`
+  y la copia independiente de `square-payment-worker.js` — esa segunda es la
+  que importa de verdad, porque es el único punto donde el envío se anula
+  (si se olvida ahí, el agujero sigue abierto; es el mismo error que ya se
+  cometió con `restrictToEmail`).
+- La comparación es por los **últimos 7 dígitos** (`samePhone()`, misma
+  normalización laxa que `isActiveLoversPhone()`): la misma clienta escribe
+  su número con o sin código de país según el formulario, y exigir
+  coincidencia exacta la dejaría fuera de su propio beneficio.
+- **Desactivación automática al cancelar**, enganchada al mismo hop interno
+  que ya apaga el cupón exclusivo del 5% — al cancelar se apagan los dos.
+  Se ubica vía un índice **`loversship:<últimos 7>` → código**, necesario
+  porque el código es un HMAC de una sola vía y el teléfono guardado en
+  Firebase no siempre coincide dígito a dígito con el que se tecleó al
+  pedirlo. El índice se reescribe en cada pedido del código (idempotente),
+  así los cupones anteriores a este cambio quedan indexados solos.
+- Los cupones `ENVIO…` **emitidos antes de este cambio** no tienen
+  `restrictToPhone` ni índice: siguen funcionando para cualquiera y no se
+  pueden desactivar solos hasta que su dueña vuelva a pedir el código (ahí
+  se le agregan los dos). Si llegan a ser varios, lo limpio es desactivarlos
+  a mano desde el panel — el endpoint es self-service y reemitirlos es
+  inmediato.
+
+## Correo saliente — nunca concatenar un dato sin validar en las cabeceras
+
+`sendGmail()` en `admin-worker.js` arma el mensaje MIME a mano
+(`To: ${to}\r\n…`). El barrido del 16 sep encontró ahí una **inyección de
+cabeceras real y explotable**: el email entraba por `/lead/register` (ruta
+pública) validado solo con `.includes('@')`, así que
+`atacante@evil.com\r\nBcc: victima@gmail.com` agregaba cabeceras nuevas — o,
+con `\r\n\r\n`, cerraba el bloque de cabeceras y escribía el cuerpo. Es
+decir: correo arbitrario saliendo de `facturacioncacusa@gmail.com` con DKIM
+y SPF válidos de Gmail. El allowlist de Origin no protege (se falsifica con
+`curl`), y el rate limit solo acota el volumen.
+
+- **`isValidEmail()`** es ahora la única validación aceptable para cualquier
+  dirección que pueda terminar en un envío. Lo importante del regex es el
+  `\s` de la clase negada: cubre `\r` y `\n`. Se aplica en los 5 puntos de
+  entrada (`handleLeadRegister`, `handleLeadSendWelcome`,
+  `handleLoversExclusiveCoupon`, `handleLoversExclusiveBulk`,
+  `handleLoversNotifyPending`) **y** como barrera dura dentro de
+  `sendGmail()` — así cualquier ruta de envío nueva queda cubierta sola.
+- **No** se usa en `/coupon/validate` ni `/coupon/burn`: ahí el email solo
+  arma una llave de KV y se compara contra `restrictToEmail`. Endurecerlo
+  podría dejar fuera del checkout a una clienta con un correo válido pero
+  raro, sin ganar nada de seguridad.
+- Ojo con la segunda vía: el correo del cupón exclusivo toma direcciones de
+  **Firebase**, y esos registros los escribe el formulario **público** de
+  suscripción. Cualquier dato que venga de Firebase es dato de internet.
+
 ## Leads (10% del popup + carritos abandonados) — una llave por email
 
 Igual que los pedidos (`order:<id>`), cada lead vive en su propia llave de
