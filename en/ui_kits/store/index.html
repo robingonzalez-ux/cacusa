@@ -449,6 +449,7 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .vig-btn{width:100%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.05em;border:none;border-radius:999px;padding:13px;cursor:pointer;box-shadow:0 4px 20px rgba(238,111,168,.4)}
 .vig-skip{font-family:var(--fu);font-size:11px;color:var(--ink-muted);text-align:center;margin-top:10px;cursor:pointer}
 .vig-fine{font-family:var(--fu);font-size:10px;color:var(--ink-muted);opacity:.65;text-align:center;margin-top:10px;line-height:1.4}
+.vig-msg{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink);text-align:center;padding:13px 0;line-height:1.4}
 @media(max-width:480px){
   .vig-box{grid-template-columns:1fr;max-width:360px}
   .vig-visual{padding:30px 24px}
@@ -1419,6 +1420,7 @@ Precious, they make your hand look feminine and delicate</li>
       <div class="vig-desc"><span class="t-es">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</span><span class="t-en">Subscribe and get 10% off your first purchase. Limited time only.</span></div>
       <input class="vig-email" id="vigEmail" type="email" placeholder="tu@email.com" aria-label="Email">
       <button class="vig-btn" id="vigBtn"><span class="t-es">Quiero mi descuento →</span><span class="t-en">I want my discount →</span></button>
+      <div class="vig-msg" id="vigMsg" role="status" aria-live="polite" hidden></div>
       <div class="vig-skip" id="vigSkip"><span class="t-es">No gracias, prefiero pagar precio completo</span><span class="t-en">No thanks, I'll pay full price</span></div>
       <div class="vig-fine"><span class="t-es">Válido solo para compras en CACUSA by Taitus. No aplica en productos de Cacusa Gold.</span><span class="t-en">Valid only for purchases at CACUSA by Taitus. Does not apply to Cacusa Gold products.</span></div>
     </div>
@@ -3810,12 +3812,19 @@ let _vigReleaseTrap = null;
     const emailEl = document.getElementById('vigEmail');
     const email = (emailEl ? emailEl.value : '').trim();
     if (!email) { if (emailEl) { emailEl.style.borderColor = '#C0336E'; emailEl.placeholder = __LANG === 'en' ? 'Enter your email first' : 'Escribe tu correo primero'; emailEl.focus(); } return; }
-    let msg = __LANG === 'en' ? '✦ *I want my 10% discount*\n*CACUSA by Taitus*\n\n' : '✦ *Quiero mi 10% de descuento*\n*CACUSA by Taitus*\n\n';
-    msg += __LANG === 'en' ? '*Email:* ' + email + '\n\nHi, I saw the 10% offer on my first purchase and would love to use it.' : '*Email:* ' + email + '\n\nHola, vi la oferta del 10% en mi primera compra y quiero aprovecharla.';
-    const num = (WHATSAPP_NUMBER || '').replace(/\D/g, '');
-    window.open((num ? 'https://wa.me/' + num : 'https://wa.me/') + '?text=' + encodeURIComponent(msg), '_blank');
+    // El código de bienvenida ahora llega solo por correo (Gmail API, admin-worker.js) —
+    // ya no hace falta coordinar por WhatsApp, así que solo registramos el lead.
     registerLead(email, 'vignette');
-    closeVig();
+    const skipEl = document.getElementById('vigSkip');
+    const msgEl = document.getElementById('vigMsg');
+    if (emailEl) emailEl.style.display = 'none';
+    vigBtn.style.display = 'none';
+    if (skipEl) skipEl.style.display = 'none';
+    if (msgEl) {
+      msgEl.textContent = __LANG === 'en' ? '✓ Check your email — we just sent your 10% code.' : '✓ Revisa tu correo — te acabamos de enviar tu código de 10%.';
+      msgEl.hidden = false;
+    }
+    setTimeout(closeVig, 2400);
   });
 })();
 
