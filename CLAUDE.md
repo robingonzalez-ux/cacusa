@@ -419,6 +419,20 @@ equipo a mano, coordinando por chat, sin ningún cupón de verdad detrás.
   `LeadsTab` del panel, para los leads que ya existían antes de esto.
   Idempotente: reenviar a la misma clienta reusa el mismo código en vez de
   generar uno nuevo o resetear la vigencia.
+- **El popup nunca dice "revisa tu correo" sin confirmar que se registró de
+  verdad** (fix del 16 sep, en las 4 páginas: `index.html`, `en/index.html`,
+  `ui_kits/store/index.html`, `en/ui_kits/store/index.html`). Antes el
+  `fetch` a `/lead/register` iba con `.catch(()=>{})` y el mensaje de éxito
+  se mostraba igual, sin esperar la respuesta — si el Worker estaba caído o
+  fallaba la red, a la clienta se le mentía que ya tenía su código, sin
+  forma de reintentar. Ahora el botón espera la respuesta real (`r.ok`):
+  éxito → mismo flujo de siempre; falla → mensaje distinto (`role="alert"
+  aria-live="assertive"`, símbolo `✕`), botón y campo de email se
+  reactivan, y el popup NO se cierra solo, para que pueda intentarlo de
+  nuevo. En la tienda, `registerLead()` (compartida con el tracking de
+  carrito abandonado) ahora es `async` y devuelve `true`/`false` — el
+  checkout la sigue llamando fire-and-forget (no le importa el resultado),
+  solo el vignette espera el valor.
 
 ## Cupón exclusivo de Cacusa Lovers (`lovers-exclusive`)
 

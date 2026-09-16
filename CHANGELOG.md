@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — El popup del 10% ya no dice "revisa tu correo" si en realidad falló
+
+Último hallazgo de la revisión del lado cliente. El popup mostraba el
+mensaje de éxito apenas se apretaba el botón, sin esperar a confirmar que
+el registro realmente había llegado al servidor — si había un corte de
+red o el sistema estaba caído en ese momento, a la clienta se le decía que
+ya tenía su código de 10% cuando en realidad nunca se mandó nada, y no
+había forma de que se diera cuenta ni de volver a intentarlo. Ahora el
+popup espera la respuesta real: si funcionó, mismo mensaje de siempre; si
+falló, avisa que algo salió mal y deja reintentar en el momento, en vez de
+cerrarse solo. Aplicado en las 4 versiones del popup (home y tienda, ES/EN).
+
 ## 2026-09-16 — Leads: un solo escaneo por request en vez de hasta 3
 
 Revisión de confiabilidad sobre el refactor de leads de más arriba. El

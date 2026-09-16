@@ -3797,14 +3797,22 @@ window.addEventListener('appinstalled', () => {
   drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
 })();
 
-// ── Captura de lead (compartida por el vignette y el checkout) ──
-function registerLead(email, source, cartData, total) {
-  if (!email) return;
+// ── Captura de lead (compartida por el vignette y el checkout) ── Devuelve una promesa
+// con true/false: el checkout la sigue usando fire-and-forget (no le importa el
+// resultado, es solo tracking de abandono), pero el vignette SÍ necesita saber si de
+// verdad se registró antes de decirle a la clienta "revisa tu correo" (ver más abajo).
+async function registerLead(email, source, cartData, total) {
+  if (!email) return false;
   if (source === 'cart_checkout_start') _abandonLeadEmail = email;
-  fetch(ADMIN_WORKER_URL + '/lead/register', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, lang: __LANG, source, cart: cartData, total })
-  }).catch(() => {});
+  try {
+    const r = await fetch(ADMIN_WORKER_URL + '/lead/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, lang: __LANG, source, cart: cartData, total })
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
 // ── VIGNETTE (10% descuento) — clave propia, independiente del landing ──
@@ -3824,23 +3832,39 @@ let _vigReleaseTrap = null;
   if (!localStorage.getItem('cacusa-vig-store')) setTimeout(openVig, 3500);
   [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', closeVig));
   const vigBtn = document.getElementById('vigBtn');
-  if (vigBtn) vigBtn.addEventListener('click', () => {
+  if (vigBtn) vigBtn.addEventListener('click', async () => {
     const emailEl = document.getElementById('vigEmail');
     const email = (emailEl ? emailEl.value : '').trim();
     if (!email) { if (emailEl) { emailEl.style.borderColor = '#C0336E'; emailEl.placeholder = __LANG === 'en' ? 'Enter your email first' : 'Escribe tu correo primero'; emailEl.focus(); } return; }
-    // El código de bienvenida ahora llega solo por correo (Gmail API, admin-worker.js) —
-    // ya no hace falta coordinar por WhatsApp, así que solo registramos el lead.
-    registerLead(email, 'vignette');
     const skipEl = document.getElementById('vigSkip');
     const msgEl = document.getElementById('vigMsg');
-    if (emailEl) emailEl.style.display = 'none';
-    vigBtn.style.display = 'none';
-    if (skipEl) skipEl.style.display = 'none';
-    if (msgEl) {
-      msgEl.textContent = __LANG === 'en' ? '✓ Check your email — we just sent your 10% code.' : '✓ Revisa tu correo — te acabamos de enviar tu código de 10%.';
-      msgEl.hidden = false;
+    // Deshabilita de inmediato — evita doble envío mientras se espera la respuesta real
+    // (antes se mostraba "listo" apenas se disparaba el fetch, sin esperar nada: un
+    // error de red le mentía a la clienta que ya tenía su código, sin forma de reintentar).
+    vigBtn.disabled = true;
+    if (emailEl) emailEl.disabled = true;
+    // El código de bienvenida ahora llega solo por correo (Gmail API, admin-worker.js) —
+    // ya no hace falta coordinar por WhatsApp, así que solo registramos el lead.
+    const sent = await registerLead(email, 'vignette');
+    if (sent) {
+      if (emailEl) emailEl.style.display = 'none';
+      vigBtn.style.display = 'none';
+      if (skipEl) skipEl.style.display = 'none';
+      if (msgEl) {
+        msgEl.setAttribute('role', 'status'); msgEl.setAttribute('aria-live', 'polite');
+        msgEl.textContent = __LANG === 'en' ? '✓ Check your email — we just sent your 10% code.' : '✓ Revisa tu correo — te acabamos de enviar tu código de 10%.';
+        msgEl.hidden = false;
+      }
+      setTimeout(closeVig, 2400);
+    } else {
+      vigBtn.disabled = false;
+      if (emailEl) emailEl.disabled = false;
+      if (msgEl) {
+        msgEl.setAttribute('role', 'alert'); msgEl.setAttribute('aria-live', 'assertive');
+        msgEl.textContent = __LANG === 'en' ? '✕ Something went wrong — try again.' : '✕ Algo falló — intenta de nuevo.';
+        msgEl.hidden = false;
+      }
     }
-    setTimeout(closeVig, 2400);
   });
 })();
 
