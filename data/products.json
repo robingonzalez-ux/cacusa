@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:48:00.474Z",
+  "lastUpdated": "2026-09-16T01:48:17.358Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1528,7 +1528,7 @@
       "description": "Romántica cadena con cinco dijes: tres corazones de nácar y dos llanos en dorado 18k. Un diseño lleno de delicadeza y amor.",
       "description_en": "Romantic chain with five charms: three mother-of-pearl hearts and two plain ones in 18k gold. A design full of delicacy and love.",
       "personalized": false,
-      "available": true,
+      "available": false,
       "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781884900943_img_0936_jpeg.webp",
       "focalX": 26.943799430081157,
       "focalY": 43.6308091094242,
