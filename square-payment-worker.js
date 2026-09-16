@@ -276,7 +276,14 @@ function couponKey(code) { return 'coupon:' + String(code || '').toUpperCase().r
 // con el código de bienvenida de OTRA clienta podía cobrarlo pagando con tarjeta vía
 // Square, aunque /coupon/validate en admin-worker.js sí lo hubiera rechazado — el pago
 // con tarjeta no pasa por esa ruta, arma el link de pago directo desde acá.
-async function couponLoadValid(env, code, email) {
+// Copia de samePhone() de admin-worker.js — compara por los últimos 7 dígitos porque
+// la misma clienta escribe su número con o sin código de país según el formulario.
+function samePhone(a, b) {
+  const da = String(a || '').replace(/\D/g, '');
+  const db = String(b || '').replace(/\D/g, '');
+  return da.length >= 7 && db.length >= 7 && da.slice(-7) === db.slice(-7);
+}
+async function couponLoadValid(env, code, email, phone) {
   if (!env.CACUSA_KV) return null;
   const raw = await env.CACUSA_KV.get(couponKey(code));
   if (!raw) return null;
@@ -285,11 +292,15 @@ async function couponLoadValid(env, code, email) {
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return null;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return null;
   if (c.restrictToEmail && (!email || String(email).toLowerCase() !== c.restrictToEmail.toLowerCase())) return null;
+  // restrictToPhone ata el cupón de envío gratis a la suscriptora que lo pidió. Importa
+  // sobre todo ACÁ: este Worker es el único punto donde el envío se anula de verdad, así
+  // que sin esta línea cualquiera con el código ENVIO… de otra persona viaja gratis.
+  if (c.restrictToPhone && !samePhone(phone, c.restrictToPhone)) return null;
   return c;
 }
 
-async function couponPeekCents(env, code, totalCents, email) {
-  const c = await couponLoadValid(env, code, email);
+async function couponPeekCents(env, code, totalCents, email, phone) {
+  const c = await couponLoadValid(env, code, email, phone);
   if (!c) return 0;
   // 'freeship' no descuenta dinero del subtotal: su efecto es anular el envío, y eso
   // se resuelve antes, sobre serverShipping. Explícito para que nunca haga las dos cosas.
@@ -482,7 +493,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   if (serverShipping > 0) {
     const cpEarly = (body.couponCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
     if (cpEarly) {
-      const c = await couponLoadValid(env, cpEarly, customer?.email);
+      const c = await couponLoadValid(env, cpEarly, customer?.email, customer?.phone);
       if (c && c.type === 'freeship') serverShipping = 0;
     }
   }
@@ -546,7 +557,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   const cpCode = (body.couponCode || '').toString().trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (cpCode) {
     const totalAfterGc = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0) - gcDiscountCents;
-    if (totalAfterGc > 0) cpDiscountCents = await couponPeekCents(env, cpCode, totalAfterGc, customer?.email);
+    if (totalAfterGc > 0) cpDiscountCents = await couponPeekCents(env, cpCode, totalAfterGc, customer?.email, customer?.phone);
   }
 
   // ── Build customer note ────────────────────────────────────────────────
