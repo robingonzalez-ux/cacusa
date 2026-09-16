@@ -874,29 +874,84 @@ async function ensureWelcomeCoupon(email, env) {
   return code;
 }
 
+// ── Plantilla de correo con la identidad visual del sitio ───────────────────────
+// HTML "old-school" (tablas, estilos inline, sin flexbox/grid/gradientes CSS externos)
+// a propósito — es lo único que se renderiza igual de bien en Gmail, Outlook, Apple
+// Mail, etc. La paleta es la misma de index.html/cacusa-lovers.html (--pink-deep,
+// --ink, --grad-warm...); "declarar background-color antes que background-image" es
+// el patrón estándar para que el degradado se vea en los clientes que sí lo soportan
+// y quede en un rosado sólido razonable en los que no.
+function emailShell({ lang, preheader, eyebrow, title, code, bullets, ctaText, ctaUrl }) {
+  const bulletsHtml = bullets.map(b => `<tr><td style="padding:3px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#96486F">${b}</td></tr>`).join('');
+  const waMsg = lang === 'en' ? encodeURIComponent('Hi! I have a question about my CACUSA by Taitus coupon.') : encodeURIComponent('Hola, tengo una consulta sobre mi cupón de CACUSA by Taitus.');
+  const footerText = lang === 'en'
+    ? `Questions? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Chat with us on WhatsApp</a>`
+    : `¿Dudas? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Escríbenos por WhatsApp</a>`;
+  return `<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#FEF8FF;">
+<span style="display:none;visibility:hidden;opacity:0;overflow:hidden;height:0;width:0;max-height:0;max-width:0;mso-hide:all;">${preheader}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEF8FF;padding:28px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid #F3E4EE;">
+<tr><td style="background-color:#EE6FA8;background-image:linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC);padding:34px 24px;text-align:center;">
+<div style="font-family:Georgia,'Bodoni Moda',serif;font-size:26px;font-weight:700;letter-spacing:.12em;color:#FFFFFF;">CACUSA</div>
+<div style="font-family:Georgia,serif;font-style:italic;font-size:14px;color:#FFFFFF;opacity:.92;margin-top:2px;">by Taitus</div>
+</td></tr>
+<tr><td style="padding:32px 30px 28px;text-align:center;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#C0336E;margin-bottom:10px;">${eyebrow}</div>
+<div style="font-family:Georgia,'Bodoni Moda',serif;font-size:22px;font-weight:700;color:#8B2A5A;margin-bottom:18px;">${title}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+<tr><td style="background:#FCE8F3;border:1.5px dashed #C0336E;border-radius:10px;padding:14px 30px;">
+<span style="font-family:Georgia,'Bodoni Moda',serif;font-size:24px;font-weight:700;letter-spacing:3px;color:#C0336E;">${code}</span>
+</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">${bulletsHtml}</table>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+<tr><td style="background-color:#EE6FA8;background-image:linear-gradient(135deg,#EE6FA8,#C4A0EC);border-radius:999px;">
+<a href="${ctaUrl}" style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:14px;color:#FFFFFF;text-decoration:none;">${ctaText}</a>
+</td></tr>
+</table>
+</td></tr>
+<tr><td style="background:#FEF0E4;padding:16px 24px;text-align:center;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${footerText}</div>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
 function welcomeEmailContent(code, lang) {
   const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
   if (lang === 'en') {
     return {
       subject: 'Your 10% off code — CACUSA by Taitus',
-      html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
-<h2 style="margin:0 0 12px">Here's your 10% off code ✦</h2>
-<p>Use it on your first purchase at CACUSA by Taitus:</p>
-<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
-<p style="font-size:13px;color:#6b6058">Valid for 3 months, one-time use, only for this email address. Does not apply to Cacusa Gold products.</p>
-<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Shop now →</a></p>
-</div>`,
+      html: emailShell({
+        lang, preheader: 'Your 10% off code is ready — use it on your first purchase.',
+        eyebrow: 'Exclusive offer', title: 'Here’s your 10% off code ✦', code,
+        bullets: [
+          'Valid for 3 months from today.',
+          'One-time use, only for this email address.',
+          'Does not apply to Cacusa Gold products.',
+        ],
+        ctaText: 'Shop now →', ctaUrl: storeUrl,
+      }),
     };
   }
   return {
     subject: 'Tu código de 10% de descuento — CACUSA by Taitus',
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
-<h2 style="margin:0 0 12px">Aquí tienes tu código de 10% ✦</h2>
-<p>Úsalo en tu primera compra en CACUSA by Taitus:</p>
-<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
-<p style="font-size:13px;color:#6b6058">Válido por 3 meses, un solo uso, solo para este correo. No aplica en productos de Cacusa Gold.</p>
-<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Ir a la tienda →</a></p>
-</div>`,
+    html: emailShell({
+      lang, preheader: 'Tu código de 10% ya está listo — úsalo en tu primera compra.',
+      eyebrow: 'Oferta exclusiva', title: 'Aquí tienes tu código de 10% ✦', code,
+      bullets: [
+        'Válido por 3 meses desde hoy.',
+        'Un solo uso, solo para este correo.',
+        'No aplica en productos de Cacusa Gold.',
+      ],
+      ctaText: 'Ir a la tienda →', ctaUrl: storeUrl,
+    }),
   };
 }
 
@@ -942,24 +997,32 @@ function loversExclusiveEmailContent(code, lang) {
   if (lang === 'en') {
     return {
       subject: 'Your exclusive Cacusa Lovers coupon — 5% off, always',
-      html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
-<h2 style="margin:0 0 12px">Your exclusive Lovers coupon ✦</h2>
-<p>As an active Cacusa Lovers member, use this code on every purchase in the store — no expiration, no limit on how many times you use it:</p>
-<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
-<p style="font-size:13px;color:#6b6058">5% off, valid only for this email address, for as long as your subscription stays active. Does not apply to Cacusa Gold products.</p>
-<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Shop now →</a></p>
-</div>`,
+      html: emailShell({
+        lang, preheader: 'Your exclusive Lovers coupon: 5% off every purchase, no limit.',
+        eyebrow: 'Cacusa Lovers member benefit', title: 'Your exclusive Lovers coupon ✦', code,
+        bullets: [
+          'Use it on every purchase in the store.',
+          'No expiration, no limit on how many times you use it.',
+          'Stays active for as long as your subscription does.',
+          'Does not apply to Cacusa Gold products.',
+        ],
+        ctaText: 'Shop now →', ctaUrl: storeUrl,
+      }),
     };
   }
   return {
     subject: 'Tu cupón exclusivo de Cacusa Lovers — 5% siempre',
-    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#2b2420">
-<h2 style="margin:0 0 12px">Tu cupón exclusivo de Lovers ✦</h2>
-<p>Como suscriptora activa de Cacusa Lovers, usa este código en cada compra que hagas en la tienda — sin vencimiento, sin límite de veces que lo uses:</p>
-<p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f6f1ea;padding:12px 20px;display:inline-block;border-radius:8px">${code}</p>
-<p style="font-size:13px;color:#6b6058">5% de descuento, válido solo para este correo, mientras tu suscripción siga activa. No aplica en productos de Cacusa Gold.</p>
-<p style="margin-top:20px"><a href="${storeUrl}" style="color:#a8425a;font-weight:bold">Ir a la tienda →</a></p>
-</div>`,
+    html: emailShell({
+      lang, preheader: 'Tu cupón exclusivo de Lovers: 5% en cada compra, sin límite.',
+      eyebrow: 'Beneficio de Cacusa Lovers', title: 'Tu cupón exclusivo de Lovers ✦', code,
+      bullets: [
+        'Úsalo en cada compra que hagas en la tienda.',
+        'Sin vencimiento, sin límite de veces que lo uses.',
+        'Se mantiene activo mientras siga tu suscripción.',
+        'No aplica en productos de Cacusa Gold.',
+      ],
+      ctaText: 'Ir a la tienda →', ctaUrl: storeUrl,
+    }),
   };
 }
 // action: 'activate' (default) | 'deactivate'. Nunca lanza — quien la llama (la ruta
