@@ -285,6 +285,13 @@ equipo a mano, coordinando por chat, sin ningún cupón de verdad detrás.
   `couponIsValid()`/`handleCouponBurnPublic()` hacen cumplir — nadie más que
   la clienta que se registró puede usarlo en el checkout, aunque conociera
   el código.
+  **Ojo con `square-payment-worker.js`**: tiene su propia copia de esta
+  validación (`couponLoadValid`/`couponPeekCents`, Worker separado sin
+  binding hacia cacusa-admin para reusar la lógica) — cualquier campo nuevo
+  que se agregue a un cupón y deba respetarse en pagos con tarjeta hay que
+  replicarlo ahí también (16 sep: `restrictToEmail` se agregó a
+  `couponIsValid()` pero se olvidó ahí al principio — pagos con tarjeta
+  cobraban el 10% sin revisar el email hasta que se corrigió el mismo día).
 - Se manda por **Gmail API (OAuth2)**, no SMTP con contraseña — sale
   literalmente de `facturacioncacusa@gmail.com` (helpers `gmailAccessToken()`
   / `sendGmail()`). Runbook completo de cómo generar los 3 secrets

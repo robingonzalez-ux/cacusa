@@ -12,6 +12,17 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-16 — Fix: pagos con tarjeta no revisaban a quién pertenecía el código 10%
+
+`square-payment-worker.js` (pagos con tarjeta/Apple Pay/Google Pay vía
+Square) tiene su propia copia de la validación de cupones, separada de
+`admin-worker.js` — al agregar la restricción por email del código de
+bienvenida (ver entrada de abajo), esta copia quedó sin actualizar: se
+podía pagar con tarjeta usando el código de bienvenida de otra clienta y
+el 10% se aplicaba igual, aunque pagar por Zelle/WhatsApp ya lo hubiera
+bloqueado. Corregido el mismo día — ahora revisa el email en los dos
+lugares.
+
 ## 2026-09-16 — Código de bienvenida del 10% de verdad, por correo
 
 El popup del 10% ("quiero mi descuento") solo abría WhatsApp — el
