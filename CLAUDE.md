@@ -599,18 +599,32 @@ vez de reinventarlos:
   `=== true`, a propósito: las reseñas anteriores al cambio no tienen el
   campo y deben seguir visibles. Importa porque esas reseñas alimentan el
   `aggregateRating` que se publica para Google.
+- **Verificado a nivel de base de datos (17 sep)**: no bastaba con que
+  `submitReview()` siempre mande `approved: false` — alguien podía saltarse
+  el sitio por completo y escribir directo a la REST API de Firebase con
+  `approved: true`, auto-aprobándose. Se pidieron las reglas actuales de
+  Firebase (Console → Realtime Database → Rules) y `cacusa_reviews` YA las
+  hace cumplir:
+  ```json
+  "approved": { ".validate": "newData.isBoolean() && newData.val() === false" }
+  ```
+  Cualquier creación con `approved` distinto de `false` (o ausente) es
+  rechazada por la regla misma, sin depender de que el cliente se porte
+  bien. `".write": "!data.exists()"` en el mismo nodo además impide editar
+  una reseña ya creada desde afuera — el flujo de aprobación real (que SÍ
+  pone `approved: true`) pasa por `lovers-webhook-worker.js` con
+  `FB_DB_SECRET`, que bypassa las reglas por diseño de Firebase.
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-Los 4 Workers están desplegados y al día (confirmado 16 sep) con todo lo de
-`workers-src` hasta el commit `2bc5896` — leads por llave, seguridad del
-correo/cupón de envío, consolidación del escaneo. La privacidad del bucket
-R2 `cacusa-backups` también quedó verificada ese día (ver "Backups y
-recuperación de desastres" más arriba). Queda pendiente uno solo:
-
-1. **Regla de Firebase**: exigir que una reseña nueva traiga
-   `approved === false`, para que nadie pueda auto-aprobarse mandando la
-   reseña por fuera del sitio.
+Ninguno por ahora (17 sep). Los 4 Workers están desplegados y al día
+(confirmado 16 sep) con todo lo de `workers-src` hasta el commit `2bc5896`
+— leads por llave, seguridad del correo/cupón de envío, consolidación del
+escaneo. La privacidad del bucket R2 `cacusa-backups` quedó verificada el
+16 sep (ver "Backups y recuperación de desastres" más arriba), y la regla
+de Firebase que exige `approved === false` en reseñas nuevas quedó
+verificada el 17 sep — ya vive en las reglas de la base de datos (ver
+"Moderación de reseñas" más arriba).
 
 ## Historial de cambios
 

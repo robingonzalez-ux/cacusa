@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-17 — Verificado: las reseñas nuevas no se pueden auto-aprobar
+
+Último ítem pendiente de seguimiento operativo, cerrado. Se pidieron las
+reglas reales de Firebase para confirmar (no suponer) que una reseña nueva
+solo puede crearse con el estado "pendiente de aprobación" — y ya era así:
+las reglas de la base de datos rechazan cualquier intento de crear una
+reseña que llegue marcada como ya aprobada, sin importar por dónde se
+mande. No fue necesario ningún cambio, solo se confirmó y se dejó
+documentado con evidencia. No queda ningún paso manual pendiente por ahora.
+
+---
+
 ## 2026-09-16 — El popup del 10% ya no dice "revisa tu correo" si en realidad falló
 
 Último hallazgo de la revisión del lado cliente. El popup mostraba el
