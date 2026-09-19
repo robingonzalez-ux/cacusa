@@ -12,6 +12,30 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (3ra tanda) — el aviso de webhook de Lovers dejó de mentir "OK"
+
+El usuario probó por su cuenta lo ya corregido y encontró un problema real
+más: si Firebase estaba caído justo cuando Square avisaba de un pago
+confirmado, una cancelación o un cobro fallido, ese aviso se perdía para
+siempre — el sistema seguía diciéndole "recibido" a Square (que por eso
+nunca reintentaba) aunque en realidad nada se hubiera guardado. Peor
+todavía: la notificación push a Tita/Robin sonaba igual, avisando de un
+pago o cancelación que en los hechos no quedó registrado en ningún lado.
+
+Ahora el sistema solo confirma "recibido" cuando el guardado salió bien de
+verdad — si Firebase falla, avisa que hubo un problema para que Square
+reintente automáticamente, y ya no manda notificaciones sobre algo que no
+se guardó. También se revisaron 2 afirmaciones más sobre el texto de la
+regla de Firebase (un supuesto error de tipeo y un problema de formato) —
+ninguna de las 2 resultó ser real, verificado directamente.
+
+De paso, se terminó de blindar la regla de Firebase de Cacusa Lovers:
+antes solo bloqueaba campos extra, ahora también exige que nombre,
+teléfono, dirección y el resto de los datos tengan el tipo y largo
+correctos. Falta desplegar 1 Worker y pegar la regla actualizada.
+
+---
+
 ## 2026-09-19 (2da tanda) — 3 hallazgos más tras revisar de nuevo con IA
 
 Misma auditoría externa, segunda pasada sobre lo ya corregido:

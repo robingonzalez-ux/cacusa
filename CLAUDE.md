@@ -177,9 +177,20 @@ reglas, actualizar este bloque con el nuevo snapshot.
         ".write": "!data.exists() && newData.hasChildren(['email', 'estado_pago'])",
         "email":       { ".validate": "newData.isString() && newData.val().length <= 150 && newData.val().matches(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/)" },
         "estado_pago": { ".validate": "newData.val() === 'pendiente'" },
-        "nombre": {}, "apellido": {}, "telefono": {}, "direccion": {}, "apto": {},
-        "ciudad": {}, "estado": {}, "zip": {}, "pais": {}, "plan": {}, "monto": {},
-        "fecha": {}, "metodo_pago": {}, "idioma": {},
+        "nombre":      { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "apellido":    { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "telefono":    { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "direccion":   { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "apto":        { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "ciudad":      { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "estado":      { ".validate": "newData.isString() && newData.val().length <= 50" },
+        "zip":         { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "pais":        { ".validate": "newData.isString() && newData.val().length <= 10" },
+        "plan":        { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "monto":       { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "fecha":       { ".validate": "newData.isString() && newData.val().length <= 10" },
+        "metodo_pago": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "idioma":      { ".validate": "newData.val() === 'es' || newData.val() === 'en'" },
         "$other": { ".validate": false }
       }
     },
@@ -814,23 +825,76 @@ nuevos, 1 ya documentado (no es hallazgo nuevo).
   al formulario público a futuro tiene que sumarse también a esta regla, o
   la escritura se va a rechazar sola (mismo trade-off ya aceptado para
   `cacusa_reviews`).
-- **Descartado como hallazgo nuevo**: "problemas del webhook Lovers y de
-  confirmación del pedido" — es el mismo A04 ya documentado arriba (acción
-  múltiple sin atomicidad en `invoice.payment_made`), no algo nuevo que se
-  encontrara. Sigue sin corregirse, a propósito, en esta tanda.
+- **Descartado en su momento, corregido en la 3ra ronda**: en esta 2da
+  ronda se dijo "problemas del webhook Lovers... es el mismo A04, no algo
+  nuevo" — la 3ra ronda (abajo) probó el escenario concreto y sí era un
+  bug real y distinto, no solo la preocupación vaga de A04.
 
 Los 2 Workers (`admin-worker.js`, `lovers-webhook-worker.js`) con estos 3
 arreglos de código ya están desplegados (confirmado 19 sep). La regla de
 Firebase actualizada para `cacusa_lovers` (A02-residual) también ya está
 publicada.
 
+### 3ra ronda (19 sep, mismo día) — verificación propia probando lo ya corregido
+
+El usuario probó las 2 rondas anteriores por su cuenta y reportó 4
+observaciones. Verificación propia de cada una contra el código real:
+
+- **Login y sesiones**: confirmado — ya rechazan tokens de usuarios
+  inválidos y siguen aceptando a los 2 usuarios reales. Sin acción.
+- **Gift card con envío/impuesto**: el frontend actualizado (`subtotal`/
+  `envio`/`impuesto` en los 2 checkouts, ES y EN) ya estaba comiteado y
+  pusheado a `main` en esta misma sesión (commit `d32f6a6`) — confirmado
+  con `grep` directo sobre los 2 archivos. No hacía falta ninguna acción
+  nueva, solo esta confirmación.
+- **Webhook de Lovers devuelve 200 aunque Firebase falle — REAL, corregido
+  de verdad esta vez**: `handleWebhook()` en `lovers-webhook-worker.js`
+  tenía un comentario explícito ("Always return 200 to Square (prevents
+  retries)") y nunca revisaba el resultado de `updateSubscriber()` — si
+  Firebase fallaba justo cuando llegaba `invoice.payment_made`,
+  `subscription.updated` (cancelación) o `invoice.scheduled_charge_failed`,
+  el estado real nunca se guardaba, pero como Square vio 200 nunca
+  reintenta, así que se perdía para siempre. Peor: las notificaciones push
+  a Tita/Robin se disparaban igual, avisando de un pago/cancelación que en
+  realidad no quedó guardado. Ahora se rastrea `dbOk` (lo que devuelve
+  `updateSubscriber()`, que ya sí revisaba `r.ok` desde antes) en las 4
+  ramas del webhook: las notificaciones solo se disparan si el guardado
+  tuvo éxito, y el webhook devuelve 500 si algo falló — Square reintenta,
+  y es seguro porque `updateSubscriber()` es un `PATCH` idempotente.
+  Probado con Firebase simulado caído (`lovers-webhook-500-test.mjs` en el
+  scratchpad de la sesión): confirma 500 + cero notificaciones falsas en
+  el fallo, y 200 + notificación real en el reintento exitoso.
+- **Regla de Firebase — email/campos**: real en parte. Se agregó
+  validación de tipo/longitud a los 13 campos que quedaban con `{}` sin
+  validar (`nombre`, `apellido`, `telefono`, `direccion`, `apto`,
+  `ciudad`, `estado`, `zip`, `pais`, `plan`, `monto`, `fecha`,
+  `metodo_pago`, `idioma`) — mismos límites que ya usa `buildOrderCore()`
+  en `admin-worker.js` para los mismos campos, ver snapshot arriba. La
+  propiedad del correo (que sea realmente el correo de quien lo escribe)
+  sigue sin poder verificarse desde una regla de base de datos — necesita
+  un flujo de confirmación real (magic link/OTP), fuera de alcance de este
+  cambio, documentado como limitación conocida, no como bug.
+  **Las 2 afirmaciones puntuales sobre el JSON no se sostuvieron**: no
+  existe ningún `"actualziado"` en el texto (búsqueda directa, no
+  aparece), y el regex del email no tiene escapes de más — se parseó el
+  JSON tal cual con Python y el resultado es exactamente
+  `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`, que es el regex correcto (el `\\s`/`\\.`
+  en el JSON es el escape que exige el propio formato JSON, no un error).
+
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-Ninguno por ahora (19 sep). Las 2 rondas de la auditoría externa quedaron
-cerradas del todo: los 6 arreglos de la 1ra ronda + los 3 de la 2da están
-desplegados en los Workers correspondientes, y las 2 reglas de Firebase
-(`estado_pago`, y la versión endurecida con validación de email + campos
-permitidos) están publicadas — ver "Reglas de Firebase RTDB (snapshot)"
+1. **Deploy de `lovers-webhook-worker.js`** con el arreglo del webhook
+   (3ra ronda, arriba) — entregado el 19 sep.
+2. **Regla de Firebase actualizada para `cacusa_lovers`** (validación de
+   tipo/longitud en los 13 campos, arriba) — pegar el snapshot completo
+   (sección "Reglas de Firebase RTDB" más arriba) en Console → Realtime
+   Database → Rules.
+
+Antes de esta 3ra ronda, las 2 rondas anteriores de la auditoría externa
+habían quedado cerradas del todo: los 6 arreglos de la 1ra ronda + los 3
+de la 2da desplegados en los Workers correspondientes, y las 2 reglas de
+Firebase (`estado_pago`, y la versión endurecida con validación de email +
+campos permitidos) publicadas — ver "Reglas de Firebase RTDB (snapshot)"
 más arriba.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
