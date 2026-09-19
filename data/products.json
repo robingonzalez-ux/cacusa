@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T17:47:36.062Z",
+  "lastUpdated": "2026-09-19T17:49:08.459Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2535,6 +2535,28 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789840051998,
+      "promo": null
+    },
+    {
+      "name": "Pulsera oro rosa de osito",
+      "name_en": "Rose Gold Bear Bracelet",
+      "category": "Pulseras",
+      "price": 28,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un toque de dulzura que también se siente sofisticado. 🧸✨\nPulsera en tono oro rosa Gold Filled, con delicadas cuentas y un dije central de osito rodeado de circones multicolor que aportan un brillo sutil y diferente. Una pieza femenina y especial, perfecta para llevar todos los días o regalar a alguien que quieras tener siempre cerquita. 💗",
+      "description_en": "A touch of sweetness that also feels sophisticated. 🧸✨\nGold Filled rose gold bracelet, with delicate beads and a central teddy bear charm surrounded by multicolored zircons that provide a subtle and different shine. A feminine and special piece, perfect to wear every day or give to someone you want to always be close. 💗",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789840075053_adfbc104_f6c8_4b89_b81f_ae33d4ad2070_jpe.webp",
+      "focalX": 24.624824890320507,
+      "focalY": 69.48310139165011,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789840143477,
       "promo": null
     }
   ],
