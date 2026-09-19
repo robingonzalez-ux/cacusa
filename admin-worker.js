@@ -286,7 +286,17 @@ export default {
 };
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
+// Barrido de seguridad (19 sep): passwordFor(user) hacía un lookup directo sobre un
+// objeto literal — que hereda de Object.prototype. Con user:"constructor" (o
+// "toString", "__proto__", etc.) el lookup devolvía una función heredada en vez de
+// undefined, y safeEqual() la convertía a un string determinista y adivinable
+// ("function Object() { [native code] }"), dejando entrar con cualquier "contraseña"
+// que fuera exactamente ese string. VALID_USERS.has() no consulta el prototype —
+// cierra el vector por completo, sin tocar signToken/verifyToken (que nunca revisan
+// qué usuario firmó el token, pero ahora nunca se firma uno para un usuario inválido).
+const VALID_USERS = new Set(['tita.jaramillo', 'robin.gonzalez']);
 function passwordFor(user, env) {
+  if (!VALID_USERS.has(user)) return undefined;
   return { 'tita.jaramillo': env.PASS_TITA, 'robin.gonzalez': env.PASS_ROBIN }[user];
 }
 
@@ -606,11 +616,21 @@ async function handleOrder(body, env, origin, ctx, request) {
   // Redención de gift card — fusionada acá (en vez de ser una llamada pública separada a
   // /giftcard/redeem, ver hallazgo de seguridad) para que nunca se pueda vaciar una tarjeta
   // sin que exista un pedido real registrado. El monto nunca puede exceder ni el saldo real
-  // de la tarjeta (lo garantiza gcRedeem) ni el total de ESTE pedido (lo garantizamos acá).
+  // de la tarjeta (lo garantiza gcRedeem) ni el total BRUTO de ESTE pedido.
+  //
+  // Barrido de seguridad (19 sep): acá se comparaba contra newOrder.total, pero ese campo
+  // ya llega NETO — la tienda le resta el gift card Y el cupón antes de mandarlo. Compra de
+  // $100 pagada 100% con gift card de $100 llegaba con total=$0, así que el tope daba
+  // min(100,0)=0 y NUNCA se descontaba nada del saldo real. Compra de $100 con $80 de gift
+  // card llegaba con total=$20, así que solo se descontaban $20, no $80. Ahora se compara
+  // contra el subtotal BRUTO recalculado de los productos del pedido (antes de cualquier
+  // descuento) — no incluye envío/impuesto (no viajan en este payload), pero ya no permite
+  // que el gift card cubra más de lo que realmente vale la mercadería.
   const gcCodeReq   = str(order.giftcard && order.giftcard.code, 40);
   const gcAmountReq = num(order.giftcard && order.giftcard.amount);
   if (gcCodeReq && gcAmountReq > 0 && env.CACUSA_KV) {
-    const cappedAmount = Math.min(gcAmountReq, newOrder.total);
+    const grossSubtotal = newOrder.productos.reduce((s, p) => s + p.price * p.qty, 0);
+    const cappedAmount = Math.min(gcAmountReq, grossSubtotal);
     if (cappedAmount > 0) {
       const giftcardResult = await gcRedeem(env, gcCodeReq, cappedAmount);
       if (giftcardResult.applied > 0) {
@@ -1291,8 +1311,19 @@ async function setCouponActive(env, code, active) {
   coupon.active = active;
   await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
 }
+// Barrido de seguridad (19 sep): antes se firmaba con el teléfono completo tal cual
+// llegaba, pero loversShipIndexKey() (arriba) siempre indexa por los últimos 7 dígitos.
+// Si la misma clienta pedía el código escribiendo su número CON código de país una vez
+// y SIN código de país otra, salían 2 HMACs distintos (2 cupones ENVIO... diferentes),
+// y el índice solo guardaba el último — al cancelar solo se desactivaba ese, el otro
+// quedaba funcionando para siempre. Ahora se normaliza a los mismos últimos 7 dígitos
+// que usa el índice, así el mismo teléfono da SIEMPRE el mismo código sin importar el
+// formato. Nota: un código emitido antes de este cambio con un formato de teléfono
+// distinto al que se use de ahora en más queda huérfano (no indexado) — mismo tipo de
+// limitación ya aceptada para el rollout de restrictToPhone del 16 sep.
 async function loversShippingCode(phoneDigits, env) {
-  const sig = await hmac('lovers-shipping:' + phoneDigits, env.SESSION_SECRET);
+  const normalized = String(phoneDigits || '').replace(/\D/g, '').slice(-7);
+  const sig = await hmac('lovers-shipping:' + normalized, env.SESSION_SECRET);
   // b64url → solo A-Z 0-9 para que entre en el formato de código de cupón.
   const clean = sig.toUpperCase().replace(/[^A-Z0-9]/g, '');
   return 'ENVIO' + clean.slice(0, 8);
