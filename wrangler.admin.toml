@@ -32,6 +32,22 @@
 # a namespace using a 'new_sqlite_classes' migration. [code: 10097]"). No hace
 # falta tocar nada del código de la clase — la API de `this.state.storage`
 # (get/put/delete/list, `setAlarm`) es la misma en los 2 tipos de storage.
+#
+# INCIDENTE (19 sep, mismo día) — este archivo NO declaraba los bindings que
+# cacusa-admin YA tenía configurados a mano en el dashboard (CACUSA_KV,
+# LOVERS_WEBHOOK) — `wrangler deploy` toma el wrangler.toml como fuente única de
+# verdad de los bindings del Worker, así que el primer deploy real los borró sin
+# avisar. Síntoma: "KV no configurado" al mandar códigos de bienvenida desde el
+# panel. Arreglo inmediato (sin código): volver a agregarlos a mano en
+# Cloudflare → cacusa-admin → Settings → Bindings → Add — un KV Namespace
+# (variable CACUSA_KV) y un Service binding (variable LOVERS_WEBHOOK → Worker
+# cacusa-lovers-webhook). Quedan también declarados abajo para que un futuro
+# `wrangler deploy` no los vuelva a pisar — PERO el `id` del namespace de KV es
+# un placeholder: hay que reemplazarlo por el ID real (Cloudflare → Workers KV →
+# click en el namespace → el ID está en la URL, o correr
+# `wrangler kv namespace list`) antes de volver a correr wrangler alguna vez.
+# Mientras el `id` sea el placeholder, NO volver a correr `wrangler deploy` con
+# este archivo — solo sirve como referencia de qué bindings debe tener el Worker.
 
 name = "cacusa-admin"
 main = "admin-worker.js"
@@ -44,3 +60,11 @@ class_name = "GiftCardLedger"
 [[migrations]]
 tag = "v1-giftcardledger"
 new_sqlite_classes = ["GiftCardLedger"]
+
+[[kv_namespaces]]
+binding = "CACUSA_KV"
+id = "REEMPLAZAR_CON_EL_ID_REAL_DEL_NAMESPACE"
+
+[[services]]
+binding = "LOVERS_WEBHOOK"
+service = "cacusa-lovers-webhook"
