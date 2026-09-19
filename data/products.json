@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T21:50:17.881Z",
+  "lastUpdated": "2026-09-19T21:52:58.484Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2537,6 +2537,28 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789840143477,
+      "promo": null
+    },
+    {
+      "name": "Set de Fe",
+      "name_en": "Faith Set",
+      "category": "Parejas",
+      "price": 44,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Set de Fe ✨ — Dos pulseras, un vínculo especial.\n\nUn detalle con significado para compartir con alguien que ocupa un lugar único en tu vida. Una para ti y una para ella, como símbolo de fe, amor y de ese lazo que las mantiene unidas. ❤️\n\nPerfectas para mejores amigas, hermanas, mamá e hija o para esa persona que simplemente es tu persona. Un regalo pequeño que dice algo enorme: “quiero que lleves siempre un pedacito de nuestro vínculo contigo”. 💕",
+      "description_en": "Faith Set ✨ — Two bracelets, a special bond.\n\nA meaningful detail to share with someone who occupies a unique place in your life. One for you and one for her, as a symbol of faith, love and that bond that holds them together. ❤️\n\nPerfect for best friends, sisters, mom and daughter or for that person who is simply you. A small gift that says something huge: \"I want you to always carry a piece of our bond with you\". 💕",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe.webp",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789854774028,
       "promo": null
     }
   ],
