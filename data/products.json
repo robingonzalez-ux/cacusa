@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:11:22.080Z",
+  "lastUpdated": "2026-09-19T16:12:57.310Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2333,6 +2333,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834277881,
+      "promo": null
+    },
+    {
+      "name": "Aretes de flor y circones ",
+      "name_en": "Flower & Zircon Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Una flor hecha para brillar tanto como tú. ✨🌸\nCubiertos de circones que capturan la luz desde cada ángulo, estos aretes convierten la delicadeza de una flor en una pieza protagonista. Su acabado Gold Filled los hace perfectos para esos días en los que quieres que tu joya sea el centro de todas las miradas.",
+      "description_en": "A flower made to shine as bright as you. ✨🌸\nCovered in zircons that capture light from every angle, these earrings turn the delicacy of a flower into a protagonist piece. Their Gold Filled finish makes them perfect for those days when you want your jewel to be the center of all eyes.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789834304059_0ad9a579_a733_4252_88e4_368716b980b5_jpe.webp",
+      "focalX": 46.30906543859206,
+      "focalY": 57.95228628230616,
+      "zoom": 1.15,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789834373112,
       "promo": null
     }
   ],
