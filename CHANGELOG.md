@@ -12,6 +12,15 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (8va tanda) — los productos destacados del home ya usan las URLs nuevas
+
+Quedaba pendiente de la auditoría SEO grande: los datos que le muestra el
+home a Google sobre sus "productos destacados" (Bestsellers) seguían
+armando el enlace de cada producto con el formato viejo. Ya usan la misma
+URL real que el resto del sitio desde hace unos días.
+
+---
+
 ## 2026-09-19 (7ma tanda) — limpieza de páginas de productos ya eliminados
 
 Al revisar el hallazgo anterior se encontró que las páginas individuales

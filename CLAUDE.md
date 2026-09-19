@@ -677,10 +677,17 @@ venga de `?p=`/`?cat=` o de una página física nueva — apuntando siempre a
 la URL física nueva. Los ~172 `<a href>` reales agregados a las tarjetas
 de producto (`_pcardHref()`/`_pcardNav()`, hallazgo SEO-03) y los enlaces
 de categoría del home (`index.html`/`en/index.html`) ya usan las URLs
-nuevas directamente. **Pendiente, no se tocó**: el JSON-LD de productos
-destacados que arma el home (`index.html` línea ~894) todavía construye
-la URL con `?p=` — es JS que corre en el home, no en la tienda, y no tenía
-`_slugify`/`_productParam` disponibles; requiere una pasada aparte.
+nuevas directamente. **Cerrado (19 sep, tanda posterior)**: el JSON-LD de
+productos destacados que arma el home (`renderHomeItemListLd()` en
+`index.html`/`en/`) construía la URL con `?p=` — se le agregó su propia
+copia de `_homeSlugify()`/`_homeProductUrl()` (mismo algoritmo que
+`_slugify`/`_productParam` de la tienda, verificado byte a byte contra
+`product_page_url()` de Python con productos reales) para que apunte
+directo a la página física del producto, fija al idioma de cada archivo
+(`index.html` siempre en/ES vía `p.name`, `en/index.html` siempre EN vía
+`p.name_en || p.name`) — igual que el resto de las señales de SEO del
+home, que ya son fijas por archivo y no dependen del toggle de idioma por
+`localStorage`.
 
 **Precio consistente en el JSON-LD estático** (hallazgo SEO-02): el precio
 publicado en `STATIC_PRODUCT_SCHEMA` venía siempre del precio base de
