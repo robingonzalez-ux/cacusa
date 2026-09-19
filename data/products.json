@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:53:04.168Z",
+  "lastUpdated": "2026-09-19T14:53:16.967Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1233,26 +1233,6 @@
       "material": "Baño de oro 18k",
       "id": 1781880053907,
       "name_en": "Adjustable Ring with 3 Zirconia"
-    },
-    {
-      "name": "Dos peces uno llano, otro con microcircones. Ambos con el ojo turco. Anillo ajustable ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Singular anillo ajustable con dos peces: uno liso y otro con microcircones, ambos con el ojo turco protector. Bañado en oro 18k.",
-      "description_en": "Unique adjustable ring featuring two fish: one plain and one with micro zirconia, both with the protective evil eye. 18k gold plated.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880075134_image_jpg.webp",
-      "focalX": 45.48832271762209,
-      "focalY": 40.71969696969693,
-      "zoom": 1.6,
-      "material": "Baño de oro 18k",
-      "id": 1781880127649,
-      "name_en": "Adjustable Two Fish & Evil Eye Ring"
     },
     {
       "name": "Anillo ajustable de circones ",
