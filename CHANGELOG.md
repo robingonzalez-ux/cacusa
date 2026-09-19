@@ -12,6 +12,28 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (4ta tanda) — 2 arreglos más de la auditoría SEO: producto inexistente y canonical faltante
+
+De la misma auditoría SEO externa, se cerraron 2 hallazgos más que habían
+quedado pendientes:
+
+- Antes, si alguien entraba a la tienda con un enlace a un producto que ya
+  no existe (por ejemplo un enlace viejo de un producto eliminado hace
+  tiempo), la página se mostraba igual que si fuera una tienda normal, sin
+  avisar nada — confuso tanto para la clienta como para Google. Ahora se
+  muestra un aviso claro ("Este producto ya no está disponible") y se le
+  dice a los buscadores que no indexen esa combinación puntual de enlace.
+  Un producto agotado (que sigue existiendo, solo sin stock) no se ve
+  afectado por este cambio — sigue mostrándose e indexándose normal.
+- 3 páginas de guías (`cuidados.html`, `envios.html`, `devoluciones.html`)
+  no tenían la etiqueta de "página preferida" (canonical) que sí tienen
+  las otras 5 guías del sitio — se agregó, siguiendo el mismo formato.
+- De paso, se simplificaron los enlaces internos que apuntaban a
+  "index.html#personalize" para que usen directamente "#personalize" —
+  mismo destino, URL más corta.
+
+---
+
 ## 2026-09-19 — Auditoría SEO: cada producto y categoría tiene su propia página real
 
 Una auditoría SEO externa encontró que la tienda nunca podía tener título,

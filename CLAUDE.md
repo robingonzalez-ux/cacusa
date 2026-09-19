@@ -679,6 +679,31 @@ scroll interno de respaldo, para que nunca cubra el 100% del viewport.
 Rediseñarlo como banner discreto (sugerencia de la auditoría, cambia el
 mecanismo de captura de leads) queda como decisión de negocio aparte, no
 se tocó.
+
+**Producto inexistente** (hallazgo SEO-08): `?p=id-que-no-existe` quedaba
+con 200 + `index, follow` + la tienda genérica — mismo tratamiento que un
+producto real, señal confusa para buscadores (no confundir con un
+producto agotado, `available: false`, que sigue siendo un producto real y
+debe seguir indexado). En el boot IIFE de `ui_kits/store/index.html`/`en/`,
+la rama `else` de `if (_ap)` ahora pone `noindex, follow` en el
+`<meta name="robots">` existente y muestra un aviso con `showToast()` (ya
+usado en el mismo archivo para el aviso de "4% off Zelle") — "Este
+producto ya no está disponible."/"This product is no longer available."
+
+**Canonical faltante en 3 páginas** (hallazgo SEO-11): `cuidados.html`,
+`envios.html` y `devoluciones.html` eran las únicas 3 páginas del patrón
+"una sola URL con selector de idioma" (ver "Patrón de idiomas" más abajo)
+sin `<link rel="canonical">` — las otras 5 del mismo patrón
+(`guia-tallas.html`, `guia-regalos.html`, `guias.html`,
+`significado-piedras.html`, `como-combinar-joyas.html`) ya lo tenían. Se
+agregó con el mismo formato exacto (`<link rel="canonical"
+href="https://cacusabytaitus.com/<archivo>.html">`, sin hreflang, ya que
+no hay 2 URLs distintas por idioma en este patrón). De paso, los enlaces
+internos `.../index.html#personalize` se simplificaron a `#personalize`
+en las 4 plantillas fuente que los tenían (`ui_kits/store/index.html`,
+`en/`, `cacusa-lovers.html`, `en/`) — mismo destino, URL más limpia; los
+172 archivos generados lo heredan solos al regenerarse, no se tocan a
+mano.
 - **Primera pantalla de la tienda**: selector visual de categorías (carrusel
   de hasta 3 fotos por tarjeta, mismo crossfade que el slideshow del hero
   del home) en vez de mostrar los ~76 productos de golpe. Se apaga
