@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-16T01:50:07.564Z",
+  "lastUpdated": "2026-09-17T17:18:05.864Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1250,28 +1250,6 @@
       "material": "Baño de oro 18k",
       "id": 1781879659210,
       "name_en": "Adjustable Double Star Micro Zirconia Ring"
-    },
-    {
-      "name": "Corazón dorado. Anillo entorchado ajustable ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Tierno anillo entorchado ajustable con corazón dorado en baño de oro 18k. Perfecto para llevar el amor en tus manos.",
-      "description_en": "Tender adjustable hooked ring with gold heart in 18k gold plating. Perfect for holding love in your hands.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879698277_image_jpg.webp",
-      "focalX": 52.01698513800424,
-      "focalY": 48.48484848484847,
-      "zoom": 1.75,
-      "material": "Baño de oro 18k",
-      "id": 1781879732319,
-      "name_en": "Golden heart. Adjustable looped ring",
-      "images": [],
-      "promo": null
     },
     {
       "name": "Anillo doble línea llana con corazón plateado ",
