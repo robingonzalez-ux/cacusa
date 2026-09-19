@@ -1377,12 +1377,27 @@ async function markReferralMonthlyUse(env, code) {
 // a diferencia de /coupon/create (que sí permite elegir tipo/monto), esta ruta es
 // pública, así que nunca deja que el llamador defina el descuento.
 // El código es determinístico a partir del teléfono, así pedirlo dos veces no crea 2 cupones.
+// Auditoría de seguridad (2ª ronda, 13 sep) — hallazgo medio, cerrado parcialmente el
+// 19 sep: la respuesta distinguía "no sos suscriptora activa" (403, texto explícito) de
+// "acá está tu código" (200) — eso convierte al endpoint en una forma de preguntar,
+// número por número, quién está suscrita a Cacusa Lovers. Cerrarlo del todo requeriría
+// no revelar nada en la respuesta y mandar el código por WhatsApp Business API en vez de
+// mostrarlo en pantalla — infraestructura que este sitio no tiene hoy (decisión explícita
+// de no construirla en esta tanda). Mitigación aplicada mientras tanto, sin tocar la UX
+// de la suscriptora real: el mismo mensaje y el mismo código HTTP (429) para los 3 casos
+// de fallo (rate-limit por IP, rate-limit por teléfono, no-es-suscriptora), para que ni
+// el texto ni el status code confirmen cuál de los 3 pasó — más un tope de intentos POR
+// TELÉFONO además del tope por IP, para que alguien con varias IPs no pueda barrer la
+// misma lista de números más rápido que una suscriptora real reintentando el suyo por
+// error de tipeo. La señal de fondo (¿vino un código real o no?) sigue existiendo — eso
+// solo se cierra del todo con el canal de WhatsApp, ver más arriba.
+const REFERRAL_GENERIC_MSG = 'No se pudo generar el código en este momento. Si sos suscriptora activa de Cacusa Lovers y el problema persiste, escríbenos por WhatsApp.';
 async function handleReferralCode(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
   const rlKey = `refrl:${ip}`;
   const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  if (rlCount >= 10) return err(REFERRAL_GENERIC_MSG, 429, origin);
   await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
 
   const name = String(body.name || '').trim().slice(0, 100);
@@ -1390,8 +1405,12 @@ async function handleReferralCode(body, env, origin, request) {
   if (!name || phoneDigits.length < 7) {
     return err('Faltan nombre o teléfono válido', 400, origin);
   }
+  const phoneRlKey = `refrlph:${phoneDigits.slice(-7)}`;
+  const phoneRlCount = parseInt((await env.CACUSA_KV.get(phoneRlKey)) || '0', 10);
+  if (phoneRlCount >= 5) return err(REFERRAL_GENERIC_MSG, 429, origin);
+  await env.CACUSA_KV.put(phoneRlKey, String(phoneRlCount + 1), { expirationTtl: 3600 });
   if (!(await isActiveLoversPhone(phoneDigits, env))) {
-    return err('Este beneficio es exclusivo para suscriptoras activas de Cacusa Lovers.', 403, origin);
+    return err(REFERRAL_GENERIC_MSG, 429, origin);
   }
   const code = 'AMIGA' + phoneDigits.slice(-6);
 
