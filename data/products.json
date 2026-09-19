@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:31:53.242Z",
+  "lastUpdated": "2026-09-19T15:34:48.910Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2069,6 +2069,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831746751,
+      "promo": null
+    },
+    {
+      "name": "Cadena doble ",
+      "name_en": "Double strand",
+      "category": "Cadenas",
+      "price": 38,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cadena doble de diseño delicado que combina dos estilos de eslabones para crear un efecto de capas elegante y moderno. ✨ Perfecta para llevar sola y conseguir un look sofisticado sin necesidad de combinar varios collares.",
+      "description_en": "Delicately designed double chain that combines two styles of links to create a sleek and modern layering effect. ✨ Perfect to wear alone and achieve a sophisticated look without the need to combine several necklaces.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789831954077_cfa79d17_a684_40de_a856_284adaa1b410_png.webp",
+      "focalX": 43.35631778946574,
+      "focalY": 80.88137839628902,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789832083118,
       "promo": null
     }
   ],
