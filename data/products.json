@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:54:29.839Z",
+  "lastUpdated": "2026-09-19T14:54:40.428Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1069,28 +1069,6 @@
       "material": "Baño de oro 18k",
       "id": 1781878646387,
       "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
-    },
-    {
-      "name": "Círculo de microcircones con un fondo de nácar y un microcircones central ",
-      "category": "Anillos",
-      "price": 25,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Ajustable. Anillo con círculo de microcircones sobre fondo de nácar y piedra central. Elegancia y detalle artesanal en cada acabado.",
-      "description_en": "Adjustable ring with a circle of micro zircons on a mother-of-pearl background and a central stone. Elegant, handcrafted detail in every finish.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1783815544186_be2921ad_a5b6_47d3_aed0_440f77267397_jpe.webp",
-      "focalX": 34.45480755119743,
-      "focalY": 46.78701475035486,
-      "zoom": 1,
-      "material": "Baño de oro 18k",
-      "id": 1781879127320,
-      "name_en": "Circle Ring with Mother-of-Pearl Background and Central Stone",
-      "images": [],
-      "promo": null
     },
     {
       "name": "Ajustable. Anillo chuncky con circones verdes ",
