@@ -599,6 +599,17 @@ export default {
       return new Response('Internal Error', { status: 500 });
     }
 
+    // Barrido de seguridad (3ra ronda, 19 sep): antes se ignoraba el resultado de
+    // updateSubscriber() y siempre se devolvía 200 — si Firebase estaba caído (o
+    // FB_DB_SECRET fallaba) en el momento exacto de un pago o cancelación, el estado
+    // real (activo/cancelado/pago_fallido) se perdía en silencio para siempre, porque
+    // Square nunca reintenta un webhook que ya vio 200. Ahora se rastrea si el guardado
+    // realmente funcionó (dbOk) — las notificaciones push solo se disparan si el
+    // guardado tuvo éxito (si no, se le estaría avisando a Tita/Robin de algo que nunca
+    // se guardó), y el webhook devuelve 500 si algo falló, para que Square reintente.
+    // updateSubscriber() es un PATCH idempotente, así que reintentar es seguro: no
+    // duplica nada, y las notificaciones solo suenan en el intento que sí se guarda.
+    let dbOk = true;
     try {
       // ── subscription.created → crear registro inmediatamente ───────────────
       if (type === 'subscription.created') {
@@ -618,7 +629,7 @@ export default {
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
           const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
           if (!existing) {
-            await updateSubscriber(key, 'pendiente', {
+            dbOk = await updateSubscriber(key, 'pendiente', {
               email: email.toLowerCase(),
               nombre:    customer?.given_name  || '',
               apellido:  customer?.family_name || '',
@@ -637,7 +648,7 @@ export default {
           } else {
             // Ya existe (vino del formulario): solo adjuntar la referencia de Square,
             // sin tocar sus datos ni su estado_pago actual.
-            await updateSubscriber(key, null, {
+            dbOk = await updateSubscriber(key, null, {
               square_subscription_id: sub.id || '',
             }, dbUrl, fbAuth);
             console.log('Attached square_subscription_id to existing record (subscription.created):', email);
@@ -651,7 +662,7 @@ export default {
           // Excepción: si el aviso de "suscripción pendiente" ya sonó cuando
           // llenó el formulario (push_pendiente), no se repite acá — esa misma
           // clienta recibiría su segundo aviso recién al confirmarse el pago.
-          if (!existing?.push_pendiente) {
+          if (dbOk && !existing?.push_pendiente) {
             await notifyAdminPush(
               'CACUSA · Nueva suscriptora Lovers',
               `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
@@ -695,20 +706,22 @@ export default {
           if (existing) {
             // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
             // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
-            await updateSubscriber(key, 'activo', {
+            dbOk = await updateSubscriber(key, 'activo', {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
-            console.log('Marked activo:', email);
-            const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-            await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
-            await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
+            if (dbOk) {
+              console.log('Marked activo:', email);
+              const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+              await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
+              await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
+            }
           } else {
             // Subscriber not in Firebase yet — create minimal record
             // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
             const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
             const isAnnual = amountCents > 5000;
-            await updateSubscriber(key, 'activo', {
+            dbOk = await updateSubscriber(key, 'activo', {
               email: email.toLowerCase(),
               ...customerFields,
               plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
@@ -717,14 +730,16 @@ export default {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
-            console.log('Created activo record for:', email, '→', key);
-            const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
-            await notifyAdminPush(
-              'CACUSA · Nueva suscriptora Lovers',
-              `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
-              env
-            );
-            await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
+            if (dbOk) {
+              console.log('Created activo record for:', email, '→', key);
+              const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
+              await notifyAdminPush(
+                'CACUSA · Nueva suscriptora Lovers',
+                `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+                env
+              );
+              await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
+            }
           }
         }
       }
@@ -740,10 +755,12 @@ export default {
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
           if (existing) {
-            await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
-            console.log('Marked pago_fallido:', email);
-            const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-            await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
+            dbOk = await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
+            if (dbOk) {
+              console.log('Marked pago_fallido:', email);
+              const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+              await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
+            }
           } else {
             console.warn('invoice.scheduled_charge_failed: no matching subscriber for', email);
           }
@@ -760,11 +777,13 @@ export default {
             const key = subscriberKey(email);
             const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
             if (existing) {
-              await updateSubscriber(key, 'cancelado', {
+              dbOk = await updateSubscriber(key, 'cancelado', {
                 fecha_cancelacion: new Date().toISOString().slice(0, 10),
               }, dbUrl, fbAuth);
-              console.log('Marked cancelado:', email);
-              await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
+              if (dbOk) {
+                console.log('Marked cancelado:', email);
+                await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
+              }
             } else {
               console.warn('subscription.updated CANCELED: no matching subscriber for', email);
             }
@@ -774,9 +793,15 @@ export default {
 
     } catch (err) {
       console.error('Handler error:', err.message);
+      dbOk = false;
     }
 
-    // Always return 200 to Square (prevents retries)
-    return new Response('OK', { status: 200 });
+    // Antes siempre se devolvía 200 (comentario original: "prevents retries") — pero
+    // eso significaba que un fallo real de Firebase en el momento exacto de un pago o
+    // cancelación se perdía para siempre, porque Square nunca reintenta un webhook que
+    // ya vio 200. Ahora solo se devuelve 200 si el guardado (o la falta de guardado
+    // necesario) salió bien; 500 fuerza el reintento de Square — seguro porque
+    // updateSubscriber() es un PATCH idempotente.
+    return new Response(dbOk ? 'OK' : 'Firebase write failed', { status: dbOk ? 200 : 500 });
   },
 };
