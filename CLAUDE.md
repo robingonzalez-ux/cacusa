@@ -883,19 +883,13 @@ observaciones. Verificación propia de cada una contra el código real:
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-1. **Deploy de `lovers-webhook-worker.js`** con el arreglo del webhook
-   (3ra ronda, arriba) — entregado el 19 sep.
-2. **Regla de Firebase actualizada para `cacusa_lovers`** (validación de
-   tipo/longitud en los 13 campos, arriba) — pegar el snapshot completo
-   (sección "Reglas de Firebase RTDB" más arriba) en Console → Realtime
-   Database → Rules.
-
-Antes de esta 3ra ronda, las 2 rondas anteriores de la auditoría externa
-habían quedado cerradas del todo: los 6 arreglos de la 1ra ronda + los 3
-de la 2da desplegados en los Workers correspondientes, y las 2 reglas de
-Firebase (`estado_pago`, y la versión endurecida con validación de email +
-campos permitidos) publicadas — ver "Reglas de Firebase RTDB (snapshot)"
-más arriba.
+Ninguno por ahora (19 sep). Las 3 rondas de la auditoría externa quedaron
+cerradas del todo: los 6 arreglos de la 1ra ronda + los 3 de la 2da + el
+del webhook de la 3ra están desplegados en los Workers correspondientes,
+y las reglas de Firebase (`estado_pago`, la versión endurecida con
+validación de email + campos permitidos, y la de tipo/longitud en los 13
+campos restantes) están todas publicadas — ver "Reglas de Firebase RTDB
+(snapshot)" más arriba.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
 (ver "Backups y recuperación de desastres" más arriba), y la regla de
