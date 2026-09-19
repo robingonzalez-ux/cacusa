@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:33:40.035Z",
+  "lastUpdated": "2026-09-19T16:35:17.031Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2443,6 +2443,28 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789835608668,
+      "promo": null
+    },
+    {
+      "name": "Anillo triple circon ",
+      "name_en": "Triple zircon ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Color que cambia todo. ✨\nTres circones en tonos vibrantes se encuentran en un diseño moderno y delicado que ilumina la mano al instante. Su acabado en baño de oro de 18K lo convierte en ese anillo diferente que levanta cualquier look sin esfuerzo. Ideal para llevar solo o combinar con tus favoritos. 💎💗🩵",
+      "description_en": "Color that changes everything. ✨\nThree zircons in vibrant tones meet in a modern, delicate design that illuminates the hand instantly. Its 18K gold plated finish makes it that different ring that lifts any look effortlessly. Ideal to wear alone or combine with your favourites. 💎💗🩵",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789835643856_aab53626_fee8_450f_ad37_f31059398dc1_jpe.webp",
+      "focalX": 47.50861917104966,
+      "focalY": 39.52948972829694,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789835713834,
       "promo": null
     }
   ],
