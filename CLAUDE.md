@@ -928,16 +928,33 @@ incompletas, guías sin traducir") — se verificó cada punto contra
   con un objeto JS aparte hardcodeado en el propio archivo en vez de venir
   del `config`, inconsistente en el mecanismo pero no en el resultado).
 - **Hallazgo nuevo, fuera del alcance original de SEO-09 — uso extenso de
-  emojis de color en ~20 productos** (`name`/`name_en`/`description`/
-  `description_en`, mayormente productos agregados en sesiones
-  recientes vía el panel admin) — contradice la regla ya establecida
-  "Cero emojis de color" (ver "Convenciones de marca ya establecidas" más
-  abajo). No se tocó en esta tanda: es una decisión de voz de marca sobre
-  copy ya publicado, no un bug — queda pendiente de decidir con el
-  usuario si se considera una regla que aplica también al copy de
-  producto (la regla, tal como está redactada, da ejemplos de UI/
-  encabezados de sitio, no de marketing de producto) o si el copy de
-  producto queda exento a propósito.
+  emojis de color en el catálogo (cerrado, 19 sep, tanda posterior)**:
+  31 productos con emojis de color en `name`/`name_en`/`description`/
+  `description_en` (27 al momento de detectarlo, +2 agregados por el
+  admin mientras se decidía qué hacer). Le pregunté al usuario si la
+  regla "Cero emojis de color" aplica también al copy de producto —
+  confirmó que sí: **reemplazar por los símbolos monocromáticos ya
+  establecidos**. Tabla de reemplazo aplicada:
+  - Cualquier corazón de color (❤️💛💙💚💜💗🤍🩵🫶) → `♡`.
+  - ✨/⭐ (brillo/estrella) → `✦`.
+  - 💎 (gema) → `◇`.
+  - Sin equivalente razonable en el set aprobado (🤩 🎀 🌸 🌙 🐚 🙌🏽 🧸 🧿
+    ✈️) → se quitan sin reemplazo, en vez de forzar un símbolo arbitrario.
+  - En `name`/`name_en` el emoji se quita por completo (sin símbolo) — no
+    hay precedente de ningún producto con símbolo decorativo en el
+    nombre, se mantiene como texto plano.
+  De paso se encontró un caso más del mismo bug de traducción fantasma ya
+  cerrado antes en esta sección (`description_en` = texto en español sin
+  traducir): Pulsera de piedra malaquita (`1789840051998`, producto nuevo
+  agregado por el admin durante esta misma tanda) — traducida completa.
+  Verificado con `grep`/regex Unicode que no queda ningún emoji de color
+  en ninguno de los 4 campos de los 88 productos tras el cambio (solo
+  quedan los símbolos monocromáticos aprobados, que el propio regex de
+  verificación también detecta y hay que excluir a propósito al
+  chequear). Cualquier producto nuevo agregado desde el admin con emoji
+  de color debe limpiarse con el mismo criterio la próxima vez que se
+  audite el catálogo — no hay ninguna validación automática que lo
+  bloquee en el panel admin hoy.
 
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 

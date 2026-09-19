@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (13va tanda) — catálogo sin emojis de color
+
+31 productos tenían emojis de color en el nombre o la descripción (❤️💛💙
+🎀🌸🤩 y otros), algo que ya iba contra la regla de marca de usar solo
+símbolos monocromáticos en el resto del sitio. Se reemplazaron por los
+mismos símbolos que ya se usan en el resto de la página (♡ para corazones,
+✦ para brillos/estrellas), y se quitaron sin reemplazo los que no tenían un
+símbolo equivalente razonable. De paso se corrigió una traducción al
+inglés más que había quedado sin traducir de verdad en un producto nuevo.
+
+---
+
 ## 2026-09-19 (12va tanda) — descripciones de producto arregladas y verificación de traducciones
 
 Revisión editorial del catálogo: 6 productos que tenían descripción vacía
