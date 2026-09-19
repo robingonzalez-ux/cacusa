@@ -39,6 +39,7 @@ enteros en cada corrida.
 """
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -283,6 +284,22 @@ def write_if_changed(path: Path, content: str) -> bool:
     return True
 
 
+def remove_stale_dirs(base_dir: Path, expected: set) -> int:
+    """Borra las carpetas de producto/categoría que ya no corresponden a nada en
+    data/products.json (producto eliminado, o categoría renombrada/quitada) —
+    antes se quedaban publicadas para siempre con contenido viejo (URL de
+    imagen incluida) porque esta función no existía, ver CLAUDE.md 19 sep."""
+    if not base_dir.exists():
+        return 0
+    removed = 0
+    for child in sorted(base_dir.iterdir()):
+        if child.is_dir() and child not in expected:
+            shutil.rmtree(child)
+            print(f"Eliminada (ya no existe en el catálogo): {child}")
+            removed += 1
+    return removed
+
+
 def main():
     data = json.loads(PRODUCTS_JSON.read_text(encoding="utf-8"))
     products = data.get("products", [])
@@ -299,12 +316,16 @@ def main():
         store_path = target["store_path"]
         store_root = target["base"].parent
 
+        expected_producto = set()
+        expected_categoria = set()
+
         for p in products:
             slug = product_param(p, lang)
             page = build_product_page(base_html, p, lang, store_path, 2, shipping_details, reviews_by_product, surcharges)
             out_path = store_root / "producto" / slug / "index.html"
             changed_any = write_if_changed(out_path, page) or changed_any
             written_dirs.add(out_path.parent)
+            expected_producto.add(out_path.parent)
 
         for cat in categories:
             cat_slug = slugify(cat)
@@ -312,6 +333,11 @@ def main():
             out_path = store_root / "categoria" / cat_slug / "index.html"
             changed_any = write_if_changed(out_path, page) or changed_any
             written_dirs.add(out_path.parent)
+            expected_categoria.add(out_path.parent)
+
+        removed = remove_stale_dirs(store_root / "producto", expected_producto)
+        removed += remove_stale_dirs(store_root / "categoria", expected_categoria)
+        changed_any = changed_any or removed > 0
 
     print(f"{len(written_dirs)} páginas estáticas generadas/verificadas ({'con cambios' if changed_any else 'sin cambios'}).")
     if "--check" in sys.argv:

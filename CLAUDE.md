@@ -813,17 +813,28 @@ sí apuntaba mal.
   `img-src` en las 5 páginas que lo tenían (las 3 de arriba +
   `cacusa-lovers.html`/`en/`, que lo tenían agregado pero nunca llegaron a
   usarlo) — ya no hace falta, todas las imágenes salen del propio dominio.
-- **Pendiente, no se tocó — páginas huérfanas de productos eliminados**:
-  al revisar esto se encontró que `generate_product_pages.py` nunca borra
-  la carpeta física (`ui_kits/store/producto/<slug>/`) de un producto que
-  se elimina del catálogo — solo crea/actualiza carpetas para los
-  productos que existen hoy en `data/products.json`. Hay ~15 carpetas
-  (×ES/EN) de productos ya eliminados que siguen publicadas con su
-  contenido viejo (incluida la imagen con el dominio equivocado, que no se
-  migró ahí porque esos productos ya no están en `data/products.json`).
-  No se actuó sobre esto — borrar, dejar un 410, o redirigir esas URLs
-  viejas es una decisión de producto/SEO aparte (podrían tener enlaces o
-  indexación externa), no un arreglo mecánico como el de arriba.
+- **Páginas huérfanas de productos eliminados — cerrado el mismo día**:
+  se encontró que `generate_product_pages.py` nunca borraba la carpeta
+  física (`ui_kits/store/producto/<slug>/`) de un producto eliminado del
+  catálogo — solo creaba/actualizaba carpetas para los productos que
+  existen hoy en `data/products.json`, dejando ~15 carpetas (×ES/EN) de
+  productos ya eliminados publicadas para siempre con contenido viejo
+  (incluida la imagen con el dominio equivocado). Se decidió limpiarlas: el
+  riesgo de indexación externa es bajo (son páginas físicas creadas recién
+  el 19 sep, con horas de vida pública, no años). `remove_stale_dirs()`
+  ahora compara qué carpetas de `producto/`/`categoria/` existen en disco
+  contra lo que debería existir según `data/products.json` en cada corrida,
+  y borra (`shutil.rmtree`) las que sobran — pasa a devolver 404 normal
+  (vía `404.html` del sitio) en vez de quedar publicada indefinidamente.
+  Corre automático dentro de `generate_product_pages.py`, sin paso manual.
+- **Mientras el Worker siga sin desplegar**: cualquier producto nuevo que
+  se suba desde el panel admin va a seguir saliendo con la URL de imagen
+  equivocada (`github.io`) hasta que se pegue el `admin-worker.js`
+  actualizado en Cloudflare — la migración de `data/products.json` de este
+  hallazgo hay que repetirla (buscar/reemplazar
+  `https://robingonzalez-ux.github.io/cacusa/` → `https://cacusabytaitus.com/`
+  y volver a correr el pipeline) cada vez que se detecte una URL nueva así,
+  hasta que el deploy esté hecho.
 - El Worker (`admin-worker.js`) quedó pendiente de deploy manual — ver
   "Cómo editarlos" en la sección de Workers más arriba.
 

@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (7ma tanda) — limpieza de páginas de productos ya eliminados
+
+Al revisar el hallazgo anterior se encontró que las páginas individuales
+de un producto nunca se borraban cuando ese producto se eliminaba del
+catálogo — quedaban publicadas para siempre con contenido viejo (incluida
+la foto con la dirección equivocada de la tanda anterior). Se corrigió
+para que se borren solas cada vez que se regenera el catálogo, en vez de
+acumularse. Se limpiaron 15 productos (en español e inglés) que ya
+llevaban un rato eliminados.
+
+---
+
 ## 2026-09-19 (6ta tanda) — las fotos de producto apuntaban al dominio equivocado
 
 El usuario mandó 2 avisos que le llegaron de Google Search Console
