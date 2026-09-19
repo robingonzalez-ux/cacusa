@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T22:16:08.718Z",
+  "lastUpdated": "2026-09-19T22:20:32.992Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2649,6 +2649,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789856160011,
+      "promo": null
+    },
+    {
+      "name": "Cadena doble ",
+      "name_en": "Double strand",
+      "category": "Cadenas",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cadena Doble Mariposa ✨🦋\n\nDos niveles, el doble de encanto. Su diseño combina una delicada estrella con una mariposa brillante, creando el efecto de layering perfecto sin tener que combinar varias cadenas.\n\nUna sola pieza que hace que hasta el look más sencillo se vea completo. Delicada, femenina y lista para convertirse en esa cadena que vas a querer usar una y otra vez. ✨",
+      "description_en": "Butterfly Double Chain ✨🦋\n\nTwo levels, twice the charm. Its design combines a delicate star with a shiny butterfly, creating the perfect layering effect without having to combine several chains.\n\nA single piece that makes even the simplest look complete. Delicate, feminine and ready to become that chain you're going to want to wear over and over again. ✨",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789856364740_79d36269_3774_4329_af97_a98cea3315ea_jpe.webp",
+      "focalX": 47.96998599122565,
+      "focalY": 39.264413518886634,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789856427179,
       "promo": null
     }
   ],
