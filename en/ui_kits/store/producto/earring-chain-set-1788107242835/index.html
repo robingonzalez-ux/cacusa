@@ -1090,7 +1090,7 @@ Precious, they make your hand look feminine and delicate</li>
   </div>
   <div class="f-links">
     <a href="/en/"><span class="t-es">Inicio</span><span class="t-en">Home</span></a>
-    <a href="../../../../index.html#personalize"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
+    <a href="../../../../#personalize"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
     <a href="../../../../../cacusa-lovers.html">Cacusa Lovers ♡</a>
     <a href="../../../../../envios.html"><span class="t-es">Envíos</span><span class="t-en">Shipping</span></a>
     <a href="../../../../../devoluciones.html"><span class="t-es">Devoluciones</span><span class="t-en">Returns</span></a>
@@ -1860,7 +1860,21 @@ let _revRating = 5;
   loadReviewSummaries();
   renderCombos();
   updateCartUI();
-  if (_autoP) { const _apId = _extractProductId(_autoP); const _ap = PRODUCTS.find(x => String(x.id) === String(_apId)); if (_ap) openModal(_ap.id); }
+  if (_autoP) {
+    const _apId = _extractProductId(_autoP);
+    const _ap = PRODUCTS.find(x => String(x.id) === String(_apId));
+    if (_ap) {
+      openModal(_ap.id);
+    } else {
+      // Barrido SEO (19 sep, SEO-08): antes un ?p= inventado se quedaba con 200 +
+      // index,follow + la tienda genérica — mismo tratamiento que un producto real. No
+      // toca productos agotados (available:false): esos SÍ están en PRODUCTS y siguen
+      // entrando por la rama de arriba, sin cambios — deben seguir indexados.
+      const _robotsMeta = document.querySelector('meta[name="robots"]');
+      if (_robotsMeta) _robotsMeta.setAttribute('content', 'noindex, follow');
+      showToast(__LANG === 'en' ? 'This product is no longer available.' : 'Este producto ya no está disponible.', 4000);
+    }
+  }
   const _autoW = new URLSearchParams(window.location.search).get('wishlist');
   if (_autoW) { const _wids = _autoW.split(',').filter(Boolean); if (_wids.length) openWishlist(_wids); }
 })();
