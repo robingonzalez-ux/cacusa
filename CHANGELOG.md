@@ -12,6 +12,17 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (11va tanda) — Google ya no lee a CACUSA como un local físico
+
+Último hallazgo pendiente de la auditoría SEO externa. Los datos que le
+mostramos a Google sobre el negocio lo describían con un tipo de "negocio
+con local físico visitable" — que no es lo que CACUSA es (todo se
+coordina por WhatsApp, sin tienda física). Se corrigió al tipo correcto.
+De paso, se agregó un enlace directo a la política de devoluciones real
+dentro de esos mismos datos, para que quede sin ninguna ambigüedad.
+
+---
+
 ## 2026-09-19 (10ma tanda) — 6 arreglos más de seguridad/confiabilidad + TikTok Shop funcional
 
 Se investigaron desde cero los últimos hallazgos que quedaban pendientes

@@ -45,10 +45,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="CACUSA">
-  <!-- Schema.org: JewelryStore + FAQPage + Organization + WebSite -->
+  <!-- Schema.org: Organization + FAQPage + Organization + WebSite —
+       #business era LocalBusiness/JewelryStore (hallazgo SEO-07, 19 sep):
+       ese tipo implica un local físico visitable, y CACUSA no tiene uno
+       (todo se coordina por WhatsApp). Sin address nunca fue "genérico",
+       era el tipo de negocio equivocado — Organization no implica
+       ubicación física y sigue aceptando areaServed/hasOfferCatalog/
+       knowsAbout tal cual. -->
   <script type="application/ld+json">
   {"@context":"https://schema.org","@graph":[
-    {"@type":["LocalBusiness","JewelryStore"],"@id":"https://cacusabytaitus.com/#business",
+    {"@type":"Organization","@id":"https://cacusabytaitus.com/#business",
      "name":"CACUSA by Taitus","alternateName":["Cacusa","Cacusa Taitus","bisutería personalizada Ecuador"],
      "url":"https://cacusabytaitus.com/ui_kits/store/",
      "image":"https://cacusabytaitus.com/assets/icon-512.jpg",

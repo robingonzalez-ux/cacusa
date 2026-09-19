@@ -845,6 +845,43 @@ sí apuntaba mal.
 - El Worker (`admin-worker.js`) quedó pendiente de deploy manual — ver
   "Cómo editarlos" en la sección de Workers más arriba.
 
+### SEO-07 — datos estructurados genéricos (cerrado, 19 sep)
+
+Igual que A07-A19, solo quedó la pista de una línea de la auditoría
+externa ("dirección de `LocalBusiness` genérica, contradicción envío-
+devoluciones JSON-LD vs texto") — se investigó de nuevo desde cero
+(2 agentes de exploración en paralelo) contra el código real.
+
+- **No era una dirección genérica/falsa — era el tipo de negocio
+  equivocado.** El bloque `#business` en `ui_kits/store/index.html`/`en/`
+  (se copia igual a las 172 páginas físicas) declaraba
+  `"@type":["LocalBusiness","JewelryStore"]` sin ningún campo `address` —
+  confirmado que no hay ninguna dirección en todo el repo, porque CACUSA
+  no tiene local físico (todo se coordina por WhatsApp). `JewelryStore`
+  en el propio vocabulario de schema.org **extiende** `Store` →
+  `LocalBusiness`, así que quitar la palabra "LocalBusiness" del array no
+  alcanzaba — declarar cualquiera de esos 2 tipos ya implica un negocio
+  con ubicación física visitable, que es justo lo que el negocio no es.
+  Se cambió a `"@type":"Organization"` (que no implica ubicación física y
+  sigue aceptando `areaServed`/`hasOfferCatalog`/`knowsAbout` tal cual) —
+  sin tocar ningún otro campo del bloque. Queda un `#organization`
+  separado y ya bien tipado 2 líneas más abajo, algo redundante con el
+  `#business` corregido — no se fusionaron en esta pasada, es un detalle
+  menor comparado con declarar un tipo de negocio falso.
+- **La "contradicción" de devoluciones no era tal — es un límite real del
+  vocabulario, ya reconocido en el propio código.** `RETURN_POLICY` en
+  `generate_product_schema.py` usa `MerchantReturnFiniteReturnWindow` +
+  `merchantReturnDays: 2` + `refundType: ExchangeRefund` para representar
+  "solo defecto de fábrica, 48h, reparación/reemplazo sin reembolso en
+  dinero" — verificado que `ExchangeRefund` es fiel (repara/reemplaza, no
+  da dinero), y que schema.org no tiene una categoría "solo defectos"
+  (`MerchantReturnNotPermitted` sería falso, ya que SÍ se acepta por
+  defecto de fábrica) — `MerchantReturnFiniteReturnWindow` es la menos
+  mala de las opciones reales. Se agregó `merchantReturnLink:
+  https://cacusabytaitus.com/devoluciones.html` — el mecanismo que
+  schema.org sí ofrece para este matiz exacto (enlazar a la política
+  completa en vez de forzar una categoría fija).
+
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 
 Sitio público y panel admin auditados y corregidos contra WCAG 2.1 AA

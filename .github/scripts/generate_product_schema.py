@@ -91,6 +91,10 @@ def build_shipping_details(shipping_cfg):
 # dinero) — ver devoluciones.html. MerchantReturnFiniteReturnWindow + 2 días es
 # la representación más fiel que permite el vocabulario de schema.org para una
 # ventana de 48h; ExchangeRefund refleja que es reparación/reemplazo, no dinero.
+# El vocabulario no tiene una categoría "solo defectos" (MerchantReturnNotPermitted
+# sería falso, ya que SÍ se acepta por defecto de fábrica) — hallazgo SEO-07 (19
+# sep): merchantReturnLink es el mecanismo que schema.org sí ofrece para este
+# matiz, enlazando a la política completa en vez de forzar una categoría fija.
 RETURN_POLICY = {
     "@type": "MerchantReturnPolicy",
     "applicableCountry": ["EC", "US"],
@@ -99,6 +103,7 @@ RETURN_POLICY = {
     "returnMethod": "https://schema.org/ReturnByMail",
     "returnFees": "https://schema.org/FreeReturn",
     "refundType": "https://schema.org/ExchangeRefund",
+    "merchantReturnLink": "https://cacusabytaitus.com/devoluciones.html",
 }
 
 
