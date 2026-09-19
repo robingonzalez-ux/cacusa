@@ -24,6 +24,14 @@
 #      a correr wrangler salvo que se agregue OTRA clase de Durable Object nueva.
 #   4. En cacusa-square (el otro Worker que necesita esta misma tarjeta), agregar el
 #      binding cruzado — ver wrangler.square.toml.
+#
+# Corregido el 19 sep — primer intento real de deploy: en el plan gratuito de
+# Cloudflare, una clase de Durable Object nueva SOLO se puede crear con storage
+# SQLite (`new_sqlite_classes`), no con el storage clásico (`new_classes`, error
+# real visto: "In order to use Durable Objects with a free plan, you must create
+# a namespace using a 'new_sqlite_classes' migration. [code: 10097]"). No hace
+# falta tocar nada del código de la clase — la API de `this.state.storage`
+# (get/put/delete/list, `setAlarm`) es la misma en los 2 tipos de storage.
 
 name = "cacusa-admin"
 main = "admin-worker.js"
@@ -35,4 +43,4 @@ class_name = "GiftCardLedger"
 
 [[migrations]]
 tag = "v1-giftcardledger"
-new_classes = ["GiftCardLedger"]
+new_sqlite_classes = ["GiftCardLedger"]
