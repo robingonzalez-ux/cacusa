@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:35:17.031Z",
+  "lastUpdated": "2026-09-19T16:37:22.701Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2465,6 +2465,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835713834,
+      "promo": null
+    },
+    {
+      "name": "Anillo maximalista ",
+      "name_en": "Maximalist ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Para las que no nacieron para pasar desapercibidas. ✨\nUn anillo maximalista con formas redondeadas y una combinación de colores que convierte tu mano en el centro de todas las miradas. Su baño de oro de 18K aporta el toque sofisticado perfecto para transformar hasta el outfit más básico. Una sola pieza y el look está completo. 💜🩵💚🤍",
+      "description_en": "For those who were not born to go unnoticed. ✨\nA maximalist ring with rounded shapes and a color scheme that makes your hand the center of all eyes. Its 18K gold plating provides the perfect sophisticated touch to transform even the most basic outfit. One piece and the look is complete. 💜🩵💚🤍",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789835739252_e0e1f3fe_3dbf_4be3_9e03_1255854a4de5_jpe.webp",
+      "focalX": 48.43135281140164,
+      "focalY": 58.61497680583165,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789835829929,
       "promo": null
     }
   ],
