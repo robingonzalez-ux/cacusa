@@ -788,7 +788,6 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <li><a href="/en/ui_kits/store/producto/large-emerald-cross-charm-chain-1781884615354/">Large Emerald Cross Charm Chain</a> — $45. Elegant chain with a striking cross charm adorned with brilliant emerald-colored stones in 18k gold plating. Faith and style in one piece.</li>
 <li><a href="/en/ui_kits/store/producto/delicate-chain-with-mother-of-pearl-heart-charm-1781884804624/">Delicate Chain with Mother-of-Pearl Heart Charm</a> — $38. Delicate gold chain with a romantic mother-of-pearl heart charm in 18k gold plating. Feminine and elegant for everyday wear.</li>
 <li><a href="/en/ui_kits/store/producto/venetian-chain-with-zirconia-cross-charm-1781884881874/">Venetian Chain with Zirconia Cross Charm</a> — $125. 925 sterling silver with 18k gold plating</li>
-<li><a href="/en/ui_kits/store/producto/3-mother-of-pearl-hearts-2-plain-heart-charms-chain-1781884932644/">3 Mother-of-Pearl Hearts &amp; 2 Plain Heart Charms Chain</a> (Sold out) — $38. Romantic chain with five charms: three mother-of-pearl hearts and two plain ones in 18k gold. A design full of delicacy and love.</li>
 <li><a href="/en/ui_kits/store/producto/saint-benedict-chain-with-cross-1781884983133/">Saint Benedict Chain with Cross</a> — $45. Protective chain with a Saint Benedict medallion and cross charm in 18k gold plating. Faith and elegance united in one piece.</li>
 <li><a href="/en/ui_kits/store/producto/pearl-heart-with-zirconia-heart-silhouette-chain-1781885024731/">Pearl Heart with Zirconia Heart Silhouette Chain</a> — $38. Delicate charm combining a pearl heart with a zirconia heart silhouette on an 18k gold chain. Romantic and sophisticated.</li>
 <li><a href="/en/ui_kits/store/producto/turquoise-opal-charm-chain-with-double-chain-effect-1781885110437/">Turquoise Opal Charm Chain with Double-Chain Effect</a> — $45. Striking gold chain with a turquoise opal charm that creates a double-chain effect at the front. Unique, original and sophisticated.</li>
@@ -2983,10 +2982,10 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     zelleCpDiscount > 0 ? `CP:${_cpCode}(-$${zelleCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
-  const ok = await submitOrder({
+  const result = await submitOrder({
     numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal },
-    productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
+    productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     subtotal:  zelleSubtotal,
     envio:     shippingCost,
@@ -2994,13 +2993,14 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     pago:      'Zelle',
     estado:    'Nuevo',
     notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined,
-    giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined
+    giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined,
+    cuponAplicado: _cpCode || undefined
   });
-  if (!ok) {
+  if (!result.ok) {
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
-  if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal);
+  if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal, result.id);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -3219,6 +3219,11 @@ function _orderIdemKey(order) {
   return h.toString(36);
 }
 
+// Auditoría externa (19 sep, ronda nueva): antes solo devolvía true/false — /coupon/burn
+// se llamaba con teléfono/email pero sin ningún id de pedido real detrás (el Worker no
+// tenía forma de verificar que el cupón se estaba consumiendo contra una compra que de
+// verdad quedó guardada). Ahora también devuelve el id real del pedido, para atarlo — ver
+// burnCoupon() y handleCouponBurnPublic() en admin-worker.js.
 async function submitOrder(order) {
   try {
     order.idempotencyKey = _orderIdemKey(order);
@@ -3227,9 +3232,12 @@ async function submitOrder(order) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ order })
     });
-    return r.ok;
+    if (!r.ok) return { ok: false, id: null };
+    const data = await r.json().catch(() => null);
+    const id = data?.id ?? data?.order?.id ?? null;
+    return { ok: !!(data && data.ok), id };
   } catch (e) {
-    return false;
+    return { ok: false, id: null };
   }
 }
 
@@ -3285,10 +3293,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     waCpDiscount > 0 ? `CP:${_cpCode}(-$${waCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const emailVal = (document.getElementById('coEmail').value || '').trim();
-  const ok = await submitOrder({
+  const result = await submitOrder({
     numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal },
-    productos: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
+    productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     subtotal: total,
     envio:  waShip,
@@ -3296,13 +3304,14 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     pago:   'WhatsApp',
     estado: 'Nuevo',
     notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined,
-    giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined
+    giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined,
+    cuponAplicado: _cpCode || undefined
   });
-  if (!ok) {
+  if (!result.ok) {
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
-  if (_cpCode) burnCoupon(_cpCode, tel, emailVal);
+  if (_cpCode) burnCoupon(_cpCode, tel, emailVal, result.id);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -3870,13 +3879,16 @@ async function applyCoupon() {
 
 // Se llama SOLO después de confirmar que el pedido se guardó (ver los 2 checkouts) —
 // antes se llamaba en paralelo con submitOrder, así que un pedido que nunca se guardó
-// igual quemaba el cupón de la clienta.
-async function burnCoupon(code, phone, email) {
-  if (!code) return;
+// igual quemaba el cupón de la clienta. Requiere orderId (auditoría externa, 19 sep):
+// admin-worker.js ahora verifica que ese pedido exista de verdad y que su
+// cuponAplicado coincida con este código antes de consumirlo, en vez de aceptar
+// cualquier request con un Origin permitido.
+async function burnCoupon(code, phone, email, orderId) {
+  if (!code || orderId == null) return;
   try {
     await fetch(ADMIN_WORKER_URL + '/coupon/burn', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, phone: phone || '', email: email || '' })
+      body: JSON.stringify({ code, phone: phone || '', email: email || '', orderId })
     });
   } catch (e) {}
 }

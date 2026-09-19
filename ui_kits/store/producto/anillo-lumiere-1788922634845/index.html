@@ -793,7 +793,6 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 <li><a href="/ui_kits/store/producto/cadena-con-dije-de-cruz-grande-con-piedras-color-esmeralda-1781884615354/">Cadena con dije de Cruz grande con piedras color esmeralda </a> — $45. Elegante cadena con imponente dije de cruz adornado con brillantes piedras color esmeralda en baño de oro 18k. Fe y estilo en una sola pieza.</li>
 <li><a href="/ui_kits/store/producto/cadena-delicada-con-dije-de-corazon-nacarado-1781884804624/">Cadena delicada con dije de corazón nacarado </a> — $38. Delicada cadena dorada con un romántico dije de corazón nacarado en baño de oro 18k. Femenina y elegante para el uso diario.</li>
 <li><a href="/ui_kits/store/producto/cadena-veneciana-con-un-dije-de-cruz-de-circones-1781884881874/">Cadena veneciana con un dije de Cruz de circones </a> — $125. Plata ley 925 con un baño de oro de 18 kilates </li>
-<li><a href="/ui_kits/store/producto/3-corazones-de-nacar-y-dos-llanos-1781884932644/">3 corazónes de nácar y dos llanos </a> (Agotado) — $38. Romántica cadena con cinco dijes: tres corazones de nácar y dos llanos en dorado 18k. Un diseño lleno de delicadeza y amor.</li>
 <li><a href="/ui_kits/store/producto/san-benito-con-cruz-1781884983133/">San Benito con cruz </a> — $45. Cadena protectora con medallón de San Benito y dije de cruz en baño de oro 18k. Fe y elegancia en una sola pieza.</li>
 <li><a href="/ui_kits/store/producto/corazon-de-perla-con-una-silueta-de-corazon-de-circon-1781885024731/">Corazón de perla con una silueta de corazón de circon </a> — $38. Delicado dije que combina un corazón de perla con una silueta de corazón de circones sobre cadena dorada de 18k. Romántico y sofisticado.</li>
 <li><a href="/ui_kits/store/producto/cadena-de-dije-de-opalo-turquesa-en-la-parte-frontal-luce-co-1781885110437/">Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble </a> — $45. Llamativa cadena dorada con dije de ópalo turquesa que crea un efecto de cadena doble en el frente. Única, original y sofisticada.</li>
@@ -3001,10 +3000,10 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     zelleCpDiscount > 0 ? `CP:${_cpCode}(-$${zelleCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
-  const ok = await submitOrder({
+  const result = await submitOrder({
     numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal },
-    productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
+    productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     subtotal:  zelleSubtotal,
     envio:     shippingCost,
@@ -3012,13 +3011,14 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     pago:      'Zelle',
     estado:    'Nuevo',
     notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined,
-    giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined
+    giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined,
+    cuponAplicado: _cpCode || undefined
   });
-  if (!ok) {
+  if (!result.ok) {
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
-  if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal);
+  if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal, result.id);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -3238,6 +3238,11 @@ function _orderIdemKey(order) {
   return h.toString(36);
 }
 
+// Auditoría externa (19 sep, ronda nueva): antes solo devolvía true/false — /coupon/burn
+// se llamaba con teléfono/email pero sin ningún id de pedido real detrás (el Worker no
+// tenía forma de verificar que el cupón se estaba consumiendo contra una compra que de
+// verdad quedó guardada). Ahora también devuelve el id real del pedido, para atarlo — ver
+// burnCoupon() y handleCouponBurnPublic() en admin-worker.js.
 async function submitOrder(order) {
   try {
     order.idempotencyKey = _orderIdemKey(order);
@@ -3246,9 +3251,12 @@ async function submitOrder(order) {
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ order })
     });
-    return r.ok;
+    if (!r.ok) return { ok: false, id: null };
+    const data = await r.json().catch(() => null);
+    const id = data?.id ?? data?.order?.id ?? null;
+    return { ok: !!(data && data.ok), id };
   } catch (e) {
-    return false;
+    return { ok: false, id: null };
   }
 }
 
@@ -3304,10 +3312,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     waCpDiscount > 0 ? `CP:${_cpCode}(-$${waCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const emailVal = (document.getElementById('coEmail').value || '').trim();
-  const ok = await submitOrder({
+  const result = await submitOrder({
     numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal },
-    productos: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
+    productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     subtotal: total,
     envio:  waShip,
@@ -3315,13 +3323,14 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     pago:   'WhatsApp',
     estado: 'Nuevo',
     notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined,
-    giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined
+    giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined,
+    cuponAplicado: _cpCode || undefined
   });
-  if (!ok) {
+  if (!result.ok) {
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
-  if (_cpCode) burnCoupon(_cpCode, tel, emailVal);
+  if (_cpCode) burnCoupon(_cpCode, tel, emailVal, result.id);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -3896,13 +3905,16 @@ async function applyCoupon() {
 
 // Se llama SOLO después de confirmar que el pedido se guardó (ver los 2 checkouts) —
 // antes se llamaba en paralelo con submitOrder, así que un pedido que nunca se guardó
-// igual quemaba el cupón de la clienta.
-async function burnCoupon(code, phone, email) {
-  if (!code) return;
+// igual quemaba el cupón de la clienta. Requiere orderId (auditoría externa, 19 sep):
+// admin-worker.js ahora verifica que ese pedido exista de verdad y que su
+// cuponAplicado coincida con este código antes de consumirlo, en vez de aceptar
+// cualquier request con un Origin permitido.
+async function burnCoupon(code, phone, email, orderId) {
+  if (!code || orderId == null) return;
   try {
     await fetch(ADMIN_WORKER_URL + '/coupon/burn', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code, phone: phone || '', email: email || '' })
+      body: JSON.stringify({ code, phone: phone || '', email: email || '', orderId })
     });
   } catch (e) {}
 }
