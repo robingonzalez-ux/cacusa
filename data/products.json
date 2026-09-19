@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:26:32.480Z",
+  "lastUpdated": "2026-09-19T16:32:02.941Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2399,6 +2399,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835085201,
+      "promo": null
+    },
+    {
+      "name": "Aretes de Piedra amazonita ",
+      "name_en": "Amazonite Stone Earrings",
+      "category": "Aretes",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un toque de naturaleza que se siente único. 💚✨\nLa amazonita aporta ese tono turquesa imposible de ignorar, y sus vetas naturales hacen que cada par tenga su propia personalidad. Combinados con detalles dorados en baño de oro de 18K, son perfectos para iluminar el rostro y darle a cualquier look ese aire sofisticado, fresco y diferente que no encuentras en una joya común.",
+      "description_en": "A touch of nature that feels unique. 💚✨\nAmazonite brings that turquoise tone that is impossible to ignore, and its natural veins mean that each pair has its own personality. Combined with gold details in an 18K gold bath, they are perfect for brightening the face and giving any look that sophisticated, fresh and different air that you do not find in a common jewel.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789835213847_ec9ba659_cf5a_44ed_bfff_96cecfce738e_jpe.webp",
+      "focalX": 49.3540864517536,
+      "focalY": 61.92842942345919,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789835517841,
       "promo": null
     }
   ],
