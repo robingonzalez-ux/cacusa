@@ -129,6 +129,74 @@ que pisa un valor ahí es irreversible. El Worker `cacusa-backup` es la
   `BACKUP_R2`, hay que revisar (c) de nuevo — es la única de las tres que
   se puede romper desde el código.
 
+## Reglas de Firebase RTDB (snapshot confirmado — 19 sep)
+
+No hay forma de leer las reglas en vivo desde el repo (viven solo en
+Firebase Console, no en ningún archivo versionado) — este es un snapshot
+pegado por el usuario y confirmado exacto el 19 sep. Guardarlo acá para no
+tener que pedirlo de nuevo cada vez que haga falta dar un fragmento
+preciso (ya pasó 3 veces esta sesión: reglas de reseñas, de Lovers, y la
+regla nueva de `estado_pago`). Si se vuelve a tocar algo del árbol de
+reglas, actualizar este bloque con el nuevo snapshot.
+
+```json
+{
+  "rules": {
+    "cacusa_ventas": {
+      ".read":  "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')",
+      ".write": "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')"
+    },
+    "cacusa_costos": {
+      ".read":  "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')",
+      ".write": "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')"
+    },
+    "cacusa_productos": {
+      ".read":  "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')",
+      ".write": "auth != null && (auth.token.email === 'robin_gonzalez@live.com' || auth.token.email === 'titajaramillolopez@gmail.com')"
+    },
+    "cacusa_reviews": {
+      ".read": true,
+      "$productId": {
+        "$reviewId": {
+          ".write": "!data.exists()",
+          ".validate": "newData.hasChildren(['name', 'rating', 'comment', 'date', 'approved'])",
+          "name":     { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 60" },
+          "rating":   { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5" },
+          "comment":  { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 600" },
+          "date":     { ".validate": "newData.isString() && newData.val().length <= 10" },
+          "approved": { ".validate": "newData.isBoolean() && newData.val() === false" },
+          "$other":   { ".validate": false }
+        }
+      }
+    },
+    "cacusa_lovers": {
+      ".read": false,
+      ".write": false,
+      "$subId": {
+        ".read": false,
+        ".write": "!data.exists() && newData.hasChildren(['email', 'estado_pago'])",
+        "estado_pago": { ".validate": "newData.val() === 'pendiente'" }
+      }
+    },
+    "cacusa_lovers_photos": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}
+```
+
+Este snapshot ya incluye el arreglo de A02 (regla `estado_pago` en
+`cacusa_lovers/$subId`) — el usuario confirmó haberlo publicado el 19 sep
+(ver "Auditoría externa" más abajo). Si se vuelve a tocar algo del árbol
+de reglas, actualizar este bloque.
+
+`cacusa_ventas`, `cacusa_costos` y `cacusa_productos` son de otra app
+(punto de venta / gestión de costos), no del sitio público — se incluyen
+acá solo para tener el árbol completo y no perder contexto si algún día
+hace falta tocar algo cerca de esos nodos, pero no son relevantes para
+nada de lo que hace este repo (sitio + Workers).
+
 ## Automatizaciones (GitHub Actions)
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que
@@ -695,8 +763,10 @@ están en `main` y publicados solos.
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-1. **Regla de Firebase para `estado_pago`** (A02, arriba) — pegar en
-   Console → Realtime Database → Rules, dentro de `cacusa_lovers/$subId`.
+Ninguno por ahora (19 sep). La regla de Firebase para `estado_pago` (A02)
+quedó publicada — ver "Reglas de Firebase RTDB (snapshot)" más arriba. Los
+6 arreglos de Workers de esta misma auditoría también están desplegados
+(confirmado arriba).
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
 (ver "Backups y recuperación de desastres" más arriba), y la regla de
