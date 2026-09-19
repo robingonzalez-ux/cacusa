@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:45:52.196Z",
+  "lastUpdated": "2026-09-19T17:47:36.062Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2513,6 +2513,28 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1789836141687_efcb6b8c_42af_422c_b519_97198d61307f_jpe.webp"
       ],
       "id": 1789836348710,
+      "promo": null
+    },
+    {
+      "name": "Pulsera de piedra malaquita ",
+      "name_en": "Malachite stone bracelet",
+      "category": "Pulseras",
+      "price": 38,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Una pulsera llena de símbolos que cuentan una historia. 💚✨\nElaborada con piedras de malaquita y detalles Gold Filled, cada dije aporta un significado especial: la cruz representa fe y protección; el avión, libertad, viajes y nuevos destinos; la estrella, sueños y guía; la moneda, prosperidad y abundancia; la mano de Fátima, protección y buena fortuna; y el ojo, tradicionalmente asociado con protección frente a las malas energías. La malaquita se asocia simbólicamente con transformación y crecimiento.\n\nMás que una pulsera, es una colección de buenos deseos para llevar contigo. 💚✈️⭐🧿",
+      "description_en": "💚✨con piedras de malaquita y detalles Gold Filled, cada dije aporta un significado especial: la cruz representa fe y protección; el avión, libertad, viajes y nuevos destinos; la estrella, sueños y guía; la moneda, prosperidad y abundancia; la mano de Fátima, protección y buena fortuna; y el ojo, tradicionalmente asociado con protección frente a las malas energías. La malaquita se asocia simbólicamente con transformación y crecimiento.\n\nMás que una pulsera, es una colección de buenos deseos para llevar contigo. 💚✈️⭐🧿",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789838861054_6b1e2e04_d18b_4ccb_8110_614f7a198c4d_jpe.webp",
+      "focalX": 39.20401640788183,
+      "focalY": 77.56792577866138,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789840051998,
       "promo": null
     }
   ],
