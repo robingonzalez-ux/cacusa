@@ -260,6 +260,8 @@ export default {
       if (path.endsWith('/lead/delete'))       return await handleLeadDelete(body, env, allowOrigin);
       if (path.endsWith('/lead/send-welcome')) return await handleLeadSendWelcome(body, env, allowOrigin);
       if (path.endsWith('/lovers/exclusive-coupon/bulk')) return await handleLoversExclusiveBulk(body, env, allowOrigin);
+      if (path.endsWith('/tiktok/export-status'))  return await handleTiktokExportStatus(env, allowOrigin);
+      if (path.endsWith('/tiktok/trigger-export')) return await handleTiktokTriggerExport(env, allowOrigin);
       if (path.endsWith('/ntfy-info')) {
         if (!env.NTFY_TOPIC) return ok({ configured: false }, allowOrigin);
         return ok({ configured: true, topic: env.NTFY_TOPIC, url: 'https://ntfy.sh/' + env.NTFY_TOPIC }, allowOrigin);
@@ -471,6 +473,18 @@ async function orderGet(env, id) {
   const raw = await env.CACUSA_KV.get(orderKey(id));
   return raw ? JSON.parse(raw) : null;
 }
+// buildOrderCore() arma el id con Date.now() — sin sufijo ni chequeo de colisión.
+// Dos checkouts cayendo en el mismo milisegundo (doble clic en "pagar", o 2 clientas
+// pagando casi a la vez) pisaban en silencio el pedido de la otra al escribir a la
+// misma llave order:<id>. Hallazgo del 19 sep (auditoría propia, A07-A19) — se
+// verifica antes de escribir y, en el (rarísimo) caso de choque, se corre el id 1ms
+// hacia adelante hasta encontrar una llave libre, sin cambiar el formato para el
+// caso normal (sigue siendo un número, ordena igual, nada más lo consume distinto).
+async function ensureUniqueOrderId(env, newOrder) {
+  for (let i = 0; i < 5 && await orderGet(env, newOrder.id); i++) {
+    newOrder.id = newOrder.id + 1;
+  }
+}
 // Reconstruye la lista completa de pedidos a partir de sus llaves individuales
 // (mismo patrón que handleGcList/handleCouponList) y la deja lista para que
 // handleLoad() la sirva con un solo GET, en vez de escanear todo en cada poll del
@@ -616,6 +630,23 @@ async function handleOrder(body, env, origin, ctx, request) {
 
   const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
   const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+
+  // Idempotencia real (hallazgo del 19 sep, auditoría propia A07-A19): si la clienta
+  // ve un error de red pero el pedido SÍ se guardó, el checkout deja el carrito intacto
+  // para reintentar (arreglo A06+A10) — un reintento manual con el mismo carrito antes
+  // disparaba un handleOrder() nuevo entero: otro id, otra redención de gift card,
+  // otro push de "pedido nuevo". La tienda manda una idempotencyKey generada una sola
+  // vez por intento de checkout (persistida mientras dure ese carrito) — si ya se
+  // procesó, se devuelve el mismo pedido de siempre en vez de crear uno nuevo.
+  const idemKey = str(order.idempotencyKey, 100);
+  if (idemKey) {
+    const existingId = await env.CACUSA_KV.get(`idem:${idemKey}`);
+    if (existingId) {
+      const existingOrder = await orderGet(env, existingId);
+      if (existingOrder) return ok({ ok: true, order: existingOrder }, origin);
+    }
+  }
+
   const newOrder = buildOrderCore(order, { strictPago: true });
 
   // Redención de gift card — fusionada acá (en vez de ser una llamada pública separada a
@@ -651,9 +682,13 @@ async function handleOrder(body, env, origin, ctx, request) {
   }
 
   // Cada pedido en su propia llave — nunca se lee ni se escribe un blob compartido, así
-  // que un pedido nuevo jamás puede pisar ni perder a otro pedido concurrente (ver
-  // auditoría de concurrencia). La lista que consume el panel se recalcula aparte.
+  // que dos pedidos concurrentes en llaves DISTINTAS nunca se pisan (ver auditoría de
+  // concurrencia). Pero el id en sí (Date.now(), sin sufijo) sí podía colisionar si 2
+  // caían en el mismo milisegundo — ensureUniqueOrderId() lo corre 1ms hacia adelante
+  // hasta encontrar una llave libre antes de escribir (hallazgo del 19 sep).
+  await ensureUniqueOrderId(env, newOrder);
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  if (idemKey) await env.CACUSA_KV.put(`idem:${idemKey}`, String(newOrder.id), { expirationTtl: 86400 });
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   // Si esta clienta tenía un carrito marcado como abandonado, ya no lo está — compró.
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
@@ -696,6 +731,7 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   const newOrder = buildOrderCore(order, { strictPago: false });
   newOrder.createdBy = session.user;
 
+  await ensureUniqueOrderId(env, newOrder);
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
@@ -1170,9 +1206,18 @@ async function handleLoversExclusiveCoupon(body, env) {
       note: `Cupón exclusivo Lovers — ${email}`,
       createdAt: new Date().toISOString(), createdBy: 'lovers-system',
     };
-    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(fresh));
+    // Orden invertido a propósito (hallazgo del 19 sep, auditoría propia A07-A19):
+    // antes el cupón se guardaba activo en KV ANTES de mandar el correo. Si sendGmail
+    // fallaba (rate limit, token vencido), el cupón quedaba activo/usable para siempre
+    // sin que la suscriptora recibiera el código — y como este bloque solo corre si
+    // `!coupon`, ningún reintento futuro (ni el próximo cobro mensual, ni el botón
+    // "Enviar a todas las activas" del panel, que ve coupon.active===true y lo salta)
+    // lo volvía a intentar. Ahora, si el correo falla, no queda ningún rastro en KV —
+    // el próximo evento real reintenta el flujo completo limpio, mismo patrón ya
+    // correcto que welcome10 (ver comentario en sendWelcomeCode).
     const lang = body.lang === 'en' ? 'en' : 'es';
     await sendGmail(env, { to: email, ...loversExclusiveEmailContent(code, lang) });
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify(fresh));
   } else if (!coupon.active) {
     coupon.active = true;
     await env.CACUSA_KV.put(couponKey(code), JSON.stringify(coupon));
@@ -1998,6 +2043,37 @@ async function ghPut(path, base64content, sha, message, env) {
   return r.json();
 }
 
+// ── TikTok Shop — carga masiva ──────────────────────────────────────────────────────
+// El panel llamaba a estas 2 rutas desde antes de que existieran acá (hallazgo del 19
+// sep, auditoría propia A07-A19) — el botón "Generar ahora" siempre daba 404. Ya existe
+// todo lo demás: .github/workflows/tiktok-bulk-export.yml espera un repository_dispatch
+// con event_type "tiktok-export", y scripts/generate_tiktok_bulk.py escribe
+// data/tiktok_export_log.json con un bloque _meta ({lastGeneratedAt, lastCount,
+// lastProducts}) — exactamente los 2 campos que ya lee el panel. Solo faltaba la pieza
+// que conecta el botón con el workflow.
+async function handleTiktokExportStatus(env, origin) {
+  const content = await ghGetContent('data/tiktok_export_log.json', env);
+  let meta = null;
+  if (content) {
+    try { meta = JSON.parse(content.text)._meta || null; } catch (e) { console.error('tiktok export log inválido:', e.message); }
+  }
+  return ok({
+    ok: true,
+    meta,
+    downloadUrl: content ? 'https://cacusabytaitus.com/exports/tiktok_bulk_latest.xlsx' : '',
+  }, origin);
+}
+
+async function handleTiktokTriggerExport(env, origin) {
+  if (!env.GH_TOKEN) return err('GH_TOKEN no configurado en el Worker', 500, origin);
+  const r = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/dispatches`, {
+    method: 'POST', headers: ghHeaders(env),
+    body: JSON.stringify({ event_type: 'tiktok-export' }),
+  });
+  if (!r.ok) return err('No se pudo disparar la exportación', 502, origin);
+  return ok({ ok: true }, origin);
+}
+
 // ── Validación de email ────────────────────────────────────────────────────────
 // Estricta a propósito, y el `\s` de la clase negada es lo importante: cubre \r y
 // \n. El destinatario termina crudo dentro de una cabecera MIME en sendGmail(), así
@@ -2169,6 +2245,12 @@ async function verifyWebAuthnSig(authData, cdBytes, sigBytes, pubKey) {
 const WA_RP_ID   = 'cacusabytaitus.com';
 const WA_RP_NAME = 'CACUSA Admin';
 const WA_USERS   = ['robin.gonzalez', 'tita.jaramillo'];
+// El rpId ya se verifica (hash SHA-256 contra authData) pero el origin de
+// clientData nunca se comparaba contra nada — un rpId es válido para
+// cualquier subdominio, así que si alguna vez un subdominio quedara
+// comprometido (DNS colgante, XSS), una ceremonia corrida desde ahí pasaba
+// igual. Hallazgo del 19 sep (auditoría propia, A07-A19).
+const WA_ORIGIN = 'https://cacusabytaitus.com';
 
 async function handleWaRegChallenge(body, env, origin) {
   const session = await verifyToken(body.token, env);
@@ -2191,6 +2273,7 @@ async function handleWaRegister(body, env, origin) {
   const cdBytes = b64urlDecode(clientDataJSON);
   const cd = JSON.parse(new TextDecoder().decode(cdBytes));
   if (cd.type !== 'webauthn.create' || cd.challenge !== challenge) return err('clientData inválido', 400, origin);
+  if (cd.origin !== WA_ORIGIN) return err('origin no coincide', 400, origin);
   const attObj = decodeCBOR(b64urlDecode(attestationObject));
   const authData = attObj.authData;
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
@@ -2202,14 +2285,34 @@ async function handleWaRegister(body, env, origin) {
   await env.CACUSA_KV.put(`wacred:${session.user}`, JSON.stringify({
     credentialId, publicKey: Array.from(coseKey), signCount, created: new Date().toISOString()
   }));
+  // Registrar una passkey nueva solo pide un token de sesión válido — quien
+  // robe un token (XSS, filtración) podría registrar su propio dispositivo
+  // en silencio, reemplazando el de la dueña real. No hay forma barata de
+  // pedir re-autenticación fuerte acá sin rediseñar el flujo, así que al
+  // menos se avisa de inmediato — mismo patrón "ante la duda, avisar a
+  // Tita/Robin" que ya usa el resto del repo (push de pedido nuevo, etc.).
+  try {
+    await sendWebPushAll(env, {
+      title: 'CACUSA · Nueva passkey registrada',
+      body: `⚠️ Se agregó un Face ID/huella nuevo para ${session.user} — si no fuiste vos, avisa ya.`,
+      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      tag: 'cacusa-webauthn',
+      urgency: 'high',
+    });
+  } catch (e) { console.error('push nueva passkey falló:', e.message); }
   return ok({ ok: true }, origin);
 }
 
 async function handleWaLoginChallenge(body, env, origin) {
   const { user } = body;
-  if (!WA_USERS.includes(user)) return err('Usuario no encontrado', 404, origin);
+  // Antes distinguía "usuario no encontrado" de "sin Face ID configurado" —
+  // con solo 2 cuentas reales eso alcanzaba para confirmar cuáles existen.
+  // Mismo mensaje genérico para los 2 casos (el motivo real sigue quedando
+  // en el log del servidor para debug).
+  const genericErr = () => err('No se puede iniciar el login con Face ID', 400, origin);
+  if (!WA_USERS.includes(user)) { console.log('wa-login-challenge: usuario no encontrado', user); return genericErr(); }
   const credRaw = await env.CACUSA_KV.get(`wacred:${user}`);
-  if (!credRaw) return err('Face ID no configurado para este usuario', 404, origin);
+  if (!credRaw) { console.log('wa-login-challenge: sin passkey configurada', user); return genericErr(); }
   const { credentialId } = JSON.parse(credRaw);
   const challenge = b64url(crypto.getRandomValues(new Uint8Array(32)));
   await env.CACUSA_KV.put(`walc:${challenge}`, user, { expirationTtl: 300 });
@@ -2229,6 +2332,7 @@ async function handleWaLogin(body, env, origin) {
   const cdBytes = b64urlDecode(clientDataJSON);
   const cd = JSON.parse(new TextDecoder().decode(cdBytes));
   if (cd.type !== 'webauthn.get' || cd.challenge !== challenge) return err('clientData inválido', 400, origin);
+  if (cd.origin !== WA_ORIGIN) return err('origin no coincide', 400, origin);
   const authBytes = b64urlDecode(authenticatorData);
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
   if (!arraysEqual(authBytes.slice(0, 32), rpHash)) return err('rpId no coincide', 400, origin);
