@@ -13,6 +13,15 @@
 #   wrangler deploy --config wrangler.square.toml
 # Después de este primer deploy, los cambios normales al CUERPO de
 # square-payment-worker.js pueden seguir pegándose en el dashboard como siempre.
+#
+# INCIDENTE (19 sep, mismo día) — este archivo NO declaraba los bindings que
+# cacusa-square YA tenía configurados a mano (CACUSA_KV, ADMIN_WORKER) —
+# `wrangler deploy` los pisó/borró al no estar acá (ver el mismo aviso en
+# wrangler.admin.toml, con el detalle completo). Arreglo inmediato: volver a
+# agregarlos a mano en Cloudflare → cacusa-square → Settings → Bindings → Add
+# (KV Namespace `CACUSA_KV`, Service binding `ADMIN_WORKER` → Worker
+# cacusa-admin). Quedan también declarados abajo — el `id` de KV es un
+# placeholder, reemplazar por el real antes de volver a correr wrangler.
 
 name = "cacusa-square"
 main = "square-payment-worker.js"
@@ -22,3 +31,11 @@ compatibility_date = "2026-09-19"
 name = "GIFT_CARD_LEDGER"
 class_name = "GiftCardLedger"
 script_name = "cacusa-admin"
+
+[[kv_namespaces]]
+binding = "CACUSA_KV"
+id = "REEMPLAZAR_CON_EL_ID_REAL_DEL_NAMESPACE"
+
+[[services]]
+binding = "ADMIN_WORKER"
+service = "cacusa-admin"
