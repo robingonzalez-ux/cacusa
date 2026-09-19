@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:53:16.967Z",
+  "lastUpdated": "2026-09-19T14:53:28.137Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1315,26 +1315,6 @@
       "material": "Baño de oro 18k",
       "id": 1781881478183,
       "name_en": "Adjustable Ring with White Zirconia"
-    },
-    {
-      "name": "Chuncky con círculo de circones, donde de nácar y una silueta de circones de corazón ",
-      "category": "Anillos",
-      "price": 22,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Llamativo anillo chunky con círculo de circones, fondo de nácar y silueta de corazón de circones en dorado 18k. Moderno y con carácter.",
-      "description_en": "Statement chunky ring with a circle of zirconia, mother-of-pearl background and a zirconia heart silhouette in 18k gold. Modern and bold.",
-      "personalized": false,
-      "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781881501235_image_jpg.webp",
-      "focalX": 37.61942675159236,
-      "focalY": 42.80303030303028,
-      "zoom": 1.6,
-      "material": "Baño de oro 18k",
-      "id": 1781881544132,
-      "name_en": "Chunky Ring with Zirconia Circle, Mother-of-Pearl & Heart Silhouette"
     },
     {
       "name": "Cadena con dije de Cruz grande con piedras color esmeralda ",
