@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:06:29.758Z",
+  "lastUpdated": "2026-09-19T16:08:48.319Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2289,6 +2289,28 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789833979991,
+      "promo": null
+    },
+    {
+      "name": "Aretes de caracol ",
+      "name_en": "Snail Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un diseño que parece traído de un tesoro escondido. ✨🐚\nSus formas de caracol, el contraste negro y los detalles dorados hacen de estos aretes una pieza imposible de ignorar. Con baño de oro de 18K, son perfectos para transformar un look sencillo y darle ese toque sofisticado y diferente que hace que todos pregunten por tus aretes.",
+      "description_en": "A design that looks like it came from a hidden treasure. ✨🐚\nIts snail shapes, black contrast and golden details make these earrings an impossible piece to ignore. With an 18K gold plating, they are perfect for transforming a simple look and giving it that sophisticated and different touch that makes everyone ask about your earrings.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789834017318_f674d9b6_8269_4d0a_8518_a1f24d7a7c8b_jpe.webp",
+      "focalX": 46.58588553069768,
+      "focalY": 59.14512922465204,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789834120184,
       "promo": null
     }
   ],
