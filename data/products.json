@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:53:54.029Z",
+  "lastUpdated": "2026-09-19T14:54:10.214Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1069,26 +1069,6 @@
       "material": "Baño de oro 18k",
       "id": 1781878646387,
       "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
-    },
-    {
-      "name": "Triple línea de circones con 3 piedras ",
-      "category": "Anillos",
-      "price": 25,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Anillo de triple banda con elegantes circones y tres piedras centrales en baño de oro 18k. Diseño sofisticado y moderno.",
-      "description_en": "Triple band ring with elegant zirconia and three central stones in 18k gold plating. Sophisticated and modern design.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878676074_image_jpg.webp",
-      "focalX": 61.52810028495943,
-      "focalY": 60.6153181509597,
-      "zoom": 1.6,
-      "material": "Baño de oro 18k",
-      "id": 1781878707797,
-      "name_en": "Triple Zirconia Band Ring with 3 Stones"
     },
     {
       "name": "Círculo de microcircones con un fondo de nácar y un microcircones central ",
