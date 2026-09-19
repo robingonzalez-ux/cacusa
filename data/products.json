@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:34:48.910Z",
+  "lastUpdated": "2026-09-19T15:38:49.121Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2091,6 +2091,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832083118,
+      "promo": null
+    },
+    {
+      "name": "Argollas ",
+      "name_en": "Rings:",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Argollas bicolor de diseño moderno, con acabado dorado y delicadas cadenas plateadas en movimiento. ✨ Una pieza original y versátil que aporta estilo y personalidad a tu look.",
+      "description_en": "Two-tone rings of modern design, with a gold finish and delicate silver chains in motion. ✨ An original and versatile piece that brings style and personality to your look.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789832173357_d4af1a12_16b6_4e16_9b72_33cb792de567_png.webp",
+      "focalX": 49.72317990789442,
+      "focalY": 34.89065606361816,
+      "zoom": 1.15,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789832318279,
       "promo": null
     }
   ],
