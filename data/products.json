@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:49:28.213Z",
+  "lastUpdated": "2026-09-19T15:54:47.054Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2179,6 +2179,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832962055,
+      "promo": null
+    },
+    {
+      "name": "Anillo escultura ",
+      "name_en": "Sculpture ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un anillo que hace todo el look. ✨\nSu diseño orgánico y escultural tiene ese efecto statement que transforma hasta el outfit más básico. Con baño de oro de 18K y diseño ajustable, es perfecto para quien busca una joya diferente, moderna y difícil de ignorar. De esas piezas que todos te preguntan dónde compraste.",
+      "description_en": "A ring that makes the whole look. ✨\nIts organic and sculptural design has that statement effect that transforms even the most basic outfit. With an 18K gold plating and adjustable design, it is perfect for those looking for a different jewel, modern and difficult to ignore. Of those pieces that everyone asks you where you bought.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789833129447_424dde68_cae9_4f27_98ad_28d5758e7f4e_png.webp",
+      "focalX": 49.907726635964785,
+      "focalY": 40.05964214711727,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789833283695,
       "promo": null
     }
   ],
