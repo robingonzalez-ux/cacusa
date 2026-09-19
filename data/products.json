@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:58:53.421Z",
+  "lastUpdated": "2026-09-19T16:01:44.041Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2245,6 +2245,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833527086,
+      "promo": null
+    },
+    {
+      "name": "Anillo curvas ",
+      "name_en": "Curves ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "El anillo que hace que tus manos no pasen desapercibidas. ✨\nSus curvas entrelazadas crean un diseño moderno y escultural que luce increíble desde cualquier ángulo. Con baño de oro de 18K y diseño ajustable, es perfecto para elevar hasta el look más sencillo. Una pieza protagonista: te la pones y no necesitas mucho más.",
+      "description_en": "The ring that makes sure your hands don't go unnoticed. ✨\nIts interlocking curves create a modern, sculptural design that looks amazing from any angle. With 18K gold plating and adjustable design, it's perfect for elevating to the simplest look. A protagonist piece: you put it on and you don't need much more.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789833570913_img_7894_jpeg.webp",
+      "focalX": 51.75319391666876,
+      "focalY": 63.51888667992046,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789833699836,
       "promo": null
     }
   ],
