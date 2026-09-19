@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T22:02:06.021Z",
+  "lastUpdated": "2026-09-19T22:05:30.732Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2603,6 +2603,30 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789855320945,
+      "promo": null
+    },
+    {
+      "name": "Anillo ojo de tigre o Piedra malaquita",
+      "name_en": "Tiger's Eye Ring or Malachite Stone",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo Ojo de Tigre / Malaquita ✨\n\nDos piedras, dos energías, un diseño que no pasa desapercibido. 🤎💚 Elige Ojo de Tigre, asociado con la confianza y protección, o Malaquita, tradicionalmente vinculada con la transformación y renovación.\n\nUna pieza protagonista para quienes quieren llevar algo bonito y con significado. ✨",
+      "description_en": "Tiger Eye/ Malachite Ring ✨\n\nTwo stones, two energies, a design that does not go unnoticed. 🤎💚 Choose Tiger's Eye, associated with trust and protection, or Malachite, traditionally linked to transformation and renewal.\n\nA protagonist piece for those who want to wear something beautiful and meaningful. ✨",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789855399126_0ab482ea_fe11_49c6_a77e_f385af780d02_jpe.webp",
+      "focalX": 50.55364018421118,
+      "focalY": 25.215374420145828,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [
+        "https://cacusabytaitus.com/ui_kits/store/images/1789855519113_b1499985_d121_4d61_9194_b7457ee01aa8_jpe.webp"
+      ],
+      "id": 1789855526360,
       "promo": null
     }
   ],
