@@ -1500,6 +1500,7 @@ const __EN_T = {
   "store.shippingFree":"Free shipping unlocked!","store.coFree":"Free",
   "store.coError1":"Please enter your name and mobile number.","store.coError2":"Please select your state.","store.coError3":"Please enter a valid phone number.",
   "store.coErrorZip":"Please enter a valid ZIP code (5 digits).",
+  "store.coErrorOrderFailed":"We couldn't save your order — please check your connection and try again.",
   "store.mktLocal":"Local product","store.mktImport":"Imported from the US","store.mktEcOnly":"Shipped from Ecuador",
   "tag.nuevo":"New","tag.bestseller":"Bestseller",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",
@@ -2851,7 +2852,7 @@ document.getElementById('coNextBtn').addEventListener('click', coGoStep2);
 document.getElementById('coBackStepBtn').addEventListener('click', coGoStep1);
 
 // ─── ZELLE / TRANSFERENCIA BUTTON ────────────────────────────
-document.getElementById('zelleBtn').addEventListener('click', () => {
+document.getElementById('zelleBtn').addEventListener('click', async () => {
   const errorEl = document.getElementById('coError');
   const nombre  = document.getElementById('coNombre').value.trim();
   const tel     = document.getElementById('coTel').value.trim();
@@ -2904,9 +2905,10 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     zelleGcDiscount > 0 ? `GC:${_gcCode}(-$${zelleGcDiscount})` : '',
     zelleCpDiscount > 0 ? `CP:${_cpCode}(-$${zelleCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
-  submitOrder({
+  const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
+  const ok = await submitOrder({
     numero:    _currentOrderNum,
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: (document.getElementById('coEmail').value || '').trim() },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal },
     productos: cart.map(i => ({ name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     pago:      'Zelle',
@@ -2914,7 +2916,10 @@ document.getElementById('zelleBtn').addEventListener('click', () => {
     notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined,
     giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined
   });
-  const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
+  if (!ok) {
+    errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
+    return;
+  }
   if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
@@ -2963,6 +2968,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     name:     nombre,
     lastname: document.getElementById('coApellido').value.trim(),
     phone:    tel,
+    email:    (document.getElementById('coEmail').value || '').trim(),
     country:  paisVal,
     state:    estadoVal || undefined,
     zip:      document.getElementById('coZip').value.trim() || undefined,
@@ -3110,16 +3116,26 @@ function buildWhatsAppUrl() {
     : 'https://wa.me/?text=' + encodeURIComponent(msg);
 }
 
-// ─── ENVIAR PEDIDO AL ADMIN (fire-and-forget) ─────────────────
-function submitOrder(order) {
-  fetch(ADMIN_WORKER_URL + '/order', {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ order })
-  }).catch(() => {}); // silencioso si falla
+// Barrido de seguridad (19 sep): antes esto era fire-and-forget — el checkout abría
+// WhatsApp, quemaba el cupón y vaciaba el carrito de inmediato, sin esperar a que el
+// servidor confirmara que el pedido se guardó. Si el Worker estaba caído, la clienta
+// veía "pedido confirmado" pero el pedido nunca existió. Ahora devuelve true/false
+// según la respuesta real, y los 2 checkouts (Zelle y WhatsApp) esperan este resultado
+// antes de continuar.
+async function submitOrder(order) {
+  try {
+    const r = await fetch(ADMIN_WORKER_URL + '/order', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ order })
+    });
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
 }
 
-document.getElementById('waFallbackBtn').addEventListener('click', e => {
+document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   e.preventDefault();
   const errorEl = document.getElementById('coError');
   const nombre  = document.getElementById('coNombre').value.trim();
@@ -3170,9 +3186,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
     waGcDiscount > 0 ? `GC:${_gcCode}(-$${waGcDiscount})` : '',
     waCpDiscount > 0 ? `CP:${_cpCode}(-$${waCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
-  submitOrder({
+  const emailVal = (document.getElementById('coEmail').value || '').trim();
+  const ok = await submitOrder({
     numero:  _currentOrderNum,
-    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: (document.getElementById('coEmail').value || '').trim() },
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal },
     productos: cart.map(i => ({ name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     pago:   'WhatsApp',
@@ -3180,7 +3197,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', e => {
     notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined,
     giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined
   });
-  const emailVal = (document.getElementById('coEmail').value || '').trim();
+  if (!ok) {
+    errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
+    return;
+  }
   if (_cpCode) burnCoupon(_cpCode, tel, emailVal);
   window.open(buildWhatsAppUrl(), '_blank');
   closeCheckout();
@@ -3715,12 +3735,17 @@ async function applyCoupon() {
   btn.disabled=false;
 }
 
-function burnCoupon(code, phone, email) {
+// Se llama SOLO después de confirmar que el pedido se guardó (ver los 2 checkouts) —
+// antes se llamaba en paralelo con submitOrder, así que un pedido que nunca se guardó
+// igual quemaba el cupón de la clienta.
+async function burnCoupon(code, phone, email) {
   if (!code) return;
-  fetch(ADMIN_WORKER_URL + '/coupon/burn', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, phone: phone || '', email: email || '' })
-  }).catch(() => {});
+  try {
+    await fetch(ADMIN_WORKER_URL + '/coupon/burn', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, phone: phone || '', email: email || '' })
+    });
+  } catch (e) {}
 }
 
 // PWA: registrar service worker + botón de instalación
