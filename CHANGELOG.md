@@ -12,6 +12,32 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (2da tanda) — 3 hallazgos más tras revisar de nuevo con IA
+
+Misma auditoría externa, segunda pasada sobre lo ya corregido:
+
+- **Sesiones que ya no deberían valer, seguían valiendo**: un token de
+  sesión firmado antes del arreglo del login (el hallazgo crítico de la
+  primera tanda) podía seguir funcionando hasta por 12 horas más, aunque
+  esa cuenta ya no fuera válida. Ahora se revisa también al verificar la
+  sesión, no solo al firmarla — cualquier token viejo de una cuenta
+  inválida deja de servir de inmediato.
+- **La gift card seguía sin cubrir el envío y el impuesto**: el arreglo de
+  la primera tanda solo miraba el precio de los productos. Con números
+  reales: compra de $100 + $20 de envío/impuesto, pagada con gift card de
+  $120 → solo se descontaban $100 del saldo real, dejando $20 sin cobrar.
+  Ya se corrigió para que sume también envío e impuesto.
+- **La regla nueva de Firebase (Cacusa Lovers) no validaba el correo ni
+  bloqueaba campos extra**: se agregó validación de formato de email y se
+  restringió la escritura a los campos exactos que manda el formulario
+  real de suscripción.
+
+Quedan 2 pasos manuales: desplegar los 2 Workers actualizados
+(`cacusa-admin`, `cacusa-lovers-webhook`) y actualizar la regla de
+Firebase — ver CLAUDE.md.
+
+---
+
 ## 2026-09-19 — Auditoría externa: 8 hallazgos corregidos (login, dinero, checkout)
 
 Se revisó una auditoría de seguridad hecha por otra IA (19 hallazgos) contra

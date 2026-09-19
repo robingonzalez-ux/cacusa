@@ -175,7 +175,12 @@ reglas, actualizar este bloque con el nuevo snapshot.
       "$subId": {
         ".read": false,
         ".write": "!data.exists() && newData.hasChildren(['email', 'estado_pago'])",
-        "estado_pago": { ".validate": "newData.val() === 'pendiente'" }
+        "email":       { ".validate": "newData.isString() && newData.val().length <= 150 && newData.val().matches(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/)" },
+        "estado_pago": { ".validate": "newData.val() === 'pendiente'" },
+        "nombre": {}, "apellido": {}, "telefono": {}, "direccion": {}, "apto": {},
+        "ciudad": {}, "estado": {}, "zip": {}, "pais": {}, "plan": {}, "monto": {},
+        "fecha": {}, "metodo_pago": {}, "idioma": {},
+        "$other": { ".validate": false }
       }
     },
     "cacusa_lovers_photos": {
@@ -761,12 +766,71 @@ están en `main` y publicados solos.
   muertas de TikTok, robustez del ID/caché de pedidos, orden Gmail-antes-
   de-KV, y otros de menor severidad que A01-A12.
 
+### 2da ronda (19 sep, mismo día) — 3 hallazgos más, verificados y corregidos
+
+El usuario volvió a pasar 4 puntos de ChatGPT sobre el trabajo ya
+desplegado. Verificación propia otra vez antes de tocar nada: 3 reales y
+nuevos, 1 ya documentado (no es hallazgo nuevo).
+
+- **A20 — las sesiones no revalidaban el usuario, solo la firma**:
+  `verifyToken()` en `admin-worker.js` y su copia independiente en
+  `lovers-webhook-worker.js` solo chequeaban firma HMAC + expiración
+  (12h) — nunca `payload.user` contra `VALID_USERS`. Un token firmado
+  ANTES del fix de A01 (o cualquier bug futuro de firma) seguía siendo
+  válido hasta su expiración natural, aunque `passwordFor()` ya rechazara
+  ese usuario en el login. Ahora las 2 copias de `verifyToken()` hacen
+  `if (!VALID_USERS.has(payload.user)) return null;` — invalida de
+  inmediato cualquier token histórico que no sea de una cuenta real.
+  `lovers-webhook-worker.js` no tenía `VALID_USERS` definida — se agregó
+  duplicada, mismo patrón que el resto de secretos compartidos entre
+  Workers (no hay módulos compartidos en Cloudflare Workers).
+- **A03, residual — la gift card seguía sin cubrir envío/impuesto**: el
+  primer arreglo (ronda 1) capeaba contra `productos.reduce(price*qty)`,
+  sin sumar envío ni impuesto. Ejemplo real confirmado: compra de $100 +
+  $20 de envío/impuesto, gift card de $120 → solo se descontaban $100
+  (`min(120,100)`), dejando $20 de saldo real sin gastar aunque la tienda
+  ya le había mostrado a la clienta que el gift card cubría el total
+  completo. `buildOrderCore()` YA aceptaba `envio`/`impuesto` (`num()`,
+  sin usarlos en ningún lado) — solo faltaba que la tienda los mandara.
+  Ahora `handleOrder()` suma `newOrder.envio + newOrder.impuesto` al
+  subtotal bruto, y `ui_kits/store/index.html`/`en/` mandan esos 2 campos
+  (más `subtotal`, informativo) en los 2 checkouts (Zelle, WhatsApp) — ya
+  calculados en el navegador (`shippingCost`/`zelleTax` y `waShip`/
+  `waTax`), solo faltaba incluirlos en el payload. Pagos con tarjeta no
+  tenían este problema: `square-payment-worker.js` recalcula precios,
+  envío e impuesto contra el catálogo real antes de llamar a
+  `/giftcard/redeem` con el monto exacto ya server-side.
+- **A02, residual — la regla de Firebase no validaba el email ni bloqueaba
+  campos extra**: la regla de `estado_pago` (ronda 1) exigía el valor
+  correcto, pero `email` no tenía ningún formato exigido (cualquier string
+  pasaba) y no había `$other: {".validate": false}` — cualquiera podía
+  agregar campos arbitrarios al crear un registro. Se agregó validación de
+  formato de email (`.matches()`, no previene que alguien use el email de
+  otra persona — eso no se puede verificar sin un flujo de confirmación
+  real, fuera de alcance de una regla de base de datos) y se declararon
+  los 15 campos reales que manda el formulario público
+  (`cacusa-lovers.html`/`en/`, verificados uno por uno) como únicos
+  permitidos — ver el snapshot arriba. Cualquier campo nuevo que se agregue
+  al formulario público a futuro tiene que sumarse también a esta regla, o
+  la escritura se va a rechazar sola (mismo trade-off ya aceptado para
+  `cacusa_reviews`).
+- **Descartado como hallazgo nuevo**: "problemas del webhook Lovers y de
+  confirmación del pedido" — es el mismo A04 ya documentado arriba (acción
+  múltiple sin atomicidad en `invoice.payment_made`), no algo nuevo que se
+  encontrara. Sigue sin corregirse, a propósito, en esta tanda.
+
+Los 2 Workers (`admin-worker.js`, `lovers-webhook-worker.js`) con estos 3
+arreglos de código quedan **pendientes de deploy manual** — ver abajo. La
+regla de Firebase también queda pendiente de pegar en Console.
+
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-Ninguno por ahora (19 sep). La regla de Firebase para `estado_pago` (A02)
-quedó publicada — ver "Reglas de Firebase RTDB (snapshot)" más arriba. Los
-6 arreglos de Workers de esta misma auditoría también están desplegados
-(confirmado arriba).
+1. **Deploy de `admin-worker.js` y `lovers-webhook-worker.js`** con los
+   arreglos de la 2da ronda (A20 en los dos; A03-residual solo en admin) —
+   entregados el 19 sep.
+2. **Regla de Firebase actualizada para `cacusa_lovers`** (A02-residual,
+   arriba) — pegar el snapshot completo actualizado (sección "Reglas de
+   Firebase RTDB" más arriba) en Console → Realtime Database → Rules.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
 (ver "Backups y recuperación de desastres" más arriba), y la regla de
