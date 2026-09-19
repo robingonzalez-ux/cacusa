@@ -676,9 +676,9 @@ crítico, los de dinero/fraude, y los que rompían funcionalidad real:
   `lovers-webhook-worker.js` usa `FB_DB_SECRET`, que bypassa las reglas.
 
 Los 6 arreglos de Workers (`admin-worker.js`, `square-payment-worker.js`)
-están en `workers-src` — **pendiente el deploy manual** (ver abajo). Los 2
-de la tienda (`ui_kits/store/index.html`, `en/`) ya están en `main` y
-publicados solos.
+ya están desplegados (confirmado 19 sep) en `cacusa-admin` y
+`cacusa-square`. Los 2 de la tienda (`ui_kits/store/index.html`, `en/`) ya
+están en `main` y publicados solos.
 
 ### Hallazgos NO corregidos en esta tanda (documentados, sin tocar código)
 
@@ -695,11 +695,7 @@ publicados solos.
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-1. **Deploy de `admin-worker.js` y `square-payment-worker.js`** con los 6
-   arreglos de arriba (A01, A03, A05, A12 en admin; A05 en square) —
-   entregados el 19 sep, `workers-src` @ `372df44`. Van **juntos**: A05
-   depende de que Admin ya tenga la validación de cupones nueva.
-2. **Regla de Firebase para `estado_pago`** (A02, arriba) — pegar en
+1. **Regla de Firebase para `estado_pago`** (A02, arriba) — pegar en
    Console → Realtime Database → Rules, dentro de `cacusa_lovers/$subId`.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
