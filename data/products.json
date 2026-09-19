@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:08:48.319Z",
+  "lastUpdated": "2026-09-19T16:11:22.080Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2311,6 +2311,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834120184,
+      "promo": null
+    },
+    {
+      "name": "Aretes de corazón ",
+      "name_en": "Heart Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un corazón para las que no nacieron para pasar desapercibidas. 💗✨\nSu diseño XL en rosa, enmarcado en dorado y con delicados detalles en relieve, convierte cualquier look sencillo en algo especial. Con baño de oro de 18K, son esos aretes protagonistas que te pones cuando quieres añadir color, personalidad y un toque irresistible.",
+      "description_en": "A heart for those who were not born to go unnoticed. 💗✨\nIts XL design in pink, framed in gold and with delicate embossed details, makes any simple look something special. With an 18K gold plating, these are the star earrings you wear when you want to add colour, personality and an irresistible touch.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789834189192_39d2bb9c_9d48_4cfe_b090_86a675166fbd_jpe.webp",
+      "focalX": 49.53863317982401,
+      "focalY": 54.24121935056333,
+      "zoom": 1.3,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789834277881,
       "promo": null
     }
   ],
