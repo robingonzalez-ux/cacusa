@@ -21,10 +21,18 @@ name: Regenerar JSON-LD y sitemap de productos
 #      llms.txt (prosa, WhatsApp, redes, políticas) sigue siendo manual —
 #      ver el encabezado de generate_llms_facts.py para el detalle de qué
 #      se automatiza y qué no.
+#   5. Una página estática real por producto y por categoría (ES + EN) en
+#      ui_kits/store/producto/<slug>/, ui_kits/store/categoria/<slug>/ y sus
+#      equivalentes en/ — con canonical/hreflang/H1 correctos desde el
+#      primer byte, en vez de depender de que corra JavaScript (auditoría
+#      SEO del 19 sep, hallazgos SEO-01/03/04/06). Corre último, después de
+#      los pasos 1-2, para partir del index.html/sitemap.xml ya regenerados
+#      en esta misma corrida — ver generate_product_pages.py.
 #
 # No entra en loop: este workflow solo mira cambios en data/products.json, y su
-# propio commit únicamente toca los index.html, sitemap.xml y llms.txt —
-# nunca products.json — así que no se vuelve a disparar a sí mismo.
+# propio commit únicamente toca los index.html, sitemap.xml, llms.txt y las
+# carpetas producto/ y categoria/ — nunca products.json — así que no se vuelve
+# a disparar a sí mismo.
 on:
   push:
     branches: [main]
@@ -55,14 +63,19 @@ jobs:
       - name: Regenerar datos numéricos de llms.txt
         run: python3 .github/scripts/generate_llms_facts.py
 
+      - name: Generar páginas estáticas por producto/categoría
+        run: python3 .github/scripts/generate_product_pages.py
+
       - name: Commitear si hubo cambios
         run: |
           git config user.name "cacusa-bot"
           git config user.email "actions@users.noreply.github.com"
-          if git diff --quiet -- ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml llms.txt; then
+          git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml llms.txt \
+                  ui_kits/store/producto en/ui_kits/store/producto \
+                  ui_kits/store/categoria en/ui_kits/store/categoria
+          if git diff --cached --quiet; then
             echo "Sin cambios."
             exit 0
           fi
-          git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml llms.txt
-          git commit -m "Regenerar JSON-LD, sitemap, catálogo noscript y datos de llms.txt [skip ci]"
+          git commit -m "Regenerar JSON-LD, sitemap, catálogo noscript, llms.txt y páginas estáticas [skip ci]"
           git push

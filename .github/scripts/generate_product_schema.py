@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 PRODUCTS_JSON = ROOT / "data" / "products.json"
 BASE_URL = "https://cacusabytaitus.com"
 REVIEWS_URL = "https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews.json"
+SURCHARGES_URL = "https://cacusa-admin.facturacioncacusa.workers.dev/pub/surcharges"
 
 MARKER_START = "<!-- STATIC_PRODUCT_SCHEMA:START -->"
 MARKER_END = "<!-- STATIC_PRODUCT_SCHEMA:END -->"
@@ -155,6 +156,46 @@ def build_review_fields(product_id, reviews_by_product):
     }
 
 
+def fetch_surcharges():
+    """Barrido SEO (19 sep): el precio publicado en este schema estático venía SIEMPRE del
+    precio base de data/products.json, sin saber si ese producto tiene activo el recargo del
+    4% con tarjeta (esa bandera vive en Cloudflare KV, no en git — la activa/desactiva Tita/
+    Robin desde el panel admin). Resultado real detectado en auditoría: un producto de $22
+    con recargo activo se mostraba a $22.88 en la tienda y en el JSON-LD que arma el propio
+    JS (_injectProductSchema), pero este script seguía publicando $22 — dos precios
+    distintos para el mismo producto. /pub/surcharges es de lectura pública (el navegador
+    la llama sin sesión) — no hace falta ningún secret nuevo, solo el mismo header Origin
+    que ya manda cualquier navegador real."""
+    try:
+        req = urllib.request.Request(
+            SURCHARGES_URL, data=b"{}", method="POST",
+            headers={"Content-Type": "application/json", "Origin": BASE_URL},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        surcharges = data.get("surcharges")
+        return surcharges if isinstance(surcharges, dict) else {}
+    except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        print(f"Aviso: no se pudieron traer los recargos activos ({e}) — se publica el precio base sin recargo esta corrida.")
+        return {}
+
+
+def js_round2(x):
+    """Replica Math.round(x*100)/100 de JS (redondeo half-up), no el round() de Python
+    (banker's rounding) — tienen que dar exactamente el mismo centavo que ve la clienta."""
+    import math
+    return math.floor(x * 100 + 0.5) / 100
+
+
+def priced(p, surcharges):
+    """Precio que realmente ve la clienta ahora mismo: base + 4% si ese id tiene el recargo
+    activo en KV, igual que hace PRODUCTS.forEach(...) en ui_kits/store/index.html."""
+    base = p.get("price", 0)
+    if surcharges.get(str(p.get("id"))) is True:
+        return js_round2(float(base) * 1.04)
+    return base
+
+
 def slugify(s):
     s = (s or "").lower()
     s = unicodedata.normalize("NFD", s)
@@ -180,10 +221,16 @@ def product_images(p):
     return []
 
 
-def build_product_entry(p, lang, store_path, shipping_details, reviews_by_product):
+def product_page_url(p, lang, store_path):
+    """URL real (no ?p=) de la página estática de este producto — generate_product_pages.py
+    la crea; este script solo tiene que apuntar Product.url/Offer.url para ahí."""
+    return f"{BASE_URL}{store_path}producto/{product_param(p, lang)}/"
+
+
+def build_product_entry(p, lang, store_path, shipping_details, reviews_by_product, surcharges):
     name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
     desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")
-    url = f"{BASE_URL}{store_path}?p={product_param(p, lang)}"
+    url = product_page_url(p, lang, store_path)
     entry = {
         "@type": "Product",
         "name": name or "",
@@ -193,7 +240,7 @@ def build_product_entry(p, lang, store_path, shipping_details, reviews_by_produc
         "offers": {
             "@type": "Offer",
             "priceCurrency": "USD",
-            "price": str(p.get("price", "")),
+            "price": str(priced(p, surcharges)),
             "availability": ("https://schema.org/OutOfStock" if p.get("available") is False else "https://schema.org/InStock"),
             "url": url,
             "shippingDetails": shipping_details,
@@ -233,14 +280,14 @@ def json_for_script_tag(obj):
     )
 
 
-def build_schema_block(products, lang, store_path, shipping_details, reviews_by_product):
+def build_schema_block(products, lang, store_path, shipping_details, reviews_by_product, surcharges):
     # Antes se excluían acá los productos agotados (available:False) — el
     # producto desaparecía por completo de Google, no solo de la tienda. Ahora
     # se incluyen todos, con availability OutOfStock en vez de InStock (ver
     # build_product_entry) — el producto sigue indexado, solo cambia el
     # estado de stock, tal como espera schema.org.
     entries = [
-        build_product_entry(p, lang, store_path, shipping_details, reviews_by_product)
+        build_product_entry(p, lang, store_path, shipping_details, reviews_by_product, surcharges)
         for p in products
     ]
     graph = {"@context": "https://schema.org", "@graph": entries}
@@ -274,9 +321,10 @@ def main():
     shipping_cfg = data.get("config", {}).get("shipping", {})
     shipping_details = build_shipping_details(shipping_cfg)
     reviews_by_product = fetch_reviews_by_product()
+    surcharges = fetch_surcharges()
     changed_any = False
     for target in TARGETS:
-        block = build_schema_block(products, target["lang"], target["store_path"], shipping_details, reviews_by_product)
+        block = build_schema_block(products, target["lang"], target["store_path"], shipping_details, reviews_by_product, surcharges)
         changed = inject(target["path"], block)
         changed_any = changed_any or changed
         print(f"{target['path']}: {'actualizado' if changed else 'sin cambios'}")
