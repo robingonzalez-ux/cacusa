@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:52:13.614Z",
+  "lastUpdated": "2026-09-19T14:52:31.893Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1029,26 +1029,6 @@
       "material": "Baño de oro 18k",
       "id": 1781878207350,
       "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
-    },
-    {
-      "name": "Anillo talla 7 con tres microcircones de colores ",
-      "category": "Anillos",
-      "price": 25,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Elegante anillo talla 7 en acero inoxidable adornado con tres microcircones de colores. Delicado, colorido y perfecto para el uso diario.",
-      "description_en": "Elegant size 7 stainless steel ring adorned with three colorful micro zirconia stones. Delicate, colorful and perfect for everyday wear.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878251959_image_jpg.webp",
-      "focalX": 56.69373564933127,
-      "focalY": 51.19422329198296,
-      "zoom": 1.9,
-      "material": "Acero inoxidable",
-      "id": 1781878296526,
-      "name_en": "Size 7 Ring with Three Colorful Micro Zirconia"
     },
     {
       "name": "Anillo TIFFY ajustable con microcircones ",
