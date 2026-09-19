@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:37:22.701Z",
+  "lastUpdated": "2026-09-19T16:45:52.196Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2487,6 +2487,32 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835829929,
+      "promo": null
+    },
+    {
+      "name": "Pulseras rojas ",
+      "name_en": "Polseres vermelles",
+      "category": "Pulseras",
+      "price": 22,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Una pulsera, un significado. ❤️\nNuestra colección de pulseras rojas reúne distintos dijes y detalles para que elijas el que más conecte contigo. Diseños delicados, ajustables y llenos de intención, perfectos para llevar todos los días, combinar entre sí o regalar a alguien especial.",
+      "description_en": "A bracelet, a meaning. ❤️\nOur collection of red bracelets brings together different charms and details so you can choose the one that connects with you the most. Delicate designs, adjustable and full of intention, perfect to wear every day, combine with each other or give to someone special.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789836068330_13ca1f4f_337c_40cb_9a26_80583ccfd844_jpe.webp",
+      "focalX": 47.877712627190455,
+      "focalY": 60.33797216699803,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789836107297_3bc8c1e7_7f9c_44dc_9e49_5656b18e332d_jpe.webp",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789836124156_a431f289_c739_4373_8ab8_a23b82dc2f8f_jpe.webp",
+        "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789836141687_efcb6b8c_42af_422c_b519_97198d61307f_jpe.webp"
+      ],
+      "id": 1789836348710,
       "promo": null
     }
   ],
