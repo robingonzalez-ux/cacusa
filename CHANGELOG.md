@@ -12,6 +12,44 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 — Auditoría externa: 8 hallazgos corregidos (login, dinero, checkout)
+
+Se revisó una auditoría de seguridad hecha por otra IA (19 hallazgos) contra
+el código real y se corrigieron los 8 más importantes:
+
+- **Crítico**: había una forma de entrar al panel admin sin conocer ninguna
+  contraseña real (un detalle técnico de cómo JavaScript maneja objetos,
+  explotable con un usuario inventado como `"constructor"`). Cerrado.
+- **Dinero real**: una compra pagada 100% (o en parte) con gift card no
+  descontaba el saldo correcto — en el peor caso, no descontaba nada. Ya se
+  descuenta el monto correcto siempre.
+- **Cupones que deberían estar bloqueados** (ya usados, o el regalo mensual
+  de un código de referido ya entregado) se seguían aceptando pagando con
+  tarjeta, aunque el panel los hubiera marcado como agotados. Ahora Square
+  respeta las mismas reglas que el panel.
+- **El checkout confirmaba la compra antes de tiempo**: si el sistema
+  fallaba justo en ese momento, a la clienta se le decía que ya había
+  comprado (y se le quemaba el cupón) sin que el pedido quedara guardado.
+  Ahora espera la confirmación real antes de avanzar, y avisa si algo falló
+  para poder reintentar.
+- **Pagos con tarjeta rechazaban el propio cupón de la clienta** (el 10% de
+  bienvenida, el exclusivo de Cacusa Lovers) por un dato que faltaba mandar.
+  Corregido.
+- **El código de envío gratis de Cacusa Lovers** podía duplicarse según cómo
+  la clienta escribiera su número de teléfono, dejando una copia que no se
+  podía cancelar. Ahora siempre es el mismo código sin importar el formato.
+- **El formulario público de Cacusa Lovers** no impedía, a nivel de la base
+  de datos, que alguien se auto-activara como suscriptora sin haber pagado
+  nunca (escribiendo directo a Firebase por fuera del sitio). Cerrado con
+  una regla nueva en Firebase — pendiente de pegarla en el dashboard.
+
+Quedan 2 pasos manuales: desplegar los 2 Workers actualizados
+(`cacusa-admin`, `cacusa-square`) y pegar la regla nueva de Firebase — ver
+CLAUDE.md. Los otros 11 hallazgos del reporte quedan documentados (con su
+veredicto: reales, exagerados, o ya resueltos) para retomar después.
+
+---
+
 ## 2026-09-17 — Verificado: las reseñas nuevas no se pueden auto-aprobar
 
 Último ítem pendiente de seguimiento operativo, cerrado. Se pidieron las

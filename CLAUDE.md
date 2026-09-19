@@ -615,16 +615,98 @@ vez de reinventarlos:
   pone `approved: true`) pasa por `lovers-webhook-worker.js` con
   `FB_DB_SECRET`, que bypassa las reglas por diseño de Firebase.
 
+## Auditoría externa (ChatGPT, 19 sep) — triaje y arreglos
+
+Se revisó una auditoría externa de 19 hallazgos (A01-A19) contra el código
+real (`workers-src` @ `2bc5896`, `main` del momento). Verificación propia
+(no solo la del documento externo): 15 de 19 eran reales, 2 estaban mal
+citados/parciales, 2 exagerados. Se corrigieron 8 en esta tanda — el
+crítico, los de dinero/fraude, y los que rompían funcionalidad real:
+
+- **A01 (crítico) — login sin contraseña real**: `passwordFor(user)` en
+  `admin-worker.js` hacía un lookup directo sobre un objeto literal, que
+  hereda de `Object.prototype`. Con `user:"constructor"` el lookup devolvía
+  la función `Object` (no `undefined`), y `safeEqual()` la convertía a un
+  string adivinable (`"function Object() { [native code] }"`) — cualquiera
+  podía loguearse sin ser `tita.jaramillo` ni `robin.gonzalez`. Arreglado con
+  `VALID_USERS` (`Set`), que no consulta el prototype.
+- **A03 — gift card no se descontaba bien**: `handleOrder()` capeaba el
+  monto pedido contra `newOrder.total`, que llega ya **neto** (descontado
+  gift card + cupón). Una compra de $100 pagada 100% con gift card de $100
+  llegaba con `total=$0`, así que nunca se descontaba nada del saldo real.
+  Ahora se compara contra el subtotal bruto recalculado de
+  `newOrder.productos`.
+- **A05 — Square aceptaba cupones que Admin rechazaría**:
+  `couponLoadValid()` en `square-payment-worker.js` nunca revisaba
+  `cpused:*`/`refmonth:*` (anti-reuso, tope mensual de referidos) — se portó
+  el mismo guard `repeatableByDesign` que ya protege welcome10/lovers-
+  shipping de este chequeo.
+- **A06 + A10 — el checkout confirmaba sin esperar al servidor**:
+  `submitOrder()`/`burnCoupon()` (`ui_kits/store/index.html`, `en/`) eran
+  fire-and-forget — si el Worker fallaba, se quemaba el cupón, se abría
+  WhatsApp y se vaciaba el carrito igual, sin que el pedido existiera. Ahora
+  ambos devuelven `true`/`false`, y los 2 checkouts (Zelle, WhatsApp) esperan
+  la confirmación antes de continuar; si falla, error visible y el carrito
+  queda intacto para reintentar.
+- **A11 — email faltante para pagos con tarjeta**: el objeto `customer` que
+  se manda a `square-payment-worker.js` no incluía `email` — un cupón propio
+  con `restrictToEmail` (welcome10, el exclusivo de Lovers) siempre se
+  rechazaba pagando con tarjeta. Se agregó el campo en los 2 archivos.
+- **A12 — código de envío gratis duplicable**: `loversShippingCode()`
+  firmaba con el teléfono completo, pero el índice de cancelación
+  (`loversShipIndexKey`) usa los últimos 7 dígitos — el mismo número en 2
+  formatos (con/sin código de país) generaba 2 cupones `ENVIO...`
+  distintos, uno no cancelable. Ahora ambos derivan de los mismos últimos 7
+  dígitos. Nota: un código emitido ANTES de este cambio, si esa clienta
+  pidió el código alguna vez en un formato distinto, queda huérfano — mismo
+  tipo de limitación ya aceptada para `restrictToPhone` el 16 sep.
+- **A02 — alta pública de Lovers se puede auto-activar**: nada impedía que
+  el navegador mandara `estado_pago: 'activo'` en vez de `'pendiente'` al
+  crear un registro en `cacusa_lovers/$subId` — quien escribiera directo a
+  la REST API de Firebase se auto-activaba y recibía todos los beneficios
+  reales sin pagar. Se agregó a las reglas de Firebase (Console → Realtime
+  Database → Rules, dentro de `cacusa_lovers/$subId`, mismo patrón que
+  `approved` en reseñas):
+  ```json
+  "estado_pago": { ".validate": "newData.val() === 'pendiente'" }
+  ```
+  y se sumó `'estado_pago'` a la lista de `hasChildren([...])` del
+  `.write` de ese nodo, para que sea obligatorio en la creación, no
+  opcional. La activación real sigue intacta:
+  `lovers-webhook-worker.js` usa `FB_DB_SECRET`, que bypassa las reglas.
+
+Los 6 arreglos de Workers (`admin-worker.js`, `square-payment-worker.js`)
+están en `workers-src` — **pendiente el deploy manual** (ver abajo). Los 2
+de la tienda (`ui_kits/store/index.html`, `en/`) ya están en `main` y
+publicados solos.
+
+### Hallazgos NO corregidos en esta tanda (documentados, sin tocar código)
+
+- **A04** (parcial/mal citado) — el documento externo citaba un patrón
+  `processed` en `lovers-webhook-worker.js:425-434` que no existe en el
+  archivo; la preocupación de fondo (acciones múltiples sin atomicidad en
+  el handler de `invoice.payment_made`, ~líneas 690-719) sí es real, pero
+  la cita puntual estaba mal.
+- **A07-A09, A13-A19** (real/exagerado según el caso, no re-detallado
+  acá) — quedan para una tanda futura; no se actuó sobre ellos. Incluyen:
+  reglas de Firebase para lectura de reseñas, hardening de WebAuthn, rutas
+  muertas de TikTok, robustez del ID/caché de pedidos, orden Gmail-antes-
+  de-KV, y otros de menor severidad que A01-A12.
+
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-Ninguno por ahora (17 sep). Los 4 Workers están desplegados y al día
-(confirmado 16 sep) con todo lo de `workers-src` hasta el commit `2bc5896`
-— leads por llave, seguridad del correo/cupón de envío, consolidación del
-escaneo. La privacidad del bucket R2 `cacusa-backups` quedó verificada el
-16 sep (ver "Backups y recuperación de desastres" más arriba), y la regla
-de Firebase que exige `approved === false` en reseñas nuevas quedó
-verificada el 17 sep — ya vive en las reglas de la base de datos (ver
-"Moderación de reseñas" más arriba).
+1. **Deploy de `admin-worker.js` y `square-payment-worker.js`** con los 6
+   arreglos de arriba (A01, A03, A05, A12 en admin; A05 en square) —
+   entregados el 19 sep, `workers-src` @ `372df44`. Van **juntos**: A05
+   depende de que Admin ya tenga la validación de cupones nueva.
+2. **Regla de Firebase para `estado_pago`** (A02, arriba) — pegar en
+   Console → Realtime Database → Rules, dentro de `cacusa_lovers/$subId`.
+
+La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
+(ver "Backups y recuperación de desastres" más arriba), y la regla de
+Firebase que exige `approved === false` en reseñas nuevas quedó verificada
+el 17 sep — ya vive en las reglas de la base de datos (ver "Moderación de
+reseñas" más arriba).
 
 ## Historial de cambios
 
