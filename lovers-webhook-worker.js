@@ -628,6 +628,13 @@ export default {
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
           const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
+          // A04 (auditoría externa, 19 sep): Square reintenta un webhook si no recibió un
+          // 200 rápido, o si esta misma función devolvió 500 antes por una falla transitoria
+          // de Firebase (fix de la 3ra ronda, ver el comentario de arriba). Sin este chequeo,
+          // la MISMA suscripción procesada 2 veces mandaba 2 avisos push de "nueva
+          // suscriptora" para la misma alta — capturado con el valor de ANTES de este write,
+          // así que en el reintento (donde ya quedó guardado) da true y no vuelve a avisar.
+          const alreadyProcessed = !!sub.id && existing?.square_subscription_id === sub.id;
           if (!existing) {
             dbOk = await updateSubscriber(key, 'pendiente', {
               email: email.toLowerCase(),
@@ -662,7 +669,7 @@ export default {
           // Excepción: si el aviso de "suscripción pendiente" ya sonó cuando
           // llenó el formulario (push_pendiente), no se repite acá — esa misma
           // clienta recibiría su segundo aviso recién al confirmarse el pago.
-          if (dbOk && !existing?.push_pendiente) {
+          if (dbOk && !existing?.push_pendiente && !alreadyProcessed) {
             await notifyAdminPush(
               'CACUSA · Nueva suscriptora Lovers',
               `✨ ${nombreCompleto} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
@@ -703,6 +710,13 @@ export default {
           };
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          // A04 (auditoría externa, 19 sep): mismo patrón que subscription.created de arriba —
+          // Square reintenta el webhook si no ve un 200 rápido, o si esta función devolvió 500
+          // antes por una falla transitoria de Firebase. Sin este chequeo, la MISMA factura
+          // procesada 2 veces mandaba 2 avisos push de "pago confirmado" para el mismo pago
+          // (notifyExclusiveCoupon ya era idempotente por su cuenta, pero igual se salta acá
+          // para no repetir el llamado sin necesidad).
+          const alreadyProcessed = !!invoice?.id && existing?.square_invoice_id === invoice.id;
           if (existing) {
             // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
             // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
@@ -710,7 +724,7 @@ export default {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
             }, dbUrl, fbAuth);
-            if (dbOk) {
+            if (dbOk && !alreadyProcessed) {
               console.log('Marked activo:', email);
               const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
               await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
