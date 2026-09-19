@@ -1,0 +1,24 @@
+# Config de wrangler SOLO para el Worker cacusa-square (square-payment-worker.js) —
+# binding CRUZADO hacia la clase GiftCardLedger que vive en cacusa-admin (ver
+# wrangler.admin.toml — desplegar ESE primero, esta clase tiene que existir antes
+# de que este binding pueda resolverla).
+#
+# Es el mismo concepto que el Service Binding ADMIN_WORKER que este Worker ya usa
+# (adminFetch(), ver cabecera de square-payment-worker.js) pero de tipo Durable
+# Object en vez de Service — permite reservar/confirmar/liberar saldo de la MISMA
+# tarjeta de regalo sin importar desde cuál de los 2 Workers se llame, porque
+# ambos apuntan al mismo namespace/clase (script_name abajo).
+#
+# Deploy (una sola vez, después de wrangler.admin.toml):
+#   wrangler deploy --config wrangler.square.toml
+# Después de este primer deploy, los cambios normales al CUERPO de
+# square-payment-worker.js pueden seguir pegándose en el dashboard como siempre.
+
+name = "cacusa-square"
+main = "square-payment-worker.js"
+compatibility_date = "2026-09-19"
+
+[[durable_objects.bindings]]
+name = "GIFT_CARD_LEDGER"
+class_name = "GiftCardLedger"
+script_name = "cacusa-admin"

@@ -253,8 +253,8 @@ function validateItems(items, products, combos, shipping, surcharges = {}) {
 }
 
 // ── Gift cards / cupones (KV compartido con cacusa-admin) ────────────────────
-// Acá solo se "espía" el saldo/descuento para calcular el precio en Square.
-// La deducción real (burn/redeem) ya NO ocurre hasta que el webhook confirme el pago.
+// gcPeekCents() solo "espía" el saldo (lectura) para calcular el precio en Square.
+// La reserva/deducción real pasa por GiftCardLedger (Durable Object, ver más abajo).
 function gcKey(code) { return 'gc:' + String(code || '').toUpperCase().replace(/[^A-Z0-9-]/g, ''); }
 async function gcPeekCents(env, code) {
   if (!env.CACUSA_KV) return 0;
@@ -263,6 +263,49 @@ async function gcPeekCents(env, code) {
   let card; try { card = JSON.parse(raw); } catch { return 0; }
   if (!card || card.active === false || !(card.balance > 0)) return 0;
   return Math.round(card.balance * 100);
+}
+
+// ── Durable Object GiftCardLedger — misma clase que admin-worker.js ──────────
+// Auditoría de integridad (19 sep, F03-a/F06): antes esto solo "espiaba" el saldo al
+// crear el link de pago (gcPeekCents, lectura) y la deducción real ocurría recién en
+// el webhook — 2 sesiones podían ver el mismo saldo disponible y ambas prometer
+// usarlo (2 links de pago por el mismo monto de la misma tarjeta). El binding
+// GIFT_CARD_LEDGER es un Durable Object namespace CRUZADO hacia la clase que exporta
+// admin-worker.js (mismo concepto que un Service Binding, pero de Durable Object) —
+// serializa las reservas de UNA tarjeta sin importar desde qué Worker se llame,
+// porque ambos apuntan al mismo namespace/clase. Sin el binding (todavía no
+// desplegado con wrangler, ver CLAUDE.md) cae al comportamiento de siempre: reservar
+// no hace nada acá, y la deducción real ocurre en gcCommit() vía el viejo
+// /giftcard/redeem de cacusa-admin — nunca rompe el sitio mientras falte ese paso.
+function giftCardLedgerStub(env, code) {
+  if (!env.GIFT_CARD_LEDGER) return null;
+  const id = env.GIFT_CARD_LEDGER.idFromName(gcKey(code));
+  return env.GIFT_CARD_LEDGER.get(id);
+}
+async function gcReserve(env, code, amountCents, orderRef) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return { applied: amountCents / 100 }; // camino viejo: ver comentario arriba
+  const r = await stub.fetch('https://gift-card-ledger.internal/reserve', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef, amountCents }),
+  });
+  return await r.json();
+}
+async function gcCommit(env, code, orderRef, amountCents) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) { await redeemGiftCardViaAdmin(code, amountCents, env); return; }
+  await stub.fetch('https://gift-card-ledger.internal/commit', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef }),
+  });
+}
+async function gcRelease(env, code, orderRef) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return; // camino viejo: nunca se reservó nada que liberar
+  await stub.fetch('https://gift-card-ledger.internal/release', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef }),
+  });
 }
 
 function couponKey(code) { return 'coupon:' + String(code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, ''); }
@@ -350,11 +393,17 @@ async function verifySquareSignature(request, rawBody, sigKey) {
   return safeEqual(expected, sigHeader);
 }
 
+// Auditoría de integridad (19 sep, F05): antes, si Square respondía un error real acá
+// (503, etc.), esta función devolvía null — indistinguible de "la orden no tiene
+// reference_id". El caller trataba ambos casos igual: responder 200 a Square sin
+// haber guardado nada, así que un error transitorio de Square nunca se reintentaba.
+// Ahora lanza una excepción real, que el try/catch de handleWebhook() ya atrapa y
+// convierte en 500 (Square sí reintenta un 500).
 async function fetchSquareOrder(orderId, token) {
   const r = await fetch(`${SQUARE_ORDERS_API}/${orderId}`, {
     headers: { 'Authorization': `Bearer ${token}`, 'Square-Version': SQUARE_VERSION }
   });
-  if (!r.ok) return null;
+  if (!r.ok) throw new Error(`Square Orders API respondió ${r.status} al recuperar ${orderId}`);
   const d = await r.json();
   return d.order || null;
 }
@@ -383,6 +432,9 @@ async function burnCouponViaAdmin(code, phone, email, env) {
   if (!r.ok) throw new Error('admin /coupon/burn respondió ' + r.status);
 }
 
+// Camino de respaldo de gcCommit() mientras el binding de Durable Object no esté
+// configurado (ver GiftCardLedger más arriba) — mismo llamado de siempre a
+// /giftcard/redeem en cacusa-admin.
 async function redeemGiftCardViaAdmin(code, amountCents, env) {
   if (!code || !(amountCents > 0)) return;
   const r = await adminFetch(env, '/giftcard/redeem', {
@@ -391,7 +443,24 @@ async function redeemGiftCardViaAdmin(code, amountCents, env) {
     body: JSON.stringify({ code, amount: amountCents / 100 })
   });
   if (!r.ok) throw new Error('admin /giftcard/redeem respondió ' + r.status);
+  // Auditoría de integridad (19 sep, F06): antes solo se chequeaba el status HTTP — un
+  // 200 con `{applied: 0}` (tarjeta inexistente, inactiva, o sin saldo — casos legítimos
+  // de gcRedeem() en admin-worker.js) marcaba igual `pending.processed = true` sin que
+  // el descuento prometido se hubiera aplicado de verdad. Ahora se compara el monto
+  // REALMENTE aplicado contra lo esperado.
+  const result = await r.json().catch(() => ({}));
+  const appliedCents = Math.round((Number(result.applied) || 0) * 100);
+  if (appliedCents < amountCents) {
+    throw new Error(`gift card aplicó $${(appliedCents / 100).toFixed(2)} en vez de $${(amountCents / 100).toFixed(2)} esperados`);
+  }
 }
+
+// Auditoría de integridad (19 sep, F05): TTL de pending_order extendido de 2h a un
+// margen seguro (Square documenta reintentos de webhook hasta 24h) — antes, si un
+// reintento tardío llegaba después de que la key ya hubiera expirado, no había forma
+// de distinguir "esto ya se procesó hace rato" de "esto se perdió de verdad". El
+// marcador aparte sqproc:<referenceId> (TTL más largo todavía) resuelve esa ambigüedad.
+const SQPROC_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
 
 // ── Webhook: Square confirma que el pago se completó ─────────────────────────
 async function handleWebhook(request, env) {
@@ -408,13 +477,36 @@ async function handleWebhook(request, env) {
   if (event.type !== 'payment.updated') return new Response('OK', { status: 200 });
 
   const payment = event.data?.object?.payment;
-  if (!payment || payment.status !== 'COMPLETED' || !payment.order_id) {
-    return new Response('OK', { status: 200 }); // otros estados (APPROVED, FAILED, etc.) — nada que hacer
+  if (!payment || !payment.order_id) {
+    return new Response('OK', { status: 200 });
   }
 
   if (!env.CACUSA_KV) {
     console.error('CACUSA_KV no configurado en cacusa-square');
     return new Response('Internal Error', { status: 500 });
+  }
+
+  if (payment.status !== 'COMPLETED') {
+    // Auditoría de integridad (19 sep, F03-a/F06): si el pago falló/se canceló, liberar
+    // de inmediato cualquier reserva de gift card en vez de esperar a que la alarm() de
+    // la DO la libere sola a las 2h (esa alarm sigue siendo la red de seguridad si esto
+    // mismo falla — ver catch abajo).
+    if (payment.status === 'FAILED' || payment.status === 'CANCELED') {
+      try {
+        const squareOrder = await fetchSquareOrder(payment.order_id, env.SQUARE_ACCESS_TOKEN);
+        const referenceId = squareOrder?.reference_id;
+        if (referenceId) {
+          const raw = await env.CACUSA_KV.get(`pending_order:${referenceId}`);
+          if (raw) {
+            const pending = JSON.parse(raw);
+            if (pending.giftCard && pending.giftCard.reservationRef && !pending.processed) {
+              await gcRelease(env, pending.giftCard.code, pending.giftCard.reservationRef);
+            }
+          }
+        }
+      } catch (e) { console.error('No se pudo liberar la reserva de gift card:', e.message); }
+    }
+    return new Response('OK', { status: 200 }); // otros estados (APPROVED, etc.) — nada más que hacer
   }
 
   try {
@@ -428,8 +520,15 @@ async function handleWebhook(request, env) {
     const kvKey = `pending_order:${referenceId}`;
     const raw = await env.CACUSA_KV.get(kvKey);
     if (!raw) {
-      console.warn('No se encontró pedido pendiente para reference_id:', referenceId);
-      return new Response('OK', { status: 200 });
+      // Auditoría de integridad (19 sep, F05): antes esto siempre respondía 200. Ahora
+      // se distingue "ya se procesó hace rato, el registro corto (pending_order) ya
+      // expiró" (nada que hacer, 200 está bien) de "se perdió de verdad" (Square SÍ
+      // reintenta hasta 24h — con el sqproc: durable de más abajo, hay margen real
+      // para notarlo en vez de responder 200 a ciegas).
+      const wasProcessed = await env.CACUSA_KV.get(`sqproc:${referenceId}`);
+      if (wasProcessed) return new Response('OK', { status: 200 });
+      console.warn('No se encontró pedido pendiente ni marcador de procesado para reference_id:', referenceId);
+      return new Response('Internal Error', { status: 500 });
     }
     const pending = JSON.parse(raw);
     if (pending.processed) {
@@ -445,10 +544,11 @@ async function handleWebhook(request, env) {
       await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
     }
     if (pending.coupon) await burnCouponViaAdmin(pending.coupon.code, pending.coupon.phone, pending.coupon.email, env);
-    if (pending.giftCard) await redeemGiftCardViaAdmin(pending.giftCard.code, pending.giftCard.amountCents, env);
+    if (pending.giftCard) await gcCommit(env, pending.giftCard.code, pending.giftCard.reservationRef, pending.giftCard.amountCents);
 
     pending.processed = true;
     await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
+    await env.CACUSA_KV.put(`sqproc:${referenceId}`, '1', { expirationTtl: SQPROC_TTL_SECONDS });
 
     return new Response('OK', { status: 200 });
   } catch (e) {
@@ -471,6 +571,13 @@ async function handleCreatePaymentLink(body, env, allowed) {
   }
   if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) {
     return jsonError('Worker no configurado — faltan credenciales Square', 500, allowed);
+  }
+  // Auditoría de integridad (19 sep, F05): antes se podía generar un link de pago real
+  // sin ningún binding de KV — el pago quedaba sin ningún pending_order donde aterrizar
+  // después, así que el webhook nunca podría completar el pedido. Ahora se exige el
+  // binding ANTES de llamar a Square, con el mismo criterio que ya tiene el webhook.
+  if (!env.CACUSA_KV) {
+    return jsonError('Worker no configurado — falta el binding de KV', 500, allowed);
   }
 
   // ── Server-side price validation ────────────────────────────────────────
@@ -552,20 +659,33 @@ async function handleCreatePaymentLink(body, env, allowed) {
     }
   }
 
-  // ── Gift card (solo descuento en Square — el burn real ocurre en el webhook) ──
+  // ── Gift card ──────────────────────────────────────────────────────────────
   let gcDiscountCents = 0;
+  let gcReservationRef = null;
   const gcCode = (body.giftCardCode || '').toString().trim().toUpperCase();
   if (gcCode) {
     const totalCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
     const balCents   = await gcPeekCents(env, gcCode);
     if (balCents > 0) {
       if (balCents >= totalCents) {
-        // La tarjeta cubre todo — no hay cargo con tarjeta, no pasa por Square ni por el webhook
+        // La tarjeta cubre todo — no hay cargo con tarjeta, no pasa por Square ni por el
+        // webhook (la tienda arma el pedido directo contra /order en cacusa-admin, que
+        // ya reserva/confirma el gift card de forma atómica — ver handleOrder()). No se
+        // reserva nada acá: sería una reserva que nadie de este lado confirma ni libera.
         return new Response(JSON.stringify({ giftCardCoversTotal: true }), {
           status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders(allowed) }
         });
       }
-      gcDiscountCents = Math.min(balCents, totalCents);
+      // Auditoría de integridad (19 sep, F03-a/F06): antes esto solo "espiaba" el saldo
+      // (lectura) — la deducción real ocurría recién en el webhook, sin ninguna reserva
+      // de por medio, así que 2 sesiones podían ver el mismo saldo disponible y ambas
+      // prometer usarlo. Ahora se reserva atómicamente (GiftCardLedger, ver más arriba)
+      // en el momento de crear el link — si el pago nunca se completa, se libera sola
+      // (alarm de la DO a las 2h) o al primer webhook de FAILED/CANCELED.
+      gcReservationRef = crypto.randomUUID();
+      const reserved = await gcReserve(env, gcCode, balCents, gcReservationRef);
+      gcDiscountCents = Math.round((Number(reserved.applied) || 0) * 100);
+      if (gcDiscountCents <= 0) gcReservationRef = null;
     }
   }
 
@@ -657,13 +777,29 @@ async function handleCreatePaymentLink(body, env, allowed) {
       estado: 'Nuevo',
       notas: orderNotesParts.join(' | ') || undefined,
     },
-    giftCard: gcDiscountCents > 0 ? { code: gcCode, amountCents: gcDiscountCents } : null,
+    giftCard: gcDiscountCents > 0 ? { code: gcCode, amountCents: gcDiscountCents, reservationRef: gcReservationRef } : null,
     coupon:   cpDiscountCents > 0 ? { code: cpCode, amountCents: cpDiscountCents, phone: customer?.phone || '', email: customer?.email || '' } : null,
     createdAt: new Date().toISOString(),
     processed: false,
   };
-  if (env.CACUSA_KV) {
+  // Auditoría de integridad (19 sep, F07): la key se deriva de un hash de contenido +
+  // una ventana de 5 min (dedupBucket, ver más arriba) — no incluye la dirección de
+  // envío. Volver a generar el mismo checkout (mismo carrito/email/teléfono/total)
+  // DENTRO de esa ventana, pero con una dirección distinta, pisaba en silencio el
+  // registro anterior — incluido uno que ya estuviera `processed: true` (pago YA
+  // confirmado), reseteándolo a `processed: false`. Ahora, si ya existe un registro
+  // procesado bajo esta key, no se pisa — Square igual maneja la idempotencia real
+  // (mismo idempotency_key = referenceId), así que la llamada de abajo sigue normal,
+  // solo sin tocar el registro local ya confirmado.
+  const existingPendingRaw = await env.CACUSA_KV.get(`pending_order:${referenceId}`);
+  let existingPending = null;
+  if (existingPendingRaw) { try { existingPending = JSON.parse(existingPendingRaw); } catch (_) {} }
+  if (!existingPending || !existingPending.processed) {
     await env.CACUSA_KV.put(`pending_order:${referenceId}`, JSON.stringify(pendingOrder), { expirationTtl: PENDING_TTL_SECONDS });
+  } else if (gcReservationRef) {
+    // Esta reserva nueva quedaría huérfana (el pedido ya se confirmó con otra reserva
+    // anterior) — liberarla de inmediato en vez de esperar a que expire sola.
+    await gcRelease(env, gcCode, gcReservationRef).catch(() => {});
   }
 
   // ── Square API call ────────────────────────────────────────────────────

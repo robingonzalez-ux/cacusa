@@ -231,12 +231,19 @@ async function updateSubscriber(key, estadoPago, extras, dbUrl, fbAuth) {
 }
 
 // ── Get customer from Square ──────────────────────────────────────────────────
+// Auditoría de integridad (19 sep, F09): antes esto devolvía null tanto si el cliente
+// genuinamente no existía como si la API de Square respondió un error real (503, etc.)
+// — el llamador (ej. subscription.updated CANCELED) trataba ambos casos igual, y un
+// error transitorio de Square terminaba respondiendo 200 sin haber tocado Firebase.
+// Mismo patrón que ya se usó para getSubscriberByKey(): 404 real = no existe (null);
+// cualquier otro !ok = lanza, para que el catch general del handler responda 500.
 async function getSquareCustomer(customerId, squareToken) {
   if (!customerId) return null;
   const r = await fetch(`${SQUARE_API}/customers/${customerId}`, {
     headers: { 'Authorization': `Bearer ${squareToken}`, 'Square-Version': '2024-11-20' }
   });
-  if (!r.ok) return null;
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`Square Customers API respondió ${r.status} al recuperar ${customerId}`);
   const d = await r.json();
   return d.customer || null;
 }
@@ -389,7 +396,13 @@ export default {
       if (!existing || existing.estado_pago !== 'pendiente' || existing.push_pendiente) {
         return adminJson({ notify: false }, 200);
       }
-      await updateSubscriber(key, null, { push_pendiente: true }, dbUrl, fbAuth);
+      // Auditoría de integridad (19 sep, F09): antes se descartaba el resultado de este
+      // PATCH — si fallaba, igual se respondía notify:true, avisando de una "suscriptora
+      // pendiente" que en realidad nunca quedó marcada como avisada (el próximo
+      // subscription.created/claim-pending podía volver a avisar por la misma, o peor,
+      // el estado real quedó sin confirmar sin que nadie lo notara).
+      const patched = await updateSubscriber(key, null, { push_pendiente: true }, dbUrl, fbAuth);
+      if (!patched) return adminJson({ error: 'No se pudo marcar push_pendiente en Firebase' }, 500);
       const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
       return adminJson({ notify: true, nombre, plan: existing.plan || 'Cacusa Lovers' }, 200);
     }
@@ -759,10 +772,20 @@ export default {
               square_invoice_id: invoice?.id || '',
               square_subscription_id: invoiceSubId,
             }, dbUrl, fbAuth);
-            if (dbOk && !alreadyProcessed) {
-              console.log('Marked activo:', email);
-              const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-              await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
+            if (dbOk) {
+              if (!alreadyProcessed) {
+                console.log('Marked activo:', email);
+                const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+                await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
+              }
+              // Auditoría de integridad (19 sep, F09): antes esta llamada vivía DENTRO del
+              // `!alreadyProcessed` — si la primera entrega de esta factura ya había guardado
+              // square_invoice_id pero notifyExclusiveCoupon() nunca llegó a completarse (ej.
+              // el Service Binding hacia cacusa-admin falló), una redelivery de Square de la
+              // MISMA factura veía alreadyProcessed=true y saltaba el cupón para siempre, sin
+              // volver a intentarlo. handleLoversExclusiveCoupon() ya es idempotente por su
+              // cuenta (no repite nada si el cupón ya existe y está activo), así que llamarla
+              // en cada entrega solo recupera un intento que había fallado, nunca duplica.
               await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
             }
           } else {
@@ -778,6 +801,12 @@ export default {
               fecha: today,
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
+              // Auditoría de integridad (19 sep, F08): este era el único camino que
+              // creaba un registro 'activo' SIN guardar square_subscription_id — dejaba
+              // la guardia de arriba (isStaleForCanceled) incapaz de reconocer una
+              // factura vieja/de otra suscripción en el futuro, porque no tenía nada
+              // guardado contra qué comparar.
+              square_subscription_id: invoiceSubId,
             }, dbUrl, fbAuth);
             if (dbOk) {
               console.log('Created activo record for:', email, '→', key);
@@ -804,11 +833,28 @@ export default {
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
           if (existing) {
-            dbOk = await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
-            if (dbOk) {
-              console.log('Marked pago_fallido:', email);
-              const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-              await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
+            // Auditoría de integridad (19 sep, F08): a diferencia de invoice.payment_made
+            // (arriba), esta rama degradaba el estado con CUALQUIER factura fallida de esa
+            // clienta, sin comparar la suscripción de la factura contra la ya guardada —
+            // una factura fallida de una suscripción vieja/distinta podía degradar un
+            // registro de una suscripción actual sana. Mismo criterio que la guardia de
+            // reactivación: si hay un square_subscription_id guardado y NO coincide con
+            // el de esta factura, se ignora. Si no hay nada guardado (registros legados,
+            // cada vez menos comunes tras el fix de arriba), se degrada como antes — no
+            // hay forma de distinguir sin ese dato.
+            const invoiceSubId = invoice?.subscription_id;
+            const belongsToOtherSubscription = existing.square_subscription_id
+              && invoiceSubId
+              && invoiceSubId !== existing.square_subscription_id;
+            if (belongsToOtherSubscription) {
+              console.warn('invoice.scheduled_charge_failed ignorado: factura de otra suscripción', email, invoiceSubId);
+            } else {
+              dbOk = await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
+              if (dbOk) {
+                console.log('Marked pago_fallido:', email);
+                const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+                await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
+              }
             }
           } else {
             console.warn('invoice.scheduled_charge_failed: no matching subscriber for', email);

@@ -428,17 +428,25 @@ async function handleUpload(body, env, origin, session) {
 // (alta manual desde el admin, ya autenticado con sesión) deja el método de pago tal
 // cual lo eligió Tita/Robin en el modal (acotado a 40 caracteres) — el modal ofrece
 // opciones reales (PayPal, efectivo, etc.) que no tiene sentido colapsar a "Otro".
-function buildOrderCore(order, { strictPago }) {
+function buildOrderCore(order, { strictPago, allowTarjeta }) {
   const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
   const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
   const cliente = order.cliente || {};
+  // Auditoría de integridad (19 sep, F02): "pago" es el método SOLICITADO por quien
+  // manda el pedido, no una confirmación real de cobro — un pedido público (no
+  // `trusted`) nunca llegó acá con un pago de tarjeta ya verificado, así que jamás
+  // debe poder autodeclararse "Tarjeta" (eso induciría a Tita/Robin a pensar que
+  // Square ya cobró y despachar sin haber cobrado de verdad). Solo el camino
+  // `trusted` (webhook de Square, ya autenticado con ORDER_INGEST_KEY, llega DESPUÉS
+  // de que el pago se confirmó de verdad) puede declarar "Tarjeta".
+  const allowedPago = allowTarjeta ? ['Zelle', 'WhatsApp', 'Tarjeta'] : ['Zelle', 'WhatsApp'];
   return {
     id:        Date.now(),
     fecha:     new Date().toISOString(),
     numero:    str(order.numero, 30) || undefined,
     estado:    'Nuevo',
     pago:      strictPago
-      ? (['Zelle', 'WhatsApp', 'Tarjeta'].includes(order.pago) ? order.pago : 'Otro')
+      ? (allowedPago.includes(order.pago) ? order.pago : 'Otro')
       : (str(order.pago, 40) || 'Otro'),
     total:     num(order.total),
     subtotal:  num(order.subtotal),
@@ -481,14 +489,19 @@ async function orderGet(env, id) {
 // buildOrderCore() arma el id con Date.now() — sin sufijo ni chequeo de colisión.
 // Dos checkouts cayendo en el mismo milisegundo (doble clic en "pagar", o 2 clientas
 // pagando casi a la vez) pisaban en silencio el pedido de la otra al escribir a la
-// misma llave order:<id>. Hallazgo del 19 sep (auditoría propia, A07-A19) — se
-// verifica antes de escribir y, en el (rarísimo) caso de choque, se corre el id 1ms
-// hacia adelante hasta encontrar una llave libre, sin cambiar el formato para el
-// caso normal (sigue siendo un número, ordena igual, nada más lo consume distinto).
-async function ensureUniqueOrderId(env, newOrder) {
-  for (let i = 0; i < 5 && await orderGet(env, newOrder.id); i++) {
-    newOrder.id = newOrder.id + 1;
-  }
+// misma llave order:<id>. El primer arreglo (A07-A19, 19 sep) verificaba con un GET
+// antes de escribir y corría el id 1ms hacia adelante en caso de choque — pero eso
+// dejaba una ventana de carrera real: el GET-que-dice-"libre" y el PUT posterior no
+// son atómicos, así que 2 requests concurrentes podían ambos pasar el chequeo y
+// pisarse igual (hallazgo F03-b de la auditoría del 19 sep, ronda de integridad).
+// Ahora se agrega SIEMPRE un sufijo aleatorio de 3 dígitos (no solo al detectar un
+// choque) — la probabilidad de que 2 pedidos generen el mismo id sin ningún GET
+// previo es prácticamente cero, así que no queda ninguna ventana que cerrar. Sigue
+// siendo un número (ordena igual que antes en listAllOrders) y sigue siendo
+// aproximadamente cronológico (Date.now() * 1000 + random), solo que ya no es
+// exactamente "milisegundos desde epoch".
+function assignOrderId(newOrder) {
+  newOrder.id = Date.now() * 1000 + Math.floor(Math.random() * 1000);
 }
 // Reconstruye la lista completa de pedidos a partir de sus llaves individuales
 // (mismo patrón que handleGcList/handleCouponList) y la deja lista para que
@@ -620,26 +633,33 @@ const CATALOG_URL = 'https://cacusabytaitus.com/data/products.json';
 function js_round2(n) { return Math.round(n * 100) / 100; }
 
 async function fetchCatalogForOrderValidation() {
-  try {
-    const r = await fetch(CATALOG_URL, { cf: { cacheTtl: 60 } });
-    if (!r.ok) return null;
-    const data = await r.json();
-    const products = Array.isArray(data) ? data : (data.products || []);
-    const combos = Array.isArray(data.combos) ? data.combos : [];
-    return { products, combos };
-  } catch (e) {
-    return null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(CATALOG_URL, { cf: { cacheTtl: 60 } });
+      if (r.ok) {
+        const data = await r.json();
+        const products = Array.isArray(data) ? data : (data.products || []);
+        const combos = Array.isArray(data.combos) ? data.combos : [];
+        const shipping = (data.config && data.config.shipping) || { freeThreshold: 90, cost: 10 };
+        return { products, combos, shipping };
+      }
+    } catch (e) { /* reintenta una vez, ver abajo */ }
+    if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
   }
+  return null;
 }
 
-// Lanza si algún item no se puede validar (id inexistente, producto no disponible) —
-// el llamador decide si eso rechaza el pedido. Si el catálogo mismo no se pudo traer
-// (falla de red transitoria, no responsabilidad del cliente), deja pasar los precios
-// tal cual vinieron — falla abierta, no cierra un checkout real por un problema
-// nuestro, mismo criterio que el resto de fetches best-effort de este Worker.
+// Auditoría de integridad (19 sep, F02) — antes esto fallaba ABIERTO (si el catálogo
+// no respondía, dejaba pasar precio/cantidad tal cual los mandó el navegador). Se
+// reprodujo el ataque real: catálogo caído (503) → producto inexistente aceptado a
+// $0.01. Ahora falla CERRADO: 2 intentos con backoff corto (arriba) y, si el catálogo
+// sigue sin responder, se rechaza el pedido — un blip de red real bloquea un checkout
+// legítimo por unos segundos (el cliente reintenta), lo cual es preferible a aceptar
+// montos arbitrarios. Devuelve { productos, subtotal, shipping } con los precios YA
+// verificados contra el catálogo real — nunca lo que mandó el cliente.
 async function validatePublicOrderProducts(productos, env) {
   const catalog = await fetchCatalogForOrderValidation();
-  if (!catalog) return productos;
+  if (!catalog) throw new Error('catálogo no disponible, intentá de nuevo en un momento');
 
   let surcharges = {};
   if (env.CACUSA_KV) {
@@ -649,7 +669,7 @@ async function validatePublicOrderProducts(productos, env) {
   const productMap = new Map(catalog.products.map(p => [String(p.id), p]));
   const comboMap = new Map(catalog.combos.map(c => [String(c.id), c]));
 
-  return productos.map((item, idx) => {
+  const validated = productos.map((item, idx) => {
     if (item.isCombo) {
       const combo = comboMap.get(String(item.id));
       if (!combo) throw new Error(`Combo no encontrado en el catálogo (id: ${item.id})`);
@@ -661,6 +681,22 @@ async function validatePublicOrderProducts(productos, env) {
     const price = surcharges[String(prod.id)] === true ? js_round2(prod.price * 1.04) : prod.price;
     return { ...item, price };
   });
+  const subtotal = validated.reduce((s, p) => s + p.price * (Math.max(1, Math.floor(Number(p.qty) || 1))), 0);
+  return { productos: validated, subtotal, shipping: catalog.shipping };
+}
+
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+// Huella canónica de un pedido — detecta si un reintento con la misma idempotencyKey
+// es de verdad el MISMO pedido (mismo contenido) o si alguien está reusando/adivinando
+// la key de otro pedido con contenido distinto (F01, auditoría del 19 sep). Se calcula
+// SIEMPRE sobre datos YA recalculados server-side, nunca lo que mandó el cliente.
+async function orderFingerprint(newOrder) {
+  const items = newOrder.productos.map((p) => `${p.id}:${p.qty}:${p.price}`).sort().join(',');
+  const raw = `${(newOrder.cliente.email || '').toLowerCase()}|${newOrder.cliente.telefono || ''}|${newOrder.total}|${items}`;
+  return sha256Hex(raw);
 }
 
 // ── Pedido desde tienda (o desde cacusa-square, ya confirmado por Square) ────
@@ -691,76 +727,128 @@ async function handleOrder(body, env, origin, ctx, request) {
   const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
   const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
 
-  // Idempotencia real (hallazgo del 19 sep, auditoría propia A07-A19): si la clienta
-  // ve un error de red pero el pedido SÍ se guardó, el checkout deja el carrito intacto
-  // para reintentar (arreglo A06+A10) — un reintento manual con el mismo carrito antes
-  // disparaba un handleOrder() nuevo entero: otro id, otra redención de gift card,
-  // otro push de "pedido nuevo". La tienda manda una idempotencyKey generada una sola
-  // vez por intento de checkout (persistida mientras dure ese carrito) — si ya se
-  // procesó, se devuelve el mismo pedido de siempre en vez de crear uno nuevo.
-  const idemKey = str(order.idempotencyKey, 100);
-  if (idemKey) {
-    const existingId = await env.CACUSA_KV.get(`idem:${idemKey}`);
-    if (existingId) {
-      const existingOrder = await orderGet(env, existingId);
-      if (existingOrder) return ok({ ok: true, order: existingOrder }, origin);
-    }
+  // Auditoría de integridad (19 sep, F02): un carrito vacío nunca es un pedido real —
+  // permitirlo dejaba fabricar un pedido "de mentira" para atar cualquier cosa a él
+  // (ej. un cuponAplicado inventado, ver handleCouponBurnPublic/F04) sin comprar nada.
+  if (!trusted && order.productos.length === 0) {
+    return err('El carrito está vacío', 400, origin);
   }
 
-  // Auditoría externa (19 sep, ronda nueva): solo pedidos públicos (Zelle/WhatsApp) —
-  // los que ya llegan `trusted` vienen de cacusa-square, que valida contra este mismo
-  // catálogo antes de generar el link de pago, así que revalidarlos acá sería
-  // redundante (y potencialmente inconsistente si el catálogo cambió entre medio).
-  if (!trusted && Array.isArray(order.productos) && order.productos.length) {
+  // Auditoría de integridad (19 sep, F02): solo pedidos públicos (Zelle/WhatsApp) — los
+  // que ya llegan `trusted` vienen de cacusa-square, que ya valida contra este mismo
+  // catálogo antes de generar el link de pago. ANTES esto fallaba abierto si el catálogo
+  // no respondía (dejaba pasar precio/cantidad del cliente tal cual); ahora
+  // validatePublicOrderProducts() lanza si el catálogo no se pudo traer, y acá se
+  // traduce en rechazar el pedido — nunca se acepta un precio no verificado.
+  let recalcSubtotal = null, recalcShipping = null;
+  if (!trusted) {
     try {
-      order.productos = await validatePublicOrderProducts(order.productos, env);
+      const validated = await validatePublicOrderProducts(order.productos, env);
+      order.productos = validated.productos;
+      recalcSubtotal = validated.subtotal;
+      recalcShipping = validated.shipping;
     } catch (e) {
       return err('No se pudo validar el carrito: ' + e.message, 400, origin);
     }
+
+    // Auditoría de integridad (19 sep, F02): total/subtotal/envío ya no se toman tal
+    // cual los manda el cliente — se recalculan desde los productos YA validados, el
+    // cupón (si hay uno, con la misma couponIsValid() que ya usa /coupon/validate) y
+    // el umbral de envío gratis real. El impuesto SÍ sigue viniendo del cliente
+    // (replicar acá la tabla completa de impuesto por estado/ZIP de
+    // square-payment-worker.js duplicaría ~150 líneas de tasas) pero se acota a un
+    // tope sano (12%, por encima de cualquier tasa combinada real de EE.UU.) en vez
+    // de aceptarlo sin límite — cierra el caso concreto reproducido por la auditoría
+    // (total −9 con un producto de $100 en el catálogo) sin replicar todo ese motor.
+    const cliente = order.cliente || {};
+    let coupon = null;
+    if (order.cuponAplicado) {
+      coupon = await couponGet(env, order.cuponAplicado);
+      if (!coupon || !couponIsValid(coupon, cliente.email, cliente.telefono)) coupon = null;
+    }
+    let discount = 0;
+    if (coupon) {
+      if (coupon.type === 'percent') discount = js_round2(recalcSubtotal * (Number(coupon.amount) || 0) / 100);
+      else if (coupon.type === 'fixed') discount = Math.min(Number(coupon.amount) || 0, recalcSubtotal);
+    }
+    const shipCost = recalcSubtotal >= (recalcShipping.freeThreshold || 90) ? 0 : (recalcShipping.cost || 10);
+    const envio = (coupon && coupon.type === 'freeship') ? 0 : shipCost;
+    const impuestoBound = recalcSubtotal * 0.12;
+    const impuesto = js_round2(Math.min(Math.max(num(order.impuesto), 0), impuestoBound));
+
+    order.subtotal = recalcSubtotal;
+    order.envio = envio;
+    order.impuesto = impuesto;
+    order.total = js_round2(Math.max(0, recalcSubtotal - discount + envio + impuesto));
   }
 
-  const newOrder = buildOrderCore(order, { strictPago: true });
+  const newOrder = buildOrderCore(order, { strictPago: true, allowTarjeta: trusted });
 
-  // Redención de gift card — fusionada acá (en vez de ser una llamada pública separada a
-  // /giftcard/redeem, ver hallazgo de seguridad) para que nunca se pueda vaciar una tarjeta
-  // sin que exista un pedido real registrado. El monto nunca puede exceder ni el saldo real
-  // de la tarjeta (lo garantiza gcRedeem) ni el total BRUTO de ESTE pedido.
-  //
-  // Barrido de seguridad (19 sep): acá se comparaba contra newOrder.total, pero ese campo
-  // ya llega NETO — la tienda le resta el gift card Y el cupón antes de mandarlo. Compra de
-  // $100 pagada 100% con gift card de $100 llegaba con total=$0, así que el tope daba
-  // min(100,0)=0 y NUNCA se descontaba nada del saldo real. Compra de $100 con $80 de gift
-  // card llegaba con total=$20, así que solo se descontaban $20, no $80. Ahora se compara
-  // contra el subtotal BRUTO recalculado de los productos del pedido.
-  //
-  // Barrido de seguridad (2da ronda, 19 sep): el primer arreglo solo sumaba productos, sin
-  // envío ni impuesto — una compra de $100 + $20 de envío/impuesto, con gift card de $120,
-  // solo descontaba $100 (min(120,100)=100), dejando $20 de saldo real sin gastar aunque la
-  // tienda ya le mostró a la clienta que el gift card cubría el total completo. Ahora se
-  // suman `envio`/`impuesto` (mismos campos que ya acepta buildOrderCore, ya recibidos y
-  // guardados en newOrder — solo faltaba que la tienda los mandara, ver ui_kits/store).
+  // Idempotencia real (A07-A19, 19 sep) endurecida el 19 sep (auditoría de integridad,
+  // F01): antes esto devolvía el PEDIDO COMPLETO (email, dirección, teléfono) a quien
+  // mandara la idempotencyKey correcta — y esa key la generaba la tienda con un hash
+  // de 32 bits de datos conocidos (email, teléfono, total), adivinable/reconstruible
+  // por cualquiera sin necesitar acertar nada. Ahora la tienda manda una key aleatoria
+  // de verdad (ver ui_kits/store, _orderIdemKey) y la respuesta ante un reintento NUNCA
+  // repite PII — es el mismo recibo mínimo de siempre. Se compara además una huella
+  // canónica del CONTENIDO (calculada acá, sobre datos ya recalculados server-side)
+  // contra la guardada: si no coincide, alguien reusa una key ajena o el contenido
+  // cambió — se rechaza con 409 sin revelar nada del pedido existente.
+  const idemKey = str(order.idempotencyKey, 100);
+  const fingerprint = idemKey ? await orderFingerprint(newOrder) : null;
+  if (idemKey) {
+    const raw = await env.CACUSA_KV.get(`idem:${idemKey}`);
+    if (raw) {
+      let stored; try { stored = JSON.parse(raw); } catch (_) { stored = null; }
+      if (stored && stored.fingerprint === fingerprint) {
+        const existingOrder = await orderGet(env, stored.orderId);
+        if (existingOrder) {
+          return ok({ ok: true, id: existingOrder.id, total: existingOrder.total, estado: existingOrder.estado }, origin);
+        }
+      } else if (stored) {
+        return err('Esta operación ya fue registrada con otros datos', 409, origin);
+      }
+    }
+  }
+
+  // El id ya no depende de ningún chequeo previo contra KV — ver assignOrderId() más
+  // arriba (F03-b, cierra la ventana de carrera del viejo ensureUniqueOrderId()).
+  assignOrderId(newOrder);
+  const orderRef = orderKey(newOrder.id);
+
+  // Redención de gift card — reserva ATÓMICA (Durable Object GiftCardLedger, ver más
+  // arriba) atada al id de ESTE pedido: si el pedido no llega a persistirse, se
+  // libera; si se persiste, se confirma. Antes se descontaba el saldo ANTES de saber
+  // si el pedido se iba a poder guardar, y sin ninguna serialización real entre 2
+  // redenciones concurrentes contra el mismo código (F03-a/F06, auditoría del 19 sep:
+  // 2 llamadas por $80 sobre saldo $100 dejaban saldo $20 en vez de rechazar la 2da).
   const gcCodeReq   = str(order.giftcard && order.giftcard.code, 40);
   const gcAmountReq = num(order.giftcard && order.giftcard.amount);
-  if (gcCodeReq && gcAmountReq > 0 && env.CACUSA_KV) {
-    const grossSubtotal = newOrder.productos.reduce((s, p) => s + p.price * p.qty, 0)
-      + newOrder.envio + newOrder.impuesto;
-    const cappedAmount = Math.min(gcAmountReq, grossSubtotal);
-    if (cappedAmount > 0) {
-      const giftcardResult = await gcRedeem(env, gcCodeReq, cappedAmount);
+  let gcReserved = false;
+  if (gcCodeReq && gcAmountReq > 0) {
+    const oweBeforeGiftCard = Math.max(0, newOrder.total);
+    const cappedAmountCents = Math.round(Math.min(gcAmountReq, oweBeforeGiftCard) * 100);
+    if (cappedAmountCents > 0) {
+      const giftcardResult = await gcReserve(env, gcCodeReq, cappedAmountCents, orderRef);
       if (giftcardResult.applied > 0) {
         newOrder.giftcard = { code: gcCodeReq, applied: giftcardResult.applied };
+        newOrder.total = js_round2(Math.max(0, newOrder.total - giftcardResult.applied));
+        gcReserved = true;
       }
     }
   }
 
   // Cada pedido en su propia llave — nunca se lee ni se escribe un blob compartido, así
-  // que dos pedidos concurrentes en llaves DISTINTAS nunca se pisan (ver auditoría de
-  // concurrencia). Pero el id en sí (Date.now(), sin sufijo) sí podía colisionar si 2
-  // caían en el mismo milisegundo — ensureUniqueOrderId() lo corre 1ms hacia adelante
-  // hasta encontrar una llave libre antes de escribir (hallazgo del 19 sep).
-  await ensureUniqueOrderId(env, newOrder);
-  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
-  if (idemKey) await env.CACUSA_KV.put(`idem:${idemKey}`, String(newOrder.id), { expirationTtl: 86400 });
+  // que dos pedidos concurrentes en llaves DISTINTAS nunca se pisan. Si la escritura
+  // falla, se libera la reserva de gift card en vez de dejarla huérfana (F03-a/F06).
+  try {
+    await env.CACUSA_KV.put(orderRef, JSON.stringify(newOrder));
+  } catch (e) {
+    if (gcReserved) await gcRelease(env, gcCodeReq, orderRef).catch(() => {});
+    return err('No se pudo guardar el pedido, intentá de nuevo', 500, origin);
+  }
+  if (gcReserved) await gcCommit(env, gcCodeReq, orderRef).catch(() => {});
+  if (idemKey) await env.CACUSA_KV.put(`idem:${idemKey}`, JSON.stringify({ orderId: newOrder.id, fingerprint }), { expirationTtl: 86400 });
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   // Si esta clienta tenía un carrito marcado como abandonado, ya no lo está — compró.
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
@@ -803,7 +891,7 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   const newOrder = buildOrderCore(order, { strictPago: false });
   newOrder.createdBy = session.user;
 
-  await ensureUniqueOrderId(env, newOrder);
+  assignOrderId(newOrder);
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
@@ -930,7 +1018,13 @@ async function gcGet(env, code) {
   const raw = await env.CACUSA_KV.get(gcKey(code));
   return raw ? JSON.parse(raw) : null;
 }
-// Deduce saldo de forma atómica-ish (KV no tiene CAS; volumen bajo lo hace seguro)
+// Deduce saldo de forma atómica-ish (KV no tiene CAS). Documentado y aceptado desde
+// antes de esta auditoría como riesgo de bajo volumen — la auditoría del 19 sep
+// (F03-a) reprodujo el escenario real: 2 llamadas concurrentes por $80 sobre saldo
+// $100 dejaban saldo $20 en vez de rechazar la segunda. Sigue existiendo como
+// FALLBACK para cuando el binding de Durable Object (GiftCardLedger, más abajo)
+// todavía no está configurado — usarlo directo ya no es el camino recomendado, ver
+// gcReserve()/gcCommit()/gcRelease().
 async function gcRedeem(env, code, amountWanted) {
   const card = await gcGet(env, code);
   if (!card || card.active === false || !(card.balance > 0)) return { applied: 0 };
@@ -940,6 +1034,186 @@ async function gcRedeem(env, code, amountWanted) {
   card.active  = card.balance > 0;
   await env.CACUSA_KV.put(gcKey(code), JSON.stringify(card));
   return { applied, balance: card.balance };
+}
+
+// ── Durable Object: GiftCardLedger ───────────────────────────────────────────
+// Cierra F03-a de la auditoría del 19 sep: serializa las redenciones de UNA
+// tarjeta de regalo — una instancia por código (env.GIFT_CARD_LEDGER.idFromName
+// (gcKey(code))). Cloudflare procesa las requests a una misma instancia de a una
+// por vez, así que 2 redenciones concurrentes contra el mismo código ya no pueden
+// leer el mismo saldo y pisarse, sin necesitar CAS de KV.
+//
+// CACUSA_KV sigue siendo lo que lee el panel admin para listar/crear/desactivar/
+// ajustar tarjetas (handleGcList/handleGcCreate/handleGcDeactivate/handleGcAdjust,
+// sin cambios) — esta DO es la única autoridad para el MOMENTO de redimir, y cada
+// mutación suya también escribe el balance actualizado de vuelta a KV, para que el
+// panel nunca muestre un saldo desactualizado. Queda un residual aceptado: si
+// alguien ajusta el saldo a mano desde el panel en el MISMO instante en que una
+// reserva está en vuelo, hay una ventana angosta de inconsistencia entre el ajuste
+// manual (escribe KV directo) y el commit/release de la DO (también escribe KV) —
+// muchísimo más improbable que el escenario real que cierra este cambio (2
+// clientas pagando con el mismo código a la vez), y se documenta como tal.
+//
+// Patrón reserva → confirmar/liberar (no "redimir" directo): al crear el link de
+// pago (Square) o al armar el pedido público (Zelle/WhatsApp) se RESERVA el monto
+// de inmediato (así 2 sesiones no pueden prometer el mismo saldo, F06) — si el
+// pedido nunca se termina de guardar o el pago nunca se confirma, se LIBERA
+// (o expira sola via alarm() a las 2h, mismo TTL que pending_order en
+// square-payment-worker.js). Si el pedido se guarda / el pago se confirma, se
+// CONFIRMA (no vuelve a tocar el balance, ya se descontó al reservar).
+//
+// Requiere un binding de Durable Object namespace nuevo en Cloudflare — a
+// diferencia del resto de este Worker (pegar código + Deploy en el dashboard
+// alcanza), la PRIMERA vez que se declara esta clase hace falta una migración
+// (`wrangler deploy` con `new_classes` en wrangler.toml) — ver wrangler.toml y
+// CLAUDE.md para el detalle. Mientras el binding no exista, gcReserve()/
+// gcCommit()/gcRelease() caen solas al camino viejo (gcRedeem directo, sin
+// reserva) — el sitio sigue funcionando, solo sin la garantía de atomicidad hasta
+// que se complete ese paso manual.
+export class GiftCardLedger {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async _loadCard(code) {
+    let card = await this.state.storage.get('card');
+    if (card === undefined) {
+      // Primera vez que se toca este código desde que existe la DO — migración
+      // perezosa desde la key legada en KV, para no tener que migrar todo de una.
+      const raw = this.env.CACUSA_KV ? await this.env.CACUSA_KV.get(gcKey(code)) : null;
+      card = raw ? JSON.parse(raw) : null;
+      await this.state.storage.put('card', card);
+    }
+    return card;
+  }
+
+  async _saveCard(code, card) {
+    await this.state.storage.put('card', card);
+    if (this.env.CACUSA_KV) await this.env.CACUSA_KV.put(gcKey(code), JSON.stringify(card));
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    let body = {};
+    try { body = await request.json(); } catch (_) {}
+    const code = String(body.code || '');
+    const orderRef = String(body.orderRef || '');
+
+    if (url.pathname === '/reserve') {
+      const amountCents = Number(body.amountCents) || 0;
+      if (!orderRef || !(amountCents > 0)) return Response.json({ applied: 0 });
+      const reservations = (await this.state.storage.get('reservations')) || {};
+      if (reservations[orderRef]) {
+        // Ya se reservó para este mismo pedido — idempotente, no descuenta 2 veces.
+        return Response.json({ applied: reservations[orderRef].appliedCents / 100 });
+      }
+      const card = await this._loadCard(code);
+      if (!card || card.active === false || !(card.balance > 0)) return Response.json({ applied: 0 });
+      const applied = Math.min(amountCents / 100, card.balance);
+      if (!(applied > 0)) return Response.json({ applied: 0 });
+      card.balance = +(card.balance - applied).toFixed(2);
+      card.active  = card.balance > 0;
+      reservations[orderRef] = { appliedCents: Math.round(applied * 100), committed: false, createdAt: Date.now() };
+      await this.state.storage.put('reservations', reservations);
+      await this._saveCard(code, card);
+      await this.state.storage.setAlarm(Date.now() + 2 * 60 * 60 * 1000);
+      return Response.json({ applied, balance: card.balance });
+    }
+
+    if (url.pathname === '/commit') {
+      const reservations = (await this.state.storage.get('reservations')) || {};
+      if (reservations[orderRef]) {
+        reservations[orderRef].committed = true;
+        await this.state.storage.put('reservations', reservations);
+      }
+      return Response.json({ ok: true });
+    }
+
+    if (url.pathname === '/release') {
+      const reservations = (await this.state.storage.get('reservations')) || {};
+      const r = reservations[orderRef];
+      if (r && !r.committed) {
+        const card = await this._loadCard(code);
+        if (card) {
+          card.balance = +(card.balance + r.appliedCents / 100).toFixed(2);
+          card.active = true;
+          await this._saveCard(code, card);
+        }
+        delete reservations[orderRef];
+        await this.state.storage.put('reservations', reservations);
+      }
+      return Response.json({ ok: true });
+    }
+
+    return new Response('not found', { status: 404 });
+  }
+
+  // Barre reservas vencidas sin confirmar (checkout abandonado) y devuelve el
+  // saldo — no depende de que nadie vuelva a llamar a esta instancia.
+  async alarm() {
+    const reservations = (await this.state.storage.get('reservations')) || {};
+    const now = Date.now();
+    let changed = false;
+    for (const [ref, r] of Object.entries(reservations)) {
+      if (!r.committed && now - r.createdAt > 2 * 60 * 60 * 1000) {
+        const card = await this.state.storage.get('card');
+        if (card) {
+          card.balance = +(card.balance + r.appliedCents / 100).toFixed(2);
+          card.active = true;
+          // _saveCard() (no un put directo a this.state.storage) — sin esto, la
+          // liberación automática por alarm() actualizaba el balance solo DENTRO de
+          // la DO, pero nunca escribía el espejo en CACUSA_KV que lee el panel admin
+          // para listar tarjetas: el panel hubiera seguido mostrando el saldo viejo
+          // (reservado) aunque la DO ya lo hubiera devuelto de verdad. Encontrado con
+          // una simulación local antes de desplegar (ver test-gift-card-ledger.mjs).
+          await this._saveCard(card.code, card);
+        }
+        delete reservations[ref];
+        changed = true;
+      }
+    }
+    if (changed) await this.state.storage.put('reservations', reservations);
+  }
+}
+
+function giftCardLedgerStub(env, code) {
+  if (!env.GIFT_CARD_LEDGER) return null;
+  const id = env.GIFT_CARD_LEDGER.idFromName(gcKey(code));
+  return env.GIFT_CARD_LEDGER.get(id);
+}
+// orderRef debe ser único por INTENTO de pedido/checkout (ej. `order:<id>` una vez
+// asignado, o el referenceId de Square) — llamarlo 2 veces con el mismo orderRef
+// es idempotente (no descuenta 2 veces), a propósito, para que un reintento nunca
+// duplique el descuento.
+async function gcReserve(env, code, amountCents, orderRef) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) {
+    // Sin el binding de Durable Object todavía (falta el paso manual de wrangler,
+    // ver CLAUDE.md) — cae al camino viejo no-atómico en vez de romper el sitio.
+    return await gcRedeem(env, code, amountCents / 100);
+  }
+  const r = await stub.fetch('https://gift-card-ledger.internal/reserve', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef, amountCents }),
+  });
+  return await r.json();
+}
+async function gcCommit(env, code, orderRef) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return; // camino viejo: gcRedeem() ya descontó de una, no hay nada que confirmar
+  await stub.fetch('https://gift-card-ledger.internal/commit', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef }),
+  });
+}
+async function gcRelease(env, code, orderRef) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return; // camino viejo: no hay reserva que liberar (riesgo ya aceptado)
+  await stub.fetch('https://gift-card-ledger.internal/release', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, orderRef }),
+  });
 }
 
 async function handleGcCreate(body, env, origin, session) {
@@ -1278,15 +1552,22 @@ async function handleLoversExclusiveCoupon(body, env) {
       note: `Cupón exclusivo Lovers — ${email}`,
       createdAt: new Date().toISOString(), createdBy: 'lovers-system',
     };
-    // Orden invertido a propósito (hallazgo del 19 sep, auditoría propia A07-A19):
-    // antes el cupón se guardaba activo en KV ANTES de mandar el correo. Si sendGmail
-    // fallaba (rate limit, token vencido), el cupón quedaba activo/usable para siempre
-    // sin que la suscriptora recibiera el código — y como este bloque solo corre si
-    // `!coupon`, ningún reintento futuro (ni el próximo cobro mensual, ni el botón
-    // "Enviar a todas las activas" del panel, que ve coupon.active===true y lo salta)
-    // lo volvía a intentar. Ahora, si el correo falla, no queda ningún rastro en KV —
-    // el próximo evento real reintenta el flujo completo limpio, mismo patrón ya
-    // correcto que welcome10 (ver comentario en sendWelcomeCode).
+    // Auditoría de integridad (19 sep, F09): el comentario original acá decía que este
+    // orden (correo antes que KV) ya seguía el mismo patrón "correcto" que welcome10 —
+    // falso: welcome10 hace KV primero, correo después (ver sendWelcomeCode). Pero
+    // igualar el orden acá NO es la mejora que parece: welcome10 es de un solo uso con
+    // vencimiento a 3 meses, mientras que este cupón es permanente y sin tope de usos —
+    // si se guardara en KV primero y el correo fallara después (Gmail: rate limit, token
+    // vencido — el modo de fallo real y documentado de este Worker), el cupón quedaría
+    // `active:true` para siempre sin que la clienta lo supiera NUNCA, porque tanto este
+    // mismo bloque (`if (!coupon)`) como el botón masivo del panel
+    // (`handleLoversExclusiveBulk`, ver más abajo) saltan cualquier cupón ya activo —
+    // no hay ningún camino que reintente solo el envío del correo. Manteniendo el
+    // correo ANTES del KV.put, el único modo de fallo real es la ventana angosta e
+    // infrecuente de "el correo salió pero el KV.put local falló justo después" — se
+    // autocorrige solo en el próximo evento real (el código es determinístico por HMAC,
+    // así que reenviar el mismo correo no duplica nada, y en cuanto el KV.put logre
+    // escribir, el código ya funciona). Documentado a propósito, no un bug pendiente.
     const lang = body.lang === 'en' ? 'en' : 'es';
     await sendGmail(env, { to: email, ...loversExclusiveEmailContent(code, lang) });
     await env.CACUSA_KV.put(couponKey(code), JSON.stringify(fresh));
@@ -1861,41 +2142,62 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   }
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ ok: true }, origin);
-  // Auditoría externa (19 sep, ronda nueva): la ruta pública (navegador) nunca pedía
-  // ni verificaba ningún pedido real detrás del consumo — solo un Origin permitido, que
-  // no prueba que hubo una compra (se falsifica con curl). Ahora exige orderId y
-  // verifica que ESE pedido exista y que su `cuponAplicado` coincida con el código que
-  // se quiere quemar — ver el campo nuevo en buildOrderCore() más arriba. Los llamados
-  // internos (Worker-a-Worker, ya autenticados con ORDER_INGEST_KEY —
-  // burnCouponViaAdmin() en square-payment-worker.js, disparado recién cuando Square
-  // confirma el pago con tarjeta) no necesitan este chequeo extra: ya vienen de un
-  // evento de pago real, no de cualquiera con un Origin permitido.
+
+  // Auditoría de integridad (19 sep, F04): el chequeo de orderId (agregado en la ronda
+  // anterior) cerraba "curl sin ningún pedido detrás", pero no "pedido real pero vacío/
+  // inventado + identidad falsa en el body + reintento múltiple sin lock" — la
+  // identidad usada para marcar "ya usó el cupón" seguía saliendo del BODY de esta
+  // misma llamada (cualquier email/teléfono que decidiera mandar quien llama), no del
+  // pedido ya verificado, y no había ninguna llave que atara un pedido a un solo
+  // consumo (se podía quemar el mismo cupón repetidas veces con el mismo pedido).
+  // Ahora: (a) la identidad sale SIEMPRE del pedido verificado, nunca del body — así
+  // nadie puede marcar como "ya usó este cupón" a un email/teléfono ajeno; (b)
+  // burned:<orderId>:<code> asegura una sola vez por pedido, sin importar cuántas
+  // veces se reintente la llamada.
+  let identityEmail = '', identityPhone = '', linkedOrderId = null;
   if (!trusted) {
     const orderId = body.orderId;
     if (orderId == null) return ok({ ok: true }, origin);
     const linkedOrder = await orderGet(env, orderId);
     if (!linkedOrder || linkedOrder.cuponAplicado !== rawCode) return ok({ ok: true }, origin);
+    identityEmail = (linkedOrder.cliente?.email || '').toLowerCase().trim();
+    identityPhone = (linkedOrder.cliente?.telefono || '').replace(/\D/g, '');
+    linkedOrderId = orderId;
+  } else {
+    // Camino interno (Worker-a-Worker, ya autenticado con ORDER_INGEST_KEY —
+    // burnCouponViaAdmin() en square-payment-worker.js, disparado recién cuando
+    // Square confirma el pago) — ya viene de un evento de pago real, la identidad
+    // que manda es la que Square/el checkout ya validó.
+    identityEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
+    identityPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
+    linkedOrderId = body.orderId != null ? body.orderId : null;
   }
-  const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
-  const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
+
+  if (linkedOrderId != null) {
+    const burnedKey = `burned:${linkedOrderId}:${rawCode}`;
+    if (await env.CACUSA_KV.get(burnedKey)) return ok({ ok: true }, origin); // ya se quemó para ESTE pedido
+    await env.CACUSA_KV.put(burnedKey, '1', { expirationTtl: 31536000 });
+  }
+
   const coupon = await couponGet(env, rawCode);
+  // Restricciones del cupón chequeadas ANTES de escribir ninguna marca (antes se
+  // escribían las marcas de "cupón usado" incondicionalmente, y solo el INCREMENTO
+  // de usedCount respetaba restrictToEmail/restrictToPhone — F04).
+  const restrictionsOk = !!coupon
+    && (!coupon.restrictToEmail || identityEmail === coupon.restrictToEmail.toLowerCase())
+    && (!coupon.restrictToPhone || samePhone(identityPhone, coupon.restrictToPhone));
+  if (!restrictionsOk) return ok({ ok: true }, origin);
+
   // Registrar uso por teléfono y email (1 año) — salvo en cupones pensados para que
   // la misma persona los reuse (ver mismo comentario en handleCouponValidate).
-  const repeatableByDesign = !!(coupon && (coupon.restrictToEmail || coupon.kind === 'lovers-shipping'));
+  const repeatableByDesign = !!(coupon.restrictToEmail || coupon.kind === 'lovers-shipping');
   if (!repeatableByDesign) {
-    if (rawPhone.length >= 7) await env.CACUSA_KV.put(`cpused:ph:${rawPhone}:${rawCode}`, '1', { expirationTtl: 31536000 });
-    if (rawEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${rawEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
+    if (identityPhone.length >= 7) await env.CACUSA_KV.put(`cpused:ph:${identityPhone}:${rawCode}`, '1', { expirationTtl: 31536000 });
+    if (identityEmail.includes('@')) await env.CACUSA_KV.put(`cpused:em:${identityEmail}:${rawCode}`, '1', { expirationTtl: 31536000 });
   }
-  // Incrementar usedCount del cupón — defensa en profundidad: si tiene restrictToEmail
-  // o restrictToPhone y no coinciden, no se cuenta como uso (el checkout ya no debería
-  // haber dejado pasar esto en /coupon/validate, pero /coupon/burn no vuelve a validar).
-  if (coupon
-      && (!coupon.restrictToEmail || rawEmail === coupon.restrictToEmail.toLowerCase())
-      && (!coupon.restrictToPhone || samePhone(rawPhone, coupon.restrictToPhone))) {
-    coupon.usedCount = (coupon.usedCount || 0) + 1;
-    await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
-    if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
-  }
+  coupon.usedCount = (coupon.usedCount || 0) + 1;
+  await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
+  if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
   return ok({ ok: true }, origin);
 }
 

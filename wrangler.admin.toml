@@ -1,0 +1,38 @@
+# Config de wrangler SOLO para el Worker cacusa-admin (admin-worker.js) — paso
+# manual único para crear la clase de Durable Object GiftCardLedger (auditoría de
+# integridad, 19 sep: cierra el doble-gasto real de gift cards, F03-a/F06).
+#
+# Por qué hace falta esto y los demás Workers no lo necesitan: los 4 Workers de este
+# repo se despliegan siempre pegando el código en el dashboard de Cloudflare (Edit
+# code → Deploy) — nunca con `wrangler`. Pero declarar una clase de Durable Object
+# NUEVA requiere una migración (`[[migrations]] new_classes = [...]`), y esa
+# migración normalmente solo se aplica con `wrangler deploy`, no alcanza con pegar
+# el código en el editor del dashboard. Antes de instalar wrangler, vale la pena
+# revisar si el dashboard de Cloudflare ya permite crear un Durable Object namespace
+# nuevo sin CLI (Worker cacusa-admin → Settings → Bindings → Add → buscar "Durable
+# Object") — Cloudflare viene agregando soporte a esto, pero no se pudo confirmar
+# desde este entorno (sin acceso a la cuenta real de Cloudflare).
+#
+# Pasos (una sola vez):
+#   1. npm install -g wrangler   (o npx wrangler, sin instalar global)
+#   2. wrangler login            (autoriza contra la cuenta real de Cloudflare)
+#   3. wrangler deploy --config wrangler.admin.toml
+#      Esto sube admin-worker.js TAL CUAL (mismo código que ya se pega a mano) y,
+#      de paso, aplica la migración que registra la clase GiftCardLedger. Después
+#      de este primer deploy, editar SOLO el cuerpo de la clase (sin renombrarla)
+#      puede seguir pegándose en el dashboard como siempre — no hace falta volver
+#      a correr wrangler salvo que se agregue OTRA clase de Durable Object nueva.
+#   4. En cacusa-square (el otro Worker que necesita esta misma tarjeta), agregar el
+#      binding cruzado — ver wrangler.square.toml.
+
+name = "cacusa-admin"
+main = "admin-worker.js"
+compatibility_date = "2026-09-19"
+
+[[durable_objects.bindings]]
+name = "GIFT_CARD_LEDGER"
+class_name = "GiftCardLedger"
+
+[[migrations]]
+tag = "v1-giftcardledger"
+new_classes = ["GiftCardLedger"]
