@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:54:52.869Z",
+  "lastUpdated": "2026-09-19T14:55:06.999Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1109,26 +1109,6 @@
       "material": "Baño de Rodio",
       "id": 1781879577380,
       "name_en": "Adjustable Twisted Ring"
-    },
-    {
-      "name": "Doble estrella de microcircon. Ajustable ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Romántico anillo ajustable con doble estrella de microcircones en baño de oro 18k. Captura el brillo de las estrellas en tu mano.",
-      "description_en": "Romantic adjustable ring featuring a double star of micro zirconia in 18k gold plating. Captures the sparkle of stars on your hand.",
-      "personalized": false,
-      "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781879626808_image_jpg.webp",
-      "focalX": 38.843773917781206,
-      "focalY": 41.90581990989327,
-      "zoom": 1.6,
-      "material": "Baño de oro 18k",
-      "id": 1781879659210,
-      "name_en": "Adjustable Double Star Micro Zirconia Ring"
     },
     {
       "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
