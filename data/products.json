@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:53:44.578Z",
+  "lastUpdated": "2026-09-19T14:53:54.029Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1555,26 +1555,6 @@
       "material": "Baño de oro 18k",
       "id": 1781892443591,
       "name_en": "Aquamarine Ring"
-    },
-    {
-      "name": "Anillo ajustable de ojo turco ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Protector anillo ajustable con el ojo turco en base dorada de 18k. Un símbolo de protección y buena energía que luce hermoso en tu mano.",
-      "description_en": "Protective adjustable ring featuring the evil eye on an 18k gold base. A symbol of protection and good energy that looks beautiful on your hand.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781892857275_image_jpg.webp",
-      "focalX": 57.855626326963915,
-      "focalY": 47.87878787878785,
-      "zoom": 1.75,
-      "material": "Baño de oro 18k",
-      "id": 1781892913830,
-      "name_en": "Evil Eye Adjustable Ring"
     },
     {
       "name": "Anillo",
