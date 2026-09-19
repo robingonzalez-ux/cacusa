@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:54:47.054Z",
+  "lastUpdated": "2026-09-19T15:56:39.728Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2201,6 +2201,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833283695,
+      "promo": null
+    },
+    {
+      "name": "Anillo corazón 🫶🏽 ",
+      "name_en": "Heart ring 🫶🏽",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un corazón que se completa con tus manos. 🫶✨\nUn anillo diferente y lleno de significado: dos manos que al acercarse forman un corazón, como símbolo de conexión, cariño y complicidad. Con baño de oro de 18K y diseño ajustable, es esa joya especial que puedes regalar a alguien importante… o llevar como recordatorio de todo lo que amas.",
+      "description_en": "A heart that is completed with your hands. 🫶✨\nA different ring full of meaning: two hands that when approached form a heart, as a symbol of connection, affection and complicity. With an 18K gold plating and adjustable design, it's that special piece of jewelry you can give to someone important… or wear as a reminder of everything you love.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789833325459_b8e75e78_a1e8_436e_8e85_0a4e3372a01f_png.webp",
+      "focalX": 49.077266359648036,
+      "focalY": 41.25248508946325,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789833395515,
       "promo": null
     }
   ],
