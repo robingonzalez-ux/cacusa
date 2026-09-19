@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:11:23.990Z",
+  "lastUpdated": "2026-09-19T15:14:53.203Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1981,6 +1981,28 @@
       "name_en": "Golden Silk Chain",
       "description_en": "The gold basic that makes everything look more elegant.\n\nGolden Silk is a chain with a smooth, luminous finish that gently hugs the neck and catches the light with every movement. Its flat design creates that sophisticated golden effect that looks amazing on its own or layered with other chains.\n\nIt's one of those pieces you can wear every day: with a basic t-shirt, a dress, or to complete an evening look. Minimalist, versatile and timeless.\n\nDetails: 316L stainless steel · gold finish · flat chain · 45 cm + 5 cm extender · adjustable length.",
       "id": 1788923140476,
+      "promo": null
+    },
+    {
+      "name": "Argollas pequeñas de 1 cm ",
+      "name_en": "1 cm small rings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Livianas y delicadas ideales para el día a día",
+      "description_en": "Lightweight and delicate, ideal for everyday use",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789830837168_45fb2f62_d872_434f_8944_93207c43a014_png.webp",
+      "focalX": 47.969985991225634,
+      "focalY": 40.722332670642814,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789830883898,
       "promo": null
     }
   ],
