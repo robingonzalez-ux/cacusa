@@ -623,13 +623,19 @@ async function handleOrder(body, env, origin, ctx, request) {
   // $100 pagada 100% con gift card de $100 llegaba con total=$0, así que el tope daba
   // min(100,0)=0 y NUNCA se descontaba nada del saldo real. Compra de $100 con $80 de gift
   // card llegaba con total=$20, así que solo se descontaban $20, no $80. Ahora se compara
-  // contra el subtotal BRUTO recalculado de los productos del pedido (antes de cualquier
-  // descuento) — no incluye envío/impuesto (no viajan en este payload), pero ya no permite
-  // que el gift card cubra más de lo que realmente vale la mercadería.
+  // contra el subtotal BRUTO recalculado de los productos del pedido.
+  //
+  // Barrido de seguridad (2da ronda, 19 sep): el primer arreglo solo sumaba productos, sin
+  // envío ni impuesto — una compra de $100 + $20 de envío/impuesto, con gift card de $120,
+  // solo descontaba $100 (min(120,100)=100), dejando $20 de saldo real sin gastar aunque la
+  // tienda ya le mostró a la clienta que el gift card cubría el total completo. Ahora se
+  // suman `envio`/`impuesto` (mismos campos que ya acepta buildOrderCore, ya recibidos y
+  // guardados en newOrder — solo faltaba que la tienda los mandara, ver ui_kits/store).
   const gcCodeReq   = str(order.giftcard && order.giftcard.code, 40);
   const gcAmountReq = num(order.giftcard && order.giftcard.amount);
   if (gcCodeReq && gcAmountReq > 0 && env.CACUSA_KV) {
-    const grossSubtotal = newOrder.productos.reduce((s, p) => s + p.price * p.qty, 0);
+    const grossSubtotal = newOrder.productos.reduce((s, p) => s + p.price * p.qty, 0)
+      + newOrder.envio + newOrder.impuesto;
     const cappedAmount = Math.min(gcAmountReq, grossSubtotal);
     if (cappedAmount > 0) {
       const giftcardResult = await gcRedeem(env, gcCodeReq, cappedAmount);
@@ -2069,6 +2075,12 @@ async function verifyToken(token, env) {
   let payload;
   try { payload = JSON.parse(new TextDecoder().decode(b64urlDecode(p))); } catch { return null; }
   if (!payload.exp || Date.now() > payload.exp) return null;
+  // Barrido de seguridad (2da ronda, 19 sep): antes solo se revisaba firma + expiración —
+  // un token firmado con un usuario inválido (ej. el bug de A01, antes del fix, o cualquier
+  // otro camino de firma que se descubra a futuro) seguía siendo válido hasta las 12h de
+  // expiración natural, aunque passwordFor() ya rechazara ese usuario en el login. Revalidar
+  // acá invalida de inmediato cualquier token histórico que no sea de un usuario real.
+  if (!VALID_USERS.has(payload.user)) return null;
   return payload;
 }
 

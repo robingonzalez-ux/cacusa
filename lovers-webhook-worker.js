@@ -73,6 +73,10 @@
 const SQUARE_API = 'https://connect.squareup.com/v2';
 const ADMIN_ORIGIN = 'https://cacusabytaitus.com';
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
+// Mismos usuarios válidos que admin-worker.js (duplicado a propósito — no hay módulos
+// compartidos entre Workers). verifyToken() los usa para revalidar el token de sesión,
+// no solo su firma — ver el comentario en verifyToken() más abajo.
+const VALID_USERS = new Set(['tita.jaramillo', 'robin.gonzalez']);
 
 // Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
 // su URL *.workers.dev (error 1042, "This request could not be routed"). El Service Binding
@@ -283,6 +287,10 @@ async function verifyToken(token, env) {
   let payload;
   try { payload = JSON.parse(new TextDecoder().decode(b64urlDecode(p))); } catch { return null; }
   if (!payload.exp || Date.now() > payload.exp) return null;
+  // Barrido de seguridad (2da ronda, 19 sep) — mismo fix que admin-worker.js: revalidar el
+  // usuario del payload, no solo la firma, para invalidar de inmediato cualquier token
+  // histórico que no sea de un usuario real.
+  if (!VALID_USERS.has(payload.user)) return null;
   return payload;
 }
 
