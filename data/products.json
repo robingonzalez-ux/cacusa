@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T22:14:07.345Z",
+  "lastUpdated": "2026-09-19T22:16:08.718Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2627,6 +2627,28 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1789855519113_b1499985_d121_4d61_9194_b7457ee01aa8_jpe.webp"
       ],
       "id": 1789855526360,
+      "promo": null
+    },
+    {
+      "name": "Argollas con circon ",
+      "name_en": "Zircon Eyelets",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Argollas con Circón ✨\n\nEse básico que hace que todo tu look se vea más arreglado. Sus circones aportan el punto justo de brillo, mientras su diseño de argolla combina fácilmente con todo: solas para un estilo elegante o acompañadas de otros aretes para crear tu propio ear stack.\n\nDe esas piezas que compras pensando en una ocasión y terminas usando todos los días. ✨",
+      "description_en": "Ring with Zircon ✨\n\nThat basic that makes your whole look look tidier. Its zircons provide the right point of brightness, while its ring design easily combines with everything: alone for an elegant style or accompanied by other earrings to create your own ear stack.\n\nOf those pieces that you buy thinking about an occasion and end up using every day. ✨",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789856080267_06938a10_f350_4093_823e_7461752e3e27_jpe.webp",
+      "focalX": 50.55364018421118,
+      "focalY": 44.83101391650104,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789856160011,
       "promo": null
     }
   ],
