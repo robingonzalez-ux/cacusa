@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:19:34.388Z",
+  "lastUpdated": "2026-09-19T15:24:25.061Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2025,6 +2025,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831017689,
+      "promo": null
+    },
+    {
+      "name": "Aretes de rombo de circon ",
+      "name_en": "Zircon Diamond Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Hermosos y livianos 🤩✨",
+      "description_en": "Beautiful and lightweight 🤩✨",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789831294315_ba157761_e5aa_4ee8_9d13_676caa41b9cd_png.webp",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789831461536,
       "promo": null
     }
   ],
