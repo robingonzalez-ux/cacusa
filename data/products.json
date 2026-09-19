@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:14:58.672Z",
+  "lastUpdated": "2026-09-19T16:24:51.471Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2377,6 +2377,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834493333,
+      "promo": null
+    },
+    {
+      "name": "Aretes Rectangulo",
+      "name_en": "Rectangle Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Una joya que parece una pequeña obra de arte. 💜✨\nSu combinación de violeta y dorado, con líneas onduladas que recorren el diseño, hace que cada mirada se detenga en ellos. Con baño de oro de 18K, son perfectos para darle color y personalidad a un look neutro. No son el complemento del outfit: son la pieza que lo hace especial.",
+      "description_en": "A jewel that looks like a small work of art. 💜✨\nIts combination of violet and gold, with wavy lines running through the design, makes every look stop at them. With an 18K gold plating, they are perfect for adding colour and personality to a neutral look. They are not the complement of the outfit: they are the piece that makes it special.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789834684927_9ccd4aee_6317_47eb_8610_dd54c2af5a15_jpe.webp",
+      "focalX": 92.99938764040229,
+      "focalY": 58.08482438701121,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789835085201,
       "promo": null
     }
   ],
