@@ -296,6 +296,23 @@ async function couponLoadValid(env, code, email, phone) {
   // sobre todo ACÁ: este Worker es el único punto donde el envío se anula de verdad, así
   // que sin esta línea cualquiera con el código ENVIO… de otra persona viaja gratis.
   if (c.restrictToPhone && !samePhone(phone, c.restrictToPhone)) return null;
+  // Barrido de seguridad (19 sep): admin-worker.js ya revisa cpused:*/refmonth:* antes de
+  // validar un cupón (anti-reuso + tope mensual de referidos) — esta copia nunca lo hacía,
+  // así que un cupón ya usado (o un referido con el cupo del mes ya gastado) que Admin
+  // rechazaría se aceptaba igual pagando con tarjeta, porque ese pago nunca pasa por
+  // /coupon/validate en admin-worker.js. Mismo guard repeatableByDesign que ya existe allá:
+  // saltarlo para cupones pensados para que la MISMA persona los reuse (restrictToEmail, o
+  // el de envío gratis) — si no, se repite el bug ya corregido el 16 sep para ese caso.
+  const repeatableByDesign = !!(c.restrictToEmail || c.kind === 'lovers-shipping');
+  if (!repeatableByDesign) {
+    const rawPhone = String(phone || '').replace(/\D/g, '');
+    if (rawPhone.length >= 7 && await env.CACUSA_KV.get(`cpused:ph:${rawPhone}:${code}`)) return null;
+    if (email && await env.CACUSA_KV.get(`cpused:em:${String(email).toLowerCase().trim()}:${code}`)) return null;
+  }
+  if (c.kind === 'referral') {
+    const ym = new Date().toISOString().slice(0, 7);
+    if (await env.CACUSA_KV.get(`refmonth:${code}:${ym}`)) return null;
+  }
   return c;
 }
 
