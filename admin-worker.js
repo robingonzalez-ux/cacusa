@@ -445,6 +445,11 @@ function buildOrderCore(order, { strictPago }) {
     envio:     num(order.envio),
     impuesto:  num(order.impuesto),
     notas:     str(order.notas, 500) || undefined,
+    // Auditoría externa (19 sep, ronda nueva): qué código de cupón se aplicó a ESTE
+    // pedido — antes no se guardaba nada, así que /coupon/burn no tenía forma de saber
+    // si el consumo que le pedían correspondía a un pedido real. Ver
+    // handleCouponBurnPublic() más abajo.
+    cuponAplicado: str(order.cuponAplicado, 40) || undefined,
     cliente: {
       nombre:    str(cliente.nombre,   100),
       apellido:  str(cliente.apellido, 100),
@@ -603,6 +608,61 @@ async function migrateLegacyLeadsIfNeeded(env) {
   await refreshLeadsCache(env);
 }
 
+// ── Validación de catálogo real para pedidos públicos (Zelle/WhatsApp) ──────
+// Auditoría externa (19 sep, ronda nueva): a diferencia de los pagos con tarjeta
+// (square-payment-worker.js ya valida contra data/products.json antes de llegar acá,
+// ver su función validateItems), estos 2 caminos aceptaban precio/cantidad tal cual
+// los mandaba el navegador — cualquiera con las devtools abiertas podía editar el
+// precio antes de enviar el pedido. Mismo patrón que square-payment-worker.js
+// (CATALOG_URL, +4% de recargo si aplica), adaptado a la forma real de
+// `order.productos` acá (con `qty`, no un item por unidad como en Square).
+const CATALOG_URL = 'https://cacusabytaitus.com/data/products.json';
+function js_round2(n) { return Math.round(n * 100) / 100; }
+
+async function fetchCatalogForOrderValidation() {
+  try {
+    const r = await fetch(CATALOG_URL, { cf: { cacheTtl: 60 } });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const products = Array.isArray(data) ? data : (data.products || []);
+    const combos = Array.isArray(data.combos) ? data.combos : [];
+    return { products, combos };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Lanza si algún item no se puede validar (id inexistente, producto no disponible) —
+// el llamador decide si eso rechaza el pedido. Si el catálogo mismo no se pudo traer
+// (falla de red transitoria, no responsabilidad del cliente), deja pasar los precios
+// tal cual vinieron — falla abierta, no cierra un checkout real por un problema
+// nuestro, mismo criterio que el resto de fetches best-effort de este Worker.
+async function validatePublicOrderProducts(productos, env) {
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return productos;
+
+  let surcharges = {};
+  if (env.CACUSA_KV) {
+    const raw = await env.CACUSA_KV.get('surcharges');
+    if (raw) try { surcharges = JSON.parse(raw); } catch {}
+  }
+  const productMap = new Map(catalog.products.map(p => [String(p.id), p]));
+  const comboMap = new Map(catalog.combos.map(c => [String(c.id), c]));
+
+  return productos.map((item, idx) => {
+    if (item.isCombo) {
+      const combo = comboMap.get(String(item.id));
+      if (!combo) throw new Error(`Combo no encontrado en el catálogo (id: ${item.id})`);
+      return { ...item, price: combo.price };
+    }
+    const prod = productMap.get(String(item.id));
+    if (!prod) throw new Error(`Producto no encontrado en el catálogo (id: ${item.id}, pos: ${idx})`);
+    if (prod.available === false) throw new Error(`Producto no disponible: ${prod.name || item.id}`);
+    const price = surcharges[String(prod.id)] === true ? js_round2(prod.price * 1.04) : prod.price;
+    return { ...item, price };
+  });
+}
+
 // ── Pedido desde tienda (o desde cacusa-square, ya confirmado por Square) ────
 async function handleOrder(body, env, origin, ctx, request) {
   const { order } = body;
@@ -644,6 +704,18 @@ async function handleOrder(body, env, origin, ctx, request) {
     if (existingId) {
       const existingOrder = await orderGet(env, existingId);
       if (existingOrder) return ok({ ok: true, order: existingOrder }, origin);
+    }
+  }
+
+  // Auditoría externa (19 sep, ronda nueva): solo pedidos públicos (Zelle/WhatsApp) —
+  // los que ya llegan `trusted` vienen de cacusa-square, que valida contra este mismo
+  // catálogo antes de generar el link de pago, así que revalidarlos acá sería
+  // redundante (y potencialmente inconsistente si el catálogo cambió entre medio).
+  if (!trusted && Array.isArray(order.productos) && order.productos.length) {
+    try {
+      order.productos = await validatePublicOrderProducts(order.productos, env);
+    } catch (e) {
+      return err('No se pudo validar el carrito: ' + e.message, 400, origin);
     }
   }
 
@@ -1758,9 +1830,10 @@ async function handleLeadSendWelcome(body, env, origin) {
 // o interna desde cacusa-square (ORDER_INGEST_KEY) tras confirmar el pago con tarjeta.
 async function handleCouponBurnPublic(body, env, origin, request) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
+  const trusted = isInternalIngest(request, env);
   // Rate limit por IP (15/hr) — igual que /giftcard/redeem, para que no se pueda agotar el
   // maxUses de un cupón ni bloquear el teléfono/email de una clienta real sin límite.
-  if (!isInternalIngest(request, env)) {
+  if (!trusted) {
     const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
     const rlKey = `cpburnrl:${ip}`;
     const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
@@ -1769,6 +1842,21 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   }
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ ok: true }, origin);
+  // Auditoría externa (19 sep, ronda nueva): la ruta pública (navegador) nunca pedía
+  // ni verificaba ningún pedido real detrás del consumo — solo un Origin permitido, que
+  // no prueba que hubo una compra (se falsifica con curl). Ahora exige orderId y
+  // verifica que ESE pedido exista y que su `cuponAplicado` coincida con el código que
+  // se quiere quemar — ver el campo nuevo en buildOrderCore() más arriba. Los llamados
+  // internos (Worker-a-Worker, ya autenticados con ORDER_INGEST_KEY —
+  // burnCouponViaAdmin() en square-payment-worker.js, disparado recién cuando Square
+  // confirma el pago con tarjeta) no necesitan este chequeo extra: ya vienen de un
+  // evento de pago real, no de cualquiera con un Origin permitido.
+  if (!trusted) {
+    const orderId = body.orderId;
+    if (orderId == null) return ok({ ok: true }, origin);
+    const linkedOrder = await orderGet(env, orderId);
+    if (!linkedOrder || linkedOrder.cuponAplicado !== rawCode) return ok({ ok: true }, origin);
+  }
   const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
   const coupon = await couponGet(env, rawCode);
@@ -2278,6 +2366,15 @@ async function handleWaRegister(body, env, origin) {
   const authData = attObj.authData;
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
   if (!arraysEqual(authData.slice(0, 32), rpHash)) return err('rpId no coincide', 400, origin);
+  // Auditoría externa (19 sep, ronda nueva): antes no se exigía ni presencia (UP) ni
+  // verificación de usuario (UV, ej. PIN/biometría) al registrar una passkey nueva —
+  // solo se chequeaba que la credencial viniera atestiguada (0x40). Un authenticator
+  // configurado para aceptar solo un toque, sin PIN/biometría, quedaba igual de
+  // registrado que uno con Face ID/huella real. Face ID/Touch ID/Windows Hello (lo
+  // único que usan las 2 cuentas reales) siempre pone ambos bits en 1, así que esto no
+  // cambia el flujo normal.
+  if (!(authData[32] & 0x01)) return err('User presence requerida', 400, origin);
+  if (!(authData[32] & 0x04)) return err('Verificación de usuario requerida', 400, origin);
   if (!(authData[32] & 0x40)) return err('Sin datos de credencial atestiguada', 400, origin);
   const credIdLen = (authData[53] << 8) | authData[54];
   const coseKey   = authData.slice(55 + credIdLen);
@@ -2337,6 +2434,10 @@ async function handleWaLogin(body, env, origin) {
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
   if (!arraysEqual(authBytes.slice(0, 32), rpHash)) return err('rpId no coincide', 400, origin);
   if (!(authBytes[32] & 0x01)) return err('User presence requerida', 400, origin);
+  // Auditoría externa (19 sep, ronda nueva): faltaba exigir UV (verificación de
+  // usuario — PIN/biometría), solo se chequeaba UP (presencia). Ver el comentario
+  // idéntico en handleWaRegister más arriba.
+  if (!(authBytes[32] & 0x04)) return err('Verificación de usuario requerida', 400, origin);
   const pubKey = await importCOSEKey(new Uint8Array(credData.publicKey));
   const valid = await verifyWebAuthnSig(authBytes, cdBytes, b64urlDecode(signature), pubKey);
   if (!valid) return err('Firma inválida', 401, origin);

@@ -194,12 +194,18 @@ function subscriberKey(email) {
 async function getSubscriberByKey(key, dbUrl, fbAuth) {
   const r = await fetch(`${dbUrl}/cacusa_lovers/${key}.json?auth=${fbAuth}`);
   if (!r.ok) {
-    // Antes esto era indistinguible de "esa key no existe" — un 401/500 real de
-    // Firebase (ej. FB_DB_SECRET mal configurado) quedaba en completo silencio, porque
-    // quien llama a esta función es procesamiento en segundo plano (webhooks de Square,
-    // claim-pending), nadie mirando una respuesta HTTP en el momento.
+    // Auditoría externa (19 sep, ronda nueva): antes esto devolvía null igual que
+    // "esa key no existe" — un 401/500 real de Firebase (ej. FB_DB_SECRET mal
+    // configurado, o Firebase caído) quedaba indistinguible de una suscriptora que
+    // genuinamente no existe. En invoice.payment_failed/scheduled_charge_failed y en
+    // subscription.updated (cancelación), eso hacía que un error real de Firebase
+    // cayera en la rama "no matching subscriber" sin escribir nada, y el webhook
+    // respondía 200 igual (dbOk nunca se tocaba) — Square nunca reintenta un 200, así
+    // que el pago fallido o la cancelación se perdían para siempre. Ahora se lanza una
+    // excepción real para que el catch general del webhook (ver 'dbOk = false' más
+    // abajo) SÍ la trate como una falla y fuerce el reintento de Square.
     console.error(`Firebase GET falló (${r.status}) para cacusa_lovers/${key}`);
-    return null;
+    throw new Error(`Firebase GET falló (${r.status}) para cacusa_lovers/${key}`);
   }
   return await r.json(); // null si esa key no existe todavía
 }
@@ -365,7 +371,17 @@ export default {
       if (!email || !email.includes('@')) return adminJson({ notify: false }, 200);
 
       const key = subscriberKey(email);
-      const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+      let existing;
+      try {
+        existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+      } catch (e) {
+        // getSubscriberByKey() ahora lanza si Firebase falló de verdad (ver su propio
+        // comentario) — acá no hay un catch general como en el webhook de Square, así
+        // que se atrapa acá mismo: un error real de Firebase debe responder 500 (para
+        // que quien llama pueda reintentar), nunca "notify:false" como si la
+        // suscriptora no existiera.
+        return adminJson({ error: 'Firebase no disponible' }, 500);
+      }
       console.log('claim-pending:', email, '→ key:', key, 'existing:',
         existing ? { estado_pago: existing.estado_pago, push_pendiente: !!existing.push_pendiente } : null);
       // Falla cerrado: sin registro real, o que no esté pendiente, o que ya se haya
@@ -717,12 +733,31 @@ export default {
           // (notifyExclusiveCoupon ya era idempotente por su cuenta, pero igual se salta acá
           // para no repetir el llamado sin necesidad).
           const alreadyProcessed = !!invoice?.id && existing?.square_invoice_id === invoice.id;
-          if (existing) {
+          // Auditoría externa (19 sep, ronda nueva): esta rama reactivaba con CUALQUIER
+          // factura de esa clienta, sin comparar la suscripción de la factura contra la
+          // que ya se conocía ni revisar si ya estaba cancelada — una factura vieja o
+          // reenviada (reintento tardío de Square) de una suscripción YA cancelada
+          // reactivaba el estado igual, dándole de vuelta el cupón exclusivo y el envío
+          // gratis sin que la clienta haya vuelto a pagar. `invoice.subscription_id` ya
+          // viene garantizado no-nulo (se filtra arriba). Si coincide con la suscripción
+          // que ya teníamos guardada Y el estado actual es 'cancelado', es una factura
+          // vieja de ESA MISMA suscripción cancelada — se ignora. Si el subscription_id
+          // es distinto (o no había ninguno guardado todavía), es una suscripción
+          // genuinamente nueva/resuscripción — se reactiva normal y se actualiza la
+          // referencia para que el próximo chequeo compare contra la correcta.
+          const invoiceSubId = invoice.subscription_id;
+          const isStaleForCanceled = existing?.estado_pago === 'cancelado'
+            && existing?.square_subscription_id
+            && invoiceSubId === existing.square_subscription_id;
+          if (isStaleForCanceled) {
+            console.warn('invoice.payment_made ignorado: factura de una suscripción ya cancelada', email, invoiceSubId);
+          } else if (existing) {
             // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
             // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
             dbOk = await updateSubscriber(key, 'activo', {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
+              square_subscription_id: invoiceSubId,
             }, dbUrl, fbAuth);
             if (dbOk && !alreadyProcessed) {
               console.log('Marked activo:', email);

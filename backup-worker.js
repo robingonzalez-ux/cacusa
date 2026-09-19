@@ -79,7 +79,7 @@
  *       body = backup.firebase
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
- *    .webauthnCredentials / .leads:
+ *    .webauthnCredentials / .leads / .loversShipIndex:
  *       env.CACUSA_KV.put(key, JSON.stringify(value))
  *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
  *    tal cual). Para surcharges/markets (siguen siendo un solo blob cada uno):
@@ -187,21 +187,30 @@ async function getKvValue(env, key) {
 
 // Prefijos/llaves respaldadas: pedidos, gift cards, cupones, credenciales WebAuthn,
 // leads (10% del popup + carritos abandonados — una llave por email, mismo esquema que
-// pedidos desde el 16 sep), y las 2 llaves sueltas de config. Deliberadamente excluido:
-// orders_cache/leads_cache (se reconstruyen solas) y todo lo que es rate-limit/challenge
-// de TTL corto (loginrl:, leadrl:, leadcancelrl:, cpused:, wac:, walc:, refmonth:,
-// push:) — ruido regenerable, no datos de negocio.
+// pedidos desde el 16 sep), el índice teléfono→código de envío gratis de Lovers, y las
+// 2 llaves sueltas de config. Deliberadamente excluido: orders_cache/leads_cache (se
+// reconstruyen solas) y todo lo que es rate-limit/challenge de TTL corto (loginrl:,
+// leadrl:, leadcancelrl:, cpused:, wac:, walc:, refmonth:, push:, idem:) — ruido
+// regenerable, no datos de negocio.
+//
+// Auditoría externa (19 sep, ronda nueva): `loversship:<últimos 7 dígitos>` — a
+// diferencia de las keys de arriba, SÍ es dato de negocio permanente (sin TTL): es el
+// único camino para encontrar y desactivar el cupón ENVIO... de una suscriptora al
+// cancelar (ver loversShippingCode()/loversShipIndexKey() en admin-worker.js). El
+// cupón en sí ya se respalda bajo coupon:, pero sin este índice una restauración
+// dejaría la desactivación automática rota para esa suscriptora — se agrega.
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
     listKvPrefix(env, 'wacred:'),
     listKvPrefix(env, 'lead:'),
+    listKvPrefix(env, 'loversship:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, surcharges, markets };
 }
 
 function backupKey(iso, trigger) {
