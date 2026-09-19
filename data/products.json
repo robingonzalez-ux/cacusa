@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:47:24.841Z",
+  "lastUpdated": "2026-09-19T15:49:28.213Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2157,6 +2157,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832841230,
+      "promo": null
+    },
+    {
+      "name": "Anillo de luna y estrella ",
+      "name_en": "Moon and star ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Lleva un pedacito de cielo contigo. 🌙✨\nUn anillo de luna y estrella creado para esas mujeres que aman las joyas con significado. Su diseño abierto y ajustable abraza delicadamente el dedo, mientras su acabado en baño de oro de 18K aporta ese brillo que hace que hasta el look más sencillo se sienta especial. Una de esas piezas que te pones una vez… y terminas usando todos los días.",
+      "description_en": "Take a little piece of heaven with you. 🌙✨\nA moon and star ring created for those women who love jewellery with meaning. Its open and adjustable design gently embraces the finger, while its 18K gold-plated finish provides that shine that makes even the simplest look feel special. One of those pieces that you put on once... and end up wearing every day.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789832865444_62bfb36f_9550_4cca_91a7_30e3fb386f91_png.webp",
+      "focalX": 49.72317990789442,
+      "focalY": 41.11994698475816,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789832962055,
       "promo": null
     }
   ],
