@@ -820,17 +820,18 @@ nuevos, 1 ya documentado (no es hallazgo nuevo).
   encontrara. Sigue sin corregirse, a propósito, en esta tanda.
 
 Los 2 Workers (`admin-worker.js`, `lovers-webhook-worker.js`) con estos 3
-arreglos de código quedan **pendientes de deploy manual** — ver abajo. La
-regla de Firebase también queda pendiente de pegar en Console.
+arreglos de código ya están desplegados (confirmado 19 sep). La regla de
+Firebase actualizada para `cacusa_lovers` (A02-residual) también ya está
+publicada.
 
 ### Pasos manuales pendientes (no se pueden hacer desde el repo)
 
-1. **Deploy de `admin-worker.js` y `lovers-webhook-worker.js`** con los
-   arreglos de la 2da ronda (A20 en los dos; A03-residual solo en admin) —
-   entregados el 19 sep.
-2. **Regla de Firebase actualizada para `cacusa_lovers`** (A02-residual,
-   arriba) — pegar el snapshot completo actualizado (sección "Reglas de
-   Firebase RTDB" más arriba) en Console → Realtime Database → Rules.
+Ninguno por ahora (19 sep). Las 2 rondas de la auditoría externa quedaron
+cerradas del todo: los 6 arreglos de la 1ra ronda + los 3 de la 2da están
+desplegados en los Workers correspondientes, y las 2 reglas de Firebase
+(`estado_pago`, y la versión endurecida con validación de email + campos
+permitidos) están publicadas — ver "Reglas de Firebase RTDB (snapshot)"
+más arriba.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
 (ver "Backups y recuperación de desastres" más arriba), y la regla de
