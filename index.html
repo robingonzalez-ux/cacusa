@@ -879,6 +879,24 @@ const __LANDING_EN = {
 // Corre antes del count-up para que las cifras animen con los valores guardados en products.json
 let CACUSA_WHATSAPP = '';
 let CACUSA_HOME = {};
+// Mismo slug que arma el JS de la tienda (_slugify/_productParam en ui_kits/store/index.html,
+// replicado en Python en generate_product_schema.py) — el home no tenía esta lógica y seguía
+// armando la URL vieja con ?p= (auditoría SEO del 19 sep, pendiente que quedó fuera de esa tanda).
+function _homeSlugify(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+function _homeProductUrl(p) {
+  // index.html es siempre la versión ES (canonical fijo a "/") — mismo criterio que
+  // product_page_url(p, "es", ...) en generate_product_schema.py.
+  const slug = _homeSlugify(p.name);
+  const param = (slug ? slug + '-' : '') + p.id;
+  return "https://cacusabytaitus.com/ui_kits/store/producto/" + param + "/";
+}
 // Genera el ItemList con productos reales (Bestseller) — se llama cuando llegan los datos.
 function renderHomeItemListLd(products){
   const el = document.getElementById('homeItemListLd');
@@ -891,7 +909,7 @@ function renderHomeItemListLd(products){
     "itemListElement": top.map((p, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": "https://cacusabytaitus.com/ui_kits/store/?p=" + encodeURIComponent(p.id),
+      "url": _homeProductUrl(p),
       "name": p.name
     }))
   });
