@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:44:00.416Z",
+  "lastUpdated": "2026-09-19T15:47:24.841Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2135,6 +2135,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832633994,
+      "promo": null
+    },
+    {
+      "name": "Anillo de flores ",
+      "name_en": "Flower Ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo de flores con acabado dorado y delicados detalles en relieve. 🌸 Un diseño femenino y elegante que envuelve el dedo con un efecto floral sofisticado, ideal para darle un toque especial y luminoso a cualquier look.",
+      "description_en": "Flower ring with gold finish and delicate embossed details. 🌸 A feminine and elegant design that envelops the finger with a sophisticated floral effect, ideal to give a special and luminous touch to any look.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789832711422_d11f853a_e69c_4eed_9c0c_979026087361_png.webp",
+      "focalX": 52.21456073684476,
+      "focalY": 40.32471835652752,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789832841230,
       "promo": null
     }
   ],
