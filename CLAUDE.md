@@ -1008,11 +1008,63 @@ están en `main` y publicados solos.
   con una simulación de 7 escenarios reales, sin acceso a Square/Firebase
   desde este entorno. Pendiente el deploy manual de
   `lovers-webhook-worker.js`.
-- **A07-A09, A13-A19** (real/exagerado según el caso, no re-detallado
-  acá) — quedan para una tanda futura; no se actuó sobre ellos. Incluyen:
-  reglas de Firebase para lectura de reseñas, hardening de WebAuthn, rutas
-  muertas de TikTok, robustez del ID/caché de pedidos, orden Gmail-antes-
-  de-KV, y otros de menor severidad que A01-A12.
+- **A07-A09, A13-A19 — investigados desde cero y cerrados el 19 sep (tanda
+  posterior)**: en su momento no quedó el texto original de estos
+  hallazgos, solo la línea de arriba como pista. Se lanzaron 3 agentes de
+  exploración en paralelo (solo lectura, contra `workers-src` y `main`)
+  para verificar cada pista contra el código real. Resultado: 7 hallazgos
+  reales confirmados, 6 corregidos, 1 documentado sin arreglar (ver abajo).
+  - **WebAuthn**: `handleWaLogin()`/`handleWaRegister()` nunca comparaban
+    `clientData.origin` contra el dominio real (solo el `rpId`, que es
+    válido para cualquier subdominio) — se agregó `WA_ORIGIN` y el
+    chequeo en los 2 handlers. Registrar una passkey nueva solo pedía un
+    token de sesión válido, sin re-autenticación — quien robara un token
+    (XSS, filtración) podía registrar su propio dispositivo en silencio,
+    reemplazando el de la dueña real; se agregó un aviso push inmediato
+    en `handleWaRegister()` (mismo patrón "ante la duda, avisar" del resto
+    del repo). `handleWaLoginChallenge()` distinguía "usuario no
+    encontrado" de "sin passkey configurada" — con 2 cuentas reales eso
+    alcanzaba para confirmar cuáles existen; ahora es un mensaje genérico.
+  - **Pedidos**: `buildOrderCore()` arma el id con `Date.now()` sin
+    sufijo — 2 checkouts en el mismo milisegundo se pisaban en silencio.
+    `ensureUniqueOrderId()` verifica antes de escribir y corre el id 1ms
+    hacia adelante en el (rarísimo) caso de choque, en `handleOrder()` y
+    `handleOrderManual()`. Además, un reintento del checkout tras un error
+    de red (el carrito queda intacto a propósito, ver A06+A10) disparaba
+    un pedido duplicado entero, con doble redención de gift card — ahora
+    la tienda manda `order.idempotencyKey` (derivado del CONTENIDO del
+    pedido — cliente+carrito+total, no un id aleatorio — así un reintento
+    exacto da la misma llave sola, y si el carrito cambia entre intentos
+    la llave cambia sola también, sin tener que rastrear nada) y
+    `handleOrder()` devuelve el pedido ya creado en vez de duplicarlo.
+  - **Lovers**: `handleLoversExclusiveCoupon()` escribía el cupón del 5%
+    como `active:true` en KV ANTES de mandar el correo — si Gmail fallaba,
+    el cupón quedaba usable para siempre sin que la suscriptora recibiera
+    nunca el código, y ningún reintento futuro lo notaba (el chequeo
+    `!coupon.active` ya daba `false`). Invertido el orden — mismo patrón
+    ya correcto que `welcome10`.
+  - **TikTok Shop**: el botón "Generar ahora" del panel llamaba a
+    `tiktok/export-status`/`tiktok/trigger-export`, 2 rutas que nunca
+    existieron en `admin-worker.js` — siempre daba 404. Se agregaron,
+    reusando `GH_TOKEN`/`ghHeaders()` ya existentes y el
+    `repository_dispatch` que `.github/workflows/tiktok-bulk-export.yml`
+    ya esperaba desde antes.
+  - **Documentado, sin arreglar (riesgo aceptado)**: regla de Firebase de
+    `cacusa_reviews` con `.read: true` en la raíz — cualquiera puede leer
+    TODAS las reseñas (incluidas las no aprobadas) vía la REST API
+    directo. Real pero de severidad baja (sin ningún campo de PII en el
+    esquema); arreglarlo de raíz requiere separar las reseñas pendientes
+    a un nodo distinto con `.read: false` (Firebase no permite "listar
+    todas menos las no aprobadas" con una regla simple en el nodo
+    actual) — es un cambio de arquitectura de datos, no un ajuste de
+    regla, queda para otra tanda. También quedaron documentadas (sin
+    arreglar, mismo criterio) 2 carreras de lectura-modificación-escritura
+    sin lock — `gcRedeem()` y `handleOrderUpdate()` — que ya admiten el
+    trade-off en su propio comentario (KV sin CAS nativo, bajo riesgo real
+    dado el volumen).
+  Verificado con 15 simulaciones de lógica pura (sin red real desde este
+  entorno). Pendiente el deploy manual de `admin-worker.js` (se suma a la
+  cola junto con el fix de imágenes de la tanda anterior).
 
 ### 2da ronda (19 sep, mismo día) — 3 hallazgos más, verificados y corregidos
 

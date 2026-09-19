@@ -12,6 +12,33 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (10ma tanda) — 6 arreglos más de seguridad/confiabilidad + TikTok Shop funcional
+
+Se investigaron desde cero los últimos hallazgos que quedaban pendientes
+de la auditoría externa, ya que no había quedado el detalle original —
+solo pistas de una línea. Se confirmaron 7 problemas reales y se
+corrigieron 6:
+
+- El login con Face ID/huella (WebAuthn) del panel admin quedó más
+  firme: se agregó una verificación que faltaba, y ahora avisa por
+  notificación si se registra un dispositivo nuevo — así Tita/Robin se
+  enteran al instante si alguien más intenta agregar el suyo.
+- Dos checkouts pagando casi al mismo instante ya no pueden pisarse el
+  pedido entre sí.
+- Si a una clienta se le corta la conexión justo después de pagar y
+  reintenta, ya no se crea un pedido duplicado (con doble descuento de
+  gift card incluido).
+- El cupón exclusivo del 5% de Cacusa Lovers ya no puede quedar activo
+  sin que la suscriptora reciba nunca el código, si el correo falla en
+  el momento justo.
+- El botón "Generar ahora" de TikTok Shop en el panel, que siempre daba
+  error, ya funciona — quedó conectado a la exportación automática que
+  ya existía por detrás.
+
+Falta desplegar 1 Worker (se suma a la cola de la tanda anterior).
+
+---
+
 ## 2026-09-19 (9na tanda) — evitar avisos duplicados cuando Square reintenta un aviso de pago
 
 Hallazgo de la auditoría externa que había quedado sin corregir (A04): si

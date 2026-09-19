@@ -3210,8 +3210,26 @@ function buildWhatsAppUrl() {
 // veía "pedido confirmado" pero el pedido nunca existió. Ahora devuelve true/false
 // según la respuesta real, y los 2 checkouts (Zelle y WhatsApp) esperan este resultado
 // antes de continuar.
+// Idempotencia real (hallazgo del 19 sep, auditoría propia): si la clienta ve un error
+// de red pero el pedido SÍ se guardó server-side, el checkout deja el carrito intacto
+// para reintentar (arreglo A06+A10) — un reintento manual disparaba un pedido nuevo
+// entero, con doble redención de gift card. La llave se deriva del CONTENIDO del
+// pedido (cliente + carrito + total), no de un id aleatorio: así un reintento exacto
+// del mismo pedido siempre da la misma llave sin tener que rastrear "¿cuándo
+// resetear esto?", y si la clienta cambia el carrito entre intentos, la llave cambia
+// sola y el servidor lo trata como un pedido genuinamente distinto.
+function _orderIdemKey(order) {
+  const c = order.cliente || {};
+  const items = (order.productos || []).map(p => `${p.name}:${p.qty}`).sort().join(',');
+  const raw = `${c.email || ''}|${c.telefono || ''}|${order.total}|${items}`;
+  let h = 5381;
+  for (let i = 0; i < raw.length; i++) h = ((h * 33) ^ raw.charCodeAt(i)) >>> 0;
+  return h.toString(36);
+}
+
 async function submitOrder(order) {
   try {
+    order.idempotencyKey = _orderIdemKey(order);
     const r = await fetch(ADMIN_WORKER_URL + '/order', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
