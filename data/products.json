@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:38:49.121Z",
+  "lastUpdated": "2026-09-19T15:44:00.416Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2113,6 +2113,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832318279,
+      "promo": null
+    },
+    {
+      "name": "Anillo estrellas",
+      "name_en": "Ring stars",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo ajustable de estrellas con acabado dorado y diseño abierto. ✨ Una pieza moderna, luminosa y versátil que aporta un toque especial a cualquier look, perfecta para usar sola o combinar con otros anillos.",
+      "description_en": "Adjustable star ring with gold finish and open design. ✨ A modern, luminous and versatile piece that adds a special touch to any look, perfect for wearing alone or combining with other rings.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789832374064_e0dbbbe9_e874_485d_92fa_5382c04dbb5f_png.webp",
+      "focalX": 30.525051169774603,
+      "focalY": 24.759285197903502,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789832633994,
       "promo": null
     }
   ],
