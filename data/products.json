@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:24:25.061Z",
+  "lastUpdated": "2026-09-19T15:29:10.761Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2047,6 +2047,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831461536,
+      "promo": null
+    },
+    {
+      "name": "Cadena de arrocillos ",
+      "name_en": "Rice Chain",
+      "category": "Cadenas",
+      "price": 35,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cadena de Arrocillos ✨\nElegante, delicada y con ese brillo dorado que transforma cualquier look. Nuestra Cadena de Arrocillos Cacusa by TAITUS destaca por sus pequeños eslabones ovalados que crean un acabado sofisticado y luminoso alrededor del cuello.\n\nElaborada en acero inoxidable con baño de oro de 18K, es una pieza versátil que puedes llevar sola para un estilo minimalista o combinar con otras cadenas para crear tu propio layering.\n\n✨ Baño de oro 18K\n✨ Diseño de eslabones tipo arrocillo\n✨ Acabado dorado brillante\n✨ Ideal para uso diario y para combinar\n✨ Una pieza clásica que nunca pasa de moda",
+      "description_en": "Cadena de Arrocillos ✨\nElegante, delicada y con ese brillo dorado que transforma cualquier look. Nuestra Cadena de Arrocillos Cacusa by TAITUS destaca por sus pequeños eslabones ovalados que crean un acabado sofisticado y luminoso alrededor del cuello.\n\nElaborada en acero inoxidable con baño de oro de 18K, es una pieza versátil que puedes llevar sola para un estilo minimalista o combinar con otras cadenas para crear tu propio layering.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789831583648_9091155c_4fb0_46fd_9988_b84f0fd1720f_png.webp",
+      "focalX": 44.002231337712104,
+      "focalY": 74.65208747514913,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789831746751,
       "promo": null
     }
   ],
