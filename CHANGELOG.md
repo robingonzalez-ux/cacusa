@@ -12,6 +12,20 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (12va tanda) — descripciones de producto arregladas y verificación de traducciones
+
+Revisión editorial del catálogo: 6 productos que tenían descripción vacía
+o de una sola línea genérica ahora tienen una descripción real, en
+español e inglés. Se corrigió una traducción al inglés que decía "18K
+gold bath" en vez de "18K gold plating" (frase que ya usan otros 20+
+productos), y otra que estaba directamente sin traducir (el texto en
+inglés era el mismo texto en español, copiado). De paso se verificó que
+las 3 páginas de cuidados/envíos/devoluciones sí tienen su contenido
+completo en inglés — no era un hallazgo real, solo estaba documentado con
+el mecanismo equivocado.
+
+---
+
 ## 2026-09-19 (11va tanda) — Google ya no lee a CACUSA como un local físico
 
 Último hallazgo pendiente de la auditoría SEO externa. Los datos que le

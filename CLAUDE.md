@@ -882,6 +882,63 @@ devoluciones JSON-LD vs texto") — se investigó de nuevo desde cero
   schema.org sí ofrece para este matiz exacto (enlazar a la política
   completa en vez de forzar una categoría fija).
 
+### SEO-09 — revisión editorial de descripciones y traducciones (cerrado, 19 sep)
+
+Mismo patrón que A07-A19/SEO-07: solo quedó la pista de una línea
+("descripciones de producto muy cortas/vacías, traducciones EN
+incompletas, guías sin traducir") — se verificó cada punto contra
+`data/products.json` y las 8 guías reales antes de tocar nada.
+
+- **6 productos con descripción de una sola línea o vacía**: Anillo doble
+  GG (`1`), Pulsera de mano con anillo (`1780369728627`), Cadena jersey
+  Ecuador (`1781387820250`), Anillo ajustable de circones e inicial
+  (`1781877944864`), Pulsera triple (`1783440355036`, la única con
+  `description`/`description_en` completamente vacíos) y Aretes de rombo
+  de circon (`1789831461536`). Se redactó una descripción real en ES y EN
+  para los 6, en la misma voz de marca ya establecida en el resto del
+  catálogo (material + estilo + uso), sin inventar detalles que no se
+  pudieran confirmar del producto (ej. no se asumió simbolismo de bandera
+  en la pulsera triple con hilos amarillo/azul/rojo — se describió el
+  color tal cual, sin interpretación).
+- **1 mistraducción literal confirmada**: Aretes de Piedra amazonita
+  (`1789835517841`) tenía "18K gold bath" en `description_en` — traducción
+  palabra por palabra de "baño de oro 18K" que no es un término real en
+  inglés. Corregido a "18K gold plating", la frase ya usada en 20+ otros
+  productos del catálogo (verificado con `grep` antes de aplicar, para no
+  introducir una frase nueva sin precedente).
+- **1 `description_en` sin traducir de verdad**: Cadena de Arrocillos
+  (`1789831746751`) tenía el mismo texto en español copiado en el campo
+  EN, y encima truncado (le faltaba la lista de 5 bullets del final que sí
+  tiene la versión ES). Traducida completa, mismo formato de bullets.
+  Se re-verificó el resto del catálogo con un chequeo más estricto
+  (longitud + cantidad de líneas ES vs EN) para confirmar que no quedaba
+  ningún otro caso similar — no lo había.
+- **"Guías sin traducir" — descartado, no era un hallazgo real.**
+  `cuidados.html`, `envios.html` y `devoluciones.html` (las 3 páginas del
+  patrón "una sola URL con selector de idioma", ver "Patrón de idiomas"
+  más abajo) SÍ tienen contenido en inglés completo — no vía un archivo
+  `/en/` separado (esas 3 no siguen ese patrón), sino leyendo
+  `config.pages_en.<página>` (texto editable desde el admin, mismo patrón
+  ya usado en `cacusa-lovers.html`) + `config.translations.en` (los
+  labels/textos fijos de la plantilla) desde `data/products.json`.
+  Verificado campo por campo que los 3 `pages_en.*` tienen contenido real
+  y completo, y que ninguna clave `data-i18n` de las 3 páginas queda sin
+  traducción en `translations.en` (la única excepción, en `cuidados.html`,
+  es la sección "¿Por qué importa el material?" — no falta, se traduce
+  con un objeto JS aparte hardcodeado en el propio archivo en vez de venir
+  del `config`, inconsistente en el mecanismo pero no en el resultado).
+- **Hallazgo nuevo, fuera del alcance original de SEO-09 — uso extenso de
+  emojis de color en ~20 productos** (`name`/`name_en`/`description`/
+  `description_en`, mayormente productos agregados en sesiones
+  recientes vía el panel admin) — contradice la regla ya establecida
+  "Cero emojis de color" (ver "Convenciones de marca ya establecidas" más
+  abajo). No se tocó en esta tanda: es una decisión de voz de marca sobre
+  copy ya publicado, no un bug — queda pendiente de decidir con el
+  usuario si se considera una regla que aplica también al copy de
+  producto (la regla, tal como está redactada, da ejemplos de UI/
+  encabezados de sitio, no de marketing de producto) o si el copy de
+  producto queda exento a propósito.
+
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 
 Sitio público y panel admin auditados y corregidos contra WCAG 2.1 AA
