@@ -1524,7 +1524,17 @@ Preciosas, hacen que tu mano luzca femenina y delicada </li>
 
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────
-const PRODUCTS_JSON_URL = '../../data/products.json';
+// Auditoría SEO (19 sep, S01): ruta ABSOLUTA a propósito, no relativa — este
+// archivo es la plantilla fuente de la que generate_product_pages.py copia 172
+// páginas físicas (producto/<slug>/, categoria/<slug>/, 2 niveles más abajo que
+// acá) y fix_relative_depth() en ese script SOLO reescribe atributos href=/src=,
+// nunca constantes de JS como esta. Con la ruta relativa vieja, esas 172 páginas
+// pedían el catálogo a una URL que no existe (404) y caían al catálogo de
+// demostración — mostrando un producto/categoría distinto al que el HTML
+// estático (title, canonical, JSON-LD) decía. Con ruta absoluta (el sitio SIEMPRE
+// se sirve desde la raíz de cacusabytaitus.com, nunca un subpath) no hace falta
+// ningún ajuste de profundidad, sea cual sea el nivel del archivo que la usa.
+const PRODUCTS_JSON_URL = '/data/products.json';
 
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
@@ -3243,21 +3253,35 @@ function buildWhatsAppUrl() {
 // veía "pedido confirmado" pero el pedido nunca existió. Ahora devuelve true/false
 // según la respuesta real, y los 2 checkouts (Zelle y WhatsApp) esperan este resultado
 // antes de continuar.
-// Idempotencia real (hallazgo del 19 sep, auditoría propia): si la clienta ve un error
-// de red pero el pedido SÍ se guardó server-side, el checkout deja el carrito intacto
-// para reintentar (arreglo A06+A10) — un reintento manual disparaba un pedido nuevo
-// entero, con doble redención de gift card. La llave se deriva del CONTENIDO del
-// pedido (cliente + carrito + total), no de un id aleatorio: así un reintento exacto
-// del mismo pedido siempre da la misma llave sin tener que rastrear "¿cuándo
-// resetear esto?", y si la clienta cambia el carrito entre intentos, la llave cambia
-// sola y el servidor lo trata como un pedido genuinamente distinto.
+// Idempotencia real (hallazgo del 19 sep, auditoría propia A07-A19; endurecida el 19
+// sep en la auditoría de integridad, F01): si la clienta ve un error de red pero el
+// pedido SÍ se guardó server-side, el checkout deja el carrito intacto para
+// reintentar (arreglo A06+A10) — un reintento manual disparaba un pedido nuevo
+// entero, con doble redención de gift card.
+//
+// La llave original se derivaba de un hash de 32 bits de email+teléfono+total+items
+// — determinística, y por eso ADIVINABLE/RECONSTRUIBLE por cualquiera que conociera
+// esos 4 datos de otra clienta: el servidor devolvía el pedido COMPLETO (email,
+// dirección, teléfono) a quien reenviara esa key. Ahora la key es aleatoria de
+// verdad (crypto.randomUUID) — pero sigue habiendo que reusar la MISMA key en un
+// reintento del MISMO carrito (si no, cada reintento crearía un pedido nuevo) y
+// generar una NUEVA si la clienta modifica el carrito entre intentos (si no, un
+// cambio real de carrito podría toparse con el chequeo de huella canónica del
+// servidor y rebotar con 409). Se resuelve cacheando la key contra una firma del
+// contenido (no contra el tiempo ni un evento explícito de "abrí el checkout") —
+// mismo carrito/cliente/total → misma key cacheada; cualquier cambio → key nueva.
+let _checkoutIdemCache = null; // { signature, key }
 function _orderIdemKey(order) {
   const c = order.cliente || {};
   const items = (order.productos || []).map(p => `${p.name}:${p.qty}`).sort().join(',');
-  const raw = `${c.email || ''}|${c.telefono || ''}|${order.total}|${items}`;
-  let h = 5381;
-  for (let i = 0; i < raw.length; i++) h = ((h * 33) ^ raw.charCodeAt(i)) >>> 0;
-  return h.toString(36);
+  const signature = `${(c.email || '').toLowerCase()}|${c.telefono || ''}|${order.total}|${items}`;
+  if (_checkoutIdemCache && _checkoutIdemCache.signature === signature) {
+    return _checkoutIdemCache.key;
+  }
+  const key = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : (Date.now().toString(36) + Math.random().toString(36).slice(2));
+  _checkoutIdemCache = { signature, key };
+  return key;
 }
 
 // Auditoría externa (19 sep, ronda nueva): antes solo devolvía true/false — /coupon/burn

@@ -1520,7 +1520,17 @@ Preciosas, hacen que tu mano luzca femenina y delicada </li>
 
 <script>
 // ─── CONFIG ─────────────────────────────────────────────────
-const PRODUCTS_JSON_URL = '../../data/products.json';
+// Auditoría SEO (19 sep, S01): ruta ABSOLUTA a propósito, no relativa — este
+// archivo es la plantilla fuente de la que generate_product_pages.py copia 172
+// páginas físicas (producto/<slug>/, categoria/<slug>/, 2 niveles más abajo que
+// acá) y fix_relative_depth() en ese script SOLO reescribe atributos href=/src=,
+// nunca constantes de JS como esta. Con la ruta relativa vieja, esas 172 páginas
+// pedían el catálogo a una URL que no existe (404) y caían al catálogo de
+// demostración — mostrando un producto/categoría distinto al que el HTML
+// estático (title, canonical, JSON-LD) decía. Con ruta absoluta (el sitio SIEMPRE
+// se sirve desde la raíz de cacusabytaitus.com, nunca un subpath) no hace falta
+// ningún ajuste de profundidad, sea cual sea el nivel del archivo que la usa.
+const PRODUCTS_JSON_URL = '/data/products.json';
 
 const SQUARE_WORKER_URL = 'https://cacusa-square.facturacioncacusa.workers.dev';
 const ADMIN_WORKER_URL  = 'https://cacusa-admin.facturacioncacusa.workers.dev';
