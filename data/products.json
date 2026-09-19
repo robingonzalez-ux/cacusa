@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:55:24.350Z",
+  "lastUpdated": "2026-09-19T14:55:38.698Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1149,26 +1149,6 @@
       "material": "Baño de oro 18k",
       "id": 1781880053907,
       "name_en": "Adjustable Ring with 3 Zirconia"
-    },
-    {
-      "name": "Anillo ajustable de circones ",
-      "category": "Anillos",
-      "price": 22,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Delicado anillo ajustable cubierto de circones brillantes en baño de oro 18k. Elegancia y brillo que te acompaña todo el día.",
-      "description_en": "Delicate adjustable ring covered in sparkling zirconia stones in 18k gold plating. Elegance and brilliance that stays with you all day.",
-      "personalized": false,
-      "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781880246199_image_jpg.webp",
-      "focalX": 50,
-      "focalY": 50,
-      "zoom": 1,
-      "material": "Baño de oro 18k",
-      "id": 1781880268274,
-      "name_en": "Adjustable Zirconia Ring"
     },
     {
       "name": "Anillos ajustable con trébol negro ",
