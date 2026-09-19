@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-17T17:18:05.864Z",
+  "lastUpdated": "2026-09-19T14:52:13.614Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -653,25 +653,6 @@
       "zoom": 1.75
     },
     {
-      "id": 3,
-      "name": "Argollas de estrella con circones ",
-      "name_en": "Star Hoop Earrings with Zirconia",
-      "category": "Aretes",
-      "price": 20,
-      "img": "bracelet",
-      "color": "violet",
-      "tag": null,
-      "description": "Argollas de circones en forma de estrella ",
-      "description_en": "Star-shaped zirconia hoop earrings",
-      "personalized": false,
-      "available": false,
-      "oldPrice": null,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781460742072_img_3335_jpeg.webp",
-      "focalX": 49.34922014520391,
-      "focalY": 32.750108004690695,
-      "material": "Acero inoxidable"
-    },
-    {
       "name": "Pulsera de mano con anillo",
       "name_en": "Hand Bracelet with Ring",
       "category": "Pulseras",
@@ -1008,26 +989,6 @@
       "material": "Acero inoxidable",
       "id": 1781877944864,
       "name_en": "Adjustable ring of zircons and initial"
-    },
-    {
-      "name": "Anillo dorado ajustable de hoja ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Delicado anillo ajustable con diseño de hoja en baño de oro 18k. Perfecto para un toque natural y elegante.",
-      "description_en": "Delicate adjustable ring with a leaf design in 18k gold plating. Perfect for a natural and elegant touch.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781877979684_image_jpg.webp",
-      "focalX": 50,
-      "focalY": 50,
-      "zoom": 1,
-      "material": "Baño de oro 18k",
-      "id": 1781878011948,
-      "name_en": "Gold Leaf Adjustable Ring"
     },
     {
       "name": "Anillo ajustable con microcircones en degrade ",
