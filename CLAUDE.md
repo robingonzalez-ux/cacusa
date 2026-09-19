@@ -992,11 +992,22 @@ están en `main` y publicados solos.
 
 ### Hallazgos NO corregidos en esta tanda (documentados, sin tocar código)
 
-- **A04** (parcial/mal citado) — el documento externo citaba un patrón
-  `processed` en `lovers-webhook-worker.js:425-434` que no existe en el
-  archivo; la preocupación de fondo (acciones múltiples sin atomicidad en
-  el handler de `invoice.payment_made`, ~líneas 690-719) sí es real, pero
-  la cita puntual estaba mal.
+- **A04** (parcial/mal citado, cerrado el 19 sep en una tanda posterior) —
+  el documento externo citaba un patrón `processed` en
+  `lovers-webhook-worker.js:425-434` que no existe en el archivo; la
+  preocupación de fondo (acciones múltiples sin atomicidad en
+  `subscription.created`/`invoice.payment_made`) sí era real: ninguno de
+  los 2 handlers sabía si ya había procesado ESE mismo evento antes, así
+  que un reintento de Square (por timeout, o por el 500 que ahora
+  devolvemos a propósito si Firebase falla — ver "3ra ronda" más arriba)
+  mandaba 2 avisos push idénticos a Tita/Robin por el mismo evento. Se
+  agregó una comparación contra `square_subscription_id`/`square_invoice_id`
+  ya guardado (capturada ANTES de escribir) — si coincide con el id del
+  evento actual, ya se procesó y se salta el aviso; un evento genuinamente
+  distinto (ej. el segundo pago mensual) sigue avisando normal. Verificado
+  con una simulación de 7 escenarios reales, sin acceso a Square/Firebase
+  desde este entorno. Pendiente el deploy manual de
+  `lovers-webhook-worker.js`.
 - **A07-A09, A13-A19** (real/exagerado según el caso, no re-detallado
   acá) — quedan para una tanda futura; no se actuó sobre ellos. Incluyen:
   reglas de Firebase para lectura de reseñas, hardening de WebAuthn, rutas

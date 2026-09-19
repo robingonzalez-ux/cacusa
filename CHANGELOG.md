@@ -12,6 +12,18 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (9na tanda) — evitar avisos duplicados cuando Square reintenta un aviso de pago
+
+Hallazgo de la auditoría externa que había quedado sin corregir (A04): si
+un aviso de pago o de alta nueva de Cacusa Lovers llegaba dos veces desde
+Square (lo cual pasa normalmente si no respondemos rápido, o si Firebase
+falló un instante antes), Tita/Robin recibían la misma notificación push
+repetida. Ahora se detecta que ya se procesó ese mismo evento antes y no
+se vuelve a avisar — un pago o alta genuinamente distinta sigue avisando
+igual que siempre. Falta desplegar 1 Worker.
+
+---
+
 ## 2026-09-19 (8va tanda) — los productos destacados del home ya usan las URLs nuevas
 
 Quedaba pendiente de la auditoría SEO grande: los datos que le muestra el
