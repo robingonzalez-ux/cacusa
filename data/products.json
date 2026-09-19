@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:14:53.203Z",
+  "lastUpdated": "2026-09-19T15:17:01.577Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2003,6 +2003,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789830883898,
+      "promo": null
+    },
+    {
+      "name": "Aretes de flor ",
+      "name_en": "Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Hipoalergenico, livianos, no irritan la piel. \nHermosos aretes de flor con un circon en el medio. No son pesados ",
+      "description_en": "Hypoallergenic, lightweight, does not irritate the skin. \nBeautiful flower earrings with a zircon in the middle. They are not heavy",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789830961504_4dac7ab4_a104_4c1c_ac37_fcba1d0b227c_png.webp",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789831017689,
       "promo": null
     }
   ],
