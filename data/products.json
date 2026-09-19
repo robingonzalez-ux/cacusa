@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:57:28.115Z",
+  "lastUpdated": "2026-09-19T14:57:49.265Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1411,26 +1411,6 @@
       "material": "Acero inoxidable",
       "id": 1781885393238,
       "name_en": "Chain with Laser Engraved Plate"
-    },
-    {
-      "name": "Anillo de doble infinito uno con microcircones y otro llano ",
-      "category": "Anillos",
-      "price": 20,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Romántico anillo con símbolo de doble infinito: uno decorado con microcircones y otro en diseño liso, en baño de oro 18k.",
-      "description_en": "Romantic ring featuring a double infinity symbol: one adorned with micro zirconia and one in a plain design, in 18k gold plating.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781891767767_image_jpg.webp",
-      "focalX": 36.89143435339291,
-      "focalY": 44.692340924520124,
-      "zoom": 1.6,
-      "material": "Baño de oro 18k",
-      "id": 1781891993137,
-      "name_en": "Double Infinity Ring with Micro Zirconia and Plain Band"
     },
     {
       "name": "Anillo de aquamarina ",
