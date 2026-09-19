@@ -12,6 +12,30 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (6ta tanda) — las fotos de producto apuntaban al dominio equivocado
+
+El usuario mandó 2 avisos que le llegaron de Google Search Console
+("página con redirección" y "duplicada, canónica distinta"). Investigado
+a fondo: cada foto de producto que se sube desde el panel admin quedaba
+guardada con la dirección genérica de GitHub (`robingonzalez-ux.github.io`)
+en vez de la dirección real del sitio (`cacusabytaitus.com`) — el archivo
+es el mismo, pero esa dirección genérica siempre redirige a la real, así
+que cada foto (la que se ve en la tienda, y la que Google usa para
+indexar cada producto) pasaba por un salto de más. No era algo viejo: las
+fotos subidas hoy mismo también salían mal — es un error de código, no de
+datos históricos.
+
+Se corrigió en la fuente (el panel admin ya no genera esa dirección
+equivocada) y se actualizaron las ~108 fotos que ya estaban guardadas mal
+para que apunten directo a la dirección correcta. Quedó pendiente el
+despliegue manual de 1 Worker — ver detalle en `CLAUDE.md`.
+
+De paso se encontró (sin corregir, es una decisión aparte): hay unas 15
+páginas de productos que ya se eliminaron del catálogo hace tiempo, pero
+sus páginas viejas siguen publicadas con contenido desactualizado.
+
+---
+
 ## 2026-09-19 (5ta tanda) — categorías faltantes en el sitemap + falsos "rojos" en el Action de productos
 
 - Las 18 páginas de categoría (9 categorías, en español e inglés) que se

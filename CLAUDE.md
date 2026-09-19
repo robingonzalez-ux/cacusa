@@ -778,6 +778,55 @@ mano.
     resuelto):
     `https://claude.ai/code/artifact/8448c651-61d8-4be3-a439-fd46721dffea`
 
+### Imágenes de producto con el dominio equivocado (encontrado y corregido, 19 sep)
+
+El usuario mandó 2 avisos de Google Search Console ("Página con
+redirección" y "Duplicada: Google ha elegido una versión canónica
+diferente a la del usuario"). Se rastreó la causa real: `handleUpload()`
+en `admin-worker.js` armaba la URL de cada imagen subida desde el panel
+admin con el dominio genérico de GitHub Pages
+(`https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/<archivo>`)
+en vez del dominio propio (`https://cacusabytaitus.com/ui_kits/store/images/<archivo>`
+— mismo archivo, mismo repo, distinto host). GitHub Pages redirige (301)
+automáticamente el dominio genérico al propio (configurado en `CNAME`),
+así que **cada imagen de producto del sitio entero** —la que se ve en la
+tienda, la de `og:image`, y la del campo `image` del JSON-LD de cada
+producto— apuntaba a una URL que siempre redirige. No era dato viejo: se
+confirmó que los productos subidos el mismo día 19 sep también salían con
+el dominio equivocado — es un bug activo en el código del Worker, no una
+cuestión de historial. Las 3 CSP del sitio (`ui_kits/store/index.html`,
+`en/`, `ui_kits/admin/index.html`) tenían agregado a mano el permiso para
+ese dominio en `img-src` — evidencia de que alguien se topó con que el
+navegador bloqueaba estas imágenes y las habilitó, sin notar que la URL en
+sí apuntaba mal.
+
+- **Arreglo de la causa raíz**: `handleUpload()` ahora devuelve
+  `https://cacusabytaitus.com/${path}` — cualquier imagen subida desde
+  ahora en más sale bien, sin redirect de por medio.
+- **Migración de datos**: los 108 valores (`imageUrl`/`images[]`) que ya
+  tenían el dominio viejo en `data/products.json` se reemplazaron por el
+  dominio propio (mismo archivo real, solo cambia el host) — el pipeline
+  de regeneración ya existente (`.github/workflows/product-schema.yml`)
+  propagó el cambio solo al JSON-LD estático, el catálogo `<noscript>` y
+  las páginas físicas de producto/categoría.
+- **CSP limpiada**: se quitó `https://robingonzalez-ux.github.io` de
+  `img-src` en las 5 páginas que lo tenían (las 3 de arriba +
+  `cacusa-lovers.html`/`en/`, que lo tenían agregado pero nunca llegaron a
+  usarlo) — ya no hace falta, todas las imágenes salen del propio dominio.
+- **Pendiente, no se tocó — páginas huérfanas de productos eliminados**:
+  al revisar esto se encontró que `generate_product_pages.py` nunca borra
+  la carpeta física (`ui_kits/store/producto/<slug>/`) de un producto que
+  se elimina del catálogo — solo crea/actualiza carpetas para los
+  productos que existen hoy en `data/products.json`. Hay ~15 carpetas
+  (×ES/EN) de productos ya eliminados que siguen publicadas con su
+  contenido viejo (incluida la imagen con el dominio equivocado, que no se
+  migró ahí porque esos productos ya no están en `data/products.json`).
+  No se actuó sobre esto — borrar, dejar un 410, o redirigir esas URLs
+  viejas es una decisión de producto/SEO aparte (podrían tener enlaces o
+  indexación externa), no un arreglo mecánico como el de arriba.
+- El Worker (`admin-worker.js`) quedó pendiente de deploy manual — ver
+  "Cómo editarlos" en la sección de Workers más arriba.
+
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 
 Sitio público y panel admin auditados y corregidos contra WCAG 2.1 AA
