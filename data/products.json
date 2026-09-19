@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:01:44.041Z",
+  "lastUpdated": "2026-09-19T16:06:29.758Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2267,6 +2267,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833699836,
+      "promo": null
+    },
+    {
+      "name": "Aretes de circon verde ",
+      "name_en": "Green Zircon Earrings",
+      "category": "Aretes",
+      "price": 20,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un toque de color que ilumina todo tu look. 💚✨\nEl circón verde intenso se convierte en protagonista, rodeado de destellos que capturan la luz con cada movimiento. Elaborados en Gold Filled, son esos aretes pequeños pero impactantes que puedes llevar de día o de noche cuando quieres verte arreglada sin esfuerzo.",
+      "description_en": "A touch of colour that brightens your entire look. 💚✨\nThe intense green zircon becomes the protagonist, surrounded by flashes that capture the light with each movement. Made of Gold Filled, they are those small but impactful earrings that you can wear day or night when you want to look effortlessly groomed.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789833815329_186d4e91_af09_497c_8054_2cfdf51d1fb0_jpe.webp",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789833979991,
       "promo": null
     }
   ],
