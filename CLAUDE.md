@@ -842,8 +842,9 @@ sí apuntaba mal.
   `https://robingonzalez-ux.github.io/cacusa/` → `https://cacusabytaitus.com/`
   y volver a correr el pipeline) cada vez que se detecte una URL nueva así,
   hasta que el deploy esté hecho.
-- El Worker (`admin-worker.js`) quedó pendiente de deploy manual — ver
-  "Cómo editarlos" en la sección de Workers más arriba.
+- **Deploy confirmado el 19 sep** (el usuario lo hizo al llegar a casa) —
+  este fix, junto con todos los de A07-A19 de más abajo, ya está en
+  producción en `cacusa-admin`.
 
 ### SEO-07 — datos estructurados genéricos (cerrado, 19 sep)
 
@@ -1117,8 +1118,8 @@ están en `main` y publicados solos.
   evento actual, ya se procesó y se salta el aviso; un evento genuinamente
   distinto (ej. el segundo pago mensual) sigue avisando normal. Verificado
   con una simulación de 7 escenarios reales, sin acceso a Square/Firebase
-  desde este entorno. Pendiente el deploy manual de
-  `lovers-webhook-worker.js`.
+  desde este entorno. **Deploy confirmado el 19 sep** — ya en producción
+  en `cacusa-lovers-webhook`.
 - **A07-A09, A13-A19 — investigados desde cero y cerrados el 19 sep (tanda
   posterior)**: en su momento no quedó el texto original de estos
   hallazgos, solo la línea de arriba como pista. Se lanzaron 3 agentes de
@@ -1174,8 +1175,8 @@ están en `main` y publicados solos.
     trade-off en su propio comentario (KV sin CAS nativo, bajo riesgo real
     dado el volumen).
   Verificado con 15 simulaciones de lógica pura (sin red real desde este
-  entorno). Pendiente el deploy manual de `admin-worker.js` (se suma a la
-  cola junto con el fix de imágenes de la tanda anterior).
+  entorno). **Deploy confirmado el 19 sep** — ya en producción en
+  `cacusa-admin`, junto con el fix de imágenes de la tanda anterior.
 
 ### 2da ronda (19 sep, mismo día) — 3 hallazgos más, verificados y corregidos
 
@@ -1290,6 +1291,12 @@ y las reglas de Firebase (`estado_pago`, la versión endurecida con
 validación de email + campos permitidos, y la de tipo/longitud en los 13
 campos restantes) están todas publicadas — ver "Reglas de Firebase RTDB
 (snapshot)" más arriba.
+
+También confirmado el mismo día: el fix del dominio de imágenes (URLs
+`github.io` → `cacusabytaitus.com`) + el lote completo A07-A19 (WebAuthn,
+IDs de pedido, idempotencia de checkout, orden Gmail-antes-de-KV, TikTok
+Shop) ya están desplegados en `cacusa-admin`, y A04 (avisos push
+duplicados) ya está desplegado en `cacusa-lovers-webhook`.
 
 La privacidad del bucket R2 `cacusa-backups` quedó verificada el 16 sep
 (ver "Backups y recuperación de desastres" más arriba), y la regla de
