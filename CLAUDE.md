@@ -217,7 +217,7 @@ nada de lo que hace este repo (sitio + Workers).
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que
 toque `data/products.json` (o manual con `workflow_dispatch`) y regenera
-cuatro cosas, comiteando de vuelta a `main` si hay cambios:
+cinco cosas, comiteando de vuelta a `main` si hay cambios:
 
 1. **JSON-LD estático de producto** (`.github/scripts/generate_product_schema.py`)
    — bloque `schema.org Product` por cada producto disponible, inyectado
@@ -253,12 +253,19 @@ cuatro cosas, comiteando de vuelta a `main` si hay cambios:
    material nuevo desde el admin sin traducción registrada en el script,
    avisa por consola y usa el texto en español como respaldo en inglés
    hasta que se agregue al diccionario `MATERIAL_LABELS`.
+5. **Páginas estáticas por producto/categoría** (`.github/scripts/generate_product_pages.py`)
+   — corre último, después de 1 y 2, para partir del `index.html`/
+   `sitemap.xml` ya regenerados en la misma corrida. Ver la sección "Páginas
+   estáticas por producto/categoría" más abajo para el detalle completo
+   (por qué existen, qué URL usan, cómo se mantienen en sincro con el
+   sitemap/noscript/JSON-LD).
 
-Los 4 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
+Los 5 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
 Python, replicando `_slugify`/`_productParam` del JS del cliente) — deben
 coincidir siempre. No entra en loop: solo escucha cambios en
 `data/products.json`, y su propio commit nunca toca ese archivo (solo los
-2 `index.html`, `sitemap.xml` y `llms.txt`).
+2 `index.html`, `sitemap.xml`, `llms.txt` y las carpetas `producto/`/
+`categoria/` bajo `ui_kits/store/` y `en/ui_kits/store/`).
 
 Los slugs de URL de producto se generan con la misma lógica que el
 JavaScript del cliente (`_slugify`/`_productParam` en `ui_kits/store/index.html`)
@@ -578,7 +585,100 @@ exclusivos", que ya estaba anunciado en los 2 planes de
   JSON-LD únicos (no solo un filtro visual) — función `_updateListingSeo()`
   / `_updateCategorySeo()` en `ui_kits/store/index.html`. 9 categorías:
   Cadenas, Aretes, Anillos, Hombres, Pulseras, Ear cuff, Parejas, Juegos,
-  Hand chain.
+  Hand chain. `?p=`/`?cat=` siguen funcionando exactamente igual que
+  siempre (abren el modal/filtran vía JS) — pero desde el 19 sep ya no son
+  la URL canónica de nada, ver el punto siguiente.
+
+### Páginas estáticas por producto/categoría (auditoría SEO, 19 sep)
+
+Una auditoría SEO externa encontró que `?p=`/`?cat=` nunca podían tener
+canonical/hreflang/H1 correctos desde el HTML crudo: GitHub Pages sirve el
+mismo archivo sin importar el query string, así que un rastreador siempre
+veía primero la versión genérica de la tienda, y recién después de que
+corriera JavaScript se corregían esas señales — contradicción real entre
+lo que Google ve primero y lo que la página termina diciendo.
+
+La solución (`.github/scripts/generate_product_pages.py`, corre último en
+`.github/workflows/product-schema.yml`) genera una página **física** por
+producto y por categoría, ES y EN — `ui_kits/store/producto/<slug>-<id>/
+index.html`, `ui_kits/store/categoria/<slug>/index.html`, y los mismos 2
+bajo `en/` (172 archivos: 77 productos + 9 categorías × 2 idiomas). Cada
+una es una copia completa del `index.html` de la tienda ya regenerado
+(misma SPA, mismo carrito/checkout — funciona igual una vez que carga JS),
+con:
+
+- `<title>`, meta description, canonical, hreflang (los 3
+  `<link rel="alternate">`, ahora con `id="hreflangEs"`/`hreflangEn`/
+  `hreflangDefault`) y `<h1 class="store-hero-h">` correctos desde el
+  primer byte — antes ninguna función de JS tocaba nunca el H1, así que
+  seguía diciendo "Nuestra Tienda"/"Our Store" incluso adentro de una
+  ficha.
+- El bloque `STATIC_PRODUCT_SCHEMA` (el catálogo completo, ~150KB)
+  reemplazado por un JSON-LD liviano de solo esa ficha/categoría — repetir
+  las 77 fichas en cada una de las 172 páginas nuevas hubiera inflado el
+  peso de cada una sin necesidad.
+- `window.__CACUSA_STATIC_PRODUCT_ID`/`__CACUSA_STATIC_CATEGORY` — un
+  `<script>` chico al principio del `<head>` que el boot de la SPA usa
+  como respaldo de `?p=`/`?cat=` (`ui_kits/store/index.html`, la constante
+  IIFE de arranque y `renderFilters()`/`_updateListingSeo()`) para saber
+  qué abrir/filtrar sin depender de un query string que estas URLs ya no
+  llevan.
+- Los ~7 enlaces relativos del template (`../../cuidados.html`, etc.)
+  reescritos para la profundidad extra de 2 carpetas — `producto/<algo>/`
+  y `categoria/<algo>/` cuelgan 2 niveles más abajo que
+  `ui_kits/store/index.html`.
+
+**Cómo se generan las URLs**: `product_page_url()`/`product_param()` en
+`generate_product_schema.py` son la fuente única de verdad — las reusan
+`generate_sitemap_products.py`, `generate_noscript_catalog.py` y
+`generate_product_pages.py`, así que sitemap, catálogo `<noscript>`,
+JSON-LD y páginas físicas nunca pueden quedar en desacuerdo entre sí.
+
+**Migración de las URLs viejas (`?p=`/`?cat=`)**: decisión explícita del
+usuario — no se redirige al visitante (los enlaces/marcadores viejos
+siguen abriendo el modal igual que siempre), pero `_injectProductSchema`/
+`_updateCategorySeo`/`_clearProductSchema` en `ui_kits/store/index.html`
+(y `en/`) ahora ponen el canonical/hreflang de **cualquier** vista —
+venga de `?p=`/`?cat=` o de una página física nueva — apuntando siempre a
+la URL física nueva. Los ~172 `<a href>` reales agregados a las tarjetas
+de producto (`_pcardHref()`/`_pcardNav()`, hallazgo SEO-03) y los enlaces
+de categoría del home (`index.html`/`en/index.html`) ya usan las URLs
+nuevas directamente. **Pendiente, no se tocó**: el JSON-LD de productos
+destacados que arma el home (`index.html` línea ~894) todavía construye
+la URL con `?p=` — es JS que corre en el home, no en la tienda, y no tenía
+`_slugify`/`_productParam` disponibles; requiere una pasada aparte.
+
+**Precio consistente en el JSON-LD estático** (hallazgo SEO-02): el precio
+publicado en `STATIC_PRODUCT_SCHEMA` venía siempre del precio base de
+`data/products.json`, sin saber si ese producto tiene activo el recargo
+del 4% con tarjeta (bandera en Cloudflare KV, no en git, la prende/apaga
+Tita/Robin desde el panel). Un producto de $22 con recargo activo se
+mostraba a $22.88 en la tienda real pero a $22 en este JSON-LD — dos
+precios distintos para el mismo producto. `fetch_surcharges()` en
+`generate_product_schema.py` ahora consulta `/pub/surcharges` (lectura
+pública, mismo endpoint que ya llama el navegador — no hace falta ningún
+secret nuevo, solo el header `Origin` que manda cualquier request) y
+aplica el mismo +4% (`js_round2`, replica `Math.round` de JS, no el
+`round()` de Python) antes de publicar el precio. Best-effort: si el
+endpoint no responde, se publica el precio base sin recargo, igual que
+antes — nunca rompe la regeneración completa por esto.
+
+**Enlaces reales en las tarjetas** (hallazgo SEO-03): las tarjetas de
+producto eran `<div onclick>`/`<button onclick>`, sin ningún `<a href>`
+real — invisibles para un rastreador que no ejecuta JS. Ahora la imagen y
+el nombre son `<a href="/ui_kits/store/producto/.../">` con
+`onclick="return _pcardNav(event, id)"`: un clic normal sigue abriendo el
+modal al instante (sin recargar), pero Ctrl/Cmd/clic-medio navega de
+verdad a la URL real (nueva pestaña) — comportamiento estándar de
+cualquier enlace, no solo un simulacro visual.
+
+**Popup del 10% en móvil** (hallazgo SEO-05): ocupaba casi toda la
+pantalla, tapando el contenido. Se redujo el tamaño/padding en el
+`@media(max-width:480px)` de `.vig-box` y se le puso `max-height:85vh` con
+scroll interno de respaldo, para que nunca cubra el 100% del viewport.
+Rediseñarlo como banner discreto (sugerencia de la auditoría, cambia el
+mecanismo de captura de leads) queda como decisión de negocio aparte, no
+se tocó.
 - **Primera pantalla de la tienda**: selector visual de categorías (carrusel
   de hasta 3 fotos por tarjeta, mismo crossfade que el slideshow del hero
   del home) en vez de mostrar los ~76 productos de golpe. Se apaga

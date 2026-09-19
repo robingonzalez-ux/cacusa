@@ -21,7 +21,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from generate_product_schema import BASE_URL, PRODUCTS_JSON, ROOT, product_param  # noqa: E402
+from generate_product_schema import BASE_URL, PRODUCTS_JSON, ROOT, product_page_url  # noqa: E402
 import json
 
 SITEMAP = ROOT / "sitemap.xml"
@@ -46,8 +46,12 @@ def url_entry(loc, es_url, en_url, lastmod):
 def build_block(products, lastmod):
     parts = []
     for p in products:
-        es_url = f"{BASE_URL}/ui_kits/store/?p={product_param(p, 'es')}"
-        en_url = f"{BASE_URL}/en/ui_kits/store/?p={product_param(p, 'en')}"
+        # Barrido SEO (19 sep): antes eran ?p=<slug> — Google recibía canonical/hreflang
+        # contradictorios porque esa URL siempre sirve el mismo HTML genérico de la tienda,
+        # sin importar el query string (GitHub Pages no puede variar la respuesta por
+        # query). Ahora apuntan a la página estática real que arma generate_product_pages.py.
+        es_url = product_page_url(p, "es", "/ui_kits/store/")
+        en_url = product_page_url(p, "en", "/en/ui_kits/store/")
         parts.append(url_entry(es_url, es_url, en_url, lastmod))
         parts.append(url_entry(en_url, es_url, en_url, lastmod))
     return MARKER_START + "\n" + "\n\n".join(parts) + "\n" + MARKER_END

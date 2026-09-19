@@ -12,6 +12,40 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 — Auditoría SEO: cada producto y categoría tiene su propia página real
+
+Una auditoría SEO externa encontró que la tienda nunca podía tener título,
+descripción ni la etiqueta de "página preferida" (canonical) correctos
+para una ficha o categoría puntual — todo dependía de que el navegador
+ejecutara JavaScript primero, así que Google veía siempre la versión
+genérica de la tienda al principio. Ahora cada uno de los ~77 productos y
+las 9 categorías tiene una página propia (en español e inglés) que ya
+trae esa información correcta desde el primer momento, sin depender de
+nada más. Los enlaces viejos (`?p=`/`?cat=`) siguen funcionando exactamente
+igual que antes — nadie pierde un marcador guardado ni un enlace
+compartido.
+
+De paso, se corrigieron 3 cosas más que encontró la misma auditoría:
+
+- El precio que Google veía en los datos de producto podía no coincidir
+  con el precio real que se le cobra a la clienta cuando un producto tiene
+  el recargo de tarjeta activado — ya se corrigió para que siempre
+  coincida.
+- Las tarjetas de producto de la tienda ahora son enlaces reales (antes
+  eran clics de JavaScript sin ningún enlace de por medio) — se puede
+  abrir un producto en una pestaña nueva, compartir el enlace, o navegar
+  con el teclado como cualquier otro enlace del sitio.
+- El aviso del 10% en el celular ocupaba casi toda la pantalla — se
+  redujo para que siempre quede algo del contenido visible detrás.
+
+Quedan 2 cosas fuera de esta tanda, anotadas para después: el enlace de
+"productos destacados" del home todavía usa el formato de URL viejo (no
+rompe nada, solo no aprovecha la mejora), y el aviso del 10% en móvil
+podría rediseñarse como un banner más discreto en vez de ocupar la
+pantalla completa (decisión de negocio, no un arreglo técnico).
+
+---
+
 ## 2026-09-19 (3ra tanda) — el aviso de webhook de Lovers dejó de mentir "OK"
 
 El usuario probó por su cuenta lo ya corregido y encontró un problema real

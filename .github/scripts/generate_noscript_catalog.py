@@ -125,7 +125,11 @@ def build_catalog_block(products, categories_order, target):
         for p in items:
             name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
             desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")
-            href = "?p=" + product_param(p, lang)
+            # Barrido SEO (19 sep): antes era "?p=<slug>" — GitHub Pages sirve el mismo HTML
+            # sin importar el query string, así que esa URL nunca puede tener canonical
+            # propio. Ahora apunta a la página estática real (generate_product_pages.py).
+            store_path = "/en/ui_kits/store/" if lang == "en" else "/ui_kits/store/"
+            href = store_path + "producto/" + product_param(p, lang) + "/"
             price = p.get("price", "")
             soldout = " (Sold out)" if (lang == "en" and p.get("available") is False) else                       " (Agotado)" if p.get("available") is False else ""
             bits = f'<li><a href="{esc(href)}">{esc(name)}</a>{soldout} — ${esc(price)}.'
