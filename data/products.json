@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T16:32:02.941Z",
+  "lastUpdated": "2026-09-19T16:33:40.035Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2421,6 +2421,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835517841,
+      "promo": null
+    },
+    {
+      "name": "Aretes triple corazón ",
+      "name_en": "Triple Heart Earrings",
+      "category": "Aretes",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Tres corazones, tres veces más impacto. 💛✨\nUn diseño en Gold Filled que combina movimiento, brillo y romanticismo en una pieza que transforma hasta el look más sencillo. Sus tres corazones en caída estilizan visualmente y aportan ese toque especial que hace que te pregunten: “¿Dónde los compraste?”. Perfectos cuando quieres que tus aretes sean los protagonistas.",
+      "description_en": "Three hearts, three times more impact. 💛✨\nA design in Gold Filled that combines movement, brightness and romanticism in a piece that transforms even the simplest look. Its three falling hearts visually stylize and bring that special touch that makes them ask you: \"Where did you buy them?\". Perfect when you want your earrings to be the protagonists.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789835549224_d31d126f_0952_47bc_908f_a0e5d1ac9a31_jpe.webp",
+      "focalX": 49.169539723683215,
+      "focalY": 66.03711066931743,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789835608668,
       "promo": null
     }
   ],
