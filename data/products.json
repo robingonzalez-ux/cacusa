@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T21:56:26.145Z",
+  "lastUpdated": "2026-09-19T22:02:06.021Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2581,6 +2581,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789854982063,
+      "promo": null
+    },
+    {
+      "name": "Pulsera roja personalizada ",
+      "name_en": "Custom red bracelet",
+      "category": "Pulseras",
+      "price": 45,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Cuenta tu historia con dijes. No es solo una pulsera: cada dije representa algo especial para ti. Amor, protección, suerte, familia, sueños, fe o esa persona que siempre quieres llevar contigo. ✨\nElige los dijes que tengan significado para ti y crea una combinación única. Porque tu historia es diferente a todas, y tu pulsera también debería serlo. ❤️",
+      "description_en": "Cuenta tu historia con dijes. No es solo una pulsera: cada dije representa algo especial para ti. Amor, protección, suerte, familia, sueños, fe o esa persona que siempre quieres llevar contigo. ✨\nElige los dijes que tengan significado para ti y crea una combinación única. Porque tu historia es diferente a todas, y tu pulsera también debería serlo. ❤️\n\nIdeal también para regalar: elige los símbolos que mejor representen a esa persona y convierte el regalo en un mensaje hecho especialmente para ella.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789855050346_2e3be3d1_5960_462e_a1cc_2cc9bc3acda1_jpe.webp",
+      "focalX": 38.65037622367063,
+      "focalY": 60.868124585818435,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [],
+      "id": 1789855320945,
       "promo": null
     }
   ],
