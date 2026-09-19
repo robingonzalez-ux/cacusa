@@ -272,6 +272,31 @@ JavaScript del cliente (`_slugify`/`_productParam` en `ui_kits/store/index.html`
 replicada en Python (`slugify`/`product_param` en
 `generate_product_schema.py`) — deben coincidir siempre.
 
+### Falsos positivos en rojo cuando el admin edita rápido (encontrado y corregido, 19 sep)
+
+Cada guardado desde el panel admin comitea directo a `main` vía la API de
+GitHub, y cada uno de esos commits dispara su propia corrida de este
+workflow. Cuando Tita/Robin editan varios productos seguidos en pocos
+segundos (agregar fotos, cambiar precios, etc.), varias corridas quedan
+regenerando en paralelo — y el último paso (`git push`) de la que termina
+primero le gana a la que termina después: la segunda ve que `main` avanzó
+mientras corría y el push simple se rechaza (`! [rejected] ... fetch
+first`), dejando el job en rojo en la pestaña Actions aunque no se haya
+roto nada de verdad — la corrida de la edición más reciente ya regenera
+todo desde el `data/products.json` más nuevo, así que el sitio nunca se
+queda con contenido desactualizado por esto. Confirmado con los logs
+reales de una corrida así (19 sep, 6 fallos en una ráfaga de ~2 minutos de
+edición, todos con el mismo `[rejected] main -> main (fetch first)`).
+
+El paso final ahora reintenta con `git fetch` + `git rebase origin/main`
+hasta 5 veces antes de rendirse; si el rebase choca de verdad (dos
+corridas regenerando desde datos distintos a la vez), aborta el rebase y
+sale limpio (sin marcar el job en rojo) en vez de forzar nada — la corrida
+más nueva ya cubre ese caso. Si alguien ve un job en rojo de este workflow
+de todos modos, revisar primero si hubo una corrida MÁS RECIENTE en verde
+para el mismo lote de ediciones antes de investigar como si fuera un bug
+real.
+
 ### Regla de escape: nada crudo dentro de un `<script>`
 
 Estos scripts escriben dentro de `<script>` en HTML público, y algunos de
@@ -628,11 +653,20 @@ con:
   y `categoria/<algo>/` cuelgan 2 niveles más abajo que
   `ui_kits/store/index.html`.
 
-**Cómo se generan las URLs**: `product_page_url()`/`product_param()` en
-`generate_product_schema.py` son la fuente única de verdad — las reusan
-`generate_sitemap_products.py`, `generate_noscript_catalog.py` y
-`generate_product_pages.py`, así que sitemap, catálogo `<noscript>`,
-JSON-LD y páginas físicas nunca pueden quedar en desacuerdo entre sí.
+**Cómo se generan las URLs**: `product_page_url()`/`product_param()` (y,
+para categorías, `category_page_url()`) en `generate_product_schema.py`
+son la fuente única de verdad — las reusan `generate_sitemap_products.py`,
+`generate_noscript_catalog.py` y `generate_product_pages.py`, así que
+sitemap, catálogo `<noscript>`, JSON-LD y páginas físicas nunca pueden
+quedar en desacuerdo entre sí.
+
+**Categorías faltantes en el sitemap (encontrado y corregido, 19 sep,
+tanda posterior)**: las 172 páginas físicas incluyen 18 de categoría (9 ×
+ES/EN), pero `generate_sitemap_products.py` solo agregaba URLs de
+producto — las de categoría nunca se sumaron al sitemap desde que existen
+(quedó fuera de la lista de "qué genera" original). `build_block()` ahora
+también itera `config.categories` y agrega esas 18 URLs con
+`category_page_url()`, mismo formato hreflang que las de producto.
 
 **Migración de las URLs viejas (`?p=`/`?cat=`)**: decisión explícita del
 usuario — no se redirige al visitante (los enlaces/marcadores viejos

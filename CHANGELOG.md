@@ -12,6 +12,25 @@ catálogo, no versionamiento del sitio.
 
 ---
 
+## 2026-09-19 (5ta tanda) — categorías faltantes en el sitemap + falsos "rojos" en el Action de productos
+
+- Las 18 páginas de categoría (9 categorías, en español e inglés) que se
+  crearon en la tanda anterior nunca se habían agregado al mapa del sitio
+  — quedó un hueco desde el día que se creó esa parte de la auditoría SEO.
+  Ya se agregaron.
+- Detectado por el usuario: el Action que regenera el catálogo automático
+  a veces aparecía en rojo ("Failure") en GitHub cuando Tita o Robin
+  editaban varios productos muy seguido. Investigado a fondo: no era un
+  dato roto ni una venta afectada — dos regeneraciones corriendo casi al
+  mismo tiempo se pisaban al guardar, y la más lenta de las dos fallaba al
+  publicar (la más rápida ya había avanzado el historial). El catálogo
+  público nunca quedó desactualizado por esto, porque la edición más
+  reciente siempre dispara su propia regeneración correcta. Se corrigió
+  para que reintente automáticamente en vez de aparecer en rojo sin
+  necesidad.
+
+---
+
 ## 2026-09-19 (4ta tanda) — 2 arreglos más de la auditoría SEO: producto inexistente y canonical faltante
 
 De la misma auditoría SEO externa, se cerraron 2 hallazgos más que habían

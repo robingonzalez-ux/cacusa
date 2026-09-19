@@ -49,6 +49,7 @@ from generate_product_schema import (  # noqa: E402
     ROOT,
     build_product_entry,
     build_shipping_details,
+    category_page_url,
     fetch_reviews_by_product,
     fetch_surcharges,
     json_for_script_tag,
@@ -222,9 +223,9 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
         else f"{label} artesanales — joyería personalizada en plata 925, baño de oro 18k y acero inoxidable."
     )
     cat_slug = slugify(cat)
-    url = f"{BASE_URL}{store_path}categoria/{cat_slug}/"
-    es_url = f"{BASE_URL}/ui_kits/store/categoria/{cat_slug}/"
-    en_url = f"{BASE_URL}/en/ui_kits/store/categoria/{cat_slug}/"
+    url = category_page_url(cat, lang, store_path)
+    es_url = category_page_url(cat, "es", "/ui_kits/store/")
+    en_url = category_page_url(cat, "en", "/en/ui_kits/store/")
     title = f"{label} — CACUSA by Taitus"
     cat_products = [p for p in products if p.get("category") == cat and p.get("available") is not False]
     first_img = None

@@ -21,7 +21,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from generate_product_schema import BASE_URL, PRODUCTS_JSON, ROOT, product_page_url  # noqa: E402
+from generate_product_schema import BASE_URL, PRODUCTS_JSON, ROOT, category_page_url, product_page_url  # noqa: E402
 import json
 
 SITEMAP = ROOT / "sitemap.xml"
@@ -43,7 +43,7 @@ def url_entry(loc, es_url, en_url, lastmod):
     )
 
 
-def build_block(products, lastmod):
+def build_block(products, categories, lastmod):
     parts = []
     for p in products:
         # Barrido SEO (19 sep): antes eran ?p=<slug> — Google recibía canonical/hreflang
@@ -52,6 +52,14 @@ def build_block(products, lastmod):
         # query). Ahora apuntan a la página estática real que arma generate_product_pages.py.
         es_url = product_page_url(p, "es", "/ui_kits/store/")
         en_url = product_page_url(p, "en", "/en/ui_kits/store/")
+        parts.append(url_entry(es_url, es_url, en_url, lastmod))
+        parts.append(url_entry(en_url, es_url, en_url, lastmod))
+    for cat in categories:
+        # Mismas 18 páginas (9 categorías x ES/EN) que ya genera
+        # generate_product_pages.py — se habían quedado fuera del sitemap
+        # (barrido del 19 sep, hallazgo posterior a la tanda original).
+        es_url = category_page_url(cat, "es", "/ui_kits/store/")
+        en_url = category_page_url(cat, "en", "/en/ui_kits/store/")
         parts.append(url_entry(es_url, es_url, en_url, lastmod))
         parts.append(url_entry(en_url, es_url, en_url, lastmod))
     return MARKER_START + "\n" + "\n\n".join(parts) + "\n" + MARKER_END
@@ -80,10 +88,11 @@ def main():
     # Ahora la URL persiste siempre; solo cambia su lastmod como cualquier
     # otro producto (el JSON-LD es quien marca OutOfStock, no el sitemap).
     products = data.get("products", [])
+    categories = data.get("config", {}).get("categories", [])
     lastmod = date.today().isoformat()
-    block = build_block(products, lastmod)
+    block = build_block(products, categories, lastmod)
     changed = inject(SITEMAP, block)
-    print(f"{SITEMAP}: {'actualizado' if changed else 'sin cambios'} ({len(products)} productos)")
+    print(f"{SITEMAP}: {'actualizado' if changed else 'sin cambios'} ({len(products)} productos, {len(categories)} categorías)")
     if "--check" in sys.argv:
         sys.exit(1 if changed else 0)
 

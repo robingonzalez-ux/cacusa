@@ -227,6 +227,14 @@ def product_page_url(p, lang, store_path):
     return f"{BASE_URL}{store_path}producto/{product_param(p, lang)}/"
 
 
+def category_page_url(cat, lang, store_path):
+    """Misma idea que product_page_url() pero para la página estática de categoría
+    (generate_product_pages.py la crea) — fuente única de verdad reusada también por
+    generate_sitemap_products.py, para que el sitemap y las páginas físicas de
+    categoría nunca queden en desacuerdo."""
+    return f"{BASE_URL}{store_path}categoria/{slugify(cat)}/"
+
+
 def build_product_entry(p, lang, store_path, shipping_details, reviews_by_product, surcharges):
     name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
     desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")

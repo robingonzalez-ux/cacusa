@@ -78,4 +78,22 @@ jobs:
             exit 0
           fi
           git commit -m "Regenerar JSON-LD, sitemap, catálogo noscript, llms.txt y páginas estáticas [skip ci]"
-          git push
+          # Varias ediciones de producto seguidas desde el admin (comitean directo a main
+          # vía la API de GitHub) disparan varias corridas de este workflow casi a la vez.
+          # Si otra ya empujó a main mientras esta regeneraba, el push simple se rechaza
+          # ("fetch first") y el job queda en rojo aunque no haya nada roto de verdad — la
+          # corrida de la edición más reciente ya va a regenerar todo desde el products.json
+          # más nuevo. Reintentar con rebase antes de rendirse evita ese falso positivo.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rechazado (main avanzó mientras corría este job) — reintentando con rebase ($i/5)..."
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "Conflicto real al rebasar: otra corrida ya está regenerando desde datos más nuevos que los de esta — no hace falta este commit."
+              git rebase --abort
+              exit 0
+            fi
+          done
+          echo "No se pudo pushear tras varios intentos — la próxima edición de producto va a disparar una corrida nueva que se pone al día sola."
