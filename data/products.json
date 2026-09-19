@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T21:52:58.484Z",
+  "lastUpdated": "2026-09-19T21:56:26.145Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2559,6 +2559,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789854774028,
+      "promo": null
+    },
+    {
+      "name": "Pulsera te amo en 100 idiomas ",
+      "name_en": "I love you bracelet in 100 languages",
+      "category": "Pulseras",
+      "price": 28,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Pulsera “Te Amo en 100 Idiomas” ❤️\n\nHay muchas formas de decir te amo, pero esta las guarda todas en una sola joya. Su detalle central proyecta “Te Amo” en 100 idiomas, convirtiéndola en un regalo lleno de significado para esa persona que hace especial tu vida.\n\nPerfecta para parejas, mejores amigas, hermanas, mamá e hija o para regalarle a tu persona. ✨\n\nPorque un “te amo” se dice en segundos, pero hay personas a las que quisiéramos decírselo en todos los idiomas del mundo. 💕",
+      "description_en": "Hay muchas formas de decir te amo, pero esta las guarda todas en una sola joya. Su detalle central proyecta “Te Amo” en 100 idiomas, convirtiéndola en un regalo lleno de significado para esa persona que hace especial tu vida.\n\nPerfecta para parejas, mejores amigas, hermanas, mamá e hija o para regalarle a tu persona. ✨\n\nPorque un “te amo” se dice en segundos, pero hay personas a las que quisiéramos decírselo en todos los idiomas del mundo. 💕",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789854829729_50052afe_0b0b_46e9_bba7_db12421fd662_jpe.webp",
+      "focalX": 47.877712627190455,
+      "focalY": 36.613651424784635,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789854982063,
       "promo": null
     }
   ],
