@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T15:56:39.728Z",
+  "lastUpdated": "2026-09-19T15:58:53.421Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -2223,6 +2223,28 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833395515,
+      "promo": null
+    },
+    {
+      "name": "Anillo estrellas ",
+      "name_en": "Ring stars",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Un pedacito de mar convertido en joya. ⭐✨\nSus estrellas de mar envuelven el dedo creando un diseño llamativo, diferente y con mucha personalidad. Con baño de oro de 18K y diseño ajustable, es esa pieza que hace sentir verano todo el año y transforma cualquier look con solo ponértela.",
+      "description_en": "A piece of sea turned into a jewel. ⭐✨\nIts starfish wrap your finger creating a striking design, different and with a lot of personality. With an 18K gold plating and adjustable design, it is that piece that makes you feel summer all year round and transforms any look just by putting it on.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789833448775_4663a0d8_c09d_4bd5_a9a6_f9db6506191e_png.webp",
+      "focalX": 48.43135281140164,
+      "focalY": 41.517561298873346,
+      "zoom": 1,
+      "material": "Baño de oro 18k",
+      "images": [],
+      "id": 1789833527086,
       "promo": null
     }
   ],
