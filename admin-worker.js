@@ -411,7 +411,12 @@ async function handleUpload(body, env, origin, session) {
   }
   const cur = await ghGetContent(path, env);
   await ghPut(path, contentBase64, cur ? cur.sha : null, message || `[admin] imagen ${session.user}`, env);
-  return ok({ ok: true, url: `https://${GH_OWNER}.github.io/${GH_REPO}/${path}` }, origin);
+  // Antes devolvía `https://${GH_OWNER}.github.io/${GH_REPO}/${path}` — el dominio
+  // genérico de GitHub Pages, que redirige (301) al dominio propio configurado en
+  // CNAME. Cada imagen de producto (visible en la tienda, en og:image y en el JSON-LD)
+  // quedaba apuntando a una URL que siempre redirige — hallazgo del 19 sep tras un
+  // aviso de Search Console de "página con redirección".
+  return ok({ ok: true, url: `https://cacusabytaitus.com/${path}` }, origin);
 }
 
 // Sanea un pedido crudo a solo los campos permitidos (nunca spread del body del
