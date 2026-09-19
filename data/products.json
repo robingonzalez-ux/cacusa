@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T14:52:31.893Z",
+  "lastUpdated": "2026-09-19T14:52:46.859Z",
   "updatedBy": "tita.jaramillo",
   "whatsapp": "+17867375336",
   "config": {
@@ -1029,26 +1029,6 @@
       "material": "Baño de oro 18k",
       "id": 1781878207350,
       "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
-    },
-    {
-      "name": "Anillo TIFFY ajustable con microcircones ",
-      "category": "Anillos",
-      "price": 25,
-      "oldPrice": null,
-      "img": "collar",
-      "color": "rose",
-      "tag": null,
-      "description": "Delicado anillo ajustable estilo Tiffy con brillantes microcircones en baño de oro 18k. Elegancia y brillo en su forma más pura.",
-      "description_en": "Delicate adjustable Tiffy-style ring with sparkling micro zirconia in 18k gold plating. Elegance and brilliance in their purest form.",
-      "personalized": false,
-      "available": false,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1781878391322_image_jpg.webp",
-      "focalX": 50.955414012738856,
-      "focalY": 57.57575757575761,
-      "zoom": 1.75,
-      "material": "Baño de oro 18k",
-      "id": 1781878427634,
-      "name_en": "Adjustable TIFFY Ring with Micro Zirconia"
     },
     {
       "name": "Ear cuff ancho plateado ",
