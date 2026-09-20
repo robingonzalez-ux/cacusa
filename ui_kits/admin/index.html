@@ -527,6 +527,16 @@ function PushSection({ token }) {
             style={{ padding: '10px', background: '#F3EFF5', color: '#7A5F8A', borderRadius: 99, fontWeight: 700, fontSize: 12.5, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>
             {busy ? 'Enviando…' : 'Probar notificación'}
           </button>
+          {/* subscribed solo indica que el navegador tiene ALGUNA suscripción guardada —
+              no que siga siendo válida contra las llaves VAPID actuales. Sin esto, si
+              "Probar notificación" falla (ej. rotaste las llaves VAPID), no había forma
+              de volver a activar desde acá: el botón "Activar" de arriba solo aparece
+              cuando subscribed es false, y activate() ya se ocupa de dar de baja la
+              suscripción vieja antes de pedir una nueva (ver comentario en activate()). */}
+          <button onClick={activate} disabled={busy}
+            style={{ padding: '9px', background: 'none', color: '#9B5DE5', borderRadius: 99, fontWeight: 700, fontSize: 12, border: '1.5px solid #E5DCF0', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>
+            {busy ? 'Reactivando…' : '🔄 Reactivar (si dejaste de recibir avisos)'}
+          </button>
         </>
       )}
 
