@@ -266,7 +266,7 @@ export default {
         }
       }
       if (path.endsWith('/load'))           return await handleLoad(env, allowOrigin);
-      if (path.endsWith('/surcharge/save')) return await handleSurchargeSave(body, env, allowOrigin);
+      if (path.endsWith('/surcharge/save')) return await handleSurchargeSave(body, env, allowOrigin, ctx);
       if (path.endsWith('/market/save'))    return await handleMarketSave(body, env, allowOrigin);
       if (path.endsWith('/save'))           return await handleSave(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
@@ -1979,13 +1979,30 @@ async function handleMarketsLoad(env, origin) {
   return ok({ markets }, origin);
 }
 
-async function handleSurchargeSave(body, env, origin) {
+async function handleSurchargeSave(body, env, origin, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   const src = body.surcharges;
   if (!src || typeof src !== 'object' || Array.isArray(src)) return err('Datos inválidos', 400, origin);
   const clean = {};
   for (const [k, v] of Object.entries(src)) clean[String(k).slice(0, 50)] = v === true;
   await env.CACUSA_KV.put('surcharges', JSON.stringify(clean));
+  // Auditoría SEO externa (20 sep): el precio "horneado" en el JSON-LD estático
+  // (STATIC_PRODUCT_SCHEMA, generate_product_schema.py) solo se recalcula cuando
+  // corre el pipeline — y ese pipeline solo se dispara con un push a
+  // data/products.json, nunca con un cambio de este flag en KV. Sin este aviso,
+  // prender/apagar el recargo del 4% podía dejar el precio publicado
+  // desactualizado indefinidamente. Mismo patrón que handleTiktokTriggerExport()
+  // — best-effort: ctx.waitUntil() para que el fetch se complete de verdad
+  // aunque ya se haya devuelto la respuesta, pero nunca debe romper el guardado
+  // real en KV si GitHub no responde.
+  if (env.GH_TOKEN && ctx) {
+    ctx.waitUntil(
+      fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/dispatches`, {
+        method: 'POST', headers: ghHeaders(env),
+        body: JSON.stringify({ event_type: 'surcharge-updated' }),
+      }).catch((e) => console.error('repository_dispatch surcharge-updated falló:', e.message))
+    );
+  }
   return ok({ ok: true }, origin);
 }
 
