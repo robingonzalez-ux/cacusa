@@ -54,13 +54,11 @@ const ORDERS_PATH    = 'data/orders.json';
 const IMAGES_PATH    = 'ui_kits/store/images';
 const LOVERS_WEBHOOK_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
 const STORE_URL      = 'https://cacusabytaitus.com/';
-// Debe ser BYTE A BYTE la misma llave pública que el secret VAPID_PUBLIC_KEY
-// configurado en Cloudflare (Worker cacusa-admin) — son 2 lugares separados
-// para el mismo par de llaves, y si uno se rota sin el otro, TODAS las
-// suscripciones fallan (VapidPkHashMismatch) sin importar cuántas veces se
-// vuelva a suscribir el navegador (bug real encontrado 20 sep: acá seguía
-// la llave vieja mientras el backend ya tenía la nueva).
-const VAPID_PUB_KEY  = 'BC_EbpyzrnHxFFv-a8Cgtx5LlUuCL_htSLA9dA8XhCDjzjclk-1VvjGucXEXysrZBiNtOu5EuIdGYy8QYrOrD5M';
+// La llave pública VAPID YA NO se hardcodea acá — antes vivía duplicada en este
+// archivo y en el secret VAPID_PUBLIC_KEY de Cloudflare, y la última vez que se
+// rotó el par de llaves quedó desincronizada entre los 2 lugares (bug real, 20
+// sep: ningún "Activar" podía funcionar hasta corregir ambos a mano). Ahora
+// PushSection la pide en tiempo real a GET /pub/vapid-key — un solo lugar real.
 
 const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👸', color: '#E85D8A' },
@@ -461,7 +459,10 @@ function PushSection({ token }) {
       // encontrado 20 sep: VapidPkHashMismatch en Cloudflare, sin ningún error visible acá).
       const existing = await reg.pushManager.getSubscription();
       if (existing) await existing.unsubscribe();
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUB_KEY) });
+      // Se pide siempre fresca al servidor (nunca hardcodeada acá) — es la única forma
+      // de que esta llave y la que firma admin-worker.js NUNCA puedan desincronizarse.
+      const { publicKey } = await apiCall('pub/vapid-key', {});
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
       await apiCall('push/subscribe', { token, subscription: sub.toJSON() });
       setSubscribed(true);
       setMsg('✅ Notificaciones push activadas en este dispositivo.');
