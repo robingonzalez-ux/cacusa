@@ -254,7 +254,7 @@ function _waB64e(buf) {
   for(let i=0;i<a.length;i++) s+=String.fromCharCode(a[i]);
   return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
-async function _waRegister(token, username) {
+async function _waRegister(token, username, pass) {
   const ch = await apiCall('webauthn/reg-challenge', { token });
   const cred = await navigator.credentials.create({ publicKey: {
     challenge: _waB64d(ch.challenge),
@@ -265,8 +265,12 @@ async function _waRegister(token, username) {
     timeout: 60000, attestation: 'none',
     excludeCredentials: (ch.excludeIds||[]).map(id => ({ id:_waB64d(id), type:'public-key' })),
   }});
+  // Auditoría (20 sep, F21-b): el servidor ahora exige reconfirmar la contraseña real,
+  // no solo el token, para registrar una passkey nueva — acá siempre se llama justo
+  // después de un login por contraseña exitoso, así que `pass` ya está en memoria y esto
+  // no agrega ningún paso nuevo para quien usa el panel normalmente.
   await apiCall('webauthn/register', {
-    token, challenge: ch.challenge,
+    token, pass, challenge: ch.challenge,
     credentialId: _waB64e(new Uint8Array(cred.rawId)),
     attestationObject: _waB64e(new Uint8Array(cred.response.attestationObject)),
     clientDataJSON: _waB64e(new Uint8Array(cred.response.clientDataJSON)),
@@ -727,7 +731,7 @@ function LoginScreen({ onLogin }) {
 
   const activarFaceId = async () => {
     setLoading(true);
-    try { await _waRegister(pendingSess.token, pendingSess.username); } catch (_) {}
+    try { await _waRegister(pendingSess.token, pendingSess.username, password); } catch (_) {}
     onLogin(pendingSess);
   };
 
@@ -4236,6 +4240,14 @@ function App() {
           {[
             ['🔄 Recargar datos', () => { loadData(); setShowMenu(false); }],
             ['🌐 Ver tienda', () => { window.open(STORE_URL, '_blank'); setShowMenu(false); }],
+            // Auditoría (20 sep, F21-c): revoca TODOS los tokens de esta cuenta en el
+            // servidor (no solo el de este navegador) — útil si se sospecha que un token
+            // se filtró (dispositivo perdido/robado, sesión abierta en una compu ajena).
+            ['🔒 Cerrar sesión en todos los dispositivos', async () => {
+              setShowMenu(false);
+              try { await apiCall('logout-all', { token: session.token }); } catch (_) {}
+              sessionStorage.clear(); setSession(null);
+            }],
             ['↩ Cerrar sesión', () => { sessionStorage.clear(); setSession(null); }]
           ].map(([l, fn]) => (
             <button key={l} onClick={fn} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', fontSize: 13, color: '#333', borderRadius: 8, transition: 'background .15s', border: 'none', cursor: 'pointer', background: 'none', fontFamily: 'inherit' }}>{l}</button>
