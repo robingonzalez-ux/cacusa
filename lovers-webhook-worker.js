@@ -532,7 +532,10 @@ export default {
             ciudad:    str(body?.ciudad, 100),
             estado:    str(body?.estado, 50),
             zip:       str(body?.zip, 20),
-            pais:      str(body?.pais, 10),
+            // 40, no 10: evita truncar "Estados Unidos"/"United States" a mitad de
+            // palabra si se escriben a mano — ese corte rompía el match de país que
+            // usa el botón de USPS en el panel (bug real encontrado 20 sep).
+            pais:      str(body?.pais, 40),
             plan:      isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
             monto:     isAnnual ? '$219.89/año' : '$19.99/mes',
             fecha:     new Date().toISOString().slice(0, 10),
