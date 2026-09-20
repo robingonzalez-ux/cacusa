@@ -330,6 +330,13 @@ export default {
     const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
     const fbAuth = env.FB_DB_SECRET;
 
+    // Auditoría (20 sep, F20): ninguna ruta tenía límite de tamaño de body — 200KB deja
+    // margen de sobra sobre cualquier payload real de este Worker (webhooks de Square,
+    // altas/ediciones manuales de suscriptoras) sin dejar de acotar un abuso real.
+    if (Number(request.headers.get('content-length') || 0) > 200_000) {
+      return new Response('Payload too large', { status: 413 });
+    }
+
     // ── GET /internal/lovers/active?phone=... — Worker-a-Worker, autenticado con
     // ORDER_INGEST_KEY. Responde si ese teléfono pertenece a una suscriptora activa
     // (estado_pago === 'activo' y, si tiene fecha de vencimiento manual, que no haya
@@ -538,6 +545,37 @@ export default {
           if (!fields || typeof fields !== 'object') {
             return adminJson({ error: 'Body inválido' }, 400);
           }
+          // Auditoría (20 sep, F22): antes se mandaba el body COMPLETO a Firebase sin
+          // ninguna lista blanca — el secreto FB_DB_SECRET bypassa las reglas públicas
+          // (que sí exigen estado_pago:'pendiente' al CREAR), así que un campo inesperado
+          // o un typo del panel podía escribir cualquier cosa. `email` queda afuera a
+          // propósito: es la identidad real (subscriberKey deriva la key de Firebase del
+          // email), cambiarla acá dejaría la key de Firebase desincronizada del campo.
+          const LOVERS_PATCH_FIELDS = new Set([
+            'nombre', 'apellido', 'telefono', 'direccion', 'apto', 'ciudad', 'estado',
+            'zip', 'pais', 'plan', 'monto', 'fecha', 'estado_pago', 'metodo_pago',
+            'vence', 'notas', 'idioma',
+          ]);
+          const badField = Object.keys(fields).find((k) => !LOVERS_PATCH_FIELDS.has(k));
+          if (badField) return adminJson({ error: `Campo no permitido: ${badField}` }, 400);
+
+          // Si estado_pago cambia de/a 'cancelado', hay que reconciliar los cupones
+          // asociados (el 5% exclusivo + el envío gratis) — antes solo se reconciliaban
+          // si el cambio venía del webhook real de Square; un PATCH manual del panel los
+          // dejaba huérfanos (activos aunque la suscriptora ya estuviera cancelada, o
+          // sin reactivar tras reactivarla a mano).
+          // getSubscriberByKey() lanza si Firebase responde un error real (no solo si la
+          // key no existe) — esta ruta no está dentro del try/catch general del webhook
+          // más abajo, así que se envuelve acá para no dejar una excepción sin atrapar.
+          let existing = null;
+          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'activo') {
+            try {
+              existing = await getSubscriberByKey(id, dbUrl, fbAuth);
+            } catch (e) {
+              return adminJson({ error: 'No se pudo leer la suscriptora antes de actualizar', detail: e.message }, 502);
+            }
+          }
+
           const r = await fetch(`${dbUrl}/cacusa_lovers/${id}.json?auth=${fbAuth}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -547,14 +585,39 @@ export default {
             const errText = await r.text().catch(() => r.status);
             return adminJson({ error: 'No se pudo actualizar', detail: errText }, 502);
           }
+
+          if (existing && existing.estado_pago !== fields.estado_pago) {
+            const email = existing.email || '';
+            const idioma = fields.idioma || existing.idioma || existing.pais;
+            if (fields.estado_pago === 'cancelado') {
+              await notifyExclusiveCoupon('deactivate', email, idioma, env, existing.telefono);
+            } else {
+              await notifyExclusiveCoupon('activate', email, idioma, env);
+            }
+          }
           return adminJson({ ok: true }, 200);
         }
 
         if (request.method === 'DELETE') {
+          // Auditoría (20 sep, F22): antes borraba el registro sin desactivar el cupón
+          // exclusivo del 5% ni el de envío gratis — quedaban huérfanos/activos para
+          // siempre, sin ninguna suscripción real detrás. Se lee el registro ANTES de
+          // borrarlo para tener con qué identificarla ante notifyExclusiveCoupon. Mismo
+          // motivo que en PATCH: envuelto en try/catch porque esta ruta no está dentro
+          // del try/catch general del webhook más abajo.
+          let existing = null;
+          try {
+            existing = await getSubscriberByKey(id, dbUrl, fbAuth);
+          } catch (e) {
+            return adminJson({ error: 'No se pudo leer la suscriptora antes de eliminar', detail: e.message }, 502);
+          }
           const r = await fetch(`${dbUrl}/cacusa_lovers/${id}.json?auth=${fbAuth}`, { method: 'DELETE' });
           if (!r.ok) {
             const errText = await r.text().catch(() => r.status);
             return adminJson({ error: 'No se pudo eliminar', detail: errText }, 502);
+          }
+          if (existing && existing.email) {
+            await notifyExclusiveCoupon('deactivate', existing.email, existing.idioma || existing.pais, env, existing.telefono);
           }
           return adminJson({ ok: true }, 200);
         }

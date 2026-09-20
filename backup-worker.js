@@ -79,10 +79,16 @@
  *       body = backup.firebase
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
- *    .webauthnCredentials / .leads / .loversShipIndex:
- *       env.CACUSA_KV.put(key, JSON.stringify(value))
+ *    .webauthnCredentials / .leads / .loversShipIndex / .cpused:
+ *       env.CACUSA_KV.put(key, typeof value === 'string' ? value : JSON.stringify(value))
  *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
- *    tal cual). Para surcharges/markets (siguen siendo un solo blob cada uno):
+ *    tal cual). OJO (F19, 20 sep): loversShipIndex guarda un STRING plano (el código
+ *    ENVIO... tal cual, no JSON) — hacer JSON.stringify(value) sin la condición de
+ *    arriba le agrega comillas literales que no tenía el valor original en KV, y esa
+ *    key deja de funcionar en la comparación real (admin-worker.js la lee con
+ *    env.CACUSA_KV.get() esperando el código plano). El resto de los prefijos SÍ son
+ *    JSON de verdad, así que la condición no les cambia nada. Para surcharges/markets
+ *    (siguen siendo un solo blob cada uno):
  *       env.CACUSA_KV.put('surcharges', JSON.stringify(backup.kv.surcharges)), etc.
  *
  *    IMPORTANTE: si se restauran keys order:* o lead:*, borrar después la caché
@@ -187,11 +193,12 @@ async function getKvValue(env, key) {
 
 // Prefijos/llaves respaldadas: pedidos, gift cards, cupones, credenciales WebAuthn,
 // leads (10% del popup + carritos abandonados — una llave por email, mismo esquema que
-// pedidos desde el 16 sep), el índice teléfono→código de envío gratis de Lovers, y las
-// 2 llaves sueltas de config. Deliberadamente excluido: orders_cache/leads_cache (se
-// reconstruyen solas) y todo lo que es rate-limit/challenge de TTL corto (loginrl:,
-// leadrl:, leadcancelrl:, cpused:, wac:, walc:, refmonth:, push:, idem:) — ruido
-// regenerable, no datos de negocio.
+// pedidos desde el 16 sep), el índice teléfono→código de envío gratis de Lovers, las
+// marcas de "cupón ya usado por esta persona" (cpused:*, ver más abajo por qué SÍ se
+// respalda), y las 2 llaves sueltas de config. Deliberadamente excluido: orders_cache/
+// leads_cache (se reconstruyen solas) y lo que de verdad es rate-limit/challenge de TTL
+// corto (loginrl:, leadrl:, leadcancelrl:, wac:, walc:, refmonth: — 40 días, idem: — 1
+// día, push:) — ruido regenerable, no datos de negocio.
 //
 // Auditoría externa (19 sep, ronda nueva): `loversship:<últimos 7 dígitos>` — a
 // diferencia de las keys de arriba, SÍ es dato de negocio permanente (sin TTL): es el
@@ -199,18 +206,25 @@ async function getKvValue(env, key) {
 // cancelar (ver loversShippingCode()/loversShipIndexKey() en admin-worker.js). El
 // cupón en sí ya se respalda bajo coupon:, pero sin este índice una restauración
 // dejaría la desactivación automática rota para esa suscriptora — se agrega.
+//
+// Auditoría (20 sep, F18): `cpused:*` (admin-worker.js, anti-reuso de cupón por
+// teléfono/email) NO es de TTL corto — su expirationTtl real es de 1 AÑO (31536000s),
+// no "ruido regenerable" como decía este comentario antes de agruparlo con refmonth:/
+// idem:. Perderlo en una restauración reabriría esa ventana de reuso para cualquiera
+// que ya hubiera gastado un cupón dentro del último año — se agrega al export.
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
     listKvPrefix(env, 'wacred:'),
     listKvPrefix(env, 'lead:'),
     listKvPrefix(env, 'loversship:'),
+    listKvPrefix(env, 'cpused:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, surcharges, markets };
 }
 
 function backupKey(iso, trigger) {

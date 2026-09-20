@@ -213,6 +213,16 @@ async function fetchSurcharges(env) {
   }
 }
 
+// Auditoría (20 sep, F11): duplicada de resolveBasePrice() en admin-worker.js (sin
+// módulos compartidos entre Workers) — replicar cualquier cambio en las 2 copias.
+function resolveBasePrice(prod) {
+  if (prod.promo && prod.promo.price) {
+    const ended = prod.promo.endsAt && new Date(prod.promo.endsAt) < new Date();
+    if (!ended) return +prod.promo.price;
+  }
+  return prod.price;
+}
+
 // Validates and returns the canonical price for each cart item.
 // Returns { validatedItems, serverShipping } or throws on invalid items.
 function validateItems(items, products, combos, shipping, surcharges = {}) {
@@ -226,6 +236,12 @@ function validateItems(items, products, combos, shipping, surcharges = {}) {
       if (!combo) {
         throw new Error(`Combo no encontrado en el catálogo (id: ${item.id})`);
       }
+      // Auditoría (20 sep, F11): antes no se chequeaba disponibilidad de combos (solo
+      // de productos sueltos) — inofensivo hoy (el catálogo real no tiene ningún combo),
+      // cierra el hueco para cuando se agregue el primero.
+      if (combo.available === false) {
+        throw new Error(`Combo no disponible: ${combo.name || item.id}`);
+      }
       return { ...item, price: combo.price };
     }
 
@@ -237,11 +253,15 @@ function validateItems(items, products, combos, shipping, surcharges = {}) {
     if (prod.available === false) {
       throw new Error(`Producto no disponible: ${prod.name || item.id}`);
     }
+    // Auditoría (20 sep, F11): antes siempre cobraba prod.price, ignorando una promo
+    // activa que la tienda SÍ le muestra a la clienta — sobrecobro real si se
+    // reactivara una promoción.
+    const basePrice = resolveBasePrice(prod);
     // Mismo cálculo que aplica la tienda en el navegador cuando el producto tiene recargo
     // (pago con tarjeta = precio con recargo; el descuento de Zelle no aplica en este flujo).
     const price = surcharges[String(prod.id)] === true
-      ? Math.round(prod.price * 1.04 * 100) / 100
-      : prod.price;
+      ? Math.round(basePrice * 1.04 * 100) / 100
+      : basePrice;
     return { ...item, price };
   });
 
@@ -569,6 +589,16 @@ async function handleCreatePaymentLink(body, env, allowed) {
   if (items.length > 50) {
     return jsonError('El carrito tiene demasiados productos', 400, allowed);
   }
+  // Auditoría (20 sep, F14): antes se podía generar un Payment Link con `customer`
+  // vacío/sin país — sin ningún dato para calcular impuesto de forma coherente ni
+  // para coordinar la entrega. `state`/`zip` solo hacen falta fuera de Ecuador (son
+  // los que calculan el sales tax real, ver getTaxRate más abajo).
+  if (!customer?.country) {
+    return jsonError('Falta el país del cliente', 400, allowed);
+  }
+  if (!isEcuador && (!customer?.state || !customer?.zip)) {
+    return jsonError('Falta el estado/ZIP del cliente', 400, allowed);
+  }
   if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) {
     return jsonError('Worker no configurado — faltan credenciales Square', 500, allowed);
   }
@@ -608,6 +638,11 @@ async function handleCreatePaymentLink(body, env, allowed) {
       }
     };
   });
+  // Auditoría (20 sep, F10): subtotal real de los productos, ANTES de sumar envío/
+  // impuesto — se necesita capturado acá porque más abajo lineItems ya mezcla las 3
+  // cosas y no hay forma de separarlas después.
+  const itemsCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
+  let taxCents = 0;
 
   // ── Cupón de envío gratis (beneficio de Cacusa Lovers) ────────────────
   // Va ANTES de armar la línea de envío. El envío se recalcula siempre en el servidor
@@ -637,10 +672,11 @@ async function handleCreatePaymentLink(body, env, allowed) {
   // ── Ecuador IVA 15% ────────────────────────────────────────────────────
   if (isEcuador) {
     const baseCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
+    taxCents = Math.round(baseCents * 0.15);
     lineItems.push({
       name: 'IVA Ecuador (15%)',
       quantity: '1',
-      base_price_money: { amount: Math.round(baseCents * 0.15), currency: 'USD' }
+      base_price_money: { amount: taxCents, currency: 'USD' }
     });
   }
 
@@ -651,10 +687,11 @@ async function handleCreatePaymentLink(body, env, allowed) {
     if (rate) {
       const baseCents = lineItems.reduce((s, i) => s + i.base_price_money.amount, 0);
       const pct = (rate * 100).toFixed(2).replace(/\.?0+$/, '');
+      taxCents = Math.round(baseCents * rate);
       lineItems.push({
         name: `Sales Tax ${st} (${pct}%)`,
         quantity: '1',
-        base_price_money: { amount: Math.round(baseCents * rate), currency: 'USD' }
+        base_price_money: { amount: taxCents, currency: 'USD' }
       });
     }
   }
@@ -762,6 +799,9 @@ async function handleCreatePaymentLink(body, env, allowed) {
         telefono:  customer?.phone || '',
         email:     customer?.email || '',
         direccion: customer?.address || '',
+        // Auditoría (20 sep, F10): faltaba por completo — el admin nunca veía el
+        // apartamento/unidad de un pedido pagado con tarjeta.
+        apto:      customer?.apto || '',
         ciudad:    customer?.city || '',
         estado:    customer?.state || '',
         zip:       customer?.zip || '',
@@ -772,13 +812,26 @@ async function handleCreatePaymentLink(body, env, allowed) {
         id: i.id, name: i.name, price: i.price,
         personalization: i.personalization || undefined,
       })),
+      // Auditoría (20 sep, F10): antes solo se mandaba `total` — el admin quedaba con
+      // subtotal/envío/impuesto en 0 para TODO pedido pagado con tarjeta.
+      subtotal: +(itemsCents / 100).toFixed(2),
+      envio:    +(serverShipping || 0).toFixed(2),
+      impuesto: +(taxCents / 100).toFixed(2),
       total: +(netCents / 100).toFixed(2),
       pago:  'Tarjeta',
       estado: 'Nuevo',
       notas: orderNotesParts.join(' | ') || undefined,
+      // Auditoría (20 sep, F12): antes nunca se mandaba para pedidos de Square — el
+      // admin no tenía forma de saber qué cupón se usó, y /coupon/burn (público)
+      // rechaza cualquier pedido sin cuponAplicado === code.
+      cuponAplicado: cpCode || undefined,
     },
     giftCard: gcDiscountCents > 0 ? { code: gcCode, amountCents: gcDiscountCents, reservationRef: gcReservationRef } : null,
-    coupon:   cpDiscountCents > 0 ? { code: cpCode, amountCents: cpDiscountCents, phone: customer?.phone || '', email: customer?.email || '' } : null,
+    // Auditoría (20 sep, F12): antes solo se guardaba si el descuento era > 0 en dinero —
+    // un cupón `freeship` (descuento $0 por diseño, ver couponPeekCents) nunca se
+    // quemaba/registraba uso por este camino. Ahora depende de si HAY un código de
+    // cupón, no de cuánto descontó.
+    coupon:   cpCode ? { code: cpCode, amountCents: cpDiscountCents, phone: customer?.phone || '', email: customer?.email || '' } : null,
     createdAt: new Date().toISOString(),
     processed: false,
   };
@@ -867,6 +920,13 @@ export default {
     const url     = new URL(request.url);
     const origin  = request.headers.get('Origin') || '';
     const allowed = env.ALLOWED_ORIGIN || 'https://cacusabytaitus.com';
+
+    // Auditoría (20 sep, F20): ninguna ruta (ni el webhook de Square, con eventos JSON
+    // chicos, ni /create-payment-link, con hasta 50 items) necesita más de esto — 200KB
+    // deja margen de sobra sin dejar de acotar un body arbitrariamente grande.
+    if (Number(request.headers.get('content-length') || 0) > 200_000) {
+      return new Response('Payload too large', { status: 413 });
+    }
 
     // El webhook de Square no manda Origin de navegador — se autentica con la firma, no con CORS
     if (url.pathname === '/webhook') {
