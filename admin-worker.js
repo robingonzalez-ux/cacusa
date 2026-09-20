@@ -81,15 +81,23 @@ export default {
     if (request.method !== 'POST') return err('Method not allowed', 405, allowOrigin);
 
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
+    // Auditoría (20 sep, F20): ninguna ruta pública tenía límite de tamaño de body —
+    // cualquiera podía mandar un POST arbitrariamente grande. 2MB deja margen de sobra
+    // sobre el payload real más grande de este Worker (guardar el catálogo completo
+    // desde el admin — data/products.json pesa ~140KB hoy y crece con cada producto
+    // nuevo), sin dejar de acotar un abuso real.
+    if (Number(request.headers.get('content-length') || 0) > 2_000_000) {
+      return err('Cuerpo demasiado grande', 413, allowOrigin);
+    }
     let body;
     try { body = await request.json(); } catch { return err('JSON inválido', 400, allowOrigin); }
 
     try {
       // WebAuthn — antes de /login porque '/webauthn/login'.endsWith('/login') es true
-      if (path.endsWith('/webauthn/login-challenge')) return await handleWaLoginChallenge(body, env, allowOrigin);
-      if (path.endsWith('/webauthn/login'))           return await handleWaLogin(body, env, allowOrigin);
-      if (path.endsWith('/webauthn/reg-challenge'))   return await handleWaRegChallenge(body, env, allowOrigin);
-      if (path.endsWith('/webauthn/register'))        return await handleWaRegister(body, env, allowOrigin);
+      if (path.endsWith('/webauthn/login-challenge')) return await handleWaLoginChallenge(body, env, allowOrigin, request);
+      if (path.endsWith('/webauthn/login'))           return await handleWaLogin(body, env, allowOrigin, request);
+      if (path.endsWith('/webauthn/reg-challenge'))   return await handleWaRegChallenge(body, env, allowOrigin, request);
+      if (path.endsWith('/webauthn/register'))        return await handleWaRegister(body, env, allowOrigin, request);
 
       if (path.endsWith('/login')) return await handleLogin(body, env, allowOrigin, request);
 
@@ -366,6 +374,13 @@ async function handleSave(body, env, origin, session, ctx) {
   const { path, content, message } = body;
   if (path !== PRODUCTS_PATH && path !== ORDERS_PATH) return err('Ruta no permitida', 403, origin);
   if (typeof content !== 'string') return err('Contenido inválido', 400, origin);
+  // Auditoría (20 sep, F15): nada validaba que `content` fuera JSON válido antes de
+  // subirlo a GitHub — un catálogo corrupto rompía la tienda entera hasta que alguien
+  // lo notara y lo arreglara a mano. Solo aplica a PRODUCTS_PATH (el editor de
+  // pedidos legado ya es no-op, ver abajo).
+  if (path === PRODUCTS_PATH) {
+    try { JSON.parse(content); } catch (e) { return err('JSON inválido: ' + e.message, 400, origin); }
+  }
 
   // Pedidos: ya no se guardan acá. Antes esto sobreescribía TODO el blob de pedidos con
   // lo que tuviera cargado el navegador — si un pedido nuevo entraba mientras alguien
@@ -472,7 +487,12 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
       notas:     str(cliente.notas,     500),
     },
     productos: (Array.isArray(order.productos) ? order.productos : []).slice(0, 50).map(p => ({
-      id:              str(p.id,   50),
+      // Auditoría (20 sep, F10): los ids reales del catálogo son numéricos
+      // (timestamps) — str() solo dejaba pasar strings, así que cualquier
+      // pedido con p.id numérico (el camino "trusted" desde Square no pasa
+      // por validatePublicOrderProducts, que sí normaliza a string) quedaba
+      // guardado con id:'' para siempre.
+      id:              p.id != null ? String(p.id).slice(0, 50) : '',
       name:            str(p.name || p.nombre, 150),
       price:           num(p.price || p.precio),
       qty:             typeof p.qty === 'number' ? Math.max(1, Math.floor(p.qty)) : 1,
@@ -631,6 +651,19 @@ async function migrateLegacyLeadsIfNeeded(env) {
 // `order.productos` acá (con `qty`, no un item por unidad como en Square).
 const CATALOG_URL = 'https://cacusabytaitus.com/data/products.json';
 function js_round2(n) { return Math.round(n * 100) / 100; }
+// Auditoría (20 sep, F11): el checkout nunca leía prod.promo — siempre cobraba el
+// precio base aunque la tienda le mostrara a la clienta el precio con descuento de
+// una promoción activa (mismo criterio que ui_kits/store/index.html usa para decidir
+// si mostrar el precio de promo: promo.price presente y promo.endsAt, si existe, en
+// el futuro). Duplicada en square-payment-worker.js (sin módulos compartidos entre
+// Workers) — cualquier cambio acá hay que replicarlo allá también.
+function resolveBasePrice(prod) {
+  if (prod.promo && prod.promo.price) {
+    const ended = prod.promo.endsAt && new Date(prod.promo.endsAt) < new Date();
+    if (!ended) return +prod.promo.price;
+  }
+  return prod.price;
+}
 
 async function fetchCatalogForOrderValidation() {
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -673,12 +706,17 @@ async function validatePublicOrderProducts(productos, env) {
     if (item.isCombo) {
       const combo = comboMap.get(String(item.id));
       if (!combo) throw new Error(`Combo no encontrado en el catálogo (id: ${item.id})`);
+      // Auditoría (20 sep, F11): antes no se chequeaba disponibilidad de combos (solo
+      // de productos sueltos) — inofensivo hoy porque el catálogo real no tiene ningún
+      // combo, pero cierra el hueco para cuando se agregue el primero.
+      if (combo.available === false) throw new Error(`Combo no disponible: ${combo.name || item.id}`);
       return { ...item, price: combo.price };
     }
     const prod = productMap.get(String(item.id));
     if (!prod) throw new Error(`Producto no encontrado en el catálogo (id: ${item.id}, pos: ${idx})`);
     if (prod.available === false) throw new Error(`Producto no disponible: ${prod.name || item.id}`);
-    const price = surcharges[String(prod.id)] === true ? js_round2(prod.price * 1.04) : prod.price;
+    const basePrice = resolveBasePrice(prod);
+    const price = surcharges[String(prod.id)] === true ? js_round2(basePrice * 1.04) : basePrice;
     return { ...item, price };
   });
   const subtotal = validated.reduce((s, p) => s + p.price * (Math.max(1, Math.floor(Number(p.qty) || 1))), 0);
@@ -1009,8 +1047,18 @@ async function handleSquarePaymentLink(body, env, origin, request) {
 
 // ── Gift Cards (almacenadas en KV, nunca accesibles desde el navegador) ──────
 const GC_CHARSET = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; // sin caracteres ambiguos
+// Auditoría (20 sep, F21): Math.random() no es un CSPRNG — cambio gratuito a
+// crypto.getRandomValues(), sin downside (Workers siempre tiene Web Crypto).
+// Rejection sampling porque 256 no es múltiplo de 31 (GC_CHARSET.length) — un simple
+// `byte % 31` sesgaría levemente los primeros caracteres del charset.
+function randomCharsetIndex(len) {
+  const limit = 256 - (256 % len);
+  let byte;
+  do { byte = crypto.getRandomValues(new Uint8Array(1))[0]; } while (byte >= limit);
+  return byte % len;
+}
 function gcGenCode() {
-  const seg = () => Array.from({ length: 4 }, () => GC_CHARSET[Math.floor(Math.random() * GC_CHARSET.length)]).join('');
+  const seg = () => Array.from({ length: 4 }, () => GC_CHARSET[randomCharsetIndex(GC_CHARSET.length)]).join('');
   return `CACUSA-${seg()}-${seg()}`;
 }
 function gcKey(code) { return 'gc:' + String(code || '').toUpperCase().replace(/[^A-Z0-9-]/g, ''); }
@@ -2054,14 +2102,25 @@ async function checkAbandonedCarts(env, { leads: preloaded, refreshCache = true 
   const stale = pending.filter(l => new Date(l.date).getTime() <= cutoff);
   if (!stale.length) return leads;
 
-  // Si ya hay un pedido de ese email posterior al lead, no fue abandono — se completó.
-  let orderEmails = new Set();
+  // Si ya hay un pedido de ese email POSTERIOR al lead, no fue abandono — se completó.
+  // Auditoría (20 sep, F17): antes esto era un Set de "compró alguna vez en el
+  // historial" — una clienta recurrente nunca volvía a generar aviso de carrito
+  // abandonado, aunque el carrito de HOY fuera un abandono genuino nuevo. Ahora se
+  // guarda la fecha del pedido MÁS RECIENTE por email y se compara contra la fecha
+  // del lead — el comentario de arriba ya decía "posterior al lead", pero el código
+  // no lo comprobaba.
+  let latestOrderByEmail = new Map();
   const ordersRaw = await env.CACUSA_KV.get('orders_cache');
   if (ordersRaw) {
     try {
       const od = JSON.parse(ordersRaw);
       if (Array.isArray(od.orders)) {
-        orderEmails = new Set(od.orders.map(o => (o.cliente?.email || '').toLowerCase()).filter(Boolean));
+        for (const o of od.orders) {
+          const em = (o.cliente?.email || '').toLowerCase();
+          if (!em) continue;
+          const t = o.fecha ? new Date(o.fecha).getTime() : 0;
+          if (!latestOrderByEmail.has(em) || t > latestOrderByEmail.get(em)) latestOrderByEmail.set(em, t);
+        }
       }
     } catch {}
   }
@@ -2071,7 +2130,8 @@ async function checkAbandonedCarts(env, { leads: preloaded, refreshCache = true 
     lead.notified = true; // se marca sí o sí para no re-evaluarlo cada vez — muta el
     changed = true;        // objeto dentro de `leads` también, son la misma referencia.
     await env.CACUSA_KV.put(leadKey(lead.email), JSON.stringify(lead));
-    if (orderEmails.has(lead.email)) continue; // compró — no es abandono real
+    const latestOrderTime = latestOrderByEmail.get(lead.email);
+    if (latestOrderTime != null && latestOrderTime >= new Date(lead.date).getTime()) continue; // compró después — no es abandono real
     const itemNames = (lead.cart || []).map(i => i.name).filter(Boolean).slice(0, 3).join(', ');
     const totalTxt = typeof lead.total === 'number' ? ` · $${lead.total.toFixed(2)}` : '';
     await sendWebPushAll(env, {
@@ -2661,7 +2721,22 @@ const WA_USERS   = ['robin.gonzalez', 'tita.jaramillo'];
 // igual. Hallazgo del 19 sep (auditoría propia, A07-A19).
 const WA_ORIGIN = 'https://cacusabytaitus.com';
 
-async function handleWaRegChallenge(body, env, origin) {
+// Auditoría (20 sep, F20): las 4 rutas de WebAuthn no tenían ningún tope de intentos
+// por IP más allá del TTL de 300s del challenge — a diferencia de /login (loginrl:) y
+// del resto de rutas públicas de este archivo. Límite generoso (30/hora): las 2
+// cuentas reales rara vez inician sesión más de un puñado de veces al día.
+async function waRateLimit(env, request, prefix, max = 30) {
+  if (!env.CACUSA_KV) return true;
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `${prefix}:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= max) return false;
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  return true;
+}
+
+async function handleWaRegChallenge(body, env, origin, request) {
+  if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
   const session = await verifyToken(body.token, env);
   if (!session) return err('Sesión inválida', 401, origin);
   const challenge = b64url(crypto.getRandomValues(new Uint8Array(32)));
@@ -2671,7 +2746,8 @@ async function handleWaRegChallenge(body, env, origin) {
   return ok({ challenge, rpId: WA_RP_ID, rpName: WA_RP_NAME, userId: session.user, excludeIds }, origin);
 }
 
-async function handleWaRegister(body, env, origin) {
+async function handleWaRegister(body, env, origin, request) {
+  if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
   const session = await verifyToken(body.token, env);
   if (!session) return err('Sesión inválida', 401, origin);
   const { challenge, credentialId, attestationObject, clientDataJSON } = body;
@@ -2721,7 +2797,8 @@ async function handleWaRegister(body, env, origin) {
   return ok({ ok: true }, origin);
 }
 
-async function handleWaLoginChallenge(body, env, origin) {
+async function handleWaLoginChallenge(body, env, origin, request) {
+  if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
   const { user } = body;
   // Antes distinguía "usuario no encontrado" de "sin Face ID configurado" —
   // con solo 2 cuentas reales eso alcanzaba para confirmar cuáles existen.
@@ -2737,7 +2814,8 @@ async function handleWaLoginChallenge(body, env, origin) {
   return ok({ challenge, credentialId, rpId: WA_RP_ID }, origin);
 }
 
-async function handleWaLogin(body, env, origin) {
+async function handleWaLogin(body, env, origin, request) {
+  if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
   const { challenge, credentialId, authenticatorData, clientDataJSON, signature } = body;
   if (!challenge || !credentialId || !authenticatorData || !clientDataJSON || !signature) return err('Datos incompletos', 400, origin);
   const user = await env.CACUSA_KV.get(`walc:${challenge}`);
