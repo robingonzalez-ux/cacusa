@@ -163,6 +163,17 @@ export default {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
         return await handleMarketsLoad(env, allowOrigin);
       }
+      // La llave pública VAPID no es secreta (por diseño del estándar Web Push, viaja
+      // al navegador en cada suscripción) — antes vivía hardcodeada por duplicado en
+      // ui_kits/admin/index.html, y quedó desincronizada del secret real la última vez
+      // que se rotó el par de llaves (bug real, 20 sep: ningún "Activar" podía funcionar
+      // hasta que se corrigieran los 2 lugares a mano). Ahora hay un solo lugar real (el
+      // secret VAPID_PUBLIC_KEY) y el frontend la pide acá en vez de tener su propia copia.
+      if (path.endsWith('/pub/vapid-key')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        if (!env.VAPID_PUBLIC_KEY) return err('VAPID_PUBLIC_KEY no configurado', 500, allowOrigin);
+        return ok({ publicKey: env.VAPID_PUBLIC_KEY }, allowOrigin);
+      }
 
       // Square — proxy para el POS (Square no responde CORS a navegadores)
       if (path.endsWith('/square/locations')) {
