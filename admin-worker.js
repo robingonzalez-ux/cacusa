@@ -2681,12 +2681,15 @@ async function sendGmail(env, { to, subject, html }) {
 // Labels API). Mientras no estén listas, este endpoint simplemente va a fallar
 // con el error real que devuelva USPS (nunca falla en silencio).
 //
-// OJO al implementar con credenciales reales: los nombres exactos de los campos
-// del payload de /labels/v3/label (imageInfo/packageDescription/toAddress/etc.)
-// son un best-effort basado en la documentación pública de USPS — no se pudieron
-// verificar contra la API en vivo desde este entorno (sin acceso de red a
-// developers.usps.com). Ajustar contra la respuesta real de un intento en el
-// ambiente TEM antes de asumir que el shape está 100% correcto.
+// Payload verificado (20 sep) contra el spec OpenAPI real de la Labels API
+// (labels_16_0.yaml, descargado por el usuario de developers.usps.com) — ya no
+// es un best-effort. Puntos no obvios confirmados contra el spec real:
+//   - weightUOM SOLO acepta 'lb' (no existe 'oz') — el peso se recibe/guarda en
+//     onzas (más natural para bisutería) y se convierte acá mismo antes de mandar.
+//   - Accept: application/vnd.usps.labels+json pide la respuesta como un solo
+//     JSON (trackingNumber + labelImage en base64, ambos top-level) en vez del
+//     multipart/form-data que devuelve por defecto la API — mucho más simple de
+//     manejar en un Worker.
 function uspsBaseUrl(env) {
   return env.USPS_ENV === 'prod' ? 'https://apis.usps.com' : 'https://apis-tem.usps.com';
 }
@@ -2722,7 +2725,20 @@ async function uspsPaymentToken(env, oauthToken) {
 // fromAddress (dirección de remitente) sale de un secret, NUNCA hardcodeada acá —
 // este archivo vive en workers-src, que también es público (ver CLAUDE.md), y una
 // dirección real de casa/negocio no debe quedar en texto plano en ningún repo.
-async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weightOz }) {
+//
+// Payload verificado contra el spec OpenAPI real de la Labels API (compartido por
+// el usuario, labels_16_0.yaml de developers.usps.com) — ya no es un best-effort:
+// - weightUOM SOLO acepta 'lb' en el schema real (no existe 'oz') — se recibe el
+//   peso en onzas (más natural para bisutería) y se convierte acá mismo.
+// - length/width/height/dimensionsUOM son propiedades planas de packageDescription.
+// - Accept: application/vnd.usps.labels+json pide la respuesta como un solo JSON
+//   (LabelVendorResponse) en vez del multipart/form-data por defecto — mucho más
+//   simple de parsear en un Worker. trackingNumber/labelImage confirmados exactos
+//   contra ese schema (labelImage = base64 del PDF, top-level).
+// - X-Idempotency-Key (orderId) evita comprar 2 guías si la llamada se reintenta
+//   por un corte de red — mismo criterio de idempotencia ya usado en el resto del
+//   repo (ver _orderIdemKey en la tienda).
+async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weightOz, lengthIn, widthIn, heightIn, orderId }) {
   if (!env.USPS_FROM_ADDRESS) throw new Error('USPS_FROM_ADDRESS no configurado');
   let fromAddress;
   try { fromAddress = JSON.parse(env.USPS_FROM_ADDRESS); }
@@ -2732,6 +2748,8 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
     headers: {
       Authorization: `Bearer ${oauthToken}`,
       'X-Payment-Authorization-Token': paymentToken,
+      'X-Idempotency-Key': String(orderId),
+      Accept: 'application/vnd.usps.labels+json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -2739,11 +2757,16 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
       toAddress,
       fromAddress,
       packageDescription: {
-        weightUOM: 'oz',
-        weight: weightOz,
+        weightUOM: 'lb',
+        weight: weightOz / 16,
+        dimensionsUOM: 'in',
+        length: lengthIn,
+        width: widthIn,
+        height: heightIn,
         mailClass: 'USPS_GROUND_ADVANTAGE',
         processingCategory: 'MACHINABLE',
         rateIndicator: 'SP',
+        mailingDate: new Date().toISOString().slice(0, 10),
       },
     }),
   });
@@ -2774,22 +2797,24 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
 
   const bodyWeightOz = Number(body.weightOz);
   let finalWeightOz = bodyWeightOz > 0 ? bodyWeightOz : null;
-  if (!finalWeightOz) {
-    try {
-      const content = await ghGetContent(PRODUCTS_PATH, env);
-      const catalog = content ? JSON.parse(content.text) : null;
-      finalWeightOz = catalog?.config?.shipping?.uspsDefaultPackage?.weightOz || 4;
-    } catch (e) {
-      console.error('No se pudo leer uspsDefaultPackage del catálogo, usando 4oz por defecto:', e.message);
-      finalWeightOz = 4;
-    }
+  let pkg = null;
+  try {
+    const content = await ghGetContent(PRODUCTS_PATH, env);
+    const catalog = content ? JSON.parse(content.text) : null;
+    pkg = catalog?.config?.shipping?.uspsDefaultPackage || null;
+  } catch (e) {
+    console.error('No se pudo leer uspsDefaultPackage del catálogo, usando defaults:', e.message);
   }
+  if (!finalWeightOz) finalWeightOz = pkg?.weightOz || 4;
+  const lengthIn = pkg?.lengthIn || 6;
+  const widthIn = pkg?.widthIn || 4;
+  const heightIn = pkg?.heightIn || 2;
 
   try {
     const oauthToken = await uspsOAuthToken(env);
     const paymentToken = await uspsPaymentToken(env, oauthToken);
     const label = await uspsCreateLabel(env, {
-      oauthToken, paymentToken, weightOz: finalWeightOz,
+      oauthToken, paymentToken, weightOz: finalWeightOz, lengthIn, widthIn, heightIn, orderId: order.id,
       toAddress: {
         firstName: cliente.nombre,
         lastName: cliente.apellido,
@@ -2801,9 +2826,9 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
         phone: cliente.telefono || undefined,
       },
     });
-    order.tracking = label.trackingNumber || label.tracking_number || '';
+    order.tracking = label.trackingNumber || '';
     order.carrier = 'USPS';
-    order.labelBase64 = label.labelImage || label.labelImageData || label.label || '';
+    order.labelBase64 = label.labelImage || '';
     order.labelFormat = 'PDF';
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
