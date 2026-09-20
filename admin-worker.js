@@ -2836,9 +2836,14 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     console.error('No se pudo leer uspsDefaultPackage del catálogo, usando defaults:', e.message);
   }
   if (!finalWeightOz) finalWeightOz = pkg?.weightOz || 4;
-  const lengthIn = pkg?.lengthIn || 6;
-  const widthIn = pkg?.widthIn || 4;
-  const heightIn = pkg?.heightIn || 2;
+  // Las 3 dimensiones del body solo se usan si vienen las 3 completas y válidas —
+  // mezclar 1-2 puntuales con el resto del default del catálogo daría una caja con
+  // proporciones sin sentido (ej. un largo puntual con el ancho/alto de otro paquete).
+  const bodyLengthIn = Number(body.lengthIn), bodyWidthIn = Number(body.widthIn), bodyHeightIn = Number(body.heightIn);
+  const bodyHasDims = bodyLengthIn > 0 && bodyWidthIn > 0 && bodyHeightIn > 0;
+  const lengthIn = bodyHasDims ? bodyLengthIn : (pkg?.lengthIn || 6);
+  const widthIn  = bodyHasDims ? bodyWidthIn  : (pkg?.widthIn  || 4);
+  const heightIn = bodyHasDims ? bodyHeightIn : (pkg?.heightIn || 2);
 
   try {
     const oauthToken = await uspsOAuthToken(env);
