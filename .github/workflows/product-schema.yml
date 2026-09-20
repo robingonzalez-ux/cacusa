@@ -39,6 +39,15 @@ on:
     paths:
       - "data/products.json"
   workflow_dispatch: {}
+  # Auditoría SEO externa (20 sep): el recargo del 4% con tarjeta vive en
+  # Cloudflare KV, no en data/products.json — prender/apagarlo desde el panel
+  # nunca disparaba este workflow, así que el precio "horneado" en el JSON-LD
+  # estático podía quedar desactualizado indefinidamente hasta el próximo
+  # commit de catálogo. admin-worker.js dispara este evento (repository_dispatch,
+  # mismo patrón ya usado por tiktok-bulk-export.yml) cada vez que se guarda un
+  # cambio real de recargos.
+  repository_dispatch:
+    types: [surcharge-updated]
 
 permissions:
   contents: write

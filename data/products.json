@@ -691,7 +691,7 @@
     },
     {
       "name": "Cadena San Benito con Cruz ",
-      "name_en": "Saint Benedict Chain with Cross",
+      "name_en": "Saint Benedict Chain with Zirconia Cross",
       "category": "Cadenas",
       "price": 48,
       "oldPrice": 55,
@@ -1290,7 +1290,7 @@
       "zoom": 0.85,
       "material": "Baño de oro 18k",
       "id": 1781884983133,
-      "name_en": "Saint Benedict Chain with Cross"
+      "name_en": "Saint Benedict Medallion with Cross"
     },
     {
       "name": "Corazón de perla con una silueta de corazón de circon ",
@@ -1633,7 +1633,7 @@
       "img": "collar",
       "color": "rose",
       "tag": "Nuevo",
-      "description": "Pearl Flower Stud Earrings - Delicate ♡\nThe timeless classic, now in a smaller size\n18K Gold Plated + White Pearls | Center of 6 pearls\nLightweight + Hypoallergenic\nPerfect for everyday elegance",
+      "description": "Aretes de perla tipo flor - Delicados ♡\nEl clásico atemporal, ahora en un tamaño más pequeño\nBaño de oro 18K + perlas blancas | Centro de 6 perlas\nLivianos + hipoalergénicos\nPerfectos para el uso diario",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1786302607718_img_5614_jpeg.webp",
@@ -1790,7 +1790,7 @@
       "promo": null
     },
     {
-      "name": "Hand chain ",
+      "name": "Hand chain de capas",
       "category": "Hand chain",
       "price": 28,
       "oldPrice": null,
@@ -1809,7 +1809,7 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1788107375752_img_6845_jpeg.webp",
         "https://cacusabytaitus.com/ui_kits/store/images/1788107383280_img_6846_jpeg.webp"
       ],
-      "name_en": "Hand chain",
+      "name_en": "Layered hand chain",
       "description_en": "18K GOLD PLATED Stainless Steel \nPrecious, they make your hand look feminine and delicate",
       "id": 1788107453046,
       "promo": null
@@ -1837,7 +1837,7 @@
       "promo": null
     },
     {
-      "name": "Hand chain ",
+      "name": "Hand chain de rombos",
       "category": "Hand chain",
       "price": 28,
       "oldPrice": null,
@@ -1864,7 +1864,7 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1788539905527_img_7205_jpeg.webp",
         "https://cacusabytaitus.com/ui_kits/store/images/1788539911809_img_7204_jpeg.webp"
       ],
-      "name_en": "Hand chain",
+      "name_en": "Geometric hand chain",
       "description_en": "Beautiful 18K Goldplated Stainless Steel hand chains to show off your most beautiful and feminine hand.",
       "id": 1788540460219,
       "promo": null
@@ -1987,7 +1987,7 @@
     },
     {
       "name": "Aretes de flor ",
-      "name_en": "Earrings",
+      "name_en": "Flower earrings",
       "category": "Aretes",
       "price": 25,
       "oldPrice": null,
@@ -2052,8 +2052,8 @@
       "promo": null
     },
     {
-      "name": "Cadena doble",
-      "name_en": "Double strand",
+      "name": "Cadena doble de eslabones",
+      "name_en": "Double link chain",
       "category": "Cadenas",
       "price": 38,
       "oldPrice": null,
@@ -2096,8 +2096,8 @@
       "promo": null
     },
     {
-      "name": "Anillo estrellas",
-      "name_en": "Ring stars",
+      "name": "Anillo estrellas abierto",
+      "name_en": "Open star ring",
       "category": "Anillos",
       "price": 25,
       "oldPrice": null,
@@ -2206,8 +2206,8 @@
       "promo": null
     },
     {
-      "name": "Anillo estrellas",
-      "name_en": "Ring stars",
+      "name": "Anillo estrella de mar",
+      "name_en": "Starfish ring",
       "category": "Anillos",
       "price": 25,
       "oldPrice": null,
@@ -2508,7 +2508,7 @@
       "description_en": "A bracelet full of symbols that tell a story. ♡✦\nCrafted with malachite stones and Gold Filled details, each charm carries a special meaning: the cross represents faith and protection; the airplane, freedom, travel and new destinations; the star, dreams and guidance; the coin, prosperity and abundance; the hand of Fatima, protection and good fortune; and the eye, traditionally associated with protection from negative energy. Malachite is symbolically associated with transformation and growth.\n\nMore than a bracelet, it's a collection of good wishes to carry with you. ♡✦",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789838861054_6b1e2e04_d18b_4ccb_8110_614f7a198c4d_jpe.webp",
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789838861054_6b1e2e04_d18b_4ccb_8110_614f7a198c4d_jpe.webp",
       "focalX": 39.20401640788183,
       "focalY": 77.56792577866138,
       "zoom": 1,
@@ -2530,7 +2530,7 @@
       "description_en": "A touch of sweetness that also feels sophisticated. ✦\nGold Filled rose gold bracelet, with delicate beads and a central teddy bear charm surrounded by multicolored zircons that provide a subtle and different shine. A feminine and special piece, perfect to wear every day or give to someone you want to always be close. ♡",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://robingonzalez-ux.github.io/cacusa/ui_kits/store/images/1789840075053_adfbc104_f6c8_4b89_b81f_ae33d4ad2070_jpe.webp",
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789840075053_adfbc104_f6c8_4b89_b81f_ae33d4ad2070_jpe.webp",
       "focalX": 24.624824890320507,
       "focalY": 69.48310139165011,
       "zoom": 1,
@@ -2592,8 +2592,8 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Cuenta tu historia con dijes. No es solo una pulsera: cada dije representa algo especial para ti. Amor, protección, suerte, familia, sueños, fe o esa persona que siempre quieres llevar contigo. ✨\nElige los dijes que tengan significado para ti y crea una combinación única. Porque tu historia es diferente a todas, y tu pulsera también debería serlo. ❤️",
-      "description_en": "Cuenta tu historia con dijes. No es solo una pulsera: cada dije representa algo especial para ti. Amor, protección, suerte, familia, sueños, fe o esa persona que siempre quieres llevar contigo. ✨\nElige los dijes que tengan significado para ti y crea una combinación única. Porque tu historia es diferente a todas, y tu pulsera también debería serlo. ❤️\n\nIdeal también para regalar: elige los símbolos que mejor representen a esa persona y convierte el regalo en un mensaje hecho especialmente para ella.",
+      "description": "Cuenta tu historia con dijes. No es solo una pulsera: cada dije representa algo especial para ti. Amor, protección, suerte, familia, sueños, fe o esa persona que siempre quieres llevar contigo. ✨\nElige los dijes que tengan significado para ti y crea una combinación única. Porque tu historia es diferente a todas, y tu pulsera también debería serlo. ❤️\n\nIdeal también para regalar: elige los símbolos que mejor representen a esa persona y convierte el regalo en un mensaje hecho especialmente para ella.",
+      "description_en": "Tell your story with charms. It's not just a bracelet: each charm represents something special to you. Love, protection, luck, family, dreams, faith, or that person you always want to carry with you. ✦\nChoose the charms that are meaningful to you and create a unique combination. Because your story is different from everyone else's, and your bracelet should be too. ♡\n\nAlso perfect as a gift: choose the symbols that best represent that person and turn the gift into a message made especially for her.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1789855050346_2e3be3d1_5960_462e_a1cc_2cc9bc3acda1_jpe.webp",
@@ -2652,8 +2652,8 @@
       "promo": null
     },
     {
-      "name": "Cadena doble ",
-      "name_en": "Double strand",
+      "name": "Cadena doble mariposa",
+      "name_en": "Butterfly double chain",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
