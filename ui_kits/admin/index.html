@@ -54,7 +54,13 @@ const ORDERS_PATH    = 'data/orders.json';
 const IMAGES_PATH    = 'ui_kits/store/images';
 const LOVERS_WEBHOOK_URL = 'https://cacusa-lovers-webhook.facturacioncacusa.workers.dev';
 const STORE_URL      = 'https://cacusabytaitus.com/';
-const VAPID_PUB_KEY  = 'BLLRPGO7zFrAiyfZ1KzNlaysb9wUVJnZeog3Z4sVJRqSFXiodQ9g8PALWr2uYT7sRuZ6W2V0iaDRQ-5XUcQif9U';
+// Debe ser BYTE A BYTE la misma llave pública que el secret VAPID_PUBLIC_KEY
+// configurado en Cloudflare (Worker cacusa-admin) — son 2 lugares separados
+// para el mismo par de llaves, y si uno se rota sin el otro, TODAS las
+// suscripciones fallan (VapidPkHashMismatch) sin importar cuántas veces se
+// vuelva a suscribir el navegador (bug real encontrado 20 sep: acá seguía
+// la llave vieja mientras el backend ya tenía la nueva).
+const VAPID_PUB_KEY  = 'BC_EbpyzrnHxFFv-a8Cgtx5LlUuCL_htSLA9dA8XhCDjzjclk-1VvjGucXEXysrZBiNtOu5EuIdGYy8QYrOrD5M';
 
 const USERS = {
   'tita.jaramillo': { name: 'Tita Jaramillo',  avatar: '👸', color: '#E85D8A' },
