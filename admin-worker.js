@@ -234,6 +234,23 @@ export default {
       const session = await verifyToken(body.token, env);
       if (!session) return err('Sesión inválida o expirada. Inicia sesión de nuevo.', 401, allowOrigin);
 
+      // Auditoría (20 sep, F21-c): "cerrar sesión en todos los dispositivos" — borra TODAS
+      // las llaves sess:<user>:* de esta cuenta (incluida la de este mismo request), así
+      // que cualquier token de esa persona (robado o no) deja de servir de inmediato,
+      // aunque su firma/expiración sigan siendo válidas.
+      if (path.endsWith('/logout-all')) {
+        let revoked = 0;
+        if (env.CACUSA_KV) {
+          let cursor;
+          do {
+            const page = await env.CACUSA_KV.list({ prefix: `sess:${session.user}:`, cursor, limit: 1000 });
+            for (const k of page.keys) { await env.CACUSA_KV.delete(k.name); revoked++; }
+            cursor = page.list_complete ? null : page.cursor;
+          } while (cursor);
+        }
+        return ok({ ok: true, revoked }, allowOrigin);
+      }
+
       if (path.endsWith('/test-ntfy')) {
         if (!env.NTFY_TOPIC) return ok({ error: 'NTFY_TOPIC no configurado' }, allowOrigin);
         try {
@@ -335,7 +352,7 @@ async function handleLogin(body, env, origin, request) {
     }
     return err('Usuario o contraseña incorrectos.', 401, origin);
   }
-  const token = await signToken({ user, exp: Date.now() + SESSION_HOURS * 3600 * 1000 }, env);
+  const token = await createSession(user, env);
   return ok({ token, user }, origin);
 }
 
@@ -2617,6 +2634,22 @@ async function signToken(payload, env) {
   const sig = await hmac(p, env.SESSION_SECRET);
   return p + '.' + sig;
 }
+function sessionKey(user, jti) { return `sess:${user}:${jti}`; }
+// Auditoría (20 sep, F21-c): las sesiones eran 100% stateless (HMAC + expiración) — sin
+// ningún registro server-side, no había forma de invalidar UN token específico antes de
+// sus 12h naturales sin también invalidar TODAS las sesiones de ese usuario (quitándolo
+// de VALID_USERS). Cada login ahora genera un `jti` random y lo registra en KV
+// (`sess:<user>:<jti>`, TTL igual a la sesión) — revocar es borrar esa key sola.
+// Tokens firmados ANTES de este cambio no tienen `jti`: verifyToken() los sigue
+// aceptando igual (no hay sesión activa que revocar para ellos) hasta que expiren solos.
+async function createSession(user, env) {
+  const exp = Date.now() + SESSION_HOURS * 3600 * 1000;
+  const jti = b64url(crypto.getRandomValues(new Uint8Array(16)));
+  if (env.CACUSA_KV) {
+    await env.CACUSA_KV.put(sessionKey(user, jti), '1', { expirationTtl: SESSION_HOURS * 3600 });
+  }
+  return signToken({ user, exp, jti }, env);
+}
 async function verifyToken(token, env) {
   if (!token || typeof token !== 'string' || token.indexOf('.') < 0) return null;
   const [p, sig] = token.split('.');
@@ -2631,6 +2664,14 @@ async function verifyToken(token, env) {
   // expiración natural, aunque passwordFor() ya rechazara ese usuario en el login. Revalidar
   // acá invalida de inmediato cualquier token histórico que no sea de un usuario real.
   if (!VALID_USERS.has(payload.user)) return null;
+  // F21-c: si el token tiene jti, su sesión debe seguir registrada en KV — si no está
+  // (revocada a mano vía /logout-all, o el binding no existía al momento del login), el
+  // token deja de servir aunque la firma/expiración sigan siendo válidas. Sin jti (tokens
+  // viejos, o KV no disponible al firmar) no hay nada que chequear — se acepta como antes.
+  if (payload.jti && env.CACUSA_KV) {
+    const active = await env.CACUSA_KV.get(sessionKey(payload.user, payload.jti));
+    if (!active) return null;
+  }
   return payload;
 }
 
@@ -2750,6 +2791,16 @@ async function handleWaRegister(body, env, origin, request) {
   if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
   const session = await verifyToken(body.token, env);
   if (!session) return err('Sesión inválida', 401, origin);
+  // Auditoría (20 sep, F21-b): antes esto solo pedía un token de sesión válido — quien
+  // robara un token (XSS, filtración) podía registrar su propio dispositivo en silencio,
+  // ganando acceso persistente que sobrevive a la expiración del token robado. Ahora exige
+  // reconfirmar la contraseña real, no solo el token — un token robado ya no alcanza solo.
+  // En el flujo normal del panel esto es transparente: "Activar Face ID" ocurre justo
+  // después de un login por contraseña exitoso, con la contraseña todavía en memoria.
+  const expectedPass = passwordFor(session.user, env);
+  if (!expectedPass || !safeEqual(body.pass || '', expectedPass)) {
+    return err('Contraseña incorrecta', 401, origin);
+  }
   const { challenge, credentialId, attestationObject, clientDataJSON } = body;
   if (!challenge || !credentialId || !attestationObject || !clientDataJSON) return err('Datos incompletos', 400, origin);
   const user = await env.CACUSA_KV.get(`wac:${challenge}`);
@@ -2844,7 +2895,7 @@ async function handleWaLogin(body, env, origin, request) {
   if (newCount > 0 && newCount <= credData.signCount) return err('Replay detectado', 401, origin);
   credData.signCount = newCount;
   await env.CACUSA_KV.put(`wacred:${user}`, JSON.stringify(credData));
-  const token = await signToken({ user, exp: Date.now() + SESSION_HOURS * 3600 * 1000 }, env);
+  const token = await createSession(user, env);
   return ok({ token, user }, origin);
 }
 
