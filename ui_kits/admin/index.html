@@ -1452,6 +1452,23 @@ function OrderCard({ order, token, onStatusChange, onDelete, onTrackingChange, o
   const [zipBusy, setZipBusy]   = React.useState(false);
   const [zipFound, setZipFound] = React.useState(null);
   const [zipErr, setZipErr]     = React.useState('');
+
+  // ── Editar dirección completa (incl. país) — el servidor ya acepta este patch
+  // (ORDER_CLIENTE_PATCH_FIELDS en handleOrderUpdate), solo faltaba la UI. Sin esto,
+  // un país mal guardado (ej. truncado al armar un pedido de Cacusa Lovers) no tenía
+  // forma de corregirse sin editar KV a mano — ver CLAUDE.md, 20 sep.
+  const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 };
+  const [editAddr, setEditAddr] = React.useState(false);
+  const [addrDraft, setAddrDraft] = React.useState({ direccion: '', apto: '', ciudad: '', estado: '', zip: '', pais: '' });
+  const openEditAddr = () => {
+    const c = order.cliente || {};
+    setAddrDraft({ direccion: c.direccion || '', apto: c.apto || '', ciudad: c.ciudad || '', estado: c.estado || '', zip: c.zip || '', pais: c.pais || '' });
+    setEditAddr(true);
+  };
+  const saveAddr = () => {
+    onClienteUpdate && onClienteUpdate(order, { ...addrDraft });
+    setEditAddr(false);
+  };
   const buscarZip = async () => {
     setZipBusy(true); setZipErr(''); setZipFound(null);
     try {
@@ -1550,6 +1567,65 @@ function OrderCard({ order, token, onStatusChange, onDelete, onTrackingChange, o
             </div>
           )}
           {order.cliente?.email && <div style={{ fontSize: 12, color: '#7A6880', marginTop: 2 }}>✉️ {order.cliente.email}</div>}
+          {editAddr ? (
+            <div style={{ marginTop: 6, background: '#FAF7FB', borderRadius: 10, padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 6 }}>
+                <div>
+                  <label htmlFor={`addrDireccion-${order.id}`} style={srOnly}>Dirección</label>
+                  <input id={`addrDireccion-${order.id}`} value={addrDraft.direccion} placeholder="Dirección"
+                    onChange={e => setAddrDraft({ ...addrDraft, direccion: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label htmlFor={`addrApto-${order.id}`} style={srOnly}>Apto / Unidad</label>
+                  <input id={`addrApto-${order.id}`} value={addrDraft.apto} placeholder="Apto"
+                    onChange={e => setAddrDraft({ ...addrDraft, apto: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6 }}>
+                <div>
+                  <label htmlFor={`addrCiudad-${order.id}`} style={srOnly}>Ciudad</label>
+                  <input id={`addrCiudad-${order.id}`} value={addrDraft.ciudad} placeholder="Ciudad"
+                    onChange={e => setAddrDraft({ ...addrDraft, ciudad: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label htmlFor={`addrEstado-${order.id}`} style={srOnly}>Estado / Provincia</label>
+                  <input id={`addrEstado-${order.id}`} value={addrDraft.estado} placeholder="Estado/Prov."
+                    onChange={e => setAddrDraft({ ...addrDraft, estado: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label htmlFor={`addrZip-${order.id}`} style={srOnly}>ZIP</label>
+                  <input id={`addrZip-${order.id}`} value={addrDraft.zip} placeholder="ZIP"
+                    onChange={e => setAddrDraft({ ...addrDraft, zip: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+                <div>
+                  <label htmlFor={`addrPais-${order.id}`} style={srOnly}>País</label>
+                  <input id={`addrPais-${order.id}`} value={addrDraft.pais} placeholder="País (ej. USA)"
+                    onChange={e => setAddrDraft({ ...addrDraft, pais: e.target.value })}
+                    style={{ width: '100%', boxSizing: 'border-box', fontSize: 12, padding: '5px 8px', borderRadius: 6, border: '1px solid #EDE8EA', fontFamily: 'inherit' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={saveAddr}
+                  style={{ fontSize: 11, fontWeight: 700, color: 'white', background: '#22C55E', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                  ✓ Guardar
+                </button>
+                <button onClick={() => setEditAddr(false)}
+                  style={{ fontSize: 11, color: '#7A6B85', background: 'none', border: 'none', cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={openEditAddr}
+              style={{ marginTop: 4, fontSize: 11, fontWeight: 700, color: '#7A5F8A', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}>
+              ✎ Editar dirección
+            </button>
+          )}
           {!order.cliente?.zip && order.cliente?.direccion && (
             <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {!zipFound && (
@@ -2963,8 +3039,18 @@ function LoversTab({ products = [], token }) {
               {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
                 <div key={key}>
                   <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
-                  <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
-                    style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                  {key === 'pais' ? (
+                    <select value={newForm.pais} onChange={e => nf('pais', e.target.value)}
+                      style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: 'white', color: '#1A1118' }}>
+                      <option value="">—</option>
+                      <option value="Ecuador">Ecuador</option>
+                      <option value="USA">Estados Unidos</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  ) : (
+                    <input value={newForm[key]} onChange={e => nf(key, e.target.value)}
+                      style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                  )}
                 </div>
               ))}
             </div>
@@ -3205,8 +3291,18 @@ function LoversTab({ products = [], token }) {
                       {[['Ciudad', 'ciudad'], ['Estado / Prov.', 'estado'], ['ZIP', 'zip'], ['País', 'pais']].map(([lbl, key]) => (
                         <div key={key}>
                           <div style={{ fontSize: 11, color: '#7A6B85', marginBottom: 4 }}>{lbl}</div>
-                          <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
-                            style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                          {key === 'pais' ? (
+                            <select value={editForm.pais} onChange={e => ef('pais', e.target.value)}
+                              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none', background: 'white', color: '#1A1118' }}>
+                              <option value="">—</option>
+                              <option value="Ecuador">Ecuador</option>
+                              <option value="USA">Estados Unidos</option>
+                              <option value="Otro">Otro</option>
+                            </select>
+                          ) : (
+                            <input value={editForm[key]} onChange={e => ef(key, e.target.value)}
+                              style={{ width: '100%', boxSizing: 'border-box', border: '1.5px solid #EDE8EA', borderRadius: 8, padding: '7px 10px', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
+                          )}
                         </div>
                       ))}
                     </div>

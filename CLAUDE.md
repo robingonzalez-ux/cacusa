@@ -131,6 +131,13 @@ Enterprise Payment Account (EPS) activa — trámites reales con USPS, no
 algo que se resuelva desde el código. Detalle completo (secrets exactos,
 estado de la cuenta, shape del payload de la API): ver el repo privado.
 
+Bug real cerrado (20 sep): un pedido de Cacusa Lovers podía guardar el
+país truncado a 10 caracteres (`"ESTADOS UN"` en vez de `"ESTADOS
+UNIDOS"`), rompiendo el match que decide si mostrar el botón de USPS —
+corregido subiendo el límite. `OrderCard` (panel admin) ahora también
+tiene un "✎ Editar dirección" para corregir a mano cualquier pedido ya
+guardado con un dato de dirección/país incorrecto, sin tocar KV.
+
 ## Automatizaciones (GitHub Actions)
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que
