@@ -304,6 +304,17 @@ async function verifyToken(token, env) {
   // usuario del payload, no solo la firma, para invalidar de inmediato cualquier token
   // histórico que no sea de un usuario real.
   if (!VALID_USERS.has(payload.user)) return null;
+  // Auditoría (20 sep, F21-c) — misma copia que admin-worker.js (que es quien firma la
+  // sesión y quien atiende /logout-all): si el token tiene jti, su sesión debe seguir
+  // registrada en `sess:<user>:<jti>`. Requiere el binding CACUSA_KV en este Worker —
+  // ANTES no lo tenía (nunca lo necesitó), hace falta agregarlo a mano en Cloudflare
+  // (Settings → Bindings → Add → KV Namespace → nombre CACUSA_KV → mismo namespace que
+  // ya usan cacusa-admin/cacusa-square). Sin el binding, o en tokens viejos sin jti, esto
+  // no bloquea nada (mismo criterio que la copia de admin-worker.js).
+  if (payload.jti && env.CACUSA_KV) {
+    const active = await env.CACUSA_KV.get(`sess:${payload.user}:${payload.jti}`);
+    if (!active) return null;
+  }
   return payload;
 }
 
