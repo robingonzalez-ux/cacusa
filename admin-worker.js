@@ -537,7 +537,11 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
       ciudad:    str(cliente.ciudad,    100),
       estado:    str(cliente.estado,     50),
       zip:       str(cliente.zip,        20),
-      pais:      str(cliente.pais,       10),
+      // 40, no 10: "ESTADOS UNIDOS"/"UNITED STATES" (14/13 caracteres) son valores
+      // reales que isUsOrder()/handleUspsLabel() ya aceptan — truncar a 10 los corta
+      // a mitad de palabra y rompe el match (bug real encontrado 20 sep: un pedido
+      // de Cacusa Lovers con país truncado nunca mostraba el botón de USPS).
+      pais:      str(cliente.pais,       40),
       notas:     str(cliente.notas,     500),
     },
     productos: (Array.isArray(order.productos) ? order.productos : []).slice(0, 50).map(p => ({
