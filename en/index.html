@@ -432,6 +432,10 @@ html,body{overflow-x:hidden}
   .col-grid{grid-template-columns:1fr}
   .col-card:first-child{grid-column:auto}
   .ig-grid{grid-template-columns:repeat(2,1fr)}
+  /* Auditoría S04 (20 sep): mismo popup que ui_kits/store/index.html — el fix de
+     SEO-05 (19 sep) nunca se copió acá. Se achica el alto máximo con scroll interno
+     de respaldo para que nunca cubra el 100% del viewport. */
+  .vig-box{max-height:85vh;overflow-y:auto}
 }
 </style>
 </head>
