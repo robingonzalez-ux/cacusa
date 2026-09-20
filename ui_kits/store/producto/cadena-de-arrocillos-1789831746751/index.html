@@ -3515,16 +3515,25 @@ let _vigReleaseTrap = null;
 (function(){
   const vig = document.getElementById('vignette');
   if (!vig) return;
+  // Fix (20 sep): esta tienda usaba su propia llave (cacusa-vig-store), distinta de la
+  // que usa index.html/en/index.html (cacusa-vig2) — poner el email en el home no le
+  // avisaba a la tienda, así que la clienta volvía a ver el popup acá aunque ya se
+  // hubiera registrado en el home. Ahora comparten la misma llave (cacusa-vig); la
+  // migración hereda el estado de cualquiera de las 2 llaves viejas para que nadie que
+  // ya haya interactuado (acá o en el home) vuelva a ver el popup una vez más.
+  if (!localStorage.getItem('cacusa-vig') && (localStorage.getItem('cacusa-vig2') || localStorage.getItem('cacusa-vig-store'))) {
+    localStorage.setItem('cacusa-vig', '1');
+  }
   function openVig() {
     vig.classList.add('show');
     _vigReleaseTrap = trapFocus(vig, closeVig);
   }
   function closeVig() {
     vig.classList.remove('show');
-    localStorage.setItem('cacusa-vig-store', '1');
+    localStorage.setItem('cacusa-vig', '1');
     if (_vigReleaseTrap) { _vigReleaseTrap(); _vigReleaseTrap = null; }
   }
-  if (!localStorage.getItem('cacusa-vig-store')) setTimeout(openVig, 3500);
+  if (!localStorage.getItem('cacusa-vig')) setTimeout(openVig, 3500);
   [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', closeVig));
   const vigBtn = document.getElementById('vigBtn');
   if (vigBtn) vigBtn.addEventListener('click', async () => {

@@ -1409,14 +1409,24 @@ if(igG && BEHOLD_FEED_ID){
 }
 
 // ── VIGNETTE ────────────────────────────────────────────────
+// Fix (20 sep): el home y la tienda usaban 2 llaves de localStorage distintas
+// (cacusa-vig2 acá, cacusa-vig-store en ui_kits/store/index.html) — poner el
+// email en una no le avisaba a la otra, así que la clienta volvía a ver el
+// popup en la tienda aunque ya se hubiera registrado en el home. Ahora las 2
+// comparten la misma llave (cacusa-vig); la migración de abajo hereda el
+// estado de cualquiera de las 2 llaves viejas para que nadie que ya haya
+// interactuado (acá o en la tienda) vuelva a ver el popup una vez más.
+if (!localStorage.getItem('cacusa-vig') && (localStorage.getItem('cacusa-vig2') || localStorage.getItem('cacusa-vig-store'))) {
+  localStorage.setItem('cacusa-vig', '1');
+}
 const vig=document.getElementById('vignette');
-if(!localStorage.getItem('cacusa-vig2')) setTimeout(()=>vig.classList.add('show'),3500);
+if(!localStorage.getItem('cacusa-vig')) setTimeout(()=>vig.classList.add('show'),3500);
 [document.getElementById('vigClose'),document.getElementById('vigSkip')].forEach(el=>el.addEventListener('click',()=>{
-  vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
+  vig.classList.remove('show'); localStorage.setItem('cacusa-vig','1');
 }));
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && vig.classList.contains('show')) {
-    vig.classList.remove('show'); localStorage.setItem('cacusa-vig2','1');
+    vig.classList.remove('show'); localStorage.setItem('cacusa-vig','1');
   }
 });
 document.getElementById('vigBtn').addEventListener('click',async ()=>{
@@ -1442,7 +1452,7 @@ document.getElementById('vigBtn').addEventListener('click',async ()=>{
     btnEl.style.display='none';
     if(skipEl) skipEl.style.display='none';
     if(msgEl){ msgEl.setAttribute('role','status'); msgEl.setAttribute('aria-live','polite'); msgEl.textContent=_vigL?'✓ Check your email — we just sent your 10% code.':'✓ Revisa tu correo — te acabamos de enviar tu código de 10%.'; msgEl.hidden=false; }
-    localStorage.setItem('cacusa-vig2','1');
+    localStorage.setItem('cacusa-vig','1');
     setTimeout(()=>{ vig.classList.remove('show'); },2400);
   } else {
     btnEl.disabled = false;
