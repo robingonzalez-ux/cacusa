@@ -88,6 +88,9 @@ const DEFAULT_SHIPPING   = {
   handlingDaysMin: 5, handlingDaysMax: 10,
   transitDaysEcMin: 1, transitDaysEcMax: 2,
   transitDaysUsMin: 2, transitDaysUsMax: 5,
+  // Peso/tamaño de caja por defecto para "Generar guía USPS" (panel de Pedidos) —
+  // hasta hoy este bloque solo se podía cambiar editando data/products.json a mano.
+  uspsDefaultPackage: { weightOz: 4, lengthIn: 6, widthIn: 4, heightIn: 2 },
 };
 const DEFAULT_TEXTS = {
   heroLabel: 'Joyería artesanal personalizada',
@@ -1381,7 +1384,11 @@ function loadQuagga() {
 // EPS). Requiere que el Worker ya tenga las credenciales de USPS configuradas —
 // si no, el error real de USPS aparece acá, nunca falla en silencio.
 function UspsLabelModal({ order, token, onClose, onSuccess }) {
+  const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 };
   const [weightOz, setWeightOz] = React.useState('');
+  const [lengthIn, setLengthIn] = React.useState('');
+  const [widthIn, setWidthIn] = React.useState('');
+  const [heightIn, setHeightIn] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
   const c = order.cliente || {};
@@ -1391,6 +1398,10 @@ function UspsLabelModal({ order, token, onClose, onSuccess }) {
       const payload = { token, orderId: order.id };
       const w = Number(weightOz);
       if (w > 0) payload.weightOz = w;
+      // Las 3 dimensiones van juntas o no van — mezclar 1-2 puntuales con el resto
+      // del default del catálogo daría una caja con proporciones sin sentido.
+      const l = Number(lengthIn), wi = Number(widthIn), h = Number(heightIn);
+      if (l > 0 && wi > 0 && h > 0) { payload.lengthIn = l; payload.widthIn = wi; payload.heightIn = h; }
       const data = await apiCall('order/usps-label', payload);
       onSuccess(data);
     } catch (e) {
@@ -1414,6 +1425,29 @@ function UspsLabelModal({ order, token, onClose, onSuccess }) {
       <input id="uspsWeightOz" type="number" min="1" value={weightOz} onChange={e => setWeightOz(e.target.value)}
         placeholder="Dejar vacío para usar el default configurado en Envíos"
         style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, marginBottom: 14, boxSizing: 'border-box' }} />
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#5B4A63', marginBottom: 4 }}>
+        Dimensiones (in) — opcional, completar los 3 o dejar los 3 vacíos
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+        <div>
+          <label htmlFor="uspsLengthIn" style={srOnly}>Largo (in)</label>
+          <input id="uspsLengthIn" type="number" min="1" step="0.5" value={lengthIn} onChange={e => setLengthIn(e.target.value)}
+            placeholder="Largo"
+            style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+        <div>
+          <label htmlFor="uspsWidthIn" style={srOnly}>Ancho (in)</label>
+          <input id="uspsWidthIn" type="number" min="1" step="0.5" value={widthIn} onChange={e => setWidthIn(e.target.value)}
+            placeholder="Ancho"
+            style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+        <div>
+          <label htmlFor="uspsHeightIn" style={srOnly}>Alto (in)</label>
+          <input id="uspsHeightIn" type="number" min="1" step="0.5" value={heightIn} onChange={e => setHeightIn(e.target.value)}
+            placeholder="Alto"
+            style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
+        </div>
+      </div>
       {error && <div role="alert" aria-live="assertive" style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '8px 12px', fontSize: 12, marginBottom: 12 }}>{error}</div>}
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={onClose} disabled={busy}
@@ -3538,6 +3572,8 @@ function CouponsTab({ token }) {
 // ── Settings Tab ────────────────────────────────────────────────────────────
 function SettingsTab({ categories, setCategories, materials, setMaterials, shipping, setShipping, texts, setTexts, products, setProducts, setDirty }) {
   const setShip = (k, v) => { setShipping(s => ({ ...s, [k]: v === '' ? '' : Number(v) })); setDirty(true); };
+  const uspsPkg = shipping.uspsDefaultPackage || DEFAULT_SHIPPING.uspsDefaultPackage;
+  const setUspsPkg = (k, v) => { setShipping(s => ({ ...s, uspsDefaultPackage: { ...(s.uspsDefaultPackage || DEFAULT_SHIPPING.uspsDefaultPackage), [k]: v === '' ? '' : Number(v) } })); setDirty(true); };
   const markDirty = fn => (...a) => { fn(...a); setDirty(true); };
   const renameCategory = (oldName, newName) => {
     setProducts(prev => prev.map(p => p.category === oldName ? { ...p, category: newName } : p));
@@ -3609,6 +3645,30 @@ function SettingsTab({ categories, setCategories, materials, setMaterials, shipp
             <div>
               <label style={lbl}>Tránsito USA — máximo (días)</label>
               <input type="number" min="0" step="1" value={shipping.transitDaysUsMax} onChange={e => setShip('transitDaysUsMax', e.target.value)} placeholder="5" style={inp} />
+            </div>
+          </div>
+        </div>
+        <div style={{ borderTop: '1px solid #F0EAF3', marginTop: 18, paddingTop: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#1A1118', marginBottom: 2 }}>📦 Paquete por defecto para guías USPS</div>
+          <div style={{ fontSize: 12, color: '#7A6B85', marginBottom: 14 }}>Peso/tamaño que se usa al generar una guía USPS si no se indica uno puntual para ese pedido (botón "Generar guía USPS" en Pedidos).</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={lbl}>Peso (oz)</label>
+              <input type="number" min="1" step="1" value={uspsPkg.weightOz} onChange={e => setUspsPkg('weightOz', e.target.value)} placeholder="4" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Largo (in)</label>
+              <input type="number" min="1" step="0.5" value={uspsPkg.lengthIn} onChange={e => setUspsPkg('lengthIn', e.target.value)} placeholder="6" style={inp} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div>
+              <label style={lbl}>Ancho (in)</label>
+              <input type="number" min="1" step="0.5" value={uspsPkg.widthIn} onChange={e => setUspsPkg('widthIn', e.target.value)} placeholder="4" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Alto (in)</label>
+              <input type="number" min="1" step="0.5" value={uspsPkg.heightIn} onChange={e => setUspsPkg('heightIn', e.target.value)} placeholder="2" style={inp} />
             </div>
           </div>
         </div>
