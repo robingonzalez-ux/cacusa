@@ -113,6 +113,29 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
   }
 }
 
+// ── Crea el "pedido de envío" del ciclo en cacusa-admin (nuevo, 20 sep) ────────────
+// Antes de esto no quedaba ningún registro de "qué se le envía a quién este mes" —
+// solo se actualizaba el estado de la suscriptora en Firebase. Mismo patrón
+// best-effort que notifyAdminPush()/notifyExclusiveCoupon(): si esto falla (ej. el
+// Service Binding hacia cacusa-admin cae), NUNCA rompe el procesamiento del webhook
+// de Square — en el peor caso, Tita/Robin arman ese envío puntual a mano como
+// siempre, sin generación automática de guía para ese ciclo. squareInvoiceId es la
+// clave de idempotencia real del lado de cacusa-admin (nunca crea 2 pedidos para el
+// mismo cobro, ni siquiera si Square reintenta la entrega del webhook).
+async function notifyLoversShipment(direccionFields, plan, squareInvoiceId, env) {
+  if (!env.ORDER_INGEST_KEY) return;
+  try {
+    const r = await adminFetch(env, '/order/lovers-shipment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ ...direccionFields, plan, squareInvoiceId }),
+    });
+    if (!r.ok) console.error('order/lovers-shipment failed:', r.status, await r.text().catch(() => ''));
+  } catch (e) {
+    console.error('order/lovers-shipment error:', e.message);
+  }
+}
+
 // ── Activa/desactiva el cupón exclusivo del 5% de Lovers en cacusa-admin ───────────
 // Mismo patrón best-effort que notifyAdminPush() — nunca bloquea ni rompe el
 // procesamiento del webhook de Square si falla. langOrPais acepta 2 formas:
@@ -861,6 +884,16 @@ export default {
               // cuenta (no repite nada si el cupón ya existe y está activo), así que llamarla
               // en cada entrega solo recupera un intento que había fallado, nunca duplica.
               await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
+              // El pedido de envío se crea con la dirección de Firebase (existing),
+              // NUNCA con customerFields de Square — mismo criterio que el resto de
+              // esta rama: no pisar/mezclar con datos de Square que suelen venir
+              // incompletos, la fuente de verdad de la dirección ya confirmada es
+              // Firebase.
+              await notifyLoversShipment({
+                nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
+                direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
+                estado: existing.estado, zip: existing.zip, pais: existing.pais,
+              }, existing.plan, invoice?.id || '', env);
             }
           } else {
             // Subscriber not in Firebase yet — create minimal record
@@ -891,6 +924,11 @@ export default {
                 env
               );
               await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
+              await notifyLoversShipment({
+                nombre: customerFields.nombre, apellido: customerFields.apellido, telefono: '',
+                direccion: customerFields.direccion, apto: customerFields.apto, ciudad: customerFields.ciudad,
+                estado: customerFields.estado, zip: customerFields.zip, pais: customerFields.pais,
+              }, isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers', invoice?.id || '', env);
             }
           }
         }
