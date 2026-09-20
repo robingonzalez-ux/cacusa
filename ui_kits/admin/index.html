@@ -448,6 +448,13 @@ function PushSection({ token }) {
       setPermission(perm);
       if (perm !== 'granted') { setMsg('No se concedió el permiso de notificaciones.'); setBusy(false); return; }
       const reg = await navigator.serviceWorker.ready;
+      // Si ya existe una suscripción (ej. de un par de llaves VAPID viejo), hay que darla
+      // de baja ANTES de volver a suscribirse — si no, varios navegadores devuelven la
+      // MISMA suscripción vieja sin error, ignorando la applicationServerKey nueva, y el
+      // botón "Activar" queda mintiendo éxito mientras el push real sigue roto (bug real
+      // encontrado 20 sep: VapidPkHashMismatch en Cloudflare, sin ningún error visible acá).
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUB_KEY) });
       await apiCall('push/subscribe', { token, subscription: sub.toJSON() });
       setSubscribed(true);
