@@ -1376,7 +1376,63 @@ function loadQuagga() {
 }
 
 // ── Order Card ─────────────────────────────────────────────────────────────
-function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate }) {
+// ── Genera una guía USPS para un pedido — botón manual, nunca automático (así
+// Tita/Robin revisan la dirección antes de gastar franqueo real de la cuenta
+// EPS). Requiere que el Worker ya tenga las credenciales de USPS configuradas —
+// si no, el error real de USPS aparece acá, nunca falla en silencio.
+function UspsLabelModal({ order, token, onClose, onSuccess }) {
+  const [weightOz, setWeightOz] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const c = order.cliente || {};
+  const submit = async () => {
+    setBusy(true); setError('');
+    try {
+      const payload = { token, orderId: order.id };
+      const w = Number(weightOz);
+      if (w > 0) payload.weightOz = w;
+      const data = await apiCall('order/usps-label', payload);
+      onSuccess(data);
+    } catch (e) {
+      setError(e.message || 'No se pudo generar la guía.');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal onClose={onClose} label="Generar guía USPS">
+      <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#1A1118' }}>📦 Generar guía USPS</h3>
+      <div style={{ fontSize: 13, color: '#5B4A63', background: '#FAF7FB', borderRadius: 10, padding: '10px 12px', marginBottom: 14 }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>{c.nombre} {c.apellido}</div>
+        <div>{c.direccion}{c.apto ? ', ' + c.apto : ''}</div>
+        <div>{c.ciudad}, {c.estado} {c.zip}</div>
+        <div>{c.pais}</div>
+      </div>
+      <label htmlFor="uspsWeightOz" style={{ fontSize: 12, fontWeight: 700, color: '#5B4A63', display: 'block', marginBottom: 4 }}>
+        Peso del paquete (oz) — opcional
+      </label>
+      <input id="uspsWeightOz" type="number" min="1" value={weightOz} onChange={e => setWeightOz(e.target.value)}
+        placeholder="Dejar vacío para usar el default configurado en Envíos"
+        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, marginBottom: 14, boxSizing: 'border-box' }} />
+      {error && <div role="alert" aria-live="assertive" style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '8px 12px', fontSize: 12, marginBottom: 12 }}>{error}</div>}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={onClose} disabled={busy}
+          style={{ flex: 1, padding: '10px', background: '#F3EFF5', color: '#5B4A63', border: 'none', borderRadius: 99, fontWeight: 700, fontSize: 13, cursor: busy ? 'default' : 'pointer' }}>
+          Cancelar
+        </button>
+        <button onClick={submit} disabled={busy}
+          style={{ flex: 1, padding: '10px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: 99, fontWeight: 700, fontSize: 13, cursor: busy ? 'default' : 'pointer', opacity: busy ? .7 : 1 }}>
+          {busy ? 'Generando…' : 'Confirmar y generar'}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function OrderCard({ order, token, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate, onLabelGenerated }) {
+  const [showLabelModal, setShowLabelModal] = React.useState(false);
+  const paisUpper = ((order.cliente && order.cliente.pais) || '').toUpperCase();
+  const isUsOrder = ['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES'].includes(paisUpper);
   const dateStr = new Date(order.fecha).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' });
   const estado = order.estado || 'Nuevo';
   const nextIdx = Math.min(ORDER_STATES.indexOf(estado) + 1, ORDER_STATES.length - 2);
@@ -1574,7 +1630,31 @@ function OrderCard({ order, onStatusChange, onDelete, onTrackingChange, onCarrie
           <option>Otro</option>
         </select>
         {trackVal && <div style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>Tracking y transportista se incluyen en el mensaje WA al notificar estado "Enviado".</div>}
+        {isUsOrder && !order.tracking && (
+          <button onClick={() => setShowLabelModal(true)}
+            style={{ marginTop: 8, width: '100%', padding: '8px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            📦 Generar guía USPS
+          </button>
+        )}
+        {order.labelBase64 && (
+          <a href={`data:application/pdf;base64,${order.labelBase64}`} target="_blank" rel="noopener noreferrer"
+            style={{ display: 'block', marginTop: 8, textAlign: 'center', padding: '8px', background: '#EFF6FF', color: '#3B82F6', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+            🖨️ Ver/imprimir guía USPS
+          </a>
+        )}
       </div>
+      {showLabelModal && (
+        <UspsLabelModal
+          order={order}
+          token={token}
+          onClose={() => setShowLabelModal(false)}
+          onSuccess={data => {
+            setShowLabelModal(false);
+            onLabelGenerated && onLabelGenerated(order, data);
+            if (data.labelBase64) window.open(`data:application/pdf;base64,${data.labelBase64}`, '_blank');
+          }}
+        />
+      )}
 
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         {estado !== 'Entregado' && estado !== 'Cancelado' && (
@@ -4483,12 +4563,13 @@ function App() {
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                             {grupo.map(o => (
-                              <OrderCard key={o.id} order={o}
+                              <OrderCard key={o.id} order={o} token={session.token}
                                 onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
                                 onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
                                 onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
                                 onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
                                 onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
+                                onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64 } : x)); }}
                               />
                             ))}
                           </div>
@@ -4556,12 +4637,13 @@ function App() {
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                               {grupo.map(o => (
-                                <OrderCard key={o.id} order={o}
+                                <OrderCard key={o.id} order={o} token={session.token}
                                   onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
                                   onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
                                   onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
                                   onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
                                   onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
+                                  onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64 } : x)); }}
                                 />
                               ))}
                             </div>

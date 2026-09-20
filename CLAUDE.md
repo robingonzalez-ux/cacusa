@@ -106,6 +106,31 @@ No hay forma de leer las reglas en vivo desde el repo (viven solo en
 Firebase Console). El snapshot completo y confirmado vive en el repo
 privado — pedirlo ahí en vez de pedírselo de nuevo al usuario.
 
+## Guías de envío USPS (nuevo, 20 sep)
+
+Botón manual "📦 Generar guía USPS" en cada pedido del panel admin (solo
+visible para pedidos con destino EE.UU. — Ecuador sigue 100% manual con
+Servientrega). Genera la guía real contra la API nueva de USPS
+(`developers.usps.com` — la vieja Web Tools API se dio de baja el 25 ene
+2026), usa un peso/tamaño de paquete fijo por defecto
+(`config.shipping.uspsDefaultPackage` en `data/products.json`, editable
+desde el admin) salvo que se indique otro peso puntual al generar. Nunca
+se dispara solo — siempre lo aprieta Tita/Robin después de revisar la
+dirección, para no gastar franqueo real por un error.
+
+Cacusa Lovers también entra: cada cobro real de una renovación
+(`invoice.payment_made` en `lovers-webhook-worker.js`) crea un pedido
+normal en el sistema (`order:<id>`, mismo esquema de siempre) con la
+dirección de la suscriptora ya cargada — con `productos` vacío a
+propósito, porque elegir qué 2 piezas van ese mes/año sigue siendo
+curaduría humana. Una vez que Tita/Robin cargan las piezas, se genera la
+guía con el mismo botón, sin código aparte.
+
+Requiere que la cuenta de USPS tenga aprobación para la Labels API y una
+Enterprise Payment Account (EPS) activa — trámites reales con USPS, no
+algo que se resuelva desde el código. Detalle completo (secrets exactos,
+estado de la cuenta, shape del payload de la API): ver el repo privado.
+
 ## Automatizaciones (GitHub Actions)
 
 `.github/workflows/product-schema.yml` corre en cada push a `main` que

@@ -32,7 +32,13 @@
       "transitDaysEcMin": 1,
       "transitDaysEcMax": 2,
       "transitDaysUsMin": 2,
-      "transitDaysUsMax": 5
+      "transitDaysUsMax": 5,
+      "uspsDefaultPackage": {
+        "weightOz": 4,
+        "lengthIn": 6,
+        "widthIn": 4,
+        "heightIn": 2
+      }
     },
     "texts": {
       "heroLabel": "Joyería artesanal personalizada",
