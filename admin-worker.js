@@ -41,6 +41,15 @@
  *   USPS_ENV              (text)    'tem' (pruebas, default) o 'prod' (real, cobra franqueo
  *                                   real de la cuenta EPS) — cambiar a 'prod' solo después de
  *                                   probar el flujo completo contra 'tem'.
+ *   USPS_CRID             (secret)  Customer Registration Identifier — dato real de la cuenta,
+ *                                   visible en gateway.usps.com (Business Customer Gateway).
+ *                                   Lo pide la Payments API para autorizar el franqueo.
+ *   USPS_MID              (secret)  Mailer Identifier — se asigna al inscribirse a un servicio
+ *                                   de manifiesto electrónico (ej. Mailer ID) en la cuenta de
+ *                                   Business Customer Gateway.
+ *   USPS_MANIFEST_MID     (secret)  MID de manifiesto — en el caso simple, igual a USPS_MID.
+ *   USPS_EPS_ACCOUNT      (secret)  Número de cuenta Enterprise Payment System (EPS) — dato
+ *                                   real de cuenta, nunca hardcodeado en este archivo público.
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -2708,19 +2717,36 @@ async function uspsOAuthToken(env) {
   const d = await r.json();
   return d.access_token;
 }
-// El Payment Token (Payments API) es distinto del OAuth token — autoriza cargar el
-// franqueo real a la Enterprise Payment Account configurada del lado de USPS. Vale
-// 8h; como este Worker no guarda estado entre invocaciones, se pide de nuevo en
-// cada guía (volumen bajo — mismo criterio ya aceptado para gmailAccessToken()).
+// El Payment Authorization Token (Payments API, POST /payment-authorization) es
+// distinto del OAuth token — autoriza cargar el franqueo real a la cuenta EPS.
+// Vale 8h; como este Worker no guarda estado entre invocaciones, se pide de nuevo
+// en cada guía (volumen bajo — mismo criterio ya aceptado para gmailAccessToken()).
+//
+// Payload verificado (20 sep) contra el spec OpenAPI real de la Payments API
+// (payments_5_0.yaml, descargado por el usuario de developers.usps.com/paymentsv3):
+//   - El endpoint real es /payment-authorization, no /payment-token.
+//   - El campo de respuesta real es paymentAuthorizationToken (top-level, string),
+//     no paymentToken/payment_token.
+//   - El rol LABEL_OWNER exige CRID+MID+manifestMID; el rol PAYER exige
+//     CRID+accountType('EPS')+accountNumber — sin estos datos reales de la cuenta
+//     USPS devuelve 400. No se pueden inventar, son específicos de cada cuenta.
 async function uspsPaymentToken(env, oauthToken) {
-  const r = await fetch(`${uspsBaseUrl(env)}/payments/v3/payment-token`, {
+  const required = ['USPS_CRID', 'USPS_MID', 'USPS_MANIFEST_MID', 'USPS_EPS_ACCOUNT'];
+  const missing = required.filter((k) => !env[k]);
+  if (missing.length) throw new Error(`Faltan secrets de USPS: ${missing.join(', ')}`);
+  const r = await fetch(`${uspsBaseUrl(env)}/payments/v3/payment-authorization`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ roles: [{ roleName: 'LABEL_OWNER' }, { roleName: 'PAYER' }] }),
+    body: JSON.stringify({
+      roles: [
+        { roleName: 'LABEL_OWNER', CRID: env.USPS_CRID, MID: env.USPS_MID, manifestMID: env.USPS_MANIFEST_MID },
+        { roleName: 'PAYER', CRID: env.USPS_CRID, accountType: 'EPS', accountNumber: env.USPS_EPS_ACCOUNT },
+      ],
+    }),
   });
-  if (!r.ok) throw new Error(`USPS payment token falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) throw new Error(`USPS payment authorization falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
   const d = await r.json();
-  return d.paymentToken || d.payment_token;
+  return d.paymentAuthorizationToken;
 }
 // fromAddress (dirección de remitente) sale de un secret, NUNCA hardcodeada acá —
 // este archivo vive en workers-src, que también es público (ver CLAUDE.md), y una
