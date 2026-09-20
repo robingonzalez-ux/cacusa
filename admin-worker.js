@@ -28,6 +28,25 @@
  *   GMAIL_CLIENT_SECRET   (secret)  ídem
  *   GMAIL_REFRESH_TOKEN   (secret)  ídem — autoriza a este Worker a mandar correos como
  *                                   facturacioncacusa@gmail.com sin guardar su contraseña
+ *   USPS_CONSUMER_KEY     (secret)  Guías de envío USPS — Developer Portal (developers.usps.com)
+ *                                   → tu app → Credentials. Requiere cuenta Business Customer
+ *                                   Gateway (gateway.usps.com), no la cuenta de consumidor normal
+ *                                   de usps.com.
+ *   USPS_CONSUMER_SECRET  (secret)  ídem
+ *   USPS_FROM_ADDRESS     (secret)  JSON con la dirección de remitente real, ej:
+ *                                   {"firstName":"...","lastName":"...","streetAddress":"...",
+ *                                   "secondaryAddress":"...","city":"...","state":"...",
+ *                                   "ZIPCode":"...","phone":"..."} — NUNCA hardcodear una
+ *                                   dirección real en este archivo (público, ver CLAUDE.md).
+ *   USPS_ENV              (text)    'tem' (pruebas, default) o 'prod' (real, cobra franqueo
+ *                                   real de la cuenta EPS) — cambiar a 'prod' solo después de
+ *                                   probar el flujo completo contra 'tem'.
+ *
+ * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
+ * para la Labels API específicamente (Developer Portal, aparte del registro básico
+ * de la app) y (b) una Enterprise Payment Account (EPS) activa — pedir el código de
+ * invitación a EPS desde gateway.usps.com o a Postalone@usps.gov. Ninguno de los 2
+ * pasos se puede hacer desde este código, son trámites reales con USPS.
  *
  * ──────────────────────────────────────────────────────────────────────────────────
  * RUNBOOK — cómo obtener los 3 secrets de Gmail (una sola vez, ~15 min):
@@ -211,6 +230,14 @@ export default {
         return ok({ ok: true }, allowOrigin);
       }
 
+      // Cacusa Lovers — crea el "pedido de envío" del ciclo (mensual/anual) cuando
+      // lovers-webhook-worker.js confirma un cobro real. Mismo guard Worker-a-Worker
+      // que el resto de rutas internas (ORDER_INGEST_KEY compartido).
+      if (path.endsWith('/order/lovers-shipment')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversShipmentIngest(body, env, allowOrigin, ctx);
+      }
+
       // Notificación push disparada desde OTRO Worker (hoy: cacusa-lovers-webhook, cuando
       // nace una suscriptora nueva) — autenticada con el mismo ORDER_INGEST_KEY compartido,
       // no con un token de sesión de admin (este Worker no tiene sesión iniciada).
@@ -271,6 +298,7 @@ export default {
       if (path.endsWith('/save'))           return await handleSave(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/order/usps-label')) return await handleUspsLabel(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -2638,6 +2666,194 @@ async function sendGmail(env, { to, subject, html }) {
     body: JSON.stringify({ raw }),
   });
   if (!r.ok) throw new Error(`Gmail send falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+}
+
+// ── USPS API (guías de envío) — nuevo, 20 sep ───────────────────────────────────
+// Plataforma nueva de USPS (developers.usps.com) — la vieja Web Tools API se dio
+// de baja el 25 ene 2026, así que esto se integra directo contra la nueva. OAuth2
+// client_credentials, ambiente elegido por env.USPS_ENV ('tem' = pruebas, 'prod' =
+// real, default 'tem' para no arriesgar franqueo real hasta confirmar el flujo).
+// Generar una guía real además exige: (a) que la cuenta de USPS tenga aprobación
+// para la Labels API específicamente y (b) una Enterprise Payment Account (EPS)
+// activa que pague el franqueo — ninguna de las 2 es algo que este código pueda
+// resolver solo, son trámites reales con USPS que hace el usuario fuera del repo
+// (Business Customer Gateway → invitación EPS → Developer Portal → aprobación
+// Labels API). Mientras no estén listas, este endpoint simplemente va a fallar
+// con el error real que devuelva USPS (nunca falla en silencio).
+//
+// OJO al implementar con credenciales reales: los nombres exactos de los campos
+// del payload de /labels/v3/label (imageInfo/packageDescription/toAddress/etc.)
+// son un best-effort basado en la documentación pública de USPS — no se pudieron
+// verificar contra la API en vivo desde este entorno (sin acceso de red a
+// developers.usps.com). Ajustar contra la respuesta real de un intento en el
+// ambiente TEM antes de asumir que el shape está 100% correcto.
+function uspsBaseUrl(env) {
+  return env.USPS_ENV === 'prod' ? 'https://apis.usps.com' : 'https://apis-tem.usps.com';
+}
+async function uspsOAuthToken(env) {
+  if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) throw new Error('USPS_CONSUMER_KEY/USPS_CONSUMER_SECRET no configurados');
+  const r = await fetch(`${uspsBaseUrl(env)}/oauth2/v3/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'client_credentials',
+      client_id: env.USPS_CONSUMER_KEY,
+      client_secret: env.USPS_CONSUMER_SECRET,
+    }),
+  });
+  if (!r.ok) throw new Error(`USPS OAuth falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  const d = await r.json();
+  return d.access_token;
+}
+// El Payment Token (Payments API) es distinto del OAuth token — autoriza cargar el
+// franqueo real a la Enterprise Payment Account configurada del lado de USPS. Vale
+// 8h; como este Worker no guarda estado entre invocaciones, se pide de nuevo en
+// cada guía (volumen bajo — mismo criterio ya aceptado para gmailAccessToken()).
+async function uspsPaymentToken(env, oauthToken) {
+  const r = await fetch(`${uspsBaseUrl(env)}/payments/v3/payment-token`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roles: [{ roleName: 'LABEL_OWNER' }, { roleName: 'PAYER' }] }),
+  });
+  if (!r.ok) throw new Error(`USPS payment token falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  const d = await r.json();
+  return d.paymentToken || d.payment_token;
+}
+// fromAddress (dirección de remitente) sale de un secret, NUNCA hardcodeada acá —
+// este archivo vive en workers-src, que también es público (ver CLAUDE.md), y una
+// dirección real de casa/negocio no debe quedar en texto plano en ningún repo.
+async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weightOz }) {
+  if (!env.USPS_FROM_ADDRESS) throw new Error('USPS_FROM_ADDRESS no configurado');
+  let fromAddress;
+  try { fromAddress = JSON.parse(env.USPS_FROM_ADDRESS); }
+  catch { throw new Error('USPS_FROM_ADDRESS no es JSON válido'); }
+  const r = await fetch(`${uspsBaseUrl(env)}/labels/v3/label`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${oauthToken}`,
+      'X-Payment-Authorization-Token': paymentToken,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      imageInfo: { imageType: 'PDF', labelType: 'SHIPPING_LABEL_101' },
+      toAddress,
+      fromAddress,
+      packageDescription: {
+        weightUOM: 'oz',
+        weight: weightOz,
+        mailClass: 'USPS_GROUND_ADVANTAGE',
+        processingCategory: 'MACHINABLE',
+        rateIndicator: 'SP',
+      },
+    }),
+  });
+  if (!r.ok) throw new Error(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 300)}`);
+  return await r.json();
+}
+
+// Genera la guía para UN pedido ya existente — nunca confía en una dirección que
+// mande el body, siempre la del pedido guardado (mismo criterio de todo el repo:
+// nunca confiar en el cliente para datos que ya están verificados server-side).
+// Disparo 100% manual (decisión del usuario, no automático) — así Tita/Robin
+// revisan la dirección antes de gastar franqueo real de la cuenta EPS.
+async function handleUspsLabel(body, env, origin, session, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.orderId;
+  if (id == null) return err('Falta orderId', 400, origin);
+  const order = await orderGet(env, id);
+  if (!order) return err('Pedido no encontrado', 404, origin);
+
+  const cliente = order.cliente || {};
+  const paisUpper = (cliente.pais || '').toUpperCase();
+  if (!['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES'].includes(paisUpper)) {
+    return err('Esta guía es solo para pedidos a Estados Unidos — para Ecuador seguí usando Servientrega a mano.', 400, origin);
+  }
+  if (!cliente.direccion || !cliente.ciudad || !cliente.estado || !cliente.zip) {
+    return err('Al pedido le falta dirección/ciudad/estado/ZIP completos — completalo antes de generar la guía.', 400, origin);
+  }
+
+  const bodyWeightOz = Number(body.weightOz);
+  let finalWeightOz = bodyWeightOz > 0 ? bodyWeightOz : null;
+  if (!finalWeightOz) {
+    try {
+      const content = await ghGetContent(PRODUCTS_PATH, env);
+      const catalog = content ? JSON.parse(content.text) : null;
+      finalWeightOz = catalog?.config?.shipping?.uspsDefaultPackage?.weightOz || 4;
+    } catch (e) {
+      console.error('No se pudo leer uspsDefaultPackage del catálogo, usando 4oz por defecto:', e.message);
+      finalWeightOz = 4;
+    }
+  }
+
+  try {
+    const oauthToken = await uspsOAuthToken(env);
+    const paymentToken = await uspsPaymentToken(env, oauthToken);
+    const label = await uspsCreateLabel(env, {
+      oauthToken, paymentToken, weightOz: finalWeightOz,
+      toAddress: {
+        firstName: cliente.nombre,
+        lastName: cliente.apellido,
+        streetAddress: cliente.direccion,
+        secondaryAddress: cliente.apto || undefined,
+        city: cliente.ciudad,
+        state: cliente.estado,
+        ZIPCode: String(cliente.zip).split('-')[0],
+        phone: cliente.telefono || undefined,
+      },
+    });
+    order.tracking = label.trackingNumber || label.tracking_number || '';
+    order.carrier = 'USPS';
+    order.labelBase64 = label.labelImage || label.labelImageData || label.label || '';
+    order.labelFormat = 'PDF';
+    await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
+    if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+    return ok({ ok: true, tracking: order.tracking, labelBase64: order.labelBase64, labelFormat: order.labelFormat }, origin);
+  } catch (e) {
+    console.error('USPS label falló:', e.message);
+    return err('No se pudo generar la guía: ' + e.message, 502, origin);
+  }
+}
+
+// ── Cacusa Lovers — "pedido de envío" del ciclo (nuevo, 20 sep) ─────────────────
+// Antes de esto, invoice.payment_made (lovers-webhook-worker.js) solo actualizaba
+// el estado de la suscriptora en Firebase — nunca quedaba ningún registro de "qué
+// se le envía a quién este mes/año", así que no había nada sobre lo cual generar
+// una guía. Este endpoint (Worker-a-Worker, mismo ORDER_INGEST_KEY de siempre) crea
+// un pedido normal en el sistema (mismo esquema que buildOrderCore(), aparece en el
+// panel como cualquier otro) con productos vacío a propósito — Tita/Robin todavía
+// tienen que elegir a mano qué 2 piezas van ese ciclo, eso sigue siendo curaduría
+// humana — pero con la dirección ya completa desde el día uno, que es lo único que
+// hace falta para poder generar la guía después con el mismo botón/endpoint de
+// arriba, sin código nuevo ahí.
+async function handleLoversShipmentIngest(body, env, origin, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const invoiceId = String(body.squareInvoiceId || '').slice(0, 100);
+  if (!invoiceId) return err('Falta squareInvoiceId', 400, origin);
+
+  // Idempotencia real (no solo un intento): un reintento de Square del mismo cobro
+  // no debe crear un segundo pedido de envío para el mismo ciclo. Mismo patrón que
+  // el resto del repo (marcador dedicado en KV, chequeado antes de crear).
+  const dedupeKey = 'lovershipinvoice:' + invoiceId;
+  const already = await env.CACUSA_KV.get(dedupeKey);
+  if (already) return ok({ ok: true, orderId: Number(already), alreadyExisted: true }, origin);
+
+  const newOrder = buildOrderCore({
+    cliente: {
+      nombre: body.nombre, apellido: body.apellido, telefono: body.telefono,
+      direccion: body.direccion, apto: body.apto, ciudad: body.ciudad,
+      estado: body.estado, zip: body.zip, pais: body.pais,
+    },
+    productos: [],
+    pago: 'Lovers',
+    total: 0, subtotal: 0, envio: 0, impuesto: 0,
+    notas: `Envío ${body.plan || 'Cacusa Lovers'} — pendiente de elegir piezas del ciclo`,
+  }, { strictPago: false });
+
+  assignOrderId(newOrder);
+  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  await env.CACUSA_KV.put(dedupeKey, String(newOrder.id), { expirationTtl: 400 * 24 * 3600 });
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  return ok({ ok: true, orderId: newOrder.id, alreadyExisted: false }, origin);
 }
 
 // ── Token (HMAC-SHA256) ────────────────────────────────────────────────────────
