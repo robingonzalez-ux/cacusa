@@ -2779,6 +2779,12 @@ async function uspsPaymentToken(env, oauthToken) {
 // - X-Idempotency-Key (orderId) evita comprar 2 guías si la llamada se reintenta
 //   por un corte de red — mismo criterio de idempotencia ya usado en el resto del
 //   repo (ver _orderIdemKey en la tienda).
+// - Todo paquete sale asegurado por $100 (decisión de negocio, 21 sep) — código 930
+//   = "Insurance <= $500" en el enum `extraServices` del spec real; `packageValue`
+//   es el valor declarado que exige USPS para calcular ese seguro. Monto fijo, no
+//   configurable por pedido.
+const USPS_INSURANCE_EXTRA_SERVICE = 930;
+const USPS_INSURANCE_VALUE_USD = 100;
 async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weightOz, lengthIn, widthIn, heightIn, orderId }) {
   if (!env.USPS_FROM_ADDRESS) throw new Error('USPS_FROM_ADDRESS no configurado');
   let fromAddress;
@@ -2808,6 +2814,8 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
         processingCategory: 'MACHINABLE',
         rateIndicator: 'SP',
         mailingDate: new Date().toISOString().slice(0, 10),
+        extraServices: [USPS_INSURANCE_EXTRA_SERVICE],
+        packageOptions: { packageValue: USPS_INSURANCE_VALUE_USD },
       },
     }),
   });
@@ -2836,31 +2844,24 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     return err('Al pedido le falta dirección/ciudad/estado/ZIP completos — completalo antes de generar la guía.', 400, origin);
   }
 
-  const bodyWeightOz = Number(body.weightOz);
-  let finalWeightOz = bodyWeightOz > 0 ? bodyWeightOz : null;
-  let pkg = null;
-  try {
-    const content = await ghGetContent(PRODUCTS_PATH, env);
-    const catalog = content ? JSON.parse(content.text) : null;
-    pkg = catalog?.config?.shipping?.uspsDefaultPackage || null;
-  } catch (e) {
-    console.error('No se pudo leer uspsDefaultPackage del catálogo, usando defaults:', e.message);
+  // Peso y las 3 dimensiones son obligatorios (decisión de negocio, 21 sep) — antes
+  // caían en silencio al default del catálogo si venían vacíos; ahora el panel los
+  // precarga con ese mismo default pero el admin los ve y confirma (o ajusta) antes
+  // de generar la guía, así que acá ya no hace falta ningún fallback ni leer el
+  // catálogo — solo validar que lleguen completos.
+  const weightOz = Number(body.weightOz);
+  const lengthIn = Number(body.lengthIn);
+  const widthIn  = Number(body.widthIn);
+  const heightIn = Number(body.heightIn);
+  if (!(weightOz > 0 && lengthIn > 0 && widthIn > 0 && heightIn > 0)) {
+    return err('Peso y las 3 dimensiones del paquete son obligatorios para generar la guía.', 400, origin);
   }
-  if (!finalWeightOz) finalWeightOz = pkg?.weightOz || 4;
-  // Las 3 dimensiones del body solo se usan si vienen las 3 completas y válidas —
-  // mezclar 1-2 puntuales con el resto del default del catálogo daría una caja con
-  // proporciones sin sentido (ej. un largo puntual con el ancho/alto de otro paquete).
-  const bodyLengthIn = Number(body.lengthIn), bodyWidthIn = Number(body.widthIn), bodyHeightIn = Number(body.heightIn);
-  const bodyHasDims = bodyLengthIn > 0 && bodyWidthIn > 0 && bodyHeightIn > 0;
-  const lengthIn = bodyHasDims ? bodyLengthIn : (pkg?.lengthIn || 6);
-  const widthIn  = bodyHasDims ? bodyWidthIn  : (pkg?.widthIn  || 4);
-  const heightIn = bodyHasDims ? bodyHeightIn : (pkg?.heightIn || 2);
 
   try {
     const oauthToken = await uspsOAuthToken(env);
     const paymentToken = await uspsPaymentToken(env, oauthToken);
     const label = await uspsCreateLabel(env, {
-      oauthToken, paymentToken, weightOz: finalWeightOz, lengthIn, widthIn, heightIn, orderId: order.id,
+      oauthToken, paymentToken, weightOz, lengthIn, widthIn, heightIn, orderId: order.id,
       toAddress: {
         firstName: cliente.nombre,
         lastName: cliente.apellido,
