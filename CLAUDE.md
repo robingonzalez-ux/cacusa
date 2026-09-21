@@ -137,6 +137,17 @@ Enterprise Payment Account (EPS) activa — trámites reales con USPS, no
 algo que se resuelva desde el código. Detalle completo (secrets exactos,
 estado de la cuenta, shape del payload de la API): ver el repo privado.
 
+**Recolección diaria (Carrier Pickup, 21 sep)**: botón aparte "📬 Pedir
+recolección de hoy" (cabecera de la pestaña Pedidos, no está atado a un
+pedido puntual) — pide que el cartero pase por la dirección de remitente
+y retire TODO lo que esté listo ese día, con la instrucción
+`packageLocation: 'KNOCK_ON_DOOR'` (toca la puerta, retira y se va —
+mismo comportamiento que ya usa el negocio a mano en su cuenta de
+USPS.com). Idempotente por fecha: apretarlo 2 veces el mismo día devuelve
+la misma confirmación, nunca pide 2 recolecciones reales. Requiere
+aprobación aparte de USPS para el producto "Carrier Pickup 3.0" (distinto
+de Labels/Payments) — mismo trámite real, ver repo privado.
+
 Bug real cerrado (20 sep): un pedido de Cacusa Lovers podía guardar el
 país truncado a 10 caracteres (`"ESTADOS UN"` en vez de `"ESTADOS
 UNIDOS"`), rompiendo el match que decide si mostrar el botón de USPS —

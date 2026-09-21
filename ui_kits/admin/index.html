@@ -1491,6 +1491,46 @@ function UspsLabelModal({ order, token, uspsDefault, onClose, onSuccess }) {
   );
 }
 
+// Botón "Pedir recolección de hoy" (Carrier Pickup) — no está atado a un pedido
+// puntual (el cartero pasa una vez por la dirección y se lleva TODO lo que esté listo
+// ese día), a diferencia de "Generar guía USPS" que sí es por pedido. El servidor ya
+// es idempotente por fecha (apretar 2 veces el mismo día devuelve la misma
+// confirmación), así que acá no hace falta ningún guard extra del lado del cliente.
+function PickupTodayButton({ token }) {
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState(null);
+  const request = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const data = await apiCall('usps/schedule-pickup', { token });
+      setMsg({
+        ok: true,
+        text: data.alreadyRequested
+          ? `Ya se había pedido la recolección de hoy — confirmación #${data.confirmationNumber}.`
+          : `Recolección pedida — confirmación #${data.confirmationNumber} (${data.packageCount} paquete${data.packageCount !== 1 ? 's' : ''}).`,
+      });
+    } catch (e) {
+      setMsg({ ok: false, text: e.message || 'No se pudo pedir la recolección.' });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div>
+      <button onClick={request} disabled={busy}
+        style={{ padding: '10px 20px', background: '#F3EFF5', color: '#5B4A63', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: busy ? 'default' : 'pointer', opacity: busy ? .7 : 1 }}>
+        {busy ? 'Pidiendo…' : '📬 Pedir recolección de hoy'}
+      </button>
+      {msg && (
+        <div role={msg.ok ? 'status' : 'alert'} aria-live={msg.ok ? 'polite' : 'assertive'}
+          style={{ marginTop: 8, fontSize: 12, color: msg.ok ? '#166534' : '#DC2626', maxWidth: 260 }}>
+          {msg.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function OrderCard({ order, token, uspsDefault, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate, onLabelGenerated }) {
   const [showLabelModal, setShowLabelModal] = React.useState(false);
   const paisUpper = ((order.cliente && order.cliente.pais) || '').toUpperCase();
@@ -4702,12 +4742,15 @@ function App() {
           return (
             <div>
               {/* Cabecera */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
                 <div style={{ fontWeight: 800, fontSize: 18, color: '#1A1118' }}>Pedidos</div>
-                <button onClick={() => setShowOrderModal(true)}
-                  style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(232,80,138,.3)' }}>
-                  + Nuevo pedido
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <PickupTodayButton token={session.token} />
+                  <button onClick={() => setShowOrderModal(true)}
+                    style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#E8508A,#9B5DE5)', color: 'white', borderRadius: 99, fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(232,80,138,.3)' }}>
+                    + Nuevo pedido
+                  </button>
+                </div>
               </div>
 
               {/* Sub-nav Activos / Historial */}
