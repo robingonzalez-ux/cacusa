@@ -268,7 +268,12 @@ async function _waRegister(token, username, pass) {
     rp: { id: ch.rpId, name: ch.rpName },
     user: { id: new TextEncoder().encode(username), name: username, displayName: USERS[username].name },
     pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
-    authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'preferred', residentKey:'discouraged' },
+    // residentKey:'required' (21 sep) — antes 'discouraged'. Sin esto, la passkey no es
+    // "discoverable" y el navegador no puede sugerirla solo en el campo de usuario
+    // (Conditional UI, ver _waConditionalLogin) — hace falta reactivar Face ID una vez
+    // más para que la nueva passkey quede en este modo; la vieja sigue sirviendo para el
+    // botón "Ingresar con Face ID" de siempre hasta que se reactive.
+    authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'preferred', residentKey:'required', requireResidentKey: true },
     timeout: 60000, attestation: 'none',
     excludeCredentials: (ch.excludeIds||[]).map(id => ({ id:_waB64d(id), type:'public-key' })),
   }});
@@ -297,6 +302,32 @@ async function _waLogin(username) {
     authenticatorData: _waB64e(new Uint8Array(a.response.authenticatorData)),
     clientDataJSON: _waB64e(new Uint8Array(a.response.clientDataJSON)),
     signature: _waB64e(new Uint8Array(a.response.signature)),
+  });
+}
+// Login condicional (21 sep) — en vez de tocar un botón que ya sabe de qué cuenta se
+// trata, esto se pide en segundo plano apenas se monta la pantalla de login. Si el
+// navegador soporta Conditional UI y hay una passkey discoverable guardada para este
+// sitio, la sugiere directo en el campo de usuario (autocompletado nativo) — elegirla
+// dispara Face ID sin que primero haya que apretar nuestro botón. `signal` permite
+// cancelarlo si el usuario ya entró por otro camino (contraseña o el botón de siempre),
+// para no dejar una promesa de WebAuthn colgada de fondo.
+async function _waConditionalLogin(signal) {
+  if (!window.PublicKeyCredential || !PublicKeyCredential.isConditionalMediationAvailable) return null;
+  if (!(await PublicKeyCredential.isConditionalMediationAvailable())) return null;
+  const ch = await apiCall('webauthn/login-challenge-any', {});
+  const a = await navigator.credentials.get({
+    mediation: 'conditional',
+    signal,
+    publicKey: { challenge: _waB64d(ch.challenge), rpId: ch.rpId, userVerification: 'preferred', timeout: 60000 },
+  });
+  if (!a) return null;
+  return apiCall('webauthn/login', {
+    challenge: ch.challenge,
+    credentialId: _waB64e(new Uint8Array(a.rawId)),
+    authenticatorData: _waB64e(new Uint8Array(a.response.authenticatorData)),
+    clientDataJSON: _waB64e(new Uint8Array(a.response.clientDataJSON)),
+    signature: _waB64e(new Uint8Array(a.response.signature)),
+    userHandle: a.response.userHandle ? _waB64e(new Uint8Array(a.response.userHandle)) : undefined,
   });
 }
 // Lee productos y pedidos frescos desde el backend
@@ -728,6 +759,19 @@ function LoginScreen({ onLogin }) {
     setWaAvail(_waSupported() && _waHasCred(username));
   }, [username]);
 
+  // Login condicional (21 sep) — pedido en segundo plano una sola vez al montar la
+  // pantalla, no ligado a ningún click. Si hay una passkey discoverable disponible, el
+  // navegador la sugiere directo en el campo de usuario; si el usuario la elige, esto
+  // resuelve solo y entra sin haber tocado el botón "Ingresar con Face ID". Se cancela
+  // si la pantalla se desmonta (ya se entró por contraseña o por el botón de siempre).
+  React.useEffect(() => {
+    const ctrl = new AbortController();
+    _waConditionalLogin(ctrl.signal)
+      .then(data => { if (data) onLogin({ username: data.user, name: USERS[data.user].name, token: data.token }); })
+      .catch(() => {}); // cancelado, sin passkey discoverable, o el usuario cerró la sugerencia — no es un error a mostrar
+    return () => ctrl.abort();
+  }, []);
+
   const submit = async e => {
     e.preventDefault(); setLoading(true); setError('');
     try {
@@ -794,14 +838,20 @@ function LoginScreen({ onLogin }) {
         </div>
         <form onSubmit={submit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={lbl}>Usuario</label>
-            <select value={username} onChange={e => setUsername(e.target.value)} style={{ ...inp, background: 'white', cursor: 'pointer' }}>
+            <label htmlFor="loginUsername" style={lbl}>Usuario</label>
+            {/* input de texto (no <select>) — el autocompletado nativo del navegador para
+                Conditional UI (ver _waConditionalLogin) solo se engancha a inputs de texto,
+                nunca a un <select>. autoComplete="username webauthn" es lo que le avisa al
+                navegador que acá puede sugerir una passkey guardada. */}
+            <input id="loginUsername" list="loginUsernameOptions" autoComplete="username webauthn"
+              value={username} onChange={e => setUsername(e.target.value)} placeholder="Usuario" style={inp} />
+            <datalist id="loginUsernameOptions">
               {Object.entries(USERS).map(([k, v]) => <option key={k} value={k}>{v.avatar} {v.name}</option>)}
-            </select>
+            </datalist>
           </div>
           <div style={{ marginBottom: 16 }}>
             <label style={lbl}>Contraseña</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required style={inp} />
+            <input type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required style={inp} />
           </div>
           <div style={{ marginBottom: 8 }} />
           {error && <div style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '10px 14px', fontSize: 13, marginBottom: 16, fontWeight: 500 }}>{error}</div>}
