@@ -1407,26 +1407,28 @@ function loadQuagga() {
 // Tita/Robin revisan la dirección antes de gastar franqueo real de la cuenta
 // EPS). Requiere que el Worker ya tenga las credenciales de USPS configuradas —
 // si no, el error real de USPS aparece acá, nunca falla en silencio.
-function UspsLabelModal({ order, token, onClose, onSuccess }) {
+function UspsLabelModal({ order, token, uspsDefault, onClose, onSuccess }) {
   const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 };
-  const [weightOz, setWeightOz] = React.useState('');
-  const [lengthIn, setLengthIn] = React.useState('');
-  const [widthIn, setWidthIn] = React.useState('');
-  const [heightIn, setHeightIn] = React.useState('');
+  const def = uspsDefault || DEFAULT_SHIPPING.uspsDefaultPackage;
+  // Precargados con el default del catálogo (no vacíos) — el admin ve y confirma el
+  // valor real que se va a usar, en vez de un campo en blanco con un fallback
+  // invisible detrás. Peso/dimensiones son obligatorios desde el 21 sep.
+  const [weightOz, setWeightOz] = React.useState(String(def.weightOz ?? ''));
+  const [lengthIn, setLengthIn] = React.useState(String(def.lengthIn ?? ''));
+  const [widthIn, setWidthIn] = React.useState(String(def.widthIn ?? ''));
+  const [heightIn, setHeightIn] = React.useState(String(def.heightIn ?? ''));
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState('');
   const c = order.cliente || {};
   const submit = async () => {
+    const w = Number(weightOz), l = Number(lengthIn), wi = Number(widthIn), h = Number(heightIn);
+    if (!(w > 0 && l > 0 && wi > 0 && h > 0)) {
+      setError('Peso y las 3 dimensiones del paquete son obligatorios.');
+      return;
+    }
     setBusy(true); setError('');
     try {
-      const payload = { token, orderId: order.id };
-      const w = Number(weightOz);
-      if (w > 0) payload.weightOz = w;
-      // Las 3 dimensiones van juntas o no van — mezclar 1-2 puntuales con el resto
-      // del default del catálogo daría una caja con proporciones sin sentido.
-      const l = Number(lengthIn), wi = Number(widthIn), h = Number(heightIn);
-      if (l > 0 && wi > 0 && h > 0) { payload.lengthIn = l; payload.widthIn = wi; payload.heightIn = h; }
-      const data = await apiCall('order/usps-label', payload);
+      const data = await apiCall('order/usps-label', { token, orderId: order.id, weightOz: w, lengthIn: l, widthIn: wi, heightIn: h });
       onSuccess(data);
     } catch (e) {
       setError(e.message || 'No se pudo generar la guía.');
@@ -1444,33 +1446,35 @@ function UspsLabelModal({ order, token, onClose, onSuccess }) {
         <div>{c.pais}</div>
       </div>
       <label htmlFor="uspsWeightOz" style={{ fontSize: 12, fontWeight: 700, color: '#5B4A63', display: 'block', marginBottom: 4 }}>
-        Peso del paquete (oz) — opcional
+        Peso del paquete (oz) — obligatorio
       </label>
-      <input id="uspsWeightOz" type="number" min="1" value={weightOz} onChange={e => setWeightOz(e.target.value)}
-        placeholder="Dejar vacío para usar el default configurado en Envíos"
+      <input id="uspsWeightOz" type="number" min="1" required value={weightOz} onChange={e => setWeightOz(e.target.value)}
         style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, marginBottom: 14, boxSizing: 'border-box' }} />
       <div style={{ fontSize: 12, fontWeight: 700, color: '#5B4A63', marginBottom: 4 }}>
-        Dimensiones (in) — opcional, completar los 3 o dejar los 3 vacíos
+        Dimensiones (in) — obligatorio, precargadas con el default de Envíos
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
         <div>
           <label htmlFor="uspsLengthIn" style={srOnly}>Largo (in)</label>
-          <input id="uspsLengthIn" type="number" min="1" step="0.5" value={lengthIn} onChange={e => setLengthIn(e.target.value)}
+          <input id="uspsLengthIn" type="number" min="1" step="0.5" required value={lengthIn} onChange={e => setLengthIn(e.target.value)}
             placeholder="Largo"
             style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
         </div>
         <div>
           <label htmlFor="uspsWidthIn" style={srOnly}>Ancho (in)</label>
-          <input id="uspsWidthIn" type="number" min="1" step="0.5" value={widthIn} onChange={e => setWidthIn(e.target.value)}
+          <input id="uspsWidthIn" type="number" min="1" step="0.5" required value={widthIn} onChange={e => setWidthIn(e.target.value)}
             placeholder="Ancho"
             style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
         </div>
         <div>
           <label htmlFor="uspsHeightIn" style={srOnly}>Alto (in)</label>
-          <input id="uspsHeightIn" type="number" min="1" step="0.5" value={heightIn} onChange={e => setHeightIn(e.target.value)}
+          <input id="uspsHeightIn" type="number" min="1" step="0.5" required value={heightIn} onChange={e => setHeightIn(e.target.value)}
             placeholder="Alto"
             style={{ width: '100%', padding: '9px 12px', border: '1.5px solid #E5DCE8', borderRadius: 10, fontSize: 13, boxSizing: 'border-box' }} />
         </div>
+      </div>
+      <div style={{ fontSize: 12, color: '#5B4A63', background: '#EFF6FF', borderRadius: 10, padding: '8px 12px', marginBottom: 14 }}>
+        Este envío sale asegurado por $100 USD (USPS Insurance) — incluido en todas las guías.
       </div>
       {error && <div role="alert" aria-live="assertive" style={{ background: '#FEE2E2', color: '#DC2626', borderRadius: 10, padding: '8px 12px', fontSize: 12, marginBottom: 12 }}>{error}</div>}
       <div style={{ display: 'flex', gap: 8 }}>
@@ -1487,7 +1491,7 @@ function UspsLabelModal({ order, token, onClose, onSuccess }) {
   );
 }
 
-function OrderCard({ order, token, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate, onLabelGenerated }) {
+function OrderCard({ order, token, uspsDefault, onStatusChange, onDelete, onTrackingChange, onCarrierChange, onClienteUpdate, onLabelGenerated }) {
   const [showLabelModal, setShowLabelModal] = React.useState(false);
   const paisUpper = ((order.cliente && order.cliente.pais) || '').toUpperCase();
   const isUsOrder = ['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES'].includes(paisUpper);
@@ -1781,6 +1785,7 @@ function OrderCard({ order, token, onStatusChange, onDelete, onTrackingChange, o
         <UspsLabelModal
           order={order}
           token={token}
+          uspsDefault={uspsDefault}
           onClose={() => setShowLabelModal(false)}
           onSuccess={data => {
             setShowLabelModal(false);
@@ -4743,7 +4748,7 @@ function App() {
                           </div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                             {grupo.map(o => (
-                              <OrderCard key={o.id} order={o} token={session.token}
+                              <OrderCard key={o.id} order={o} token={session.token} uspsDefault={shipping.uspsDefaultPackage || DEFAULT_SHIPPING.uspsDefaultPackage}
                                 onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
                                 onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
                                 onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
@@ -4817,7 +4822,7 @@ function App() {
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 14 }}>
                               {grupo.map(o => (
-                                <OrderCard key={o.id} order={o} token={session.token}
+                                <OrderCard key={o.id} order={o} token={session.token} uspsDefault={shipping.uspsDefaultPackage || DEFAULT_SHIPPING.uspsDefaultPackage}
                                   onStatusChange={(ord, newState) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, estado: newState } : x)); updateOrderRemote(ord.id, { estado: newState }); }}
                                   onDelete={ord => { setOrders(orders.filter(x => x.id !== ord.id)); deleteOrderRemote(ord.id); }}
                                   onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}

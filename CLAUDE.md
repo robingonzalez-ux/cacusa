@@ -112,14 +112,17 @@ Botón manual "📦 Generar guía USPS" en cada pedido del panel admin (solo
 visible para pedidos con destino EE.UU. — Ecuador sigue 100% manual con
 Servientrega). Genera la guía real contra la API nueva de USPS
 (`developers.usps.com` — la vieja Web Tools API se dio de baja el 25 ene
-2026), usa un peso/tamaño de paquete fijo por defecto
-(`config.shipping.uspsDefaultPackage` — pestaña Envíos del panel, sección
-"📦 Paquete por defecto para guías USPS") salvo que se indique otro
-peso/dimensiones puntuales al generar (modal "Generar guía USPS": las 3
-medidas van juntas o no van, para no mezclar 1-2 puntuales con el resto
-del default). Nunca se dispara solo — siempre lo aprieta Tita/Robin
-después de revisar la dirección, para no gastar franqueo real por un
-error.
+2026). Peso y las 3 dimensiones del paquete son **obligatorios** (21 sep) —
+el modal los precarga con el default de `config.shipping.uspsDefaultPackage`
+(pestaña Envíos del panel, sección "📦 Paquete por defecto para guías
+USPS") pero Tita/Robin ven y confirman (o ajustan) el valor real antes de
+generar; ya no existe ningún fallback silencioso del lado del servidor —
+si falta cualquiera de los 4 campos, el Worker rechaza con 400 antes de
+llamar a USPS. Todo envío sale además asegurado por $100 USD (USPS
+Insurance, `extraServices: [930]` + `packageOptions.packageValue: 100`) —
+monto fijo, no configurable por pedido. Nunca se dispara solo — siempre lo
+aprieta Tita/Robin después de revisar la dirección, para no gastar
+franqueo real por un error.
 
 Cacusa Lovers también entra: cada cobro real de una renovación
 (`invoice.payment_made` en `lovers-webhook-worker.js`) crea un pedido
