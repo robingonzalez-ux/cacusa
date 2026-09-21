@@ -123,6 +123,7 @@ export default {
     try {
       // WebAuthn — antes de /login porque '/webauthn/login'.endsWith('/login') es true
       if (path.endsWith('/webauthn/login-challenge')) return await handleWaLoginChallenge(body, env, allowOrigin, request);
+      if (path.endsWith('/webauthn/login-challenge-any')) return await handleWaLoginChallengeAny(body, env, allowOrigin, request);
       if (path.endsWith('/webauthn/login'))           return await handleWaLogin(body, env, allowOrigin, request);
       if (path.endsWith('/webauthn/reg-challenge'))   return await handleWaRegChallenge(body, env, allowOrigin, request);
       if (path.endsWith('/webauthn/register'))        return await handleWaRegister(body, env, allowOrigin, request);
@@ -3257,13 +3258,37 @@ async function handleWaLoginChallenge(body, env, origin, request) {
   return ok({ challenge, credentialId, rpId: WA_RP_ID }, origin);
 }
 
+// Reto de login SIN usuario elegido de antemano — habilita el autocompletado nativo del
+// navegador (Conditional UI / credenciales discoverable, 21 sep): el navegador sugiere la
+// passkey directo en el campo de usuario en vez de que primero se aprete un botón "Ingresar
+// con Face ID" que ya sabe de qué cuenta se trata. El servidor recién sabe qué usuario fue
+// al leer `userHandle` de la respuesta, en handleWaLogin() — el resto de la verificación
+// (firma, origin, rpId, UP/UV, replay) es exactamente la misma que el flujo con botón
+// explícito, no se duplica nada de eso.
+async function handleWaLoginChallengeAny(body, env, origin, request) {
+  if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
+  const challenge = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  await env.CACUSA_KV.put(`walc:${challenge}`, '*', { expirationTtl: 300 });
+  return ok({ challenge, rpId: WA_RP_ID }, origin);
+}
+
 async function handleWaLogin(body, env, origin, request) {
   if (!(await waRateLimit(env, request, 'warl'))) return err('Demasiados intentos. Intenta más tarde.', 429, origin);
-  const { challenge, credentialId, authenticatorData, clientDataJSON, signature } = body;
+  const { challenge, credentialId, authenticatorData, clientDataJSON, signature, userHandle } = body;
   if (!challenge || !credentialId || !authenticatorData || !clientDataJSON || !signature) return err('Datos incompletos', 400, origin);
-  const user = await env.CACUSA_KV.get(`walc:${challenge}`);
+  let user = await env.CACUSA_KV.get(`walc:${challenge}`);
   if (!user) return err('Challenge inválido o expirado', 400, origin);
   await env.CACUSA_KV.delete(`walc:${challenge}`);
+  // El challenge "any" (autocompletado nativo, ver handleWaLoginChallengeAny) llega marcado
+  // con '*' — recién acá se sabe qué cuenta es, vía el userHandle que el propio navegador
+  // devuelve para credenciales discoverable (los mismos bytes de `user.id` que se mandaron
+  // al registrar la passkey, ver _waRegister en el frontend). El resto de abajo (firma,
+  // origin, rpId, UP/UV, replay) es IDÉNTICO al flujo con usuario conocido de antemano.
+  if (user === '*') {
+    if (!userHandle) return err('Datos incompletos', 400, origin);
+    try { user = new TextDecoder().decode(b64urlDecode(userHandle)); } catch { return err('userHandle inválido', 400, origin); }
+    if (!WA_USERS.includes(user)) return err('Credencial no encontrada', 404, origin);
+  }
   const credRaw = await env.CACUSA_KV.get(`wacred:${user}`);
   if (!credRaw) return err('Credencial no encontrada', 404, origin);
   const credData = JSON.parse(credRaw);
