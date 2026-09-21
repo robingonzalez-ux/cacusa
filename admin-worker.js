@@ -319,6 +319,7 @@ export default {
       if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/usps-label')) return await handleUspsLabel(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -2877,12 +2878,98 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     order.carrier = 'USPS';
     order.labelBase64 = label.labelImage || '';
     order.labelFormat = 'PDF';
+    // Necesarios para que handleUspsSchedulePickup() sepa cuántas guías se generaron
+    // HOY y cuánto pesan en total, sin tener que adivinar ni volver a leer nada más.
+    order.labelGeneratedAt = new Date().toISOString();
+    order.labelWeightOz = weightOz;
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
     return ok({ ok: true, tracking: order.tracking, labelBase64: order.labelBase64, labelFormat: order.labelFormat }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
     return err('No se pudo generar la guía: ' + e.message, 502, origin);
+  }
+}
+
+// Carrier Pickup — pide que el cartero pase por la dirección de remitente
+// (USPS_FROM_ADDRESS) y retire lo que esté listo, con la misma instrucción "toca la
+// puerta, se lleva el paquete" que el usuario ya usa a mano en su cuenta de USPS.com
+// (`packageLocation: 'KNOCK_ON_DOOR'` — valor de primera clase del enum real, no un
+// texto libre). Payload verificado contra el spec OpenAPI real
+// (`carrier-pickup_8.yaml` v3.1.10, developers.usps.com/carrierpickupv3).
+function uspsPickupContact(fromAddress) {
+  const cell = String(fromAddress.phone || '').replace(/\D/g, '').slice(-10);
+  if (cell.length !== 10) throw new Error('USPS_FROM_ADDRESS.phone debe tener 10 dígitos para pedir la recolección');
+  return [{ cellNumber: cell }];
+}
+async function uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate }) {
+  const r = await fetch(`${uspsBaseUrl(env)}/pickup/v3/carrier-pickup`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pickupDate,
+      pickupAddress: {
+        firstName: fromAddress.firstName,
+        lastName: fromAddress.lastName,
+        address: {
+          streetAddress: fromAddress.streetAddress,
+          secondaryAddress: fromAddress.secondaryAddress || undefined,
+          city: fromAddress.city,
+          state: fromAddress.state,
+          ZIPCode: fromAddress.ZIPCode,
+        },
+        contact: uspsPickupContact(fromAddress),
+      },
+      packages: [{ packageType: 'USPS_GROUND_ADVANTAGE', packageCount }],
+      estimatedWeight,
+      pickupLocation: { packageLocation: 'KNOCK_ON_DOOR' },
+      // Si el día pedido ya no tiene servicio (cutoff 2am CT, domingo, feriado), USPS
+      // reprograma solo al próximo día hábil en vez de rechazar — evita tener que
+      // calcular el cutoff de zona horaria a mano acá.
+      nextAvailablePickup: true,
+    }),
+  });
+  if (!r.ok) throw new Error(`USPS pickup falló (${r.status}): ${(await r.text()).slice(0, 300)}`);
+  return await r.json();
+}
+
+// Botón "Pedir recolección de hoy" del panel — no está atado a un pedido puntual (el
+// cartero pasa una vez por la dirección y se lleva TODO lo que esté listo ese día), así
+// que la idempotencia es por FECHA, no por pedido: apretar el botón 2 veces el mismo
+// día devuelve la misma confirmación en vez de pedir 2 recolecciones reales.
+async function handleUspsSchedulePickup(body, env, origin, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const today = new Date().toISOString().slice(0, 10);
+  const kvKey = `uspspickup:${today}`;
+  const existingRaw = await env.CACUSA_KV.get(kvKey);
+  if (existingRaw) {
+    let existing;
+    try { existing = JSON.parse(existingRaw); } catch { existing = null; }
+    if (existing) return ok({ ok: true, alreadyRequested: true, ...existing }, origin);
+  }
+
+  const orders = await listAllOrders(env);
+  const todays = orders.filter(o => o.carrier === 'USPS' && String(o.labelGeneratedAt || '').slice(0, 10) === today);
+  if (!todays.length) {
+    return err('No se generó ninguna guía USPS hoy — no hay nada que recoger.', 400, origin);
+  }
+  const packageCount = todays.length;
+  const estimatedWeight = todays.reduce((sum, o) => sum + (Number(o.labelWeightOz) || 4) / 16, 0);
+
+  if (!env.USPS_FROM_ADDRESS) return err('USPS_FROM_ADDRESS no configurado', 500, origin);
+  let fromAddress;
+  try { fromAddress = JSON.parse(env.USPS_FROM_ADDRESS); }
+  catch { return err('USPS_FROM_ADDRESS no es JSON válido', 500, origin); }
+
+  try {
+    const oauthToken = await uspsOAuthToken(env);
+    const pickup = await uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today });
+    const result = { confirmationNumber: pickup.confirmationNumber, pickupDate: pickup.pickupDate, packageCount };
+    await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 });
+    return ok({ ok: true, alreadyRequested: false, ...result }, origin);
+  } catch (e) {
+    console.error('USPS schedule pickup falló:', e.message);
+    return err('No se pudo pedir la recolección: ' + e.message, 502, origin);
   }
 }
 
