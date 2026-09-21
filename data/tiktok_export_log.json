@@ -16,8 +16,8 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1781399974669": {
-    "hash": "6686d5d9d753d08d",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "aad801a2ccaf7b0e",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1781400451404": {
     "hash": "fa8805019ac5fdda",
@@ -168,8 +168,8 @@
     "exportedAt": "2026-09-14T01:45:26.670887+00:00"
   },
   "1781884983133": {
-    "hash": "7807c440f7210223",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "6badb49310b6ef04",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1781885024731": {
     "hash": "c9b7d793106bc0ad",
@@ -244,8 +244,8 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1786303032752": {
-    "hash": "fb8ba64a255727d7",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "f640b312df6a46be",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1786308585824": {
     "hash": "598150cd0eab5540",
@@ -276,16 +276,16 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1788107453046": {
-    "hash": "59e547203650ed69",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "0b5af5f001825e82",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1788449850640": {
     "hash": "9f637aa1b2260f64",
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1788540460219": {
-    "hash": "84c7a49b2980a032",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "c84c3bfeab842a7a",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1788921701764": {
     "hash": "f2c2eac6024d28aa",
@@ -304,92 +304,18 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "_meta": {
-    "lastGeneratedAt": "2026-09-20T12:57:22.331029+00:00",
-    "lastCount": 91,
+    "lastGeneratedAt": "2026-09-21T14:57:49.149775+00:00",
+    "lastCount": 17,
     "lastProducts": [
-      "CACUSA-1: Anillo doble GG",
-      "CACUSA-1780369728627: Pulsera de mano con anillo",
-      "CACUSA-1781387820250: Cadena jersey Ecuador",
       "CACUSA-1781399974669: Cadena San Benito con Cruz ",
-      "CACUSA-1781400451404: Pulsera tejida macramé con dije y perlas ",
-      "CACUSA-1781460544331: Collar negro con ojo turco ",
-      "CACUSA-1781472855605: Pulsera Tiffy",
-      "CACUSA-1781473015877: Pulsera triple con dije de corazón ",
-      "CACUSA-1781473438388: Cadena con dije de corazón y pelota ",
-      "CACUSA-1781473526943: Cadena con ángel de la guarda circular ",
-      "CACUSA-1781473627668: Cadena con dije de Luna y corazón turquesa ",
-      "CACUSA-1781875334358: Collar de perla ",
-      "CACUSA-1781877227517: Cadena clip con dije de árbol de vida ",
-      "CACUSA-1781877358815: Cadena con dije de gato y panza de corazón con circones ",
-      "CACUSA-1781877568374: Cadena de balines con dije de corazón con circones ",
-      "CACUSA-1781877838074: Anillo ajustable color plateado ",
-      "CACUSA-1781877944864: Anillo ajustable de circones e inicial",
-      "CACUSA-1781878104655: Anillo ajustable con microcircones en degrade ",
-      "CACUSA-1781878207350: Anillo dorado ajustable de circones fucsia ",
-      "CACUSA-1781878560407: Ear cuff ancho plateado ",
-      "CACUSA-1781878646387: Entorchado dorado con piedra azul zafiro",
-      "CACUSA-1781879189744: Ajustable. Anillo chuncky con circones verdes ",
-      "CACUSA-1781879577380: Entorchado ajustable ",
-      "CACUSA-1781879917484: Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
-      "CACUSA-1781880053907: Anillo ajustable con 3 circones ",
-      "CACUSA-1781880340918: Anillos ajustable con trébol negro ",
-      "CACUSA-1781880466753: Anillo dorado ajustable ",
-      "CACUSA-1781881478183: Anillo ajustable con circones blancos ",
-      "CACUSA-1781884615354: Cadena con dije de Cruz grande con piedras color esmeralda ",
-      "CACUSA-1781884804624: Cadena delicada con dije de corazón nacarado ",
-      "CACUSA-1781884881874: Cadena veneciana con un dije de Cruz de circones ",
       "CACUSA-1781884983133: San Benito con cruz ",
-      "CACUSA-1781885024731: Corazón de perla con una silueta de corazón de circon ",
-      "CACUSA-1781885110437: Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
-      "CACUSA-1781885197196: Cadena de circon rosado bajo",
-      "CACUSA-1781885271521: Dije de balletista con inicial ",
-      "CACUSA-1781885393238: Cadena con placa grabada a láser ",
-      "CACUSA-1781893045956: Anillo",
-      "CACUSA-1781977774245: Pulseras de pareja Ying y el yang",
-      "CACUSA-1783440355036: Pulsera triple",
-      "CACUSA-1785466095890: Cadena de cruz con circones ",
-      "CACUSA-1785469196142: Bangel Evil eye ",
-      "CACUSA-1785469598547: Bangle Greek Eye ",
-      "CACUSA-1785470275920: Anillo vintage aventurine ",
-      "CACUSA-1785470725921: Anillo Pulpo Glossy",
       "CACUSA-1786303032752: Aretes de perla tejidos a mano",
-      "CACUSA-1786308585824: FE Red String Bracelet",
-      "CACUSA-1786315591380: PULSERA OJO TURCO AZUL + MEDALLA + PERLA",
-      "CACUSA-1786328384393: Pulsera de ojo turco rojo",
-      "CACUSA-1786329172109: Collar Lazo Dorado con Zirconias",
-      "CACUSA-1786330341098: Heart Chinoiserie Earrings",
-      "CACUSA-1788107242835: Set aretes y cadena ",
-      "CACUSA-1788107453046: Hand chain ",
-      "CACUSA-1788449850640: Pulseras hechas a mano",
-      "CACUSA-1788540460219: Hand chain ",
-      "CACUSA-1788921701764: Anillo Conchas Doradas",
-      "CACUSA-1788922298558: Anillo Golden Stars",
-      "CACUSA-1788922634845: Anillo Lumière",
-      "CACUSA-1788923140476: Cadena Golden Silk",
-      "CACUSA-1789830883898: Argollas pequeñas de 1 cm ",
+      "CACUSA-1788107453046: Hand chain de capas",
+      "CACUSA-1788540460219: Hand chain de rombos",
       "CACUSA-1789831017689: Aretes de flor ",
-      "CACUSA-1789831461536: Aretes de rombo de circon",
-      "CACUSA-1789831746751: Cadena de arrocillos",
-      "CACUSA-1789832083118: Cadena doble",
-      "CACUSA-1789832318279: Argollas",
-      "CACUSA-1789832633994: Anillo estrellas",
-      "CACUSA-1789832841230: Anillo de flores",
-      "CACUSA-1789832962055: Anillo de luna y estrella",
-      "CACUSA-1789833283695: Anillo escultura",
-      "CACUSA-1789833395515: Anillo corazón",
-      "CACUSA-1789833527086: Anillo estrellas",
-      "CACUSA-1789833699836: Anillo curvas",
-      "CACUSA-1789833979991: Aretes de circon verde",
-      "CACUSA-1789834120184: Aretes de caracol",
-      "CACUSA-1789834277881: Aretes de corazón",
-      "CACUSA-1789834373112: Aretes de flor y circones",
-      "CACUSA-1789834493333: Aretes entrelazados",
-      "CACUSA-1789835085201: Aretes Rectangulo",
-      "CACUSA-1789835517841: Aretes de Piedra amazonita",
-      "CACUSA-1789835608668: Aretes triple corazón",
-      "CACUSA-1789835713834: Anillo triple circon",
-      "CACUSA-1789835829929: Anillo maximalista",
-      "CACUSA-1789836348710: Pulseras rojas",
+      "CACUSA-1789832083118: Cadena doble de eslabones",
+      "CACUSA-1789832633994: Anillo estrellas abierto",
+      "CACUSA-1789833527086: Anillo estrella de mar",
       "CACUSA-1789840051998: Pulsera de piedra malaquita",
       "CACUSA-1789840143477: Pulsera oro rosa de osito",
       "CACUSA-1789854774028: Set de Fe",
@@ -397,7 +323,7 @@
       "CACUSA-1789855320945: Pulsera roja personalizada ",
       "CACUSA-1789855526360: Anillo ojo de tigre o Piedra malaquita",
       "CACUSA-1789856160011: Argollas con circon ",
-      "CACUSA-1789856427179: Cadena doble "
+      "CACUSA-1789856427179: Cadena doble mariposa"
     ]
   },
   "1789830883898": {
@@ -405,8 +331,8 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1789831017689": {
-    "hash": "fad4338dffa59a2a",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "f9892db3bdecf897",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789831461536": {
     "hash": "c87f2370545978b0",
@@ -417,16 +343,16 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1789832083118": {
-    "hash": "e2e023439f43c261",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "75e1c237f18fcd9d",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789832318279": {
     "hash": "4746c6fbfd590b66",
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1789832633994": {
-    "hash": "ec0231de098d5b13",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "3c910aecc3659420",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789832841230": {
     "hash": "178df91fb4e20129",
@@ -445,8 +371,8 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1789833527086": {
-    "hash": "d370f6104296fc02",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "1c5036696854335f",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789833699836": {
     "hash": "38579e0c455f3e87",
@@ -497,35 +423,35 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "1789840051998": {
-    "hash": "689894a8d1116e61",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "51aaa2395ca8ce36",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789840143477": {
-    "hash": "451c0f5d17edaf0f",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "ecdc9a7ef3eaec01",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789854774028": {
-    "hash": "d52ad1435bff211e",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "8f29f5b943823fa6",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789854982063": {
-    "hash": "b01446f64116e100",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "c7939525b5328fb0",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789855320945": {
-    "hash": "18f0df8f4813614b",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "12cacc4db1917e58",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789855526360": {
-    "hash": "7b8bcced627c901a",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "b54f1d0a3158727d",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789856160011": {
-    "hash": "a463029b33e10ef1",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "ea750ff574e2110a",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   },
   "1789856427179": {
-    "hash": "3a41364a9dfc1c18",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "08398505e6867c99",
+    "exportedAt": "2026-09-21T14:57:49.149775+00:00"
   }
 }
