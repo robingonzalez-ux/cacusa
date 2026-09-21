@@ -839,10 +839,29 @@ function LoginScreen({ onLogin }) {
         <form onSubmit={submit}>
           <div style={{ marginBottom: 16 }}>
             <label htmlFor="loginUsername" style={lbl}>Usuario</label>
-            {/* input de texto (no <select>) — el autocompletado nativo del navegador para
-                Conditional UI (ver _waConditionalLogin) solo se engancha a inputs de texto,
-                nunca a un <select>. autoComplete="username webauthn" es lo que le avisa al
-                navegador que acá puede sugerir una passkey guardada. */}
+            {/* Botones de elegir-de-una-lista (como el <select> de antes) — solo hay 2
+                cuentas reales y nunca va a haber más, así que un toque directo es más
+                cómodo que escribir. En iOS Safari el <datalist> de abajo no se ve bien
+                (WebKit nunca le dio soporte visual decente), así que esto es lo que de
+                verdad reemplaza al selector viejo ahí. */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+              {Object.entries(USERS).map(([k, v]) => (
+                <button key={k} type="button" onClick={() => setUsername(k)}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: '11px 10px', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+                    border: username === k ? '1.5px solid #9B5DE5' : '1.5px solid #e0e0e0',
+                    background: username === k ? 'linear-gradient(135deg,#F3EEFF,#FBEFF5)' : 'white',
+                    color: username === k ? '#5a3fa0' : '#555',
+                  }}>
+                  <span style={{ fontSize: 16 }}>{v.avatar}</span> {v.name}
+                </button>
+              ))}
+            </div>
+            {/* Input real de texto (nunca <select>) — necesario para que el navegador
+                pueda sugerir la passkey acá (Conditional UI, ver _waConditionalLogin);
+                los botones de arriba lo llenan solo con un toque, así que en el uso
+                normal nunca hace falta tocarlo. */}
             <input id="loginUsername" list="loginUsernameOptions" autoComplete="username webauthn"
               value={username} onChange={e => setUsername(e.target.value)} placeholder="Usuario" style={inp} />
             <datalist id="loginUsernameOptions">
