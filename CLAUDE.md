@@ -259,6 +259,20 @@ Dos patrones conviven en el sitio:
 - **Carruseles automáticos**: respetar `prefers-reduced-motion` y
   pausarse en `mouseenter`/`focusin`.
 
+## Correos transaccionales a clientas (nuevo, 22 sep)
+
+3 correos automáticos reales (vía Gmail API, reusando la infraestructura
+del código de bienvenida 10%/cupón exclusivo de Lovers ya documentada
+arriba): confirmación de pedido (con la descripción de lo comprado) al
+crear un pedido real, confirmación de suscripción (solo en el primer pago
+real o al resuscribirse tras cancelar — nunca en cada renovación normal)
+al activarse Cacusa Lovers, y confirmación de envío con el número de
+guía + link de tracking directo a usps.com al generar una guía real de
+USPS. Salen en el idioma real en el que la clienta compró (ES/EN, campo
+nuevo capturado en el checkout de la tienda). Detalle técnico completo
+(nombres de función, hooks exactos, por qué la transición de estado
+elegida): ver el repo privado.
+
 ## Flujo de git
 
 - Todo commit a `main` publica de inmediato vía GitHub Pages — no hay
