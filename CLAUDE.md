@@ -284,6 +284,13 @@ nuevo capturado en el checkout de la tienda). Detalle técnico completo
 (nombres de función, hooks exactos, por qué la transición de estado
 elegida): ver el repo privado.
 
+Cerrado además (22 sep) un riesgo real que este correo de pedido dejaba
+al descubierto: 2 entregas casi simultáneas del mismo webhook de Square
+podían crear el mismo pedido 2 veces (y, con el correo nuevo, mandarlo 2
+veces a la clienta) — se cerró reusando el mecanismo de deduplicación por
+`idempotencyKey` que el sistema ya tenía construido, sin necesitar
+ningún Durable Object nuevo. Detalle completo: ver el repo privado.
+
 ## Flujo de git
 
 - Todo commit a `main` publica de inmediato vía GitHub Pages — no hay
