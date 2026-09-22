@@ -162,6 +162,26 @@ async function notifyExclusiveCoupon(action, email, langOrPais, env, phone) {
     console.error('exclusive-coupon error:', e.message);
   }
 }
+
+// ── Correo de bienvenida/confirmación de suscripción (22 sep) — SOLO en la
+// transición hacia estado_pago:'activo' (ver wasActive, calculado en
+// invoice.payment_made antes de llamar a updateSubscriber con el valor NUEVO), nunca
+// en una renovación normal. Mismo patrón Worker-a-Worker best-effort que
+// notifyExclusiveCoupon()/notifyLoversShipment() — nunca bloquea ni rompe el
+// procesamiento del webhook de Square si falla.
+async function notifySubscriptionEmail(email, fields, env) {
+  if (!env.ORDER_INGEST_KEY || !email) return;
+  try {
+    const r = await adminFetch(env, '/internal/lovers/subscription-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ email, ...fields }),
+    });
+    if (!r.ok) console.error('subscription-email failed:', r.status, await r.text().catch(() => ''));
+  } catch (e) {
+    console.error('subscription-email error:', e.message);
+  }
+}
 const ADMIN_CORS = {
   'Access-Control-Allow-Origin': ADMIN_ORIGIN,
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
@@ -839,6 +859,12 @@ export default {
           };
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          // Correo de bienvenida/confirmación de suscripción (22 sep) — se calcula ANTES
+          // de que updateSubscriber() escriba 'activo' más abajo, así que captura el
+          // estado VIEJO. Cubre pendiente→activo (primer pago real, o el registro ni
+          // siquiera existía todavía) y cancelado→activo (resuscripción) — NO cubre
+          // activo→activo (renovación normal, no debe mandar nada).
+          const wasActive = existing?.estado_pago === 'activo';
           // A04 (auditoría externa, 19 sep): mismo patrón que subscription.created de arriba —
           // Square reintenta el webhook si no ve un 200 rápido, o si esta función devolvió 500
           // antes por una falla transitoria de Firebase. Sin este chequeo, la MISMA factura
@@ -897,6 +923,15 @@ export default {
                 direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
                 estado: existing.estado, zip: existing.zip, pais: existing.pais,
               }, existing.plan, invoice?.id || '', env);
+              if (!wasActive) {
+                const idiomaResuelto = existing.idioma === 'es' || existing.idioma === 'en'
+                  ? existing.idioma
+                  : (existing.pais === 'Ecuador' ? 'es' : 'en');
+                await notifySubscriptionEmail(email, {
+                  nombre: existing.nombre, apellido: existing.apellido,
+                  plan: existing.plan, monto: existing.monto, idioma: idiomaResuelto,
+                }, env);
+              }
             }
           } else {
             // Subscriber not in Firebase yet — create minimal record
@@ -932,6 +967,17 @@ export default {
                 direccion: customerFields.direccion, apto: customerFields.apto, ciudad: customerFields.ciudad,
                 estado: customerFields.estado, zip: customerFields.zip, pais: customerFields.pais,
               }, isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers', invoice?.id || '', env);
+              // wasActive es siempre false acá (existing era null) — se mantiene el mismo
+              // guard por simetría/legibilidad con la rama de arriba, no porque haga
+              // falta la condición.
+              if (!wasActive) {
+                await notifySubscriptionEmail(email, {
+                  nombre: customerFields.nombre, apellido: customerFields.apellido,
+                  plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+                  monto: isAnnual ? '$219.89/año' : '$19.99/mes',
+                  idioma: customerFields.pais === 'Ecuador' ? 'es' : 'en',
+                }, env);
+              }
             }
           }
         }

@@ -806,6 +806,9 @@ async function handleCreatePaymentLink(body, env, allowed) {
         estado:    customer?.state || '',
         zip:       customer?.zip || '',
         pais:      customer?.country || '',
+        // Nuevo (22 sep) — en qué idioma compró (tienda ES o EN), para que los correos
+        // transaccionales de admin-worker.js salgan en el idioma correcto.
+        idioma:    customer?.idioma === 'en' ? 'en' : 'es',
         notas:     customer?.notes || '',
       },
       productos: validatedItems.map(i => ({
