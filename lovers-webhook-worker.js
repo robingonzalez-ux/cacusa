@@ -468,6 +468,48 @@ export default {
       return adminJson({ notify: true, nombre, plan: existing.plan || 'Cacusa Lovers' }, 200);
     }
 
+    // ── POST /internal/lovers/confirm-register — Worker-a-Worker, autenticado con
+    // ORDER_INGEST_KEY. Nuevo (22 sep — auditoría externa S07): antes el formulario
+    // público (cacusa-lovers.html) escribía DIRECTO a este mismo nodo de Firebase
+    // desde el navegador, sin que nadie probara que quien llena el formulario controla
+    // ese email — cualquiera podía crear el PRIMER registro de un email ajeno con una
+    // dirección inventada, y esa dirección terminaba usándose el día que la dueña real
+    // pagara de verdad (invoice.payment_made preserva la dirección YA guardada, nunca
+    // la de Square). Ahora cacusa-admin solo llama acá DESPUÉS de que la persona hizo
+    // click en el link de confirmación que le llegó a SU correo — cierra el ataque real
+    // (un atacante no controla el inbox de la víctima).
+    if (url.pathname === '/internal/lovers/confirm-register') {
+      if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+      if (!isInternalIngest(request, env)) return adminJson({ error: 'Unauthorized' }, 401);
+      if (!fbAuth) return adminJson({ error: 'FB_DB_SECRET no está configurado en el worker' }, 500);
+
+      const b = await request.json().catch(() => ({}));
+      const email = String(b.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) return adminJson({ error: 'Email inválido' }, 400);
+
+      const key = subscriberKey(email);
+      const ok = await updateSubscriber(key, 'pendiente', {
+        email,
+        nombre: String(b.nombre || '').slice(0, 100),
+        apellido: String(b.apellido || '').slice(0, 100),
+        telefono: String(b.telefono || '').slice(0, 30),
+        direccion: String(b.direccion || '').slice(0, 200),
+        apto: String(b.apto || '').slice(0, 40),
+        ciudad: String(b.ciudad || '').slice(0, 100),
+        estado: String(b.estado || '').slice(0, 50),
+        zip: String(b.zip || '').slice(0, 20),
+        pais: String(b.pais || '').slice(0, 40),
+        plan: String(b.plan || '').slice(0, 60),
+        monto: String(b.monto || '').slice(0, 40),
+        fecha: String(b.fecha || '').slice(0, 10),
+        metodo_pago: String(b.metodo_pago || 'square').slice(0, 20),
+        idioma: b.idioma === 'en' ? 'en' : 'es',
+      }, dbUrl, fbAuth);
+      if (!ok) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
+      console.log('confirm-register: registro confirmado para', email, '→ key:', key);
+      return adminJson({ ok: true }, 200);
+    }
+
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
@@ -872,24 +914,29 @@ export default {
           // (notifyExclusiveCoupon ya era idempotente por su cuenta, pero igual se salta acá
           // para no repetir el llamado sin necesidad).
           const alreadyProcessed = !!invoice?.id && existing?.square_invoice_id === invoice.id;
-          // Auditoría externa (19 sep, ronda nueva): esta rama reactivaba con CUALQUIER
-          // factura de esa clienta, sin comparar la suscripción de la factura contra la
-          // que ya se conocía ni revisar si ya estaba cancelada — una factura vieja o
-          // reenviada (reintento tardío de Square) de una suscripción YA cancelada
-          // reactivaba el estado igual, dándole de vuelta el cupón exclusivo y el envío
-          // gratis sin que la clienta haya vuelto a pagar. `invoice.subscription_id` ya
-          // viene garantizado no-nulo (se filtra arriba). Si coincide con la suscripción
-          // que ya teníamos guardada Y el estado actual es 'cancelado', es una factura
-          // vieja de ESA MISMA suscripción cancelada — se ignora. Si el subscription_id
-          // es distinto (o no había ninguno guardado todavía), es una suscripción
-          // genuinamente nueva/resuscripción — se reactiva normal y se actualiza la
-          // referencia para que el próximo chequeo compare contra la correcta.
+          // Auditoría externa (19 sep, ronda nueva; generalizado 22 sep — S06): esta
+          // rama reactivaba con CUALQUIER factura de esa clienta, sin comparar la
+          // suscripción de la factura contra la que ya se conocía. El fix del 19 sep
+          // solo cerró el caso "cancelado + misma suscripción vieja reenviada" — dejaba
+          // un hueco real: una factura VIEJA de una suscripción YA REEMPLAZADA por otra
+          // (ej. existing sigue 'activo' bajo la suscripción B, pero llega/reintenta una
+          // factura de la suscripción A, anterior) no era detectada como stale (el
+          // chequeo solo miraba `estado_pago === 'cancelado'`) — pisaba
+          // `square_subscription_id` con el id VIEJO y podía disparar de nuevo avisos/
+          // cupón como si fuera un evento real. `invoice.subscription_id` ya viene
+          // garantizado no-nulo (se filtra arriba). Regla generalizada: si ya hay una
+          // suscripción guardada, el id de esta factura NO coincide, y el estado actual
+          // NO es 'cancelado' (o sea, no es una resuscripción legítima tras cancelar),
+          // se trata como evento viejo/de otra suscripción y se ignora — sin importar si
+          // el estado actual es 'activo' o 'pendiente'. Si el estado SÍ es 'cancelado' y
+          // el id difiere, es una suscripción genuinamente nueva/resuscripción — se
+          // reactiva normal y se actualiza la referencia.
           const invoiceSubId = invoice.subscription_id;
-          const isStaleForCanceled = existing?.estado_pago === 'cancelado'
-            && existing?.square_subscription_id
-            && invoiceSubId === existing.square_subscription_id;
-          if (isStaleForCanceled) {
-            console.warn('invoice.payment_made ignorado: factura de una suscripción ya cancelada', email, invoiceSubId);
+          const hasStoredSub = !!existing?.square_subscription_id;
+          const subMatches = hasStoredSub && invoiceSubId === existing.square_subscription_id;
+          const isStaleEvent = hasStoredSub && !subMatches && existing?.estado_pago !== 'cancelado';
+          if (isStaleEvent) {
+            console.warn('invoice.payment_made ignorado: factura de otra suscripción (vieja/reemplazada)', email, invoiceSubId, 'vs', existing?.square_subscription_id);
           } else if (existing) {
             // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
             // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
@@ -994,21 +1041,28 @@ export default {
           const key = subscriberKey(email);
           const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
           if (existing) {
-            // Auditoría de integridad (19 sep, F08): a diferencia de invoice.payment_made
-            // (arriba), esta rama degradaba el estado con CUALQUIER factura fallida de esa
-            // clienta, sin comparar la suscripción de la factura contra la ya guardada —
-            // una factura fallida de una suscripción vieja/distinta podía degradar un
-            // registro de una suscripción actual sana. Mismo criterio que la guardia de
-            // reactivación: si hay un square_subscription_id guardado y NO coincide con
-            // el de esta factura, se ignora. Si no hay nada guardado (registros legados,
-            // cada vez menos comunes tras el fix de arriba), se degrada como antes — no
-            // hay forma de distinguir sin ese dato.
+            // Auditoría de integridad (19 sep, F08; endurecido 22 sep — S06c): a
+            // diferencia de invoice.payment_made (arriba), esta rama degradaba el
+            // estado con CUALQUIER factura fallida de esa clienta, sin comparar la
+            // suscripción de la factura contra la ya guardada — una factura fallida de
+            // una suscripción vieja/distinta podía degradar un registro de una
+            // suscripción actual sana. El fix del 19 sep solo cerró el caso de id
+            // explícitamente distinto — dejaba un hueco: si `invoice.subscription_id`
+            // venía ausente/vacío, `invoiceSubId &&` se cortocircuitaba a false,
+            // `belongsToOtherSubscription` daba false, y degradaba igual — un evento
+            // AMBIGUO (no identifica a qué suscripción pertenece) se trataba como
+            // "coincide", el peor de los 2 supuestos posibles. Ahora: si hay un
+            // square_subscription_id guardado y este evento NO trae uno que coincida
+            // exactamente (sea porque difiere o porque vino vacío), se ignora — solo
+            // degrada cuando de verdad coincide, o cuando no hay nada guardado contra
+            // qué comparar (registros legados, cada vez menos comunes tras el fix de
+            // arriba).
             const invoiceSubId = invoice?.subscription_id;
-            const belongsToOtherSubscription = existing.square_subscription_id
-              && invoiceSubId
+            const hasStoredSub = !!existing.square_subscription_id;
+            const isAmbiguousOrOtherSubscription = hasStoredSub
               && invoiceSubId !== existing.square_subscription_id;
-            if (belongsToOtherSubscription) {
-              console.warn('invoice.scheduled_charge_failed ignorado: factura de otra suscripción', email, invoiceSubId);
+            if (isAmbiguousOrOtherSubscription) {
+              console.warn('invoice.scheduled_charge_failed ignorado: factura de otra suscripción o sin subscription_id identificable', email, invoiceSubId);
             } else {
               dbOk = await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
               if (dbOk) {
@@ -1033,12 +1087,27 @@ export default {
             const key = subscriberKey(email);
             const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
             if (existing) {
-              dbOk = await updateSubscriber(key, 'cancelado', {
-                fecha_cancelacion: new Date().toISOString().slice(0, 10),
-              }, dbUrl, fbAuth);
-              if (dbOk) {
-                console.log('Marked cancelado:', email);
-                await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
+              // Auditoría externa (22 sep, S06b): esta rama nunca comparaba la
+              // suscripción del evento contra la ya guardada — a diferencia de
+              // invoice.payment_made/scheduled_charge_failed (arriba), que ya
+              // rechazan un evento de una suscripción distinta a la vigente. Una
+              // cancelación de una suscripción VIEJA/reemplazada (ej. la clienta
+              // canceló el plan mensual y se pasó al anual, y llega tarde el evento
+              // de cancelación del mensual) podía cancelar la suscripción ACTUAL
+              // sana. Mismo criterio: si hay un square_subscription_id guardado y
+              // este evento no trae uno que coincida exactamente, se ignora.
+              const hasStoredSub = !!existing.square_subscription_id;
+              const isOtherSubscription = hasStoredSub && sub?.id !== existing.square_subscription_id;
+              if (isOtherSubscription) {
+                console.warn('subscription.updated CANCELED ignorado: suscripción distinta a la vigente', email, sub?.id, 'vs', existing.square_subscription_id);
+              } else {
+                dbOk = await updateSubscriber(key, 'cancelado', {
+                  fecha_cancelacion: new Date().toISOString().slice(0, 10),
+                }, dbUrl, fbAuth);
+                if (dbOk) {
+                  console.log('Marked cancelado:', email);
+                  await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
+                }
               }
             } else {
               console.warn('subscription.updated CANCELED: no matching subscriber for', email);

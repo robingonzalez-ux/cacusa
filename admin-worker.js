@@ -229,6 +229,22 @@ export default {
         return await handleLoversNotifyPending(body, env, allowOrigin, request);
       }
 
+      // Auditoría externa (22 sep, S07): antes, el formulario público escribía DIRECTO
+      // a Firebase desde el navegador — cualquiera podía crear el PRIMER registro de un
+      // email ajeno (sin probar que lo controla) con una dirección inventada, y esa
+      // dirección quedaba lista para usarse en un envío real el día que la dueña
+      // verdadera del email pagara. Ahora el formulario manda los datos acá (no a
+      // Firebase directo) y no se escribe NADA hasta que la persona confirma el enlace
+      // que le llega a su correo — ver handleLoversRegister()/handleLoversConfirm().
+      if (path.endsWith('/lovers/register')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversRegister(body, env, allowOrigin, request);
+      }
+      if (path.endsWith('/lovers/confirm')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversConfirm(body, env, allowOrigin, request);
+      }
+
       // Cupones — validación pública (origin-restringida, rate-limited)
       if (path.endsWith('/coupon/validate')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
@@ -581,7 +597,12 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
       id:              p.id != null ? String(p.id).slice(0, 50) : '',
       name:            str(p.name || p.nombre, 150),
       price:           num(p.price || p.precio),
-      qty:             typeof p.qty === 'number' ? Math.max(1, Math.floor(p.qty)) : 1,
+      // Auditoría externa (22 sep, S03): defensa en profundidad — este coerción corre
+      // también para los caminos trusted/manual (Square ya validado, admin a mano) que
+      // no pasan por validatePublicOrderProducts(); Number.isFinite() rechaza
+      // Infinity/NaN (ej. un número JSON que desborda el rango) que `typeof === 'number'`
+      // por sí solo no filtra.
+      qty:             Number.isFinite(p.qty) ? Math.max(1, Math.floor(p.qty)) : 1,
       personalization: str(p.personalization, 300),
     })),
   };
@@ -776,7 +797,29 @@ async function fetchCatalogForOrderValidation() {
 // legítimo por unos segundos (el cliente reintenta), lo cual es preferible a aceptar
 // montos arbitrarios. Devuelve { productos, subtotal, shipping } con los precios YA
 // verificados contra el catálogo real — nunca lo que mandó el cliente.
-async function validatePublicOrderProducts(productos, env) {
+// Auditoría externa (22 sep, S08 — recargo sobre precio de promo): promo.price ya ES
+// el precio final que la tienda le muestra a la clienta (mismo criterio documentado en
+// el comentario de resolveBasePrice) — aplicarle el 4% de recargo encima cobraba de más
+// sin que la clienta lo viera venir (un producto de $80 en promo terminaba en $83.20).
+function isPromoActive(prod) {
+  if (!(prod.promo && prod.promo.price)) return false;
+  const ended = prod.promo.endsAt && new Date(prod.promo.endsAt) < new Date();
+  return !ended;
+}
+
+// Auditoría externa (22 sep, S03): límite de líneas y de cantidad por línea — antes
+// aceptaba cualquier cantidad de líneas (calculaba el total sobre TODAS antes de que
+// buildOrderCore recortara a 50 en silencio) y cualquier valor de `qty` que pasara
+// `typeof === 'number'`, incluido Infinity/NaN (un número JSON que desborda el rango
+// parsea como Infinity — sigue siendo `typeof 'number'`). Un carrito así guardaba un
+// pedido con total/subtotal en 0 pese a tener un producto real de precio > 0.
+const ORDER_MAX_LINES = 50;
+const ORDER_MAX_QTY_PER_LINE = 20;
+
+async function validatePublicOrderProducts(productos, env, idioma) {
+  if (!Array.isArray(productos) || productos.length > ORDER_MAX_LINES) {
+    throw new Error(`El carrito no puede tener más de ${ORDER_MAX_LINES} líneas`);
+  }
   const catalog = await fetchCatalogForOrderValidation();
   if (!catalog) throw new Error('catálogo no disponible, intentá de nuevo en un momento');
 
@@ -789,6 +832,11 @@ async function validatePublicOrderProducts(productos, env) {
   const comboMap = new Map(catalog.combos.map(c => [String(c.id), c]));
 
   const validated = productos.map((item, idx) => {
+    const qty = Number(item.qty);
+    if (!Number.isFinite(qty) || qty < 1 || qty > ORDER_MAX_QTY_PER_LINE) {
+      throw new Error(`Cantidad inválida en la línea ${idx + 1}`);
+    }
+    const safeQty = Math.floor(qty);
     if (item.isCombo) {
       const combo = comboMap.get(String(item.id));
       if (!combo) throw new Error(`Combo no encontrado en el catálogo (id: ${item.id})`);
@@ -796,16 +844,22 @@ async function validatePublicOrderProducts(productos, env) {
       // de productos sueltos) — inofensivo hoy porque el catálogo real no tiene ningún
       // combo, pero cierra el hueco para cuando se agregue el primero.
       if (combo.available === false) throw new Error(`Combo no disponible: ${combo.name || item.id}`);
-      return { ...item, price: combo.price };
+      return { ...item, qty: safeQty, name: combo.name, price: combo.price };
     }
     const prod = productMap.get(String(item.id));
     if (!prod) throw new Error(`Producto no encontrado en el catálogo (id: ${item.id}, pos: ${idx})`);
     if (prod.available === false) throw new Error(`Producto no disponible: ${prod.name || item.id}`);
     const basePrice = resolveBasePrice(prod);
-    const price = surcharges[String(prod.id)] === true ? js_round2(basePrice * 1.04) : basePrice;
-    return { ...item, price };
+    // Auditoría (22 sep, S08): nunca recargar un precio que ya viene de una promo activa.
+    const price = (!isPromoActive(prod) && surcharges[String(prod.id)] === true)
+      ? js_round2(basePrice * 1.04) : basePrice;
+    // Auditoría (22 sep, S03): el nombre siempre sale del catálogo real, nunca del que
+    // manda el cliente — antes se conservaba `item.name` tal cual, sin comparar contra
+    // el producto real que ese id identifica.
+    const name = (idioma === 'en' && prod.name_en) ? prod.name_en : prod.name;
+    return { ...item, qty: safeQty, name, price };
   });
-  const subtotal = validated.reduce((s, p) => s + p.price * (Math.max(1, Math.floor(Number(p.qty) || 1))), 0);
+  const subtotal = validated.reduce((s, p) => s + p.price * p.qty, 0);
   return { productos: validated, subtotal, shipping: catalog.shipping };
 }
 
@@ -818,8 +872,13 @@ async function sha256Hex(str) {
 // la key de otro pedido con contenido distinto (F01, auditoría del 19 sep). Se calcula
 // SIEMPRE sobre datos YA recalculados server-side, nunca lo que mandó el cliente.
 async function orderFingerprint(newOrder) {
-  const items = newOrder.productos.map((p) => `${p.id}:${p.qty}:${p.price}`).sort().join(',');
-  const raw = `${(newOrder.cliente.email || '').toLowerCase()}|${newOrder.cliente.telefono || ''}|${newOrder.total}|${items}`;
+  const items = newOrder.productos.map((p) => `${p.id}:${p.qty}:${p.price}:${p.personalization || ''}`).sort().join(',');
+  const c = newOrder.cliente || {};
+  // Auditoría externa (22 sep, S04): antes la huella no incluía dirección/depto/
+  // personalización — un reintento con la misma idempotencyKey pero esos campos
+  // editados coincidía igual y devolvía el pedido VIEJO (con la dirección vieja) en
+  // vez de rechazar por huella distinta o crear uno nuevo.
+  const raw = `${(c.email || '').toLowerCase()}|${c.telefono || ''}|${c.direccion || ''}|${c.apto || ''}|${c.ciudad || ''}|${c.estado || ''}|${c.zip || ''}|${newOrder.total}|${items}`;
   return sha256Hex(raw);
 }
 
@@ -867,7 +926,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   let recalcSubtotal = null, recalcShipping = null;
   if (!trusted) {
     try {
-      const validated = await validatePublicOrderProducts(order.productos, env);
+      const validated = await validatePublicOrderProducts(order.productos, env, order.cliente && order.cliente.idioma);
       order.productos = validated.productos;
       recalcSubtotal = validated.subtotal;
       recalcShipping = validated.shipping;
@@ -888,7 +947,7 @@ async function handleOrder(body, env, origin, ctx, request) {
     let coupon = null;
     if (order.cuponAplicado) {
       coupon = await couponGet(env, order.cuponAplicado);
-      if (!coupon || !couponIsValid(coupon, cliente.email, cliente.telefono)) coupon = null;
+      if (!coupon || !(await couponIsValid(coupon, cliente.email, cliente.telefono, env))) coupon = null;
     }
     let discount = 0;
     if (coupon) {
@@ -920,6 +979,32 @@ async function handleOrder(body, env, origin, ctx, request) {
   // cambió — se rechaza con 409 sin revelar nada del pedido existente.
   const idemKey = str(order.idempotencyKey, 100);
   const fingerprint = idemKey ? await orderFingerprint(newOrder) : null;
+  // Auditoría externa (22 sep, S04): el chequeo de KV de abajo (get→...→put, no
+  // atómico) puede dejar pasar 2 pedidos si 2 requests con la misma idemKey llegan
+  // genuinamente al mismo tiempo — reclamar la key en OrderIdempotency PRIMERO cierra
+  // esa carrera (ver la clase más arriba). Sin binding todavía, orderIdemClaim()
+  // devuelve {claimed:true} siempre y el comportamiento es idéntico al de antes.
+  let idemClaimed = false;
+  if (idemKey) {
+    const claim = await orderIdemClaim(env, idemKey);
+    if (!claim.claimed) {
+      if (claim.timedOut) {
+        return err('Esta operación ya se está procesando, intentá de nuevo en un momento', 409, origin);
+      }
+      if (claim.fingerprint === fingerprint) {
+        const existingOrder = await orderGet(env, claim.orderId);
+        if (existingOrder) {
+          return ok({ ok: true, id: existingOrder.id, total: existingOrder.total, estado: existingOrder.estado }, origin);
+        }
+        // La DO dice 'done' pero el pedido ya no existe (rarísimo) — sigue de largo
+        // como si fuera nuevo, sin volver a reclamar (ya está 'done' en la DO).
+      } else {
+        return err('Esta operación ya fue registrada con otros datos', 409, origin);
+      }
+    } else {
+      idemClaimed = true;
+    }
+  }
   if (idemKey) {
     const raw = await env.CACUSA_KV.get(`idem:${idemKey}`);
     if (raw) {
@@ -927,9 +1012,11 @@ async function handleOrder(body, env, origin, ctx, request) {
       if (stored && stored.fingerprint === fingerprint) {
         const existingOrder = await orderGet(env, stored.orderId);
         if (existingOrder) {
+          if (idemClaimed) await orderIdemFinalize(env, idemKey, existingOrder.id, fingerprint).catch(() => {});
           return ok({ ok: true, id: existingOrder.id, total: existingOrder.total, estado: existingOrder.estado }, origin);
         }
       } else if (stored) {
+        if (idemClaimed) await orderIdemRelease(env, idemKey).catch(() => {});
         return err('Esta operación ya fue registrada con otros datos', 409, origin);
       }
     }
@@ -968,11 +1055,17 @@ async function handleOrder(body, env, origin, ctx, request) {
   try {
     await env.CACUSA_KV.put(orderRef, JSON.stringify(newOrder));
   } catch (e) {
-    if (gcReserved) await gcRelease(env, gcCodeReq, orderRef).catch(() => {});
+    // Auditoría externa (22 sep, S02): antes se ignoraba silenciosamente cualquier
+    // fallo de gcRelease() — ahora que gcCommit()/gcRelease() SÍ lanzan si la DO
+    // devuelve un error real, loguearlo da visibilidad real en vez de tragárselo del
+    // todo (la reserva igual se auto-libera sola vía alarm() a las 2h si esto falla).
+    if (gcReserved) await gcRelease(env, gcCodeReq, orderRef).catch(e2 => console.error('gcRelease falló tras error de guardado:', e2.message));
+    if (idemClaimed) await orderIdemRelease(env, idemKey).catch(() => {});
     return err('No se pudo guardar el pedido, intentá de nuevo', 500, origin);
   }
-  if (gcReserved) await gcCommit(env, gcCodeReq, orderRef).catch(() => {});
+  if (gcReserved) await gcCommit(env, gcCodeReq, orderRef).catch(e => console.error('gcCommit falló (el pedido ya se guardó igual):', e.message));
   if (idemKey) await env.CACUSA_KV.put(`idem:${idemKey}`, JSON.stringify({ orderId: newOrder.id, fingerprint }), { expirationTtl: 86400 });
+  if (idemClaimed) await orderIdemFinalize(env, idemKey, newOrder.id, fingerprint).catch(() => {});
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   // Si esta clienta tenía un carrito marcado como abandonado, ya no lo está — compró.
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
@@ -1260,28 +1353,79 @@ export class GiftCardLedger {
     }
 
     if (url.pathname === '/commit') {
+      // Auditoría externa (22 sep, S02): antes esto devolvía {ok:true} SIEMPRE, incluso
+      // si la reserva ya no existía (liberada por /release, expirada por la alarm(), o un
+      // orderRef que nunca se reservó) — un caller que confiara en el status/body nunca
+      // podía distinguir "confirmado de verdad" de "no había nada que confirmar". Ahora
+      // una reserva inexistente es un 409 real — el único caso que sigue devolviendo
+      // {ok:true} sin cambiar nada es un commit YA hecho antes (reintento idempotente).
       const reservations = (await this.state.storage.get('reservations')) || {};
-      if (reservations[orderRef]) {
-        reservations[orderRef].committed = true;
-        await this.state.storage.put('reservations', reservations);
+      const r = reservations[orderRef];
+      if (!r) {
+        return Response.json({ ok: false, error: 'reserva no encontrada (ya liberada, vencida, o inexistente)' }, { status: 409 });
       }
+      if (r.committed) return Response.json({ ok: true, alreadyCommitted: true });
+      r.committed = true;
+      await this.state.storage.put('reservations', reservations);
       return Response.json({ ok: true });
     }
 
     if (url.pathname === '/release') {
-      const reservations = (await this.state.storage.get('reservations')) || {};
-      const r = reservations[orderRef];
-      if (r && !r.committed) {
-        const card = await this._loadCard(code);
+      // Auditoría externa (22 sep, S02): antes esto acreditaba el saldo (this._saveCard,
+      // que escribe storage Y el espejo en KV) ANTES de borrar la reserva — 2 escrituras
+      // independientes con un `await` real en el medio (la del KV mirror puede fallar).
+      // Si esa segunda escritura fallaba, la reserva quedaba viva con `committed:false` y
+      // el saldo YA acreditado — un reintento de /release volvía a acreditarlo (doble
+      // crédito real). `state.storage.transaction()` corre las 2 escrituras (nuevo
+      // balance + borrado de la reserva) como una sola unidad atómica dentro del storage
+      // de la DO: si algo falla a mitad de camino, ninguna de las 2 queda aplicada.
+      let releasedCard = null;
+      await this.state.storage.transaction(async (txn) => {
+        const reservations = (await txn.get('reservations')) || {};
+        const r = reservations[orderRef];
+        if (!r || r.committed) return; // idempotente: nada que liberar, no es un error
+        const card = await txn.get('card');
         if (card) {
           card.balance = +(card.balance + r.appliedCents / 100).toFixed(2);
           card.active = true;
-          await this._saveCard(code, card);
+          await txn.put('card', card);
+          releasedCard = card;
         }
         delete reservations[orderRef];
-        await this.state.storage.put('reservations', reservations);
+        await txn.put('reservations', reservations);
+      });
+      // El espejo en CACUSA_KV se escribe DESPUÉS de que la transacción ya confirmó el
+      // cambio real en el storage de la DO — si este `put` puntual fallara, el panel
+      // mostraría un saldo desactualizado por un momento, pero la DO (la autoridad real)
+      // ya quedó consistente; no hay ventana de doble crédito posible.
+      if (releasedCard && this.env.CACUSA_KV) {
+        await this.env.CACUSA_KV.put(gcKey(code), JSON.stringify(releasedCard));
       }
       return Response.json({ ok: true });
+    }
+
+    if (url.pathname === '/admin-set') {
+      // Auditoría externa (22 sep, S01): antes, desactivar/ajustar una tarjeta desde el
+      // panel (handleGcDeactivate/handleGcAdjust) solo escribía CACUSA_KV — invisible
+      // para esta DO una vez que ya había tocado el código alguna vez (su storage queda
+      // cacheado desde el primer touch, nunca vuelve a leer KV). Una reserva posterior a
+      // esa desactivación seguía viendo el card VIEJO (activo, con el saldo de antes) y
+      // la aceptaba, pisando de vuelta el KV con ese estado. Esta ruta deja que el panel
+      // toque el estado REAL que la DO usa para decidir, no un espejo aparte.
+      const card = await this._loadCard(code);
+      if (!card) return Response.json({ ok: false, error: 'not found' }, { status: 404 });
+      if (body.active !== undefined) card.active = !!body.active;
+      if (body.balance !== undefined) card.balance = +(Number(body.balance) || 0).toFixed(2);
+      await this._saveCard(code, card);
+      return Response.json({ ok: true, card });
+    }
+
+    if (url.pathname === '/get') {
+      // Lectura del estado REAL que usa la DO — para que ajustes del panel (que restan
+      // un monto del saldo actual) calculen el nuevo saldo contra la autoridad real, no
+      // contra un espejo en KV que podría estar desactualizado por una reserva en vuelo.
+      const card = await this._loadCard(code);
+      return Response.json({ card });
     }
 
     return new Response('not found', { status: 404 });
@@ -1337,20 +1481,187 @@ async function gcReserve(env, code, amountCents, orderRef) {
   });
   return await r.json();
 }
+// Auditoría externa (22 sep, S02): antes esto nunca miraba `r.ok`/el body de la
+// respuesta — un commit que la DO rechazara (409, reserva ya no existe) se trataba
+// igual que un éxito silencioso. Ahora lanza si la DO devuelve un error real (no si
+// ya estaba comprometido — eso es un reintento idempotente, no un fallo).
 async function gcCommit(env, code, orderRef) {
   const stub = giftCardLedgerStub(env, code);
   if (!stub) return; // camino viejo: gcRedeem() ya descontó de una, no hay nada que confirmar
-  await stub.fetch('https://gift-card-ledger.internal/commit', {
+  const r = await stub.fetch('https://gift-card-ledger.internal/commit', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, orderRef }),
   });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error(`gcCommit falló (${r.status}): ${d.error || 'sin detalle'}`);
+  }
 }
 async function gcRelease(env, code, orderRef) {
   const stub = giftCardLedgerStub(env, code);
   if (!stub) return; // camino viejo: no hay reserva que liberar (riesgo ya aceptado)
-  await stub.fetch('https://gift-card-ledger.internal/release', {
+  const r = await stub.fetch('https://gift-card-ledger.internal/release', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, orderRef }),
+  });
+  if (!r.ok) throw new Error(`gcRelease falló (${r.status})`);
+}
+// Auditoría externa (22 sep, S01): deja que el panel (handleGcDeactivate/
+// handleGcAdjust) actualice el estado REAL que usa la DO, no solo el espejo en KV —
+// devuelve null si no hay binding todavía (el llamador cae al camino viejo, KV-only).
+async function gcAdminSet(env, code, patch) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return null;
+  const r = await stub.fetch('https://gift-card-ledger.internal/admin-set', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code, ...patch }),
+  });
+  if (!r.ok) return null;
+  return await r.json();
+}
+// Lee el saldo/estado REAL que usa la DO (no el espejo en KV) — null si no hay binding.
+async function gcLedgerGet(env, code) {
+  const stub = giftCardLedgerStub(env, code);
+  if (!stub) return null;
+  const r = await stub.fetch('https://gift-card-ledger.internal/get', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  });
+  if (!r.ok) return null;
+  const d = await r.json().catch(() => ({}));
+  return d.card || null;
+}
+
+// ── Durable Object: OrderIdempotency ─────────────────────────────────────────
+// Auditoría externa (22 sep, S04): el patrón "leer marcador → crear pedido →
+// escribir marcador" en KV (handleOrder() y handleLoversShipmentIngest(), ver más
+// abajo) no es una exclusión mutua real — 2 requests genuinamente concurrentes con
+// la misma idempotencyKey/invoiceId pueden ambas leer "sin marcador" ANTES de que
+// ninguna escriba, y las 2 terminan creando un pedido separado (o, si el reintento
+// llega después de que la primera guardó el pedido pero antes de escribir el
+// marcador, lo mismo). Mismo patrón ya cerrado para gift cards (GiftCardLedger,
+// ver arriba) — una instancia por key serializa las requests a ESA key sin
+// necesitar CAS de KV (que Cloudflare KV no tiene).
+//
+// Esta DO NO reemplaza el chequeo de huella (fingerprint) que handleOrder() ya
+// hace contra `idem:<key>` en KV — solo resuelve la CARRERA (2 requests
+// verdaderamente simultáneas viendo "nadie la reclamó todavía" a la vez). El
+// contrato:
+//   POST /claim {key}    → si nadie reclamó esta key, la marca 'pending' y
+//     devuelve {status:'claimed'}. Si otra request la tiene reclamada AHORA MISMO
+//     (todavía no llamó /finalize ni /release), devuelve {status:'in_progress'} —
+//     el caller reintenta con backoff corto (ver orderIdemClaim). Si ya está
+//     'done', devuelve {status:'done', orderId, fingerprint} — el pedido ya existe.
+//   POST /finalize {key, orderId, fingerprint} → marca 'done'. Cualquier /claim
+//     futuro con esta key ya ve 'done' para siempre (no hay TTL — mismo criterio
+//     que `idem:<key>` en KV, que vive 24h; acá no hace falta expirar nada porque
+//     el volumen es bajo y cada key es del tamaño de un id + huella).
+//   POST /release {key}  → si el pedido nunca se llegó a guardar de verdad (ej. el
+//     catálogo rechazó el carrito después de reclamar, o la escritura a KV falló),
+//     vuelve a 'none' para que un reintento genuino no quede bloqueado para
+//     siempre.
+// Una alarma de 5 minutos (order creation es casi instantáneo — es un margen
+// generoso) libera sola un 'pending' que nunca llegó a /finalize ni /release (ej.
+// el Worker se cayó a mitad de camino) — mismo criterio que la alarm() de 2h de
+// GiftCardLedger para reservas abandonadas, solo que acá el timeout es mucho más
+// corto porque no hay ningún "checkout que la clienta puede dejar a medias":
+// crear un pedido ya-validado es una operación de servidor de punta a punta.
+//
+// Requiere el mismo tipo de binding de Durable Object que GiftCardLedger — ver
+// wrangler.admin.toml (una migración nueva, `new_sqlite_classes = ["OrderIdempotency"]`,
+// además de la que ya existe para GiftCardLedger) y CLAUDE.md. Sin el binding
+// todavía, orderIdemClaim() devuelve `{claimed:true}` siempre — el sitio sigue
+// funcionando exactamente como antes de este fix (protegido solo por el chequeo de
+// KV ya existente, con la misma ventana de carrera que se documentó como riesgo
+// aceptado hasta completar este paso manual).
+export class OrderIdempotency {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    let body = {};
+    try { body = await request.json(); } catch (_) {}
+
+    if (url.pathname === '/claim') {
+      let record = await this.state.storage.get('record');
+      if (!record) {
+        await this.state.storage.put('record', { status: 'pending' });
+        await this.state.storage.setAlarm(Date.now() + 5 * 60 * 1000);
+        return Response.json({ status: 'claimed' });
+      }
+      if (record.status === 'done') {
+        return Response.json({ status: 'done', orderId: record.orderId, fingerprint: record.fingerprint });
+      }
+      return Response.json({ status: 'in_progress' });
+    }
+
+    if (url.pathname === '/finalize') {
+      await this.state.storage.put('record', { status: 'done', orderId: body.orderId, fingerprint: body.fingerprint || null });
+      return Response.json({ ok: true });
+    }
+
+    if (url.pathname === '/release') {
+      await this.state.storage.delete('record');
+      return Response.json({ ok: true });
+    }
+
+    return new Response('not found', { status: 404 });
+  }
+
+  // Libera sola un 'pending' que nunca llegó a /finalize ni /release — ver
+  // comentario largo junto a la clase.
+  async alarm() {
+    const record = await this.state.storage.get('record');
+    if (record && record.status === 'pending') {
+      await this.state.storage.delete('record');
+    }
+  }
+}
+
+function orderIdemStub(env, key) {
+  if (!env.ORDER_IDEMPOTENCY) return null;
+  const id = env.ORDER_IDEMPOTENCY.idFromName(key);
+  return env.ORDER_IDEMPOTENCY.get(id);
+}
+// Reclama una key — hasta 5 reintentos cortos (150ms) si otra request la tiene
+// reclamada AHORA MISMO (carrera verdadera, rarísima en la práctica: el caso real
+// que esto cierra son 2 reintentos casi simultáneos del mismo webhook/checkout, no
+// 2 clics genuinos del mismo humano en el mismo instante). Devuelve:
+//   {claimed:true}                              → nadie más la tiene, proceder
+//   {claimed:false, orderId, fingerprint}        → ya existe (status 'done')
+//   {claimed:false, timedOut:true}               → sigue en curso tras esperar
+async function orderIdemClaim(env, key) {
+  const stub = orderIdemStub(env, key);
+  if (!stub) return { claimed: true }; // sin binding todavía: cae al chequeo KV-only existente
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const r = await stub.fetch('https://order-idempotency.internal/claim', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    const d = await r.json();
+    if (d.status === 'claimed') return { claimed: true };
+    if (d.status === 'done') return { claimed: false, orderId: d.orderId, fingerprint: d.fingerprint };
+    await new Promise((res) => setTimeout(res, 150)); // 'in_progress' — esperar y reintentar
+  }
+  return { claimed: false, timedOut: true };
+}
+async function orderIdemFinalize(env, key, orderId, fingerprint) {
+  const stub = orderIdemStub(env, key);
+  if (!stub) return;
+  await stub.fetch('https://order-idempotency.internal/finalize', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, orderId, fingerprint: fingerprint || null }),
+  });
+}
+async function orderIdemRelease(env, key) {
+  const stub = orderIdemStub(env, key);
+  if (!stub) return;
+  await stub.fetch('https://order-idempotency.internal/release', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
   });
 }
 
@@ -1389,6 +1700,11 @@ async function handleGcDeactivate(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const card = await gcGet(env, body.code);
   if (!card) return err('Tarjeta no encontrada', 404, origin);
+  // Auditoría externa (22 sep, S01): enrutar por la DO primero — ver gcAdminSet() y el
+  // comentario largo junto a la clase GiftCardLedger. Si no hay binding todavía, cae al
+  // camino viejo (solo KV) de siempre.
+  const viaLedger = await gcAdminSet(env, body.code, { active: false });
+  if (viaLedger) return ok({ ok: true, card: viaLedger.card }, origin);
   card.active = false;
   await env.CACUSA_KV.put(gcKey(body.code), JSON.stringify(card));
   return ok({ ok: true, card }, origin);
@@ -1401,8 +1717,18 @@ async function handleGcAdjust(body, env, origin) {
   if (!card) return err('Tarjeta no encontrada', 404, origin);
   const used = Number(body.usedAmount);
   if (!(used > 0)) return err('Monto inválido', 400, origin);
-  card.balance = +Math.max(0, card.balance - used).toFixed(2);
-  card.active  = card.balance > 0;
+  // Auditoría externa (22 sep, S01): calcular el nuevo saldo contra el estado REAL de
+  // la DO (gcLedgerGet), no contra el espejo en KV que ya leyó gcGet() arriba (solo se
+  // usa para el chequeo de "tarjeta no encontrada") — una reserva en vuelo puede haber
+  // dejado el saldo de la DO más bajo que el de KV en el instante exacto de este ajuste.
+  const ledgerCard = await gcLedgerGet(env, body.code);
+  const currentBalance = ledgerCard ? ledgerCard.balance : card.balance;
+  const newBalance = +Math.max(0, currentBalance - used).toFixed(2);
+  const newActive  = newBalance > 0;
+  const viaLedger = await gcAdminSet(env, body.code, { balance: newBalance, active: newActive });
+  if (viaLedger) return ok({ ok: true, card: viaLedger.card }, origin);
+  card.balance = newBalance;
+  card.active  = newActive;
   await env.CACUSA_KV.put(gcKey(body.code), JSON.stringify(card));
   return ok({ ok: true, card }, origin);
 }
@@ -1462,7 +1788,15 @@ function samePhone(a, b) {
   const db = String(b || '').replace(/\D/g, '');
   return da.length >= 7 && db.length >= 7 && da.slice(-7) === db.slice(-7);
 }
-function couponIsValid(c, email, phone) {
+// Auditoría externa (22 sep, S08a): antes el chequeo de "cupón ya usado" (cpused:ph/em)
+// solo vivía en /coupon/validate (aviso en pantalla) y en /coupon/burn (al confirmar el
+// pago) — el CÁLCULO real del descuento en handleOrder() nunca lo consultaba, así que
+// un cupón ya marcado como usado igual se restaba del total de un pedido nuevo (recién
+// se rechazaba después, al intentar "quemarlo" de nuevo — demasiado tarde, el pedido ya
+// se había guardado con el descuento aplicado). Ahora couponIsValid() es la única
+// función de validación, y hacerla async + pasarle `env` le permite chequear cpused acá
+// también, en el único lugar que de verdad calcula cuánto se descuenta.
+async function couponIsValid(c, email, phone, env) {
   if (!c || !c.active) return false;
   if (c.expiresAt && new Date(c.expiresAt + 'T23:59:59') < new Date()) return false;
   if (c.maxUses != null && c.usedCount >= c.maxUses) return false;
@@ -1472,6 +1806,16 @@ function couponIsValid(c, email, phone) {
   // y como no tiene tope de usos (el beneficio es "envío gratis en TODA compra"),
   // compartirlo una vez lo regalaba para siempre.
   if (c.restrictToPhone && !samePhone(phone, c.restrictToPhone)) return false;
+  // repeatableByDesign: cupones pensados para que la MISMA persona los reuse en cada
+  // compra (restrictToEmail, o el envío gratis de Lovers) nunca se marcan "usado" contra
+  // ella — mismo criterio ya usado en handleCouponValidate/couponLoadValid (Square).
+  const repeatableByDesign = !!(c.restrictToEmail || c.kind === 'lovers-shipping');
+  if (!repeatableByDesign && env && env.CACUSA_KV) {
+    const rawPhone = String(phone || '').replace(/\D/g, '');
+    const rawEmail = String(email || '').toLowerCase().trim();
+    if (rawPhone.length >= 7 && await env.CACUSA_KV.get(`cpused:ph:${rawPhone}:${c.code}`)) return false;
+    if (rawEmail.includes('@') && await env.CACUSA_KV.get(`cpused:em:${rawEmail}:${c.code}`)) return false;
+  }
   return true;
 }
 
@@ -2180,6 +2524,139 @@ async function handleLoversNotifyPending(body, env, origin, request) {
   return ok({ ok: true, notified: true }, origin);
 }
 
+// ── Doble opt-in por email — altas de Cacusa Lovers (nuevo, 22 sep — S07) ──────────
+// Auditoría externa: la regla de Firebase permite crear el PRIMER registro de
+// cualquier email sin probar que quien escribe lo controla, y el webhook de pago
+// (invoice.payment_made, lovers-webhook-worker.js) preserva la dirección YA guardada
+// en ese registro en vez de exigir una fresca — así que alguien podía pre-crear el
+// registro de un email ajeno con una dirección inventada, y esa dirección terminaba
+// usándose el día que la dueña real del email pagara de verdad. Cerrar esto del todo
+// necesitaría autenticación real (fuera de alcance de esta tanda) — pero el ÚNICO
+// camino que hoy escribe el primer registro de un email es este formulario público,
+// así que exigir un click de confirmación desde ESE email antes de escribir nada a
+// Firebase cierra el ataque real: un atacante no controla el inbox de la víctima, así
+// que no puede completar la confirmación en su nombre.
+//
+// El pago sigue disparándose de inmediato al enviar el formulario (misma UX que
+// antes, sin esperar a que confirme el correo) — lo único que cambia es que la
+// escritura a Firebase ya no ocurre desde el navegador ni al instante: queda en un
+// KV pendiente (TTL 48h) hasta que la persona hace click en el link de su correo.
+const LOVERS_PENDING_TTL_SECONDS = 48 * 3600;
+
+function loversRegisterEmailContent(nombre, confirmUrl, idioma) {
+  const bodyHtml = `
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+<tr><td style="text-align:center;">
+<a href="${esc(confirmUrl)}" style="display:inline-block;background:#C0336E;color:#fff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;padding:12px 28px;border-radius:8px;">${idioma === 'en' ? 'Confirm my email' : 'Confirmar mi correo'}</a>
+</td></tr>
+</table>
+<p style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;text-align:center;margin:0;">${idioma === 'en' ? 'This link expires in 48 hours.' : 'Este enlace vence en 48 horas.'}</p>`;
+  if (idioma === 'en') {
+    return {
+      subject: 'Confirm your email — Cacusa Lovers',
+      html: emailShellGeneric({
+        lang: 'en', preheader: 'One click to confirm your Cacusa Lovers signup.',
+        eyebrow: 'Cacusa Lovers', title: `Almost there${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+        bodyHtml, ctaText: '', ctaUrl: '',
+      }),
+    };
+  }
+  return {
+    subject: 'Confirmá tu correo — Cacusa Lovers',
+    html: emailShellGeneric({
+      lang: 'es', preheader: 'Un click para confirmar tu alta a Cacusa Lovers.',
+      eyebrow: 'Cacusa Lovers', title: `Ya casi${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+      bodyHtml, ctaText: '', ctaUrl: '',
+    }),
+  };
+}
+
+async function handleLoversRegister(body, env, origin, request) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
+  const rlKey = `loversregrl:${ip}`;
+  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
+  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+
+  const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
+  const email = String(body.email || '').toLowerCase().trim().slice(0, 150);
+  if (!isValidEmail(email)) return err('Email inválido', 400, origin);
+  const nombre = str(body.nombre, 100);
+  if (!nombre) return err('Falta el nombre', 400, origin);
+  const idioma = body.idioma === 'en' ? 'en' : 'es';
+
+  const token = b64url(crypto.getRandomValues(new Uint8Array(24)));
+  const pendingData = {
+    nombre, apellido: str(body.apellido, 100), email, telefono: str(body.telefono, 30),
+    direccion: str(body.direccion, 200), apto: str(body.apto, 40), ciudad: str(body.ciudad, 100),
+    estado: str(body.estado, 50), zip: str(body.zip, 20), pais: str(body.pais, 40),
+    plan: str(body.plan, 60), monto: str(body.monto, 40), idioma,
+    fecha: str(body.fecha, 10) || new Date().toISOString().slice(0, 10),
+    metodo_pago: str(body.metodo_pago, 20) || 'square',
+    createdAt: new Date().toISOString(),
+  };
+  await env.CACUSA_KV.put(`loverspending:${token}`, JSON.stringify(pendingData), { expirationTtl: LOVERS_PENDING_TTL_SECONDS });
+
+  // Aviso de "nueva suscripción pendiente" — antes esto dependía de que el formulario
+  // ya hubiera escrito el registro en Firebase (para que /internal/lovers/claim-pending
+  // lo pudiera leer). Como este registro ya NO se crea hasta que se confirma el email
+  // (ver más arriba), esa cadena dejaría de avisar para siempre — se dispara acá mismo,
+  // directo, con los datos que ya tenemos a mano, sin depender de Firebase para nada.
+  if (env.VAPID_PRIVATE_KEY_JWK) {
+    try {
+      const esAnual = String(pendingData.plan || '').toLowerCase().includes('anual');
+      await sendWebPushAll(env, {
+        title: 'CACUSA · Nueva suscripción pendiente',
+        body: `🕐 ${nombre} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que confirme el correo y complete el pago`,
+        url: 'https://cacusabytaitus.com/ui_kits/admin/',
+        tag: 'cacusa-lovers',
+        urgency: 'normal',
+      });
+    } catch (e) {
+      console.error('push suscripción pendiente falló:', e.message);
+    }
+  }
+
+  const confirmUrl = (idioma === 'en'
+    ? 'https://cacusabytaitus.com/en/cacusa-lovers.html?confirm='
+    : 'https://cacusabytaitus.com/cacusa-lovers.html?confirm=') + encodeURIComponent(token);
+  try {
+    await sendGmail(env, { to: email, ...loversRegisterEmailContent(nombre, confirmUrl, idioma) });
+  } catch (e) {
+    // Best-effort — el pago sigue su curso igual aunque el correo falle (la clienta
+    // puede confirmar más tarde si el formulario le ofrece un botón de reenviar, o
+    // Tita/Robin pueden confirmarla a mano desde el panel como ya hacían antes).
+    console.error('email de confirmación de Lovers falló:', e.message);
+  }
+  return ok({ ok: true }, origin);
+}
+
+async function handleLoversConfirm(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
+  const token = typeof body.token === 'string' ? body.token.slice(0, 64) : '';
+  if (!token) return err('Falta el token', 400, origin);
+  const raw = await env.CACUSA_KV.get(`loverspending:${token}`);
+  if (!raw) return err('Este enlace ya no es válido o ya fue usado', 404, origin);
+  let pending; try { pending = JSON.parse(raw); } catch (_) { pending = null; }
+  if (!pending) return err('Este enlace ya no es válido o ya fue usado', 404, origin);
+
+  if (!env.ORDER_INGEST_KEY) return err('Worker no configurado', 500, origin);
+  const r = await loversFetch(env, '/internal/lovers/confirm-register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+    body: JSON.stringify(pending),
+  });
+  if (!r.ok) {
+    console.error('confirm-register respondió', r.status, await r.text().catch(() => ''));
+    return err('No se pudo confirmar la suscripción, intentá de nuevo', 500, origin);
+  }
+  // Recién ahora, con el registro real ya escrito en Firebase, se invalida el token —
+  // un fallo ANTES de este punto deja el token intacto para poder reintentar.
+  await env.CACUSA_KV.delete(`loverspending:${token}`);
+  return ok({ ok: true }, origin);
+}
+
 async function handleCouponValidate(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   // Rate limit por IP (20/hr)
@@ -2194,20 +2671,13 @@ async function handleCouponValidate(body, env, origin, request) {
   const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
   const coupon = await couponGet(env, rawCode);
-  // Bloquear si teléfono o email ya usó este cupón — pero NUNCA para uno pensado para
-  // que la MISMA persona lo reuse en cada compra (restrictToEmail, o el envío gratis
-  // de Lovers). Aplicado sin distinción, esto rompía en silencio el envío gratis de
-  // Lovers en la segunda compra de cualquier suscriptora — nunca se detectó porque
-  // /coupon/validate solo dice { valid:false }, no por qué.
-  const repeatableByDesign = !!(coupon && (coupon.restrictToEmail || coupon.kind === 'lovers-shipping'));
-  if (!repeatableByDesign) {
-    if (rawPhone.length >= 7 && await env.CACUSA_KV.get(`cpused:ph:${rawPhone}:${rawCode}`)) return ok({ valid: false }, origin);
-    if (rawEmail.includes('@') && await env.CACUSA_KV.get(`cpused:em:${rawEmail}:${rawCode}`)) return ok({ valid: false }, origin);
-  }
   const codeKey = `cpvrl:c:${rawCode}`;
   const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
   if (codeCount >= 8) return ok({ valid: false }, origin);
-  let valid = couponIsValid(coupon, rawEmail, rawPhone);
+  // El chequeo de "cupón ya usado" (cpused:ph/em, saltado para cupones pensados para
+  // reusarse — restrictToEmail o envío gratis de Lovers) vive DENTRO de couponIsValid()
+  // desde el 22 sep (S08a) — un solo lugar, en vez de duplicarlo acá y en handleOrder().
+  let valid = await couponIsValid(coupon, rawEmail, rawPhone, env);
   // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
   if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
   if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
@@ -2519,11 +2989,16 @@ async function handleCouponBurnPublic(body, env, origin, request) {
     linkedOrderId = body.orderId != null ? body.orderId : null;
   }
 
-  if (linkedOrderId != null) {
-    const burnedKey = `burned:${linkedOrderId}:${rawCode}`;
-    if (await env.CACUSA_KV.get(burnedKey)) return ok({ ok: true }, origin); // ya se quemó para ESTE pedido
-    await env.CACUSA_KV.put(burnedKey, '1', { expirationTtl: 31536000 });
-  }
+  // Auditoría externa (22 sep, S08c): antes la marca `burned:<orderId>:<code>` se
+  // escribía ACÁ, antes de aplicar el efecto real (cpused + usedCount) — si el Worker
+  // se caía o KV fallaba entre esa escritura y las de abajo, un reintento veía
+  // `burned` ya puesto y devolvía éxito sin haber completado el descuento/tope de usos
+  // real. Ahora solo se LEE acá (para no reprocesar un pedido ya quemado del todo); la
+  // escritura de `burned` se mueve al final, después de que el efecto real ya haya
+  // quedado persistido — mismo criterio "efecto real primero, marca después" que ya se
+  // usa en el correo de bienvenida (welcomeCouponCode).
+  const burnedKey = linkedOrderId != null ? `burned:${linkedOrderId}:${rawCode}` : null;
+  if (burnedKey && await env.CACUSA_KV.get(burnedKey)) return ok({ ok: true }, origin); // ya se quemó para ESTE pedido
 
   const coupon = await couponGet(env, rawCode);
   // Restricciones del cupón chequeadas ANTES de escribir ninguna marca (antes se
@@ -2544,6 +3019,8 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   coupon.usedCount = (coupon.usedCount || 0) + 1;
   await env.CACUSA_KV.put(couponKey(rawCode), JSON.stringify(coupon));
   if (coupon.kind === 'referral') await markReferralMonthlyUse(env, rawCode);
+  // Recién ahora, con el efecto real ya persistido, se marca este pedido como quemado.
+  if (burnedKey) await env.CACUSA_KV.put(burnedKey, '1', { expirationTtl: 31536000 });
   return ok({ ok: true }, origin);
 }
 
@@ -3230,9 +3707,24 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
   // Idempotencia real (no solo un intento): un reintento de Square del mismo cobro
   // no debe crear un segundo pedido de envío para el mismo ciclo. Mismo patrón que
   // el resto del repo (marcador dedicado en KV, chequeado antes de crear).
+  //
+  // Auditoría externa (22 sep, S04): el chequeo de abajo (get→crear→put, no
+  // atómico) podía dejar pasar 2 pedidos de envío si 2 reintentos de la misma
+  // factura llegaban genuinamente al mismo tiempo, o si el 2do llegaba justo entre
+  // el `put` del pedido y el `put` del marcador. Reclamar la key en
+  // OrderIdempotency primero (misma DO que ya usa handleOrder(), ver más arriba)
+  // cierra esa carrera. Sin binding todavía, cae al comportamiento de siempre.
   const dedupeKey = 'lovershipinvoice:' + invoiceId;
+  const claim = await orderIdemClaim(env, dedupeKey);
+  if (!claim.claimed) {
+    if (claim.timedOut) return err('Esta operación ya se está procesando, intentá de nuevo en un momento', 409, origin);
+    if (claim.orderId != null) return ok({ ok: true, orderId: claim.orderId, alreadyExisted: true }, origin);
+  }
   const already = await env.CACUSA_KV.get(dedupeKey);
-  if (already) return ok({ ok: true, orderId: Number(already), alreadyExisted: true }, origin);
+  if (already) {
+    if (claim.claimed) await orderIdemFinalize(env, dedupeKey, Number(already)).catch(() => {});
+    return ok({ ok: true, orderId: Number(already), alreadyExisted: true }, origin);
+  }
 
   const newOrder = buildOrderCore({
     cliente: {
@@ -3247,8 +3739,14 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
   }, { strictPago: false });
 
   assignOrderId(newOrder);
-  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
-  await env.CACUSA_KV.put(dedupeKey, String(newOrder.id), { expirationTtl: 400 * 24 * 3600 });
+  try {
+    await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+    await env.CACUSA_KV.put(dedupeKey, String(newOrder.id), { expirationTtl: 400 * 24 * 3600 });
+  } catch (e) {
+    if (claim.claimed) await orderIdemRelease(env, dedupeKey).catch(() => {});
+    return err('No se pudo guardar el pedido de envío, intentá de nuevo', 500, origin);
+  }
+  if (claim.claimed) await orderIdemFinalize(env, dedupeKey, newOrder.id).catch(() => {});
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   return ok({ ok: true, orderId: newOrder.id, alreadyExisted: false }, origin);
 }
