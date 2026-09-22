@@ -291,6 +291,33 @@ veces a la clienta) — se cerró reusando el mecanismo de deduplicación por
 `idempotencyKey` que el sistema ya tenía construido, sin necesitar
 ningún Durable Object nuevo. Detalle completo: ver el repo privado.
 
+## Auditoría de seguridad e integridad — cierre del 22 sep
+
+Ronda nueva sobre los 4 Workers y el alta pública de Cacusa Lovers,
+8 hallazgos (verificados con exploración real del código antes de tocar
+nada, mismo criterio de siempre). Resumen: tarjetas de regalo — el panel
+ahora sincroniza con la Durable Object real en vez de un espejo aparte, y
+reservar/liberar saldo quedó atómico; validación más estricta de
+cantidades y nombres de línea en pedidos; nueva Durable Object
+(`OrderIdempotency`) para cerrar una carrera real de pedidos duplicados;
+el registro pendiente de un pago con Square ahora dura 30 días de verdad
+(antes decía que sí pero el valor nunca se había tocado) y se verifica
+que el monto/moneda/ubicación cobrados coincidan con lo esperado antes de
+completar un pedido; el chequeo que evita que una factura vieja reactive
+una suscripción de Lovers ya reemplazada se generalizó a todos los casos,
+no solo el que se había cerrado antes; los cupones se validan contra su
+historial de uso en el mismo cálculo del descuento, no solo al confirmar.
+
+También se cerró un hallazgo del formulario público de Cacusa Lovers: el
+alta ya no escribe directo a Firebase desde el navegador — ahora exige
+confirmar un link enviado al correo antes de crear el registro real,
+cerrando la posibilidad de que alguien pre-cargara una dirección para un
+email ajeno. El pago sigue disparándose de inmediato al llenar el
+formulario, sin esperar esa confirmación — misma experiencia de siempre.
+
+Detalle técnico completo (línea por línea, diseño de la Durable Object
+nueva, los 47 escenarios de prueba locales): ver el repo privado.
+
 ## Flujo de git
 
 - Todo commit a `main` publica de inmediato vía GitHub Pages — no hay
