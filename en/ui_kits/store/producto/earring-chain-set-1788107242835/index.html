@@ -74,10 +74,10 @@ A Jewel to make you look more beautiful than you already are">
      "knowsAbout":["handcrafted jewelry","personalized jewelry","925 silver","18k gold plating","stainless steel","personalized rings","handcrafted necklaces","woven bracelets","handmade earrings","personalized gift"],
      "hasOfferCatalog":{"@type":"OfferCatalog","name":"Personalized handcrafted jewelry",
        "itemListElement":[
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Handcrafted rings","description":"Handmade rings in 925 silver and 18k gold plating with initial and name personalization"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Personalized necklaces and chains","description":"Handcrafted necklaces with charms, 925 silver and 18k gold-plated chains"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Woven bracelets","description":"Handwoven macramé bracelets with charms and pearls"}},
-         {"@type":"Offer","itemOffered":{"@type":"Product","name":"Handcrafted earrings","description":"Handmade earrings with unique designs in 925 silver and gold plating"}}
+         {"@type":"Offer","itemOffered":{"@type":"Service","name":"Handcrafted rings","description":"Handmade rings in 925 silver and 18k gold plating with initial and name personalization"}},
+         {"@type":"Offer","itemOffered":{"@type":"Service","name":"Personalized necklaces and chains","description":"Handcrafted necklaces with charms, 925 silver and 18k gold-plated chains"}},
+         {"@type":"Offer","itemOffered":{"@type":"Service","name":"Woven bracelets","description":"Handwoven macramé bracelets with charms and pearls"}},
+         {"@type":"Offer","itemOffered":{"@type":"Service","name":"Handcrafted earrings","description":"Handmade earrings with unique designs in 925 silver and gold plating"}}
        ]},
      "contactPoint":{"@type":"ContactPoint","contactType":"customer service","availableLanguage":["Spanish","English"]},
      "sameAs":["https://www.instagram.com/cacusabytaitus/","https://www.tiktok.com/@cacusabytaitus"]},
@@ -2498,7 +2498,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
   const result = await submitOrder({
     numero:    _currentOrderNum,
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal, idioma: __LANG },
     productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     subtotal:  zelleSubtotal,
@@ -2569,7 +2569,8 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     city:     document.getElementById('coCiudad').value.trim(),
     address:  document.getElementById('coDireccion').value.trim(),
     apto:     document.getElementById('coApto').value.trim(),
-    notes:    document.getElementById('coNotas').value.trim()
+    notes:    document.getElementById('coNotas').value.trim(),
+    idioma:   __LANG
   };
 
   const _subtotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
@@ -2823,7 +2824,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   const emailVal = (document.getElementById('coEmail').value || '').trim();
   const result = await submitOrder({
     numero:  _currentOrderNum,
-    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal },
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal, idioma: __LANG },
     productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     subtotal: total,

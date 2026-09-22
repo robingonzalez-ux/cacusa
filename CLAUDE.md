@@ -241,6 +241,17 @@ Dos patrones conviven en el sitio:
 - `llms.txt`: resumen del negocio para LLMs/IA — actualizar si cambian
   datos de negocio (precios, envío, materiales, políticas) o se agrega
   contenido nuevo importante.
+- **Bug real cerrado (22 sep)**: el bloque `hasOfferCatalog` del schema de
+  Organización (`ui_kits/store/index.html`/`en/`) describía 4 categorías
+  ("Anillos artesanales", etc.) como `"@type":"Product"` sin
+  `offers`/`review`/`aggregateRating` — Google Search Console las marcaba
+  "no válidas" (36 items) porque no son productos concretos, son
+  resúmenes de categoría. Corregido a `"@type":"Service"` (no requiere
+  esos campos) en los 2 templates y propagado a las ~204 páginas físicas
+  con el pipeline de siempre. Los productos reales SÍ siguen siendo
+  `Product` con `offers` completo — el otro hallazgo del mismo reporte
+  ("falta aggregateRating/review", 231 items) es solo un aviso de mejora:
+  son productos reales sin reseñas todavía, no un bug.
 
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 
