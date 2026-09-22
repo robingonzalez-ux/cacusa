@@ -159,7 +159,17 @@ const SQUARE_VERSION  = '2025-05-21';
 const REDIRECT_URL    = 'https://cacusabytaitus.com/ui_kits/store/?paid=1';
 const CATALOG_URL     = 'https://cacusabytaitus.com/data/products.json';
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
-const PENDING_TTL_SECONDS = 2 * 60 * 60; // 2 horas — tiempo de sobra para completar el pago
+// Auditoría externa (22 sep, S05): este valor decía "2 horas" desde siempre, y un
+// comentario más abajo (junto a SQPROC_TTL_SECONDS) afirmaba que ya se había
+// "extendido a un margen seguro" — pero nunca se tocó ESTE valor, así que la
+// afirmación era falsa. El problema real: `pending.order` (dirección/carrito
+// completos) solo vive acá — si el registro expira ANTES de que el pago se termine
+// de procesar (Square documenta reintentos de webhook hasta ~24h tras un fallo), esos
+// datos se pierden para siempre; el marcador aparte `sqproc:<referenceId>` (ver más
+// abajo) resuelve "¿ya se procesó?" pero no "¿dónde estaban los datos?". Ahora sí se
+// extiende de verdad — 30 días es un margen generoso sobre cualquier ventana de
+// reintento real documentada por Square, y el costo de KV para esto es insignificante.
+const PENDING_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 días
 
 // Cloudflare bloquea que un Worker le haga fetch() a otro Worker de la misma cuenta usando
 // su URL *.workers.dev (error 1042, "This request could not be routed"). El Service Binding
@@ -223,9 +233,18 @@ function resolveBasePrice(prod) {
   return prod.price;
 }
 
+// Auditoría externa (22 sep, S08 — recargo sobre precio de promo): promo.price ya ES
+// el precio final mostrado a la clienta — aplicarle el 4% de recargo encima cobraba de
+// más sin que lo viera venir. Duplicada de la misma función en admin-worker.js.
+function isPromoActive(prod) {
+  if (!(prod.promo && prod.promo.price)) return false;
+  const ended = prod.promo.endsAt && new Date(prod.promo.endsAt) < new Date();
+  return !ended;
+}
+
 // Validates and returns the canonical price for each cart item.
 // Returns { validatedItems, serverShipping } or throws on invalid items.
-function validateItems(items, products, combos, shipping, surcharges = {}) {
+function validateItems(items, products, combos, shipping, surcharges = {}, idioma) {
   const productMap = new Map(products.map(p => [String(p.id), p]));
   const comboMap   = new Map(combos.map(c => [String(c.id), c]));
 
@@ -242,7 +261,7 @@ function validateItems(items, products, combos, shipping, surcharges = {}) {
       if (combo.available === false) {
         throw new Error(`Combo no disponible: ${combo.name || item.id}`);
       }
-      return { ...item, price: combo.price };
+      return { ...item, name: combo.name, price: combo.price };
     }
 
     // Regular product: look up by id
@@ -259,10 +278,14 @@ function validateItems(items, products, combos, shipping, surcharges = {}) {
     const basePrice = resolveBasePrice(prod);
     // Mismo cálculo que aplica la tienda en el navegador cuando el producto tiene recargo
     // (pago con tarjeta = precio con recargo; el descuento de Zelle no aplica en este flujo).
-    const price = surcharges[String(prod.id)] === true
+    // Auditoría (22 sep, S08): nunca recargar un precio que ya viene de una promo activa.
+    const price = (!isPromoActive(prod) && surcharges[String(prod.id)] === true)
       ? Math.round(basePrice * 1.04 * 100) / 100
       : basePrice;
-    return { ...item, price };
+    // Auditoría externa (22 sep, S03): el nombre siempre sale del catálogo real, nunca
+    // del que manda el cliente — antes se conservaba `item.name` tal cual.
+    const name = (idioma === 'en' && prod.name_en) ? prod.name_en : prod.name;
+    return { ...item, name, price };
   });
 
   // Recalculate shipping from canonical subtotal — ignore client-sent value
@@ -311,21 +334,31 @@ async function gcReserve(env, code, amountCents, orderRef) {
   });
   return await r.json();
 }
+// Auditoría externa (22 sep, S02): antes esto nunca miraba `r.ok`/el body — un commit
+// que la DO rechazara (409, la reserva ya no existe) se trataba igual que un éxito
+// silencioso. Ahora lanza si la DO devuelve un error real — dentro de handleWebhook()
+// esto propaga al try/catch que ya responde 500 (Square reintenta), en vez de marcar
+// `pending.processed = true` sobre un commit que en realidad nunca se confirmó.
 async function gcCommit(env, code, orderRef, amountCents) {
   const stub = giftCardLedgerStub(env, code);
   if (!stub) { await redeemGiftCardViaAdmin(code, amountCents, env); return; }
-  await stub.fetch('https://gift-card-ledger.internal/commit', {
+  const r = await stub.fetch('https://gift-card-ledger.internal/commit', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, orderRef }),
   });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    throw new Error(`gcCommit falló (${r.status}): ${d.error || 'sin detalle'}`);
+  }
 }
 async function gcRelease(env, code, orderRef) {
   const stub = giftCardLedgerStub(env, code);
   if (!stub) return; // camino viejo: nunca se reservó nada que liberar
-  await stub.fetch('https://gift-card-ledger.internal/release', {
+  const r = await stub.fetch('https://gift-card-ledger.internal/release', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code, orderRef }),
   });
+  if (!r.ok) throw new Error(`gcRelease falló (${r.status})`);
 }
 
 function couponKey(code) { return 'coupon:' + String(code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, ''); }
@@ -430,6 +463,11 @@ async function fetchSquareOrder(orderId, token) {
 
 // Reenvía el pedido ya confirmado a cacusa-admin — llamada servidor-a-servidor,
 // autenticada con ORDER_INGEST_KEY (no con el Origin del navegador, que acá no aplica).
+// Auditoría externa (22 sep, S08d): antes esto descartaba la respuesta de admin más
+// allá de chequear `.ok` — devuelve ahora el id REAL que admin-worker.js le asignó al
+// pedido (o el ya existente, si esto es un reintento con la misma idempotencyKey), para
+// que burnCouponViaAdmin() pueda atar el consumo del cupón a ESE pedido en vez de
+// mandarlo sin ningún orderId (ver más abajo).
 async function forwardOrderToAdmin(order, env) {
   const r = await adminFetch(env, '/order', {
     method: 'POST',
@@ -437,17 +475,25 @@ async function forwardOrderToAdmin(order, env) {
     body: JSON.stringify({ order })
   });
   if (!r.ok) throw new Error('admin /order respondió ' + r.status);
+  const d = await r.json().catch(() => ({}));
+  return d.id != null ? d.id : null;
 }
 
 // Nota: estas dos NO se tragan el error — si fallan, el webhook debe devolver 500 para que
 // Square reintente (ver handleWebhook). Un fallo silencioso acá dejaría el cupón/tarjeta de
 // regalo sin quemarse aunque el pedido ya se haya creado.
-async function burnCouponViaAdmin(code, phone, email, env) {
+// Auditoría externa (22 sep, S08d): antes se mandaba sin `orderId` — admin-worker.js
+// (handleCouponBurnPublic, camino `trusted`) solo activa su dedupe `burned:<orderId>:
+// <code>` cuando `body.orderId` viene presente; sin él, un reintento de este mismo
+// webhook (Square puede redisparar `payment.updated` varias veces) volvía a incrementar
+// usedCount cada vez, sin ninguna protección por pedido. `orderId` es el id REAL que
+// admin-worker.js le asignó al pedido de este pago (ver forwardOrderToAdmin() arriba).
+async function burnCouponViaAdmin(code, phone, email, env, orderId) {
   if (!code) return;
   const r = await adminFetch(env, '/coupon/burn', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-    body: JSON.stringify({ code, phone, email })
+    body: JSON.stringify({ code, phone, email, orderId })
   });
   if (!r.ok) throw new Error('admin /coupon/burn respondió ' + r.status);
 }
@@ -475,11 +521,12 @@ async function redeemGiftCardViaAdmin(code, amountCents, env) {
   }
 }
 
-// Auditoría de integridad (19 sep, F05): TTL de pending_order extendido de 2h a un
-// margen seguro (Square documenta reintentos de webhook hasta 24h) — antes, si un
-// reintento tardío llegaba después de que la key ya hubiera expirado, no había forma
-// de distinguir "esto ya se procesó hace rato" de "esto se perdió de verdad". El
-// marcador aparte sqproc:<referenceId> (TTL más largo todavía) resuelve esa ambigüedad.
+// Auditoría de integridad (19 sep, F05): antes, si un reintento tardío de Square
+// llegaba después de que `pending_order:<referenceId>` ya hubiera expirado, no había
+// forma de distinguir "esto ya se procesó hace rato" de "esto se perdió de verdad".
+// Este marcador aparte (TTL más largo, y ahora más corto que PENDING_TTL_SECONDS de
+// arriba — antes era al revés, ver S05 arriba) resuelve esa ambigüedad: si no está
+// `pending_order` pero SÍ está `sqproc`, ya se procesó, nada que hacer.
 const SQPROC_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
 
 // ── Webhook: Square confirma que el pago se completó ─────────────────────────
@@ -555,15 +602,47 @@ async function handleWebhook(request, env) {
       return new Response('OK', { status: 200 }); // ya procesado — reintento de Square, ignorar
     }
 
+    // Auditoría externa (22 sep, S05): antes esto confiaba en `payment.status ===
+    // 'COMPLETED'` sin comparar NADA del monto/moneda/ubicación reales contra lo que
+    // se esperaba al crear el Payment Link — un webhook con la firma válida (viene
+    // de Square de verdad) pero con datos que no coinciden con este pago específico
+    // (ej. un `order_id` de otra location, o un monto distinto por algún problema del
+    // lado de Square) se procesaba igual, sin ninguna señal de alerta. `payment.
+    // amount_money` es el monto REAL cobrado por Square para este pago puntual —
+    // se compara contra `pending.order.total` (calculado server-side al crear el
+    // link, nunca lo que mandó el cliente) antes de reenviar nada a admin-worker.js.
+    const expectedCents = Math.round((Number(pending.order?.total) || 0) * 100);
+    const paidCents = payment.amount_money?.amount;
+    const paidCurrency = payment.amount_money?.currency;
+    const orderLocationId = squareOrder.location_id;
+    if (paidCents !== expectedCents || paidCurrency !== 'USD' || orderLocationId !== env.SQUARE_LOCATION_ID) {
+      // No es algo que un reintento del mismo webhook vaya a "arreglar solo" —
+      // responder 200 evita que Square lo siga reintentando para siempre, pero
+      // NUNCA se reenvía el pedido a admin con un monto/ubicación que no coincide.
+      // Queda en los Real-time Logs de Cloudflare para revisión manual (mismo
+      // criterio que otras anomalías de este archivo, ej. una liberación de gift
+      // card que falla) — no hay hoy un canal de push desde este Worker en
+      // particular hacia Tita/Robin, a diferencia de admin-worker.js.
+      console.error('Reconciliación de pago falló — no coincide con lo esperado', {
+        referenceId, expectedCents, paidCents, paidCurrency,
+        expectedLocation: env.SQUARE_LOCATION_ID, orderLocationId,
+      });
+      return new Response('OK', { status: 200 });
+    }
+
     // El pedido se reenvía una sola vez (orderForwarded evita duplicarlo si Square reintenta
     // el webhook porque el paso del cupón/tarjeta de regalo falló después). Esos dos pasos sí
     // se reintentan hasta que funcionen — nunca deben quedar "olvidados" en silencio.
     if (!pending.orderForwarded) {
-      await forwardOrderToAdmin(pending.order, env);
+      // Auditoría externa (22 sep, S08d): persistir el id real devuelto por admin en
+      // `pending.adminOrderId` — así, si esta rama nunca vuelve a correr (orderForwarded
+      // ya en true en un reintento posterior) pero SÍ hace falta reintentar el burn del
+      // cupón, `burnCouponViaAdmin()` de abajo sigue teniendo el orderId correcto.
+      pending.adminOrderId = await forwardOrderToAdmin(pending.order, env);
       pending.orderForwarded = true;
       await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
     }
-    if (pending.coupon) await burnCouponViaAdmin(pending.coupon.code, pending.coupon.phone, pending.coupon.email, env);
+    if (pending.coupon) await burnCouponViaAdmin(pending.coupon.code, pending.coupon.phone, pending.coupon.email, env, pending.adminOrderId);
     if (pending.giftCard) await gcCommit(env, pending.giftCard.code, pending.giftCard.reservationRef, pending.giftCard.amountCents);
 
     pending.processed = true;
@@ -617,7 +696,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
       fetchCatalog(),
       fetchSurcharges(env),
     ]);
-    ({ validatedItems, serverShipping } = validateItems(items, products, combos, shipping, surcharges));
+    ({ validatedItems, serverShipping } = validateItems(items, products, combos, shipping, surcharges, customer?.idioma));
   } catch (e) {
     console.error('Catalog/validation error:', e.message);
     return jsonError('No se pudo validar el carrito: ' + e.message, 400, allowed);
@@ -868,7 +947,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   } else if (gcReservationRef) {
     // Esta reserva nueva quedaría huérfana (el pedido ya se confirmó con otra reserva
     // anterior) — liberarla de inmediato en vez de esperar a que expire sola.
-    await gcRelease(env, gcCode, gcReservationRef).catch(() => {});
+    await gcRelease(env, gcCode, gcReservationRef).catch(e => console.error('gcRelease falló:', e.message));
   }
 
   // ── Square API call ────────────────────────────────────────────────────

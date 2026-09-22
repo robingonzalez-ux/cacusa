@@ -1,6 +1,9 @@
 # Config de wrangler SOLO para el Worker cacusa-admin (admin-worker.js) — paso
-# manual único para crear la clase de Durable Object GiftCardLedger (auditoría de
-# integridad, 19 sep: cierra el doble-gasto real de gift cards, F03-a/F06).
+# manual único para crear las clases de Durable Object GiftCardLedger (auditoría de
+# integridad, 19 sep: cierra el doble-gasto real de gift cards, F03-a/F06) y
+# OrderIdempotency (auditoría externa, 22 sep — S04: cierra la carrera real de
+# pedidos/envíos duplicados, ver el comentario largo junto a esa clase en
+# admin-worker.js).
 #
 # Por qué hace falta esto y los demás Workers no lo necesitan: los 4 Workers de este
 # repo se despliegan siempre pegando el código en el dashboard de Cloudflare (Edit
@@ -18,12 +21,16 @@
 #   2. wrangler login            (autoriza contra la cuenta real de Cloudflare)
 #   3. wrangler deploy --config wrangler.admin.toml
 #      Esto sube admin-worker.js TAL CUAL (mismo código que ya se pega a mano) y,
-#      de paso, aplica la migración que registra la clase GiftCardLedger. Después
-#      de este primer deploy, editar SOLO el cuerpo de la clase (sin renombrarla)
-#      puede seguir pegándose en el dashboard como siempre — no hace falta volver
-#      a correr wrangler salvo que se agregue OTRA clase de Durable Object nueva.
-#   4. En cacusa-square (el otro Worker que necesita esta misma tarjeta), agregar el
-#      binding cruzado — ver wrangler.square.toml.
+#      de paso, aplica las migraciones pendientes (GiftCardLedger si es la primera
+#      vez, OrderIdempotency si ya se hizo el primer deploy antes del 22 sep —
+#      wrangler solo aplica la migración NUEVA que todavía no corrió, sin tocar la
+#      que ya se aplicó). Después de que TODAS las clases declaradas ya tengan su
+#      migración aplicada, editar el cuerpo de cualquiera de las 2 (sin renombrarlas)
+#      puede seguir pegándose en el dashboard como siempre — solo hace falta volver
+#      a correr wrangler si se agrega OTRA clase de Durable Object nueva.
+#   4. En cacusa-square (el otro Worker que necesita la MISMA tarjeta de
+#      GiftCardLedger — OrderIdempotency no la necesita, solo la usa admin-worker.js),
+#      agregar el binding cruzado — ver wrangler.square.toml.
 #
 # Corregido el 19 sep — primer intento real de deploy: en el plan gratuito de
 # Cloudflare, una clase de Durable Object nueva SOLO se puede crear con storage
@@ -57,9 +64,20 @@ compatibility_date = "2026-09-19"
 name = "GIFT_CARD_LEDGER"
 class_name = "GiftCardLedger"
 
+[[durable_objects.bindings]]
+name = "ORDER_IDEMPOTENCY"
+class_name = "OrderIdempotency"
+
 [[migrations]]
 tag = "v1-giftcardledger"
 new_sqlite_classes = ["GiftCardLedger"]
+
+# Migración nueva (22 sep) — una clase de Durable Object NUEVA necesita su propia
+# entrada de migración (agregarla a la de arriba no la aplicaría; los tags de
+# migración son incrementales, nunca se reescribe uno ya aplicado).
+[[migrations]]
+tag = "v2-orderidempotency"
+new_sqlite_classes = ["OrderIdempotency"]
 
 [[kv_namespaces]]
 binding = "CACUSA_KV"
