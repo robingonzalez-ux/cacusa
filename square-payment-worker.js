@@ -828,6 +828,19 @@ async function handleCreatePaymentLink(body, env, allowed) {
       // admin no tenía forma de saber qué cupón se usó, y /coupon/burn (público)
       // rechaza cualquier pedido sin cuponAplicado === code.
       cuponAplicado: cpCode || undefined,
+      // Cierra la carrera real documentada en la ronda anterior (22 sep): el guard
+      // `orderForwarded` de abajo (chequear-y-luego-escribir, no atómico) puede dejar
+      // pasar 2 entregas casi simultáneas del mismo webhook de Square, y las 2
+      // terminan llamando forwardOrderToAdmin() con este MISMO objeto (mismo
+      // `pending.order` leído de KV antes de que ninguna escriba). Antes, sin este
+      // campo, admin-worker.js no tenía forma de reconocer el reintento — creaba 2
+      // pedidos reales (y, desde el 22 sep, 2 correos de confirmación al mismo
+      // cliente). `referenceId` ya es determinístico por pago (mismo valor que
+      // `idempotency_key` de Square más abajo) — reusarlo acá activa el mecanismo de
+      // deduplicación que `handleOrder()` YA tiene (idem:<key> + huella del
+      // contenido): la segunda llamada devuelve el mismo pedido en vez de crear uno
+      // nuevo, sin necesitar ningún cambio de arquitectura (Durable Object) para esto.
+      idempotencyKey: referenceId,
     },
     giftCard: gcDiscountCents > 0 ? { code: gcCode, amountCents: gcDiscountCents, reservationRef: gcReservationRef } : null,
     // Auditoría (20 sep, F12): antes solo se guardaba si el descuento era > 0 en dinero —
