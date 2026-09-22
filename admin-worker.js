@@ -251,6 +251,17 @@ export default {
         return ok({ ok: true }, allowOrigin);
       }
 
+      // Correo de bienvenida/confirmación de Cacusa Lovers — llamada desde
+      // lovers-webhook-worker.js SOLO en la transición hacia estado_pago:'activo'
+      // (primer pago real o resuscripción, nunca una renovación normal — ver
+      // wasActive en invoice.payment_made). Mismo guard Worker-a-Worker que el resto
+      // de rutas internas (ORDER_INGEST_KEY compartido).
+      if (path.endsWith('/internal/lovers/subscription-email')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        await sendSubscriptionConfirmationEmail(body, env).catch(e => console.error('subscription-email interno falló:', e.message));
+        return ok({ ok: true }, allowOrigin);
+      }
+
       // Cacusa Lovers — crea el "pedido de envío" del ciclo (mensual/anual) cuando
       // lovers-webhook-worker.js confirma un cobro real. Mismo guard Worker-a-Worker
       // que el resto de rutas internas (ORDER_INGEST_KEY compartido).
@@ -556,6 +567,10 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
       // de Cacusa Lovers con país truncado nunca mostraba el botón de USPS).
       pais:      str(cliente.pais,       40),
       notas:     str(cliente.notas,     500),
+      // Nuevo (22 sep) — en qué idioma compró (tienda ES o EN), para mandar los 3
+      // correos transaccionales nuevos en el idioma correcto. Default 'es' si no viene
+      // (pedidos manuales del admin, o pedidos viejos de antes de este campo).
+      idioma:    str(cliente.idioma, 5) === 'en' ? 'en' : 'es',
     },
     productos: (Array.isArray(order.productos) ? order.productos : []).slice(0, 50).map(p => ({
       // Auditoría (20 sep, F10): los ids reales del catálogo son numéricos
@@ -963,6 +978,9 @@ async function handleOrder(body, env, origin, ctx, request) {
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
+  // Correo de confirmación de pedido — nunca antes de este punto (el pedido ya está
+  // guardado de verdad), nunca en un reintento (idem: ya devolvió antes de llegar acá).
+  if (ctx) ctx.waitUntil(sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido falló:', e.message)));
 
   if (env.NTFY_TOPIC) {
     await sendNtfy(newOrder, env);
@@ -1005,6 +1023,7 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
+  if (ctx) ctx.waitUntil(sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido manual falló:', e.message)));
 
   return ok({ ok: true, order: newOrder }, origin);
 }
@@ -1535,6 +1554,185 @@ function emailShell({ lang, preheader, eyebrow, title, code, bullets, ctaText, c
 </table>
 </body>
 </html>`;
+}
+
+// Escape mínimo para texto libre (nombre de producto, personalización, nombre de
+// clienta) que se interpola en los correos nuevos de abajo — a diferencia de
+// welcomeEmailContent()/loversExclusiveEmailContent(), que solo interpolan un código
+// de cupón generado por el sistema, estos 3 sí meten texto que viene de la clienta o
+// del catálogo (editable desde el admin) — sin esto, un nombre con "&"/"<"/">" rompería
+// el HTML del correo.
+function esc(v) {
+  return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Plantilla de correo genérica (21-22 sep) — mismo look que emailShell() (banner,
+// tarjeta, tipografías, pie con WhatsApp) pero sin el slot fijo de código+bullets, para
+// los 3 correos transaccionales nuevos (confirmación de pedido, envío/tracking,
+// suscripción) que necesitan contenido de forma libre (tabla de productos, caja de
+// tracking, lista de beneficios) en vez de un cupón.
+function emailShellGeneric({ lang, preheader, eyebrow, title, bodyHtml, ctaText, ctaUrl }) {
+  const waMsg = lang === 'en' ? encodeURIComponent('Hi! I have a question about my CACUSA by Taitus order.') : encodeURIComponent('Hola, tengo una consulta sobre mi pedido de CACUSA by Taitus.');
+  const footerText = lang === 'en'
+    ? `Questions? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Chat with us on WhatsApp</a>`
+    : `¿Dudas? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Escríbenos por WhatsApp</a>`;
+  const ctaHtml = ctaUrl ? `
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:18px auto 0;">
+<tr><td style="background-color:#EE6FA8;background-image:linear-gradient(135deg,#EE6FA8,#C4A0EC);border-radius:999px;">
+<a href="${ctaUrl}" style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:14px;color:#FFFFFF;text-decoration:none;">${ctaText}</a>
+</td></tr>
+</table>` : '';
+  return `<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#FEF8FF;">
+<span style="display:none;visibility:hidden;opacity:0;overflow:hidden;height:0;width:0;max-height:0;max-width:0;mso-hide:all;">${preheader}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FEF8FF;padding:28px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border-radius:18px;overflow:hidden;border:1px solid #F3E4EE;">
+<tr><td style="background-color:#EE6FA8;background-image:linear-gradient(135deg,#F5C8A8,#EE6FA8,#C4A0EC);padding:34px 24px;text-align:center;">
+<div style="font-family:Georgia,'Bodoni Moda',serif;font-size:26px;font-weight:700;letter-spacing:.12em;color:#FFFFFF;">CACUSA</div>
+<div style="font-family:Georgia,serif;font-style:italic;font-size:14px;color:#FFFFFF;opacity:.92;margin-top:2px;">by Taitus</div>
+</td></tr>
+<tr><td style="padding:32px 30px 28px;text-align:center;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#C0336E;margin-bottom:10px;">${eyebrow}</div>
+<div style="font-family:Georgia,'Bodoni Moda',serif;font-size:22px;font-weight:700;color:#8B2A5A;margin-bottom:18px;">${title}</div>
+${bodyHtml}
+${ctaHtml}
+</td></tr>
+<tr><td style="background:#FEF0E4;padding:16px 24px;text-align:center;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${footerText}</div>
+</td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+// Correo de confirmación de pedido — se dispara desde handleOrder()/handleOrderManual()
+// justo después de persistir el pedido de verdad (nunca antes, nunca en un reintento).
+function orderConfirmationEmailContent(order, lang) {
+  const nombre = (order.cliente && order.cliente.nombre || '').trim();
+  const numero = order.numero || ('#' + order.id);
+  const money = n => '$' + (Number(n) || 0).toFixed(2);
+  const rows = (order.productos || []).map(p => `
+<tr>
+<td style="padding:8px 0;border-bottom:1px solid #F3E4EE;text-align:left;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B2A5A;">
+${esc(p.name)}${p.qty > 1 ? ` × ${p.qty}` : ''}${p.personalization ? `<div style="font-size:11px;color:#96486F;font-style:italic;">${esc(p.personalization)}</div>` : ''}
+</td>
+<td style="padding:8px 0;border-bottom:1px solid #F3E4EE;text-align:right;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B2A5A;white-space:nowrap;">
+${money(p.price * (p.qty || 1))}
+</td>
+</tr>`).join('');
+  const totalsRow = (label, val) => `
+<tr><td style="padding:4px 0;text-align:left;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${label}</td>
+<td style="padding:4px 0;text-align:right;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${money(val)}</td></tr>`;
+  const bodyHtml = `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">${rows}</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">
+${totalsRow(lang === 'en' ? 'Subtotal' : 'Subtotal', order.subtotal)}
+${totalsRow(lang === 'en' ? 'Shipping' : 'Envío', order.envio)}
+${order.impuesto ? totalsRow(lang === 'en' ? 'Tax' : 'Impuesto', order.impuesto) : ''}
+<tr><td style="padding:8px 0 0;text-align:left;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#8B2A5A;border-top:1.5px solid #C0336E;">Total</td>
+<td style="padding:8px 0 0;text-align:right;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#C0336E;border-top:1.5px solid #C0336E;">${money(order.total)}</td></tr>
+</table>`;
+  const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
+  if (lang === 'en') {
+    return {
+      subject: `Order confirmed — ${numero} — CACUSA by Taitus`,
+      html: emailShellGeneric({
+        lang, preheader: `We've got your order ${numero} — here's what you ordered.`,
+        eyebrow: 'Order confirmed', title: `Thank you${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+        bodyHtml, ctaText: 'Keep shopping →', ctaUrl: storeUrl,
+      }),
+    };
+  }
+  return {
+    subject: `Pedido confirmado — ${numero} — CACUSA by Taitus`,
+    html: emailShellGeneric({
+      lang, preheader: `Ya tenemos tu pedido ${numero} — esto es lo que compraste.`,
+      eyebrow: 'Pedido confirmado', title: `¡Gracias${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+      bodyHtml, ctaText: 'Seguir comprando →', ctaUrl: storeUrl,
+    }),
+  };
+}
+
+// Correo de confirmación de envío — se dispara desde handleUspsLabel() justo después
+// de persistir el tracking real de la guía ya generada.
+function shippingConfirmationEmailContent(order, trackingUrl, lang) {
+  const nombre = (order.cliente && order.cliente.nombre || '').trim();
+  const bodyHtml = `
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+<tr><td style="background:#FCE8F3;border:1.5px dashed #C0336E;border-radius:10px;padding:14px 30px;text-align:center;">
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#96486F;margin-bottom:4px;">${lang === 'en' ? 'Tracking number' : 'Número de guía'}</div>
+<span style="font-family:Georgia,'Bodoni Moda',serif;font-size:20px;font-weight:700;letter-spacing:1px;color:#C0336E;">${esc(order.tracking || '')}</span>
+</td></tr>
+</table>`;
+  if (lang === 'en') {
+    return {
+      subject: 'Your order is on its way — CACUSA by Taitus',
+      html: emailShellGeneric({
+        lang, preheader: 'Your USPS tracking number is ready.',
+        eyebrow: 'Shipped', title: `On its way${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+        bodyHtml, ctaText: 'Track on USPS.com →', ctaUrl: trackingUrl,
+      }),
+    };
+  }
+  return {
+    subject: 'Tu pedido va en camino — CACUSA by Taitus',
+    html: emailShellGeneric({
+      lang, preheader: 'Tu número de guía USPS ya está listo.',
+      eyebrow: 'Enviado', title: `Va en camino${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+      bodyHtml, ctaText: 'Rastrear en USPS.com →', ctaUrl: trackingUrl,
+    }),
+  };
+}
+
+// Correo de bienvenida/confirmación de suscripción — se dispara SOLO en la transición
+// hacia estado_pago:'activo' (ver wasActive en lovers-webhook-worker.js), nunca en
+// cada renovación mensual/anual.
+function subscriptionConfirmationEmailContent(subscriberData, lang) {
+  const nombre = (subscriberData.nombre || '').trim();
+  const plan = subscriberData.plan || 'Cacusa Lovers';
+  const monto = subscriberData.monto || '';
+  const bullets = lang === 'en' ? [
+    '5% off, always — on every purchase in the store.',
+    'Free shipping on every shipment while your subscription is active.',
+    'A curated Cacusa piece delivered every cycle.',
+  ] : [
+    '5% de descuento siempre — en cada compra de la tienda.',
+    'Envío gratis en cada ciclo mientras tu suscripción siga activa.',
+    'Una pieza Cacusa elegida especialmente para ti cada ciclo.',
+  ];
+  const bodyHtml = `
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+<tr><td style="background:#FCE8F3;border:1.5px dashed #C0336E;border-radius:10px;padding:12px 26px;text-align:center;">
+<span style="font-family:Georgia,'Bodoni Moda',serif;font-size:17px;font-weight:700;color:#C0336E;">${esc(plan)}</span>
+${monto ? `<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;margin-top:2px;">${esc(monto)}</div>` : ''}
+</td></tr>
+</table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+${bullets.map(b => `<tr><td style="padding:3px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#96486F;text-align:left;">${b}</td></tr>`).join('')}
+</table>`;
+  const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
+  if (lang === 'en') {
+    return {
+      subject: 'Welcome to Cacusa Lovers ✦',
+      html: emailShellGeneric({
+        lang, preheader: 'Your Cacusa Lovers membership is active.',
+        eyebrow: 'Cacusa Lovers', title: `Welcome${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+        bodyHtml, ctaText: 'Shop now →', ctaUrl: storeUrl,
+      }),
+    };
+  }
+  return {
+    subject: 'Bienvenida a Cacusa Lovers ✦',
+    html: emailShellGeneric({
+      lang, preheader: 'Tu membresía Cacusa Lovers ya está activa.',
+      eyebrow: 'Cacusa Lovers', title: `Bienvenida${nombre ? ', ' + esc(nombre) : ''}! ✦`,
+      bodyHtml, ctaText: 'Ir a la tienda →', ctaUrl: storeUrl,
+    }),
+  };
 }
 
 function welcomeEmailContent(code, lang) {
@@ -2694,6 +2892,44 @@ async function sendGmail(env, { to, subject, html }) {
   if (!r.ok) throw new Error(`Gmail send falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
 }
 
+// Los 3 wrappers de abajo son el único punto que llaman handleOrder()/
+// handleOrderManual()/handleUspsLabel()/la ruta interna de suscripción — evita repetir
+// el guard isValidEmail() + el try/catch best-effort en cada uno de los 4 puntos de
+// disparo. Ninguno de los 3 debe poder romper el flujo que los llama si Gmail falla.
+async function sendOrderConfirmationEmail(order, env) {
+  const email = (order.cliente && order.cliente.email) || '';
+  if (!isValidEmail(email)) return; // sin correo válido, no hay a quién mandarle nada
+  const lang = (order.cliente && order.cliente.idioma) === 'en' ? 'en' : 'es';
+  try {
+    await sendGmail(env, { to: email, ...orderConfirmationEmailContent(order, lang) });
+  } catch (e) {
+    console.error('email de confirmación de pedido falló:', e.message);
+  }
+}
+
+async function sendShippingConfirmationEmail(order, env) {
+  const email = (order.cliente && order.cliente.email) || '';
+  if (!isValidEmail(email) || !order.tracking) return;
+  const lang = (order.cliente && order.cliente.idioma) === 'en' ? 'en' : 'es';
+  const trackingUrl = `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(order.tracking)}`;
+  try {
+    await sendGmail(env, { to: email, ...shippingConfirmationEmailContent(order, trackingUrl, lang) });
+  } catch (e) {
+    console.error('email de confirmación de envío falló:', e.message);
+  }
+}
+
+async function sendSubscriptionConfirmationEmail(body, env) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!isValidEmail(email)) return;
+  const lang = body.idioma === 'en' ? 'en' : 'es';
+  try {
+    await sendGmail(env, { to: email, ...subscriptionConfirmationEmailContent(body, lang) });
+  } catch (e) {
+    console.error('email de confirmación de suscripción falló:', e.message);
+  }
+}
+
 // ── USPS API (guías de envío) — nuevo, 20 sep ───────────────────────────────────
 // Plataforma nueva de USPS (developers.usps.com) — la vieja Web Tools API se dio
 // de baja el 25 ene 2026, así que esto se integra directo contra la nueva. OAuth2
@@ -2885,6 +3121,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     order.labelWeightOz = weightOz;
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+    if (ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
     return ok({ ok: true, tracking: order.tracking, labelBase64: order.labelBase64, labelFormat: order.labelFormat }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
