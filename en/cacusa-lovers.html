@@ -305,8 +305,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .sub-plan-opt--anual .sub-plan-opt-price{color:var(--lilac)}
 .sub-plan-opt-badge{display:inline-block;background:var(--lilac);color:white;font-family:var(--fu);font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:100px;margin-bottom:4px}
 /* ── SUCCESS SCREEN ── */
-#sub-success{display:none;position:fixed;inset:0;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
-#sub-success.show{display:flex}
+.ss-overlay{display:none;position:fixed;inset:0;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);z-index:950;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 24px}
+.ss-overlay.show{display:flex}
 .ss-icon{font-size:72px;margin-bottom:20px;animation:ssIn .6s cubic-bezier(.34,1.56,.64,1)}
 .ss-title{font-family:var(--fd);font-weight:900;font-size:clamp(32px,5vw,52px);color:white;margin-bottom:12px}
 .ss-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:460px;line-height:1.7;margin-bottom:32px}
@@ -371,11 +371,23 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <div id="cursor-ring"></div>
 
 <!-- SUCCESS SCREEN -->
-<div id="sub-success">
+<div id="sub-success" class="ss-overlay">
   <div class="ss-icon" aria-hidden="true">✦</div>
   <h2 class="ss-title">Welcome to the club!</h2>
   <p class="ss-sub">Your <strong>Cacusa Lovers</strong> subscription is active. You'll receive a confirmation email from Square and your first box will arrive in the coming days. ♡</p>
   <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explore more →</button>
+</div>
+<div id="lovers-confirm-ok" class="ss-overlay" role="status" aria-live="polite">
+  <div class="ss-icon" aria-hidden="true">✓</div>
+  <h2 class="ss-title">Email confirmed!</h2>
+  <p class="ss-sub">We've saved your details. If you haven't completed payment yet, do so from the link that took you to Square — if you already paid, your subscription is already on its way. ♡</p>
+  <button class="ss-btn" onclick="document.getElementById('lovers-confirm-ok').classList.remove('show');history.replaceState({},'',location.pathname)">Explore more →</button>
+</div>
+<div id="lovers-confirm-err" class="ss-overlay" role="alert" aria-live="assertive">
+  <div class="ss-icon" aria-hidden="true">✕</div>
+  <h2 class="ss-title">This link is no longer valid</h2>
+  <p class="ss-sub">You may have already used it, or more than 48 hours may have passed since you filled out the form. Message us on WhatsApp if you need help.</p>
+  <button class="ss-btn" onclick="document.getElementById('lovers-confirm-err').classList.remove('show');history.replaceState({},'',location.pathname)">Close</button>
 </div>
 
 <!-- SUBSCRIPTION MODAL -->
@@ -1479,34 +1491,25 @@ async function submitSubscription(){
     idioma:      'en', // en qué página se suscribió — usado para el idioma del cupón exclusivo
   };
 
-  // Guardar datos en Firebase (best-effort — no bloquea el pago si falla).
-  // Key determinística por email (no un ID al azar): si Square manda sus
-  // webhooks casi al mismo tiempo que esto, todos escriben al mismo nodo en
-  // vez de crear copias separadas de la misma suscriptora.
+  // Auditoría externa (22 sep, S07): antes esto escribía DIRECTO a Firebase desde acá
+  // — cualquiera podía crear el primer registro de un email ajeno sin probar que lo
+  // controla. Ahora se manda a admin-worker.js, que NO escribe nada todavía: guarda
+  // los datos en un pendiente (48h) y manda un correo con un link de confirmación a
+  // ESE email. El registro real en Firebase recién se crea cuando la persona hace
+  // click en ese link (ver handleLoversConfirmLink() más abajo). El pago sigue
+  // disparándose de inmediato después de esto, sin esperar la confirmación — misma
+  // experiencia de siempre. keepalive:true es imprescindible porque el redirect a
+  // Square ocurre en la línea siguiente y sin eso el navegador cancela la petición.
+  // Este mismo llamado ya dispara el aviso por push de "suscripción pendiente" del
+  // lado del Worker (ver handleLoversRegister) — no hace falta ningún llamado aparte.
   try {
-    if(!_fbIdToken) await _fbSignIn();
-    const subKey = subscriber.email.replace(/[.#$\[\]/]/g, ',');
-    await fetch(_fbUrl(`${_FB_DB}/cacusa_lovers/${subKey}.json`), {
-      method:  'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(subscriber),
-    });
-  } catch(e){ console.warn('[fb-save]', e); }
-
-  // Avisar por push que entró una suscripción pendiente. Tiene que ser acá y no en
-  // el webhook de Square: si la clienta abandona el pago, Square nunca manda ningún
-  // webhook y nadie se entera jamás de esta pendiente. El Worker decide si
-  // corresponde avisar (verifica el registro en Firebase) y arma el texto; acá solo
-  // va el email. keepalive:true es imprescindible porque el redirect a Square ocurre
-  // en la línea siguiente y sin eso el navegador cancela la petición.
-  try {
-    await fetch(`${ADMIN_WORKER_URL}/lovers/notify-pending`, {
+    await fetch(`${ADMIN_WORKER_URL}/lovers/register`, {
       method:    'POST',
       headers:   { 'Content-Type': 'application/json' },
-      body:      JSON.stringify({ email: subscriber.email }),
+      body:      JSON.stringify(subscriber),
       keepalive: true,
     });
-  } catch(e){ console.warn('[notify-pending]', e); }
+  } catch(e){ console.warn('[lovers-register]', e); }
 
   const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
   window.location.href = link;
@@ -1519,6 +1522,27 @@ async function submitSubscription(){
     document.getElementById('sub-success').classList.add('show');
     history.replaceState({}, '', location.pathname);
   }
+})();
+
+// ── CONFIRM EMAIL (?confirm=<token>) — double opt-in, S07 (22 sep) ──────────
+// The person arrives here from the link we emailed when they filled out the
+// form. Only NOW is the real record created in Firebase (see
+// handleLoversConfirm() in admin-worker.js) — never before, so nobody can
+// pre-create another person's record without being able to click their own inbox.
+(function handleLoversConfirmLink(){
+  const params = new URLSearchParams(location.search);
+  const token = params.get('confirm');
+  if (!token) return;
+  history.replaceState({}, '', location.pathname);
+  fetch(`${ADMIN_WORKER_URL}/lovers/confirm`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ token }),
+  }).then(r => {
+    document.getElementById(r.ok ? 'lovers-confirm-ok' : 'lovers-confirm-err').classList.add('show');
+  }).catch(() => {
+    document.getElementById('lovers-confirm-err').classList.add('show');
+  });
 })();
 
 // ── CURSOR ──────────────────────────────────────────────────
