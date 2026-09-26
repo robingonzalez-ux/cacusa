@@ -71,7 +71,8 @@
  */
 
 const SQUARE_API = 'https://connect.squareup.com/v2';
-const ADMIN_ORIGIN = 'https://cacusabytaitus.com';
+// El primero es el valor por defecto de ADMIN_CORS; withAdminOrigin() refleja el que corresponda.
+const ADMIN_ORIGINS = ['https://admin.cacusabytaitus.com', 'https://cacusabytaitus.com'];
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 // Mismos usuarios válidos que admin-worker.js (duplicado a propósito — no hay módulos
 // compartidos entre Workers). verifyToken() los usa para revalidar el token de sesión,
@@ -183,7 +184,7 @@ async function notifySubscriptionEmail(email, fields, env) {
   }
 }
 const ADMIN_CORS = {
-  'Access-Control-Allow-Origin': ADMIN_ORIGIN,
+  'Access-Control-Allow-Origin': ADMIN_ORIGINS[0],
   'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Key',
 };
@@ -392,6 +393,21 @@ function decodeId(raw) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
+    return withAdminOrigin(request, await handleRequest(request, env));
+  },
+};
+
+// CORS de /admin/*: refleja el Origin solo si es uno de los orígenes del panel.
+function withAdminOrigin(request, res) {
+  const origin = request.headers.get('Origin') || '';
+  if (!ADMIN_ORIGINS.includes(origin) || res.headers.get('Access-Control-Allow-Origin') !== ADMIN_ORIGINS[0]) return res;
+  const out = new Response(res.body, res);
+  out.headers.set('Access-Control-Allow-Origin', origin);
+  out.headers.append('Vary', 'Origin');
+  return out;
+}
+
+async function handleRequest(request, env) {
     const url = new URL(request.url);
     const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
     const fbAuth = env.FB_DB_SECRET;
@@ -1165,5 +1181,4 @@ export default {
     // necesario) salió bien; 500 fuerza el reintento de Square — seguro porque
     // updateSubscriber() es un PATCH idempotente.
     return new Response(dbOk ? 'OK' : 'Firebase write failed', { status: dbOk ? 200 : 500 });
-  },
-};
+}

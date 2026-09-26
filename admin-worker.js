@@ -94,8 +94,12 @@ const SESSION_HOURS = 12;
 
 const ORIGIN_ALLOWLIST = [
   'https://cacusabytaitus.com',
-  'https://www.cacusabytaitus.com'
+  'https://www.cacusabytaitus.com',
+  'https://admin.cacusabytaitus.com'
 ];
+
+// Panel admin en su propio origen (26 sep) — separado de la tienda, que carga GTM.
+const ADMIN_URL = 'https://admin.cacusabytaitus.com/';
 
 // Origen del POS (app aparte, GitHub Pages) — solo puede usar rutas explícitamente marcadas
 const POS_ORIGIN = 'https://robingonzalez-ux.github.io';
@@ -294,7 +298,7 @@ export default {
         if (!env.VAPID_PRIVATE_KEY_JWK) return ok({ error: 'VAPID_PRIVATE_KEY_JWK no configurado' }, allowOrigin);
         const title   = (body.title || 'CACUSA').toString().slice(0, 100);
         const text    = (body.body  || '').toString().slice(0, 200);
-        const url     = (body.url   || 'https://cacusabytaitus.com/ui_kits/admin/').toString().slice(0, 300);
+        const url     = (body.url   || ADMIN_URL).toString().slice(0, 300);
         // tag: agrupa notificaciones del mismo tipo de evento — así una nueva
         // suscriptora Lovers no tapa un pedido que todavía no se ha leído (antes
         // todo compartía un único tag y la más reciente reemplazaba a la anterior
@@ -389,7 +393,7 @@ export default {
         const stats = await sendWebPushAll(env, {
           title: 'CACUSA · Notificación de prueba',
           body:  'Si ves esto, las notificaciones están funcionando ✅',
-          url:   'https://cacusabytaitus.com/ui_kits/admin/',
+          url:   ADMIN_URL,
           tag:   'cacusa-test',
           urgency: 'normal',
         });
@@ -463,7 +467,7 @@ async function emailRecipientAllowed(env, email) {
 async function adminPush(env, title, body, tag = 'cacusa-system', urgency = 'high') {
   if (!env.VAPID_PRIVATE_KEY_JWK || !env.CACUSA_KV) return;
   try {
-    await sendWebPushAll(env, { title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag, urgency });
+    await sendWebPushAll(env, { title, body, url: ADMIN_URL, tag, urgency });
   } catch (e) {
     console.error('adminPush falló:', e.message);
   }
@@ -536,7 +540,7 @@ async function notifyNgrokSyncFailure(err, env) {
   await sendWebPushAll(env, {
     title: 'CACUSA · Falló la sincronización con Excel/POS',
     body:  `El servidor local (ngrok) no respondió: ${err.message}. Revisa que siga corriendo — no vas a recibir otro aviso por 6h aunque siga fallando.`,
-    url:   'https://cacusabytaitus.com/ui_kits/admin/',
+    url:   ADMIN_URL,
     tag: 'cacusa-system',
     urgency: 'normal',
   }).catch(() => {});
@@ -1183,7 +1187,7 @@ async function handleOrder(body, env, origin, ctx, request) {
       await sendWebPushAll(env, {
         title: 'CACUSA · Nuevo pedido',
         body:  `${icon} ${newOrder.pago} · ${sanitizePushText(newOrder.cliente?.nombre) || 'Cliente'} · $${newOrder.total}`,
-        url:   'https://cacusabytaitus.com/ui_kits/admin/',
+        url:   ADMIN_URL,
         tag: 'cacusa-order',
         urgency: 'high',
       });
@@ -2669,7 +2673,7 @@ async function handleLoversNotifyPending(body, env, origin, request) {
       await sendWebPushAll(env, {
         title: 'CACUSA · Nueva suscripción pendiente',
         body:  `🕐 ${sanitizePushText(claim.nombre) || 'Alguien'} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que complete el pago`,
-        url:   'https://cacusabytaitus.com/ui_kits/admin/',
+        url:   ADMIN_URL,
         tag: 'cacusa-lovers',
         urgency: 'normal',
       });
@@ -2765,7 +2769,7 @@ async function handleLoversRegister(body, env, origin, request) {
       await sendWebPushAll(env, {
         title: 'CACUSA · Nueva suscripción pendiente',
         body: `🕐 ${sanitizePushText(nombre) || 'Alguien'} (sin confirmar) llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que confirme el correo y complete el pago`,
-        url: 'https://cacusabytaitus.com/ui_kits/admin/',
+        url: ADMIN_URL,
         tag: 'cacusa-lovers',
         urgency: 'normal',
       });
@@ -3052,7 +3056,7 @@ async function checkAbandonedCarts(env, { leads: preloaded, refreshCache = true 
     await sendWebPushAll(env, {
       title: 'CACUSA · Carrito abandonado',
       body: `🛒 ${lead.email}${totalTxt}${itemNames ? ' — ' + itemNames : ''}`,
-      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      url: ADMIN_URL,
       tag: 'cacusa-cart',
       urgency: 'low',
     });
@@ -3261,7 +3265,7 @@ async function sendNtfy(order, env) {
         'Title':        'CACUSA · Nuevo pedido',
         'Priority':     'high',
         'Tags':         'bell,shopping',
-        'Click':        'https://cacusabytaitus.com/ui_kits/admin/',
+        'Click':        ADMIN_URL,
         'Content-Type': 'text/plain; charset=utf-8'
       },
       body
@@ -3416,7 +3420,7 @@ async function handlePushSubscribe(body, env, origin, session) {
     await sendWebPushAll(env, {
       title: 'CACUSA · Nuevo dispositivo',
       body: `🔔 Un dispositivo nuevo empezó a recibir avisos (usuario ${session.user})`,
-      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      url: ADMIN_URL,
       tag: 'cacusa-system',
       urgency: 'normal',
     }, { excludeKey: key }).catch((e) => console.error('push dispositivo nuevo falló:', e.message));
@@ -4102,7 +4106,9 @@ const WA_USERS   = ['robin.gonzalez', 'tita.jaramillo'];
 // cualquier subdominio, así que si alguna vez un subdominio quedara
 // comprometido (DNS colgante, XSS), una ceremonia corrida desde ahí pasaba
 // igual. Hallazgo del 19 sep (auditoría propia, A07-A19).
-const WA_ORIGIN = 'https://cacusabytaitus.com';
+// El rpId sigue siendo el dominio registrable: las passkeys existentes sirven desde el subdominio.
+// El origen de la tienda queda solo durante la transición.
+const WA_ORIGINS = ['https://admin.cacusabytaitus.com', 'https://cacusabytaitus.com'];
 
 // Auditoría (20 sep, F20): las 4 rutas de WebAuthn no tenían ningún tope de intentos
 // por IP más allá del TTL de 300s del challenge — a diferencia de /login (loginrl:) y
@@ -4151,7 +4157,7 @@ async function handleWaRegister(body, env, origin, request) {
   const cdBytes = b64urlDecode(clientDataJSON);
   const cd = JSON.parse(new TextDecoder().decode(cdBytes));
   if (cd.type !== 'webauthn.create' || cd.challenge !== challenge) return err('clientData inválido', 400, origin);
-  if (cd.origin !== WA_ORIGIN) return err('origin no coincide', 400, origin);
+  if (!WA_ORIGINS.includes(cd.origin)) return err('origin no coincide', 400, origin);
   const attObj = decodeCBOR(b64urlDecode(attestationObject));
   const authData = attObj.authData;
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
@@ -4182,7 +4188,7 @@ async function handleWaRegister(body, env, origin, request) {
     await sendWebPushAll(env, {
       title: 'CACUSA · Nueva passkey registrada',
       body: `⚠️ Se agregó un Face ID/huella nuevo para ${session.user} — si no fuiste vos, avisa ya.`,
-      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      url: ADMIN_URL,
       tag: 'cacusa-webauthn',
       urgency: 'high',
     });
@@ -4245,7 +4251,7 @@ async function handleWaLogin(body, env, origin, request) {
   const cdBytes = b64urlDecode(clientDataJSON);
   const cd = JSON.parse(new TextDecoder().decode(cdBytes));
   if (cd.type !== 'webauthn.get' || cd.challenge !== challenge) return err('clientData inválido', 400, origin);
-  if (cd.origin !== WA_ORIGIN) return err('origin no coincide', 400, origin);
+  if (!WA_ORIGINS.includes(cd.origin)) return err('origin no coincide', 400, origin);
   const authBytes = b64urlDecode(authenticatorData);
   const rpHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(WA_RP_ID)));
   if (!arraysEqual(authBytes.slice(0, 32), rpHash)) return err('rpId no coincide', 400, origin);
