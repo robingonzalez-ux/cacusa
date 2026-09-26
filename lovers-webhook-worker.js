@@ -377,6 +377,18 @@ function isInternalIngest(request, env) {
   return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
 }
 
+// ── Ids que se interpolan en URLs de Firebase/Square: solo caracteres seguros.
+// Las keys de suscriptoras derivan del email (subscriberKey: '.'→','), así que
+// para esas se permite además '@', ',' y '+'. Nunca '.', '/', '%', '?', '#'.
+const SAFE_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
+const SAFE_LOVER_KEY_RE = /^[A-Za-z0-9_@,+-]{1,128}$/;
+function validId(v, loverKey = false) {
+  return typeof v === 'string' && (loverKey ? SAFE_LOVER_KEY_RE : SAFE_ID_RE).test(v);
+}
+function decodeId(raw) {
+  try { return decodeURIComponent(raw); } catch (_) { return null; }
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -407,13 +419,15 @@ export default {
       if (!r.ok) return adminJson({ error: 'No se pudo leer cacusa_lovers' }, 502);
       const subscribers = (await r.json()) || {};
       const todayIso = new Date().toISOString().slice(0, 10);
-      const active = Object.values(subscribers).some(s => {
+      const match = Object.values(subscribers).find(s => {
         if (!s || String(s.telefono || '').replace(/\D/g, '').slice(-7) !== phoneDigits.slice(-7)) return false;
         if (s.estado_pago !== 'activo') return false;
         if (s.vence && s.vence < todayIso) return false;
         return true;
       });
-      return adminJson({ active }, 200);
+      // email/idioma solo para cacusa-admin (manda el código de envío por correo).
+      if (!match) return adminJson({ active: false }, 200);
+      return adminJson({ active: true, email: String(match.email || ''), idioma: match.idioma === 'en' ? 'en' : 'es' }, 200);
     }
 
     // ── POST /internal/lovers/claim-pending — Worker-a-Worker, autenticado con
@@ -488,6 +502,22 @@ export default {
       if (!email || !email.includes('@')) return adminJson({ error: 'Email inválido' }, 400);
 
       const key = subscriberKey(email);
+      // Si ya existe y no está 'pendiente' (activo/pago_fallido/cancelado), no se
+      // toca nada: misma respuesta de éxito + aviso a las admins.
+      let current;
+      try {
+        current = await getSubscriberByKey(key, dbUrl, fbAuth);
+      } catch (e) {
+        return adminJson({ error: 'Firebase no disponible' }, 500);
+      }
+      if (current && current.estado_pago && current.estado_pago !== 'pendiente') {
+        console.warn('confirm-register: re-registro ignorado para', email, 'estado:', current.estado_pago);
+        const txt = current.estado_pago === 'activo'
+          ? `⚠ Intento de re-registro de una suscriptora activa: ${email}`
+          : `⚠ Intento de re-registro de una suscriptora (${current.estado_pago}): ${email}`;
+        await notifyAdminPush('CACUSA · Lovers', txt, env);
+        return adminJson({ ok: true }, 200);
+      }
       const ok = await updateSubscriber(key, 'pendiente', {
         email,
         nombre: String(b.nombre || '').slice(0, 100),
@@ -534,6 +564,9 @@ export default {
         const { subscriptionId, firebaseKey } = payload || {};
         if (!subscriptionId || !firebaseKey) {
           return adminJson({ error: 'Falta subscriptionId o firebaseKey' }, 400);
+        }
+        if (!validId(subscriptionId) || !validId(firebaseKey, true)) {
+          return adminJson({ error: 'Id inválido' }, 400);
         }
 
         const result = await cancelSquareSubscription(subscriptionId, env.SQUARE_ACCESS_TOKEN);
@@ -636,7 +669,8 @@ export default {
       // PATCH /admin/lovers/{id} y DELETE /admin/lovers/{id}
       const idMatch = url.pathname.match(/^\/admin\/lovers\/([^/]+)$/);
       if (idMatch) {
-        const id = decodeURIComponent(idMatch[1]);
+        const id = decodeId(idMatch[1]);
+        if (!validId(id, true)) return adminJson({ error: 'Id inválido' }, 400);
 
         if (request.method === 'PATCH') {
           let fields;
@@ -732,8 +766,9 @@ export default {
       const revApprove = url.pathname.match(/^\/admin\/reviews\/([^/]+)\/([^/]+)\/approve$/);
       if (revApprove) {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
-        const productId = decodeURIComponent(revApprove[1]);
-        const reviewId = decodeURIComponent(revApprove[2]);
+        const productId = decodeId(revApprove[1]);
+        const reviewId = decodeId(revApprove[2]);
+        if (!validId(productId) || !validId(reviewId)) return adminJson({ error: 'Id inválido' }, 400);
         const r = await fetch(`${dbUrl}/cacusa_reviews/${productId}/${reviewId}.json?auth=${fbAuth}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -750,8 +785,9 @@ export default {
       const revMatch = url.pathname.match(/^\/admin\/reviews\/([^/]+)\/([^/]+)$/);
       if (revMatch) {
         if (request.method !== 'DELETE') return adminJson({ error: 'Method not allowed' }, 405);
-        const productId = decodeURIComponent(revMatch[1]);
-        const reviewId = decodeURIComponent(revMatch[2]);
+        const productId = decodeId(revMatch[1]);
+        const reviewId = decodeId(revMatch[2]);
+        if (!validId(productId) || !validId(reviewId)) return adminJson({ error: 'Id inválido' }, 400);
         const r = await fetch(`${dbUrl}/cacusa_reviews/${productId}/${reviewId}.json?auth=${fbAuth}`, { method: 'DELETE' });
         if (!r.ok) {
           const errText = await r.text().catch(() => r.status);

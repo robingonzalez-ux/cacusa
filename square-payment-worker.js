@@ -658,8 +658,46 @@ async function handleWebhook(request, env) {
 }
 
 // ── Crear el Payment Link ─────────────────────────────────────────────────────
+// Topes de largo de los campos de la clienta antes de guardarlos en KV/Square.
+const CUSTOMER_FIELD_MAX = {
+  name: 100, lastname: 100, email: 120, phone: 30, address: 200, apto: 200,
+  city: 200, state: 200, zip: 200, country: 200, notes: 500, idioma: 5,
+};
+function capCustomer(c) {
+  if (!c || typeof c !== 'object') return c;
+  const out = { ...c };
+  for (const [k, max] of Object.entries(CUSTOMER_FIELD_MAX)) {
+    if (out[k] != null) out[k] = String(out[k]).slice(0, max);
+  }
+  return out;
+}
+
+// Rate limit best-effort por colo vía Cache API (no gasta escrituras de KV, plan free).
+async function cacheRateLimit(name, key, max, windowSec) {
+  try {
+    const cache = caches.default;
+    const req = new Request(`https://rl.internal/${name}/${encodeURIComponent(key)}`);
+    const hit = await cache.match(req);
+    let data = null;
+    if (hit) { try { data = await hit.json(); } catch (_) {} }
+    const now = Date.now();
+    if (!data || !(data.exp > now)) data = { n: 0, exp: now + windowSec * 1000 };
+    if (data.n >= max) return false;
+    data.n++;
+    const ttl = Math.max(1, Math.ceil((data.exp - now) / 1000));
+    await cache.put(req, new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${ttl}` },
+    }));
+    return true;
+  } catch (e) {
+    console.error('cacheRateLimit falló:', e.message);
+    return true; // si la cache falla, no bloquear pagos reales
+  }
+}
+
 async function handleCreatePaymentLink(body, env, allowed) {
-  const { items, customer } = body;
+  const { items } = body;
+  const customer = capCustomer(body.customer);
   const isEcuador = (customer?.country || '') === 'EC';
 
   if (!items || !Array.isArray(items) || items.length === 0) {
@@ -994,9 +1032,9 @@ async function handleCreatePaymentLink(body, env, allowed) {
   }
 
   if (!squareResp.ok) {
-    const detail = squareData?.errors?.[0]?.detail || 'Error desconocido de Square';
-    console.error('Square error:', JSON.stringify(squareData));
-    return jsonError(detail, 502, allowed);
+    // Nunca devolver el detalle de Square a la clienta — solo al log.
+    console.error('Square error:', squareData?.errors?.[0]?.detail || '', JSON.stringify(squareData));
+    return jsonError('No se pudo generar el link de pago. Intenta de nuevo o escríbenos por WhatsApp.', 502, allowed);
   }
 
   const checkoutUrl = squareData.payment_link?.url;
@@ -1036,6 +1074,12 @@ export default {
 
     if (request.method !== 'POST') {
       return jsonError('Method not allowed', 405, allowed);
+    }
+
+    // Rate limit por IP antes de parsear el body: 8 cada 10 min.
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    if (!(await cacheRateLimit('paylink', ip, 8, 600))) {
+      return jsonError('Demasiados intentos. Espera unos minutos e intenta de nuevo.', 429, allowed);
     }
 
     // ── Parse body ──────────────────────────────────────────────────────
