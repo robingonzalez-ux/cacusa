@@ -79,7 +79,7 @@
  *       body = backup.firebase
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
- *    .webauthnCredentials / .leads / .loversShipIndex / .cpused:
+ *    .webauthnCredentials / .leads / .loversShipIndex / .couponUsage / .uspsLabels:
  *       env.CACUSA_KV.put(key, typeof value === 'string' ? value : JSON.stringify(value))
  *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
  *    tal cual). OJO (F19, 20 sep): loversShipIndex guarda un STRING plano (el código
@@ -130,7 +130,7 @@ async function notifyAdminPush(title, body, env) {
     const r = await adminFetch(env, '/push/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag: 'cacusa-backup', urgency: 'high' }),
+      body: JSON.stringify({ title, body, url: 'https://admin.cacusabytaitus.com/', tag: 'cacusa-backup', urgency: 'high' }),
     });
     if (!r.ok) console.error('push/notify failed:', r.status, await r.text().catch(() => ''));
   } catch (e) {
@@ -212,8 +212,12 @@ async function getKvValue(env, key) {
 // no "ruido regenerable" como decía este comentario antes de agruparlo con refmonth:/
 // idem:. Perderlo en una restauración reabriría esa ventana de reuso para cualquiera
 // que ya hubiera gastado un cupón dentro del último año — se agrega al export.
+//
+// 26 sep: `label:*` — el PDF de la guía USPS salió de order:/orders_cache a su propia
+// llave (límite de 25 MB de KV); sin esto una restauración dejaría los pedidos con
+// labelStored:true pero sin la guía.
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
@@ -221,10 +225,11 @@ async function exportKv(env) {
     listKvPrefix(env, 'lead:'),
     listKvPrefix(env, 'loversship:'),
     listKvPrefix(env, 'cpused:'),
+    listKvPrefix(env, 'label:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, surcharges, markets };
 }
 
 function backupKey(iso, trigger) {
