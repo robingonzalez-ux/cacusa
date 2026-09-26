@@ -672,26 +672,23 @@ function capCustomer(c) {
   return out;
 }
 
-// Rate limit best-effort por colo vía Cache API (no gasta escrituras de KV, plan free).
-async function cacheRateLimit(name, key, max, windowSec) {
+// Rate limit sin gastar escrituras de KV (plan free): contador en memoria dentro de
+// una instancia de la DO GiftCardLedger por name:key (ruta /rl, no toca su storage).
+// No usa la Cache API: en *.workers.dev no tiene efecto. Si la instancia se descarta
+// por inactividad el contador vuelve a 0 (best-effort). Ante error, no bloquea.
+async function rateLimit(env, name, key, max, windowSec) {
   try {
-    const cache = caches.default;
-    const req = new Request(`https://rl.internal/${name}/${encodeURIComponent(key)}`);
-    const hit = await cache.match(req);
-    let data = null;
-    if (hit) { try { data = await hit.json(); } catch (_) {} }
-    const now = Date.now();
-    if (!data || !(data.exp > now)) data = { n: 0, exp: now + windowSec * 1000 };
-    if (data.n >= max) return false;
-    data.n++;
-    const ttl = Math.max(1, Math.ceil((data.exp - now) / 1000));
-    await cache.put(req, new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${ttl}` },
-    }));
-    return true;
+    if (!env || !env.GIFT_CARD_LEDGER) return true;
+    const id = env.GIFT_CARD_LEDGER.idFromName(`rl:${name}:${String(key)}`);
+    const r = await env.GIFT_CARD_LEDGER.get(id).fetch('https://gc/rl', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ max, windowSec }),
+    });
+    const d = await r.json();
+    return d.allowed !== false;
   } catch (e) {
-    console.error('cacheRateLimit falló:', e.message);
-    return true; // si la cache falla, no bloquear pagos reales
+    console.error('rateLimit falló:', e.message);
+    return true;
   }
 }
 
@@ -1078,7 +1075,7 @@ export default {
 
     // Rate limit por IP antes de parsear el body: 8 cada 10 min.
     const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-    if (!(await cacheRateLimit('paylink', ip, 8, 600))) {
+    if (!(await rateLimit(env, 'paylink', ip, 8, 600))) {
       return jsonError('Demasiados intentos. Espera unos minutos e intenta de nuevo.', 429, allowed);
     }
 
