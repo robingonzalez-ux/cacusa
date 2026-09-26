@@ -129,13 +129,16 @@
     // Pausa/reanuda el crossfade por tiempo de heroSlideshow() mientras el pin está
     // activo — usa las mismas closures pause()/resume() que heroSlideshow() ya expone
     // globalmente, para que crossfade y scroll-scrub nunca compitan en el mismo pixel.
-    if (typeof window._heroSlideshowPause === 'function') {
-      ScrollTrigger.create({
-        trigger: host, start: 'top top', end: 'bottom top',
-        onEnter: window._heroSlideshowPause, onEnterBack: window._heroSlideshowPause,
-        onLeave: window._heroSlideshowResume, onLeaveBack: window._heroSlideshowResume
-      });
-    }
+    // Se resuelven al momento del evento, no acá: heroSlideshow() corre después del fetch
+    // async de products.json, así que al registrar este trigger todavía no existen.
+    function slidePause() { if (typeof window._heroSlideshowPause === 'function') window._heroSlideshowPause(); }
+    function slideResume() { if (typeof window._heroSlideshowResume === 'function') window._heroSlideshowResume(); }
+    var pinTrigger = ScrollTrigger.create({
+      trigger: host, start: 'top top', end: 'bottom top',
+      onEnter: slidePause, onEnterBack: slidePause,
+      onLeave: slideResume, onLeaveBack: slideResume
+    });
+    window._heroPinActive = function () { return pinTrigger.isActive; };
 
     var tl = gsap.timeline({
       scrollTrigger: {

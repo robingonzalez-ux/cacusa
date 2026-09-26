@@ -1298,6 +1298,7 @@ function heroSlideshow(){
   stage.addEventListener('focusout', resume);
   window._heroSlideshowPause = pause;
   window._heroSlideshowResume = resume;
+  if (typeof window._heroPinActive === 'function' && window._heroPinActive()) pause();
 }
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────
