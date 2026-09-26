@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cacusa-admin.facturacioncacusa.workers.dev https://feeds.behold.so https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cacusa-admin.facturacioncacusa.workers.dev https://feeds.behold.so https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="theme-color" content="#EE6FA8">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
@@ -49,6 +49,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script>(function(){var _l=(localStorage.getItem('cacusa-lang')||'es')==='en'?'en':'es';document.documentElement.className='lang-'+_l;document.documentElement.lang=_l;})();</script>
+<!-- GSAP + ScrollTrigger (motion del home). Se cargan con el atributo defer, así que se
+     ejecutan recién cuando el documento termina de parsearse — heroSlideshow() (más abajo,
+     inline) lee window.HERO_CUTOUTS con un fallback a {} por si todavía no cargaron (fetch de
+     data/products.json más rápido que el CDN): en ese caso simplemente usa el camino
+     fotográfico, igual que hoy. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script defer src="./assets/home-motion.js"></script>
 <style>
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -135,6 +143,14 @@ nav.scrolled .nav-cta{background:var(--pink-deep);color:white;box-shadow:0 2px 1
 #navDrawer{display:none}
 
 /* ── HERO ──────────────────────────────────────────── */
+/* Host que da el espacio de scroll para el timeline pineado (ver assets/home-motion.js) —
+   con JS deshabilitado o prefers-reduced-motion activo, ninguno de los dos registra el pin,
+   así que la altura vuelve a auto acá mismo para no dejar un hueco vacío debajo del hero. */
+/* padding:0 — anula el section{padding:96px 0} genérico: con height:auto (reduced-motion o
+   sin JS) ese padding sumaría 192px de hueco vacío arriba/abajo; con height:240vh explícito
+   (box-sizing:border-box) no se nota, pero igual restaría espacio real de scroll al pin. */
+#hero-scroll-host{position:relative;height:240vh;padding:0}
+@media(prefers-reduced-motion: reduce){#hero-scroll-host{height:auto}}
 #hero{position:relative;height:100vh;min-height:700px;overflow:hidden;display:flex;align-items:center}
 #hero-canvas{position:absolute;inset:0;width:100%;height:100%}
 .hero-content{position:relative;z-index:2;padding:0 80px;max-width:660px}
@@ -159,6 +175,12 @@ nav.scrolled .nav-cta{background:var(--pink-deep);color:white;box-shadow:0 2px 1
   mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.45) 14%,#000 32%)}
 .hs-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease}
 .hs-layer.on{opacity:1}
+/* Camino cutout (paralaje de 2 capas) — solo productos en HERO_CUTOUTS (assets/home-motion.js).
+   Vacío hoy, así que .on nunca se activa y estas capas quedan invisibles/sin efecto. */
+.hs-cut-bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;filter:saturate(.85)}
+.hs-cut-bg.on{opacity:.55}
+.hs-cut-fg{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center bottom;opacity:0;transition:opacity 1.1s ease;pointer-events:none}
+.hs-cut-fg.on{opacity:1}
 .hs-dots{position:absolute;bottom:28px;right:32px;display:flex;gap:6px;z-index:2}
 .hs-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5);transition:all .3s}
 .hs-dot.active{background:white;width:18px;border-radius:4px}
@@ -174,13 +196,12 @@ section{padding:96px 0}
 .section-h em{font-style:italic;font-weight:400;color:var(--ink)}
 .section-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted);line-height:1.7;margin-top:12px}
 
-/* ── REVEAL ────────────────────────────────────────── */
-.reveal{opacity:0;transform:translateY(36px);transition:opacity .8s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.4,0,.2,1)}
-.reveal-left{opacity:0;transform:translateX(-36px);transition:opacity .8s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.4,0,.2,1)}
-.reveal-right{opacity:0;transform:translateX(36px);transition:opacity .8s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.4,0,.2,1)}
-.reveal-scale{opacity:0;transform:scale(.93);transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1)}
-.reveal.visible,.reveal-left.visible,.reveal-right.visible,.reveal-scale.visible{opacity:1;transform:none}
-[data-delay="1"]{transition-delay:.1s}[data-delay="2"]{transition-delay:.2s}[data-delay="3"]{transition-delay:.3s}[data-delay="4"]{transition-delay:.4s}[data-delay="5"]{transition-delay:.5s}
+/* ── SKIP LINK / A11Y ─────────────────────────────────
+   El sistema .reveal/.reveal-left/.reveal-right/.reveal-scale (fade-up genérico e idéntico
+   en casi toda la página) se retiró — cada sección ahora tiene su propio tratamiento GSAP
+   en assets/home-motion.js, con el contenido visible por defecto si GSAP no llega a cargar. */
+.skip-link{position:absolute;left:-999px;top:auto;width:1px;height:1px;overflow:hidden;background:white;color:var(--ink);padding:12px 20px;border-radius:0 0 10px 0;font-family:var(--fu);font-weight:600;font-size:13px;z-index:10001;text-decoration:none}
+.skip-link:focus{left:0;top:0;width:auto;height:auto;outline:2px solid var(--pink);outline-offset:2px}
 
 /* ── COLLECTIONS ───────────────────────────────────── */
 #collections{background:var(--pearl)}
@@ -381,6 +402,7 @@ html,body{overflow-x:hidden}
   .t-item{font-size:10px;padding:0 22px}
 
   /* HERO */
+  #hero-scroll-host{height:220vh}
   #hero{min-height:auto;height:auto;flex-direction:column;justify-content:center;padding:92px 0 48px}
   .hero-content{padding:0 22px;max-width:100%}
   .hero-h1{font-size:clamp(42px,12vw,64px)}
@@ -445,6 +467,7 @@ html,body{overflow-x:hidden}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main-content" data-i18n="landing.skipLink">Saltar al contenido</a>
 <!--NOSCRIPT_HOME_START-->
 <noscript>
 <section aria-label="CACUSA by Taitus">
@@ -486,6 +509,7 @@ html,body{overflow-x:hidden}
 <!-- TICKER -->
 <div id="ticker"><div class="t-track" id="tTrack"></div></div>
 
+<header>
 <!-- NAV -->
 <nav id="nav">
   <div class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></div>
@@ -521,9 +545,13 @@ html,body{overflow-x:hidden}
     <button class="drawer-lang-btn" onclick="window.location.href='./en/'">EN</button>
   </div>
 </div>
+</header>
 
+<main id="main-content">
 <!-- HERO -->
-<section id="hero">
+<noscript><style>#hero-scroll-host{height:auto}</style></noscript>
+<section id="hero-scroll-host">
+<section id="hero" class="hero-pin">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-content">
     <h2 class="hero-label" data-i18n="landing.heroLabel">Joyería artesanal personalizada</h2>
@@ -538,18 +566,25 @@ html,body{overflow-x:hidden}
   <div class="hero-stage" id="heroStage">
     <div class="hs-layer" id="hsA"></div>
     <div class="hs-layer" id="hsB"></div>
+    <!-- Camino cutout (paralaje de 2 capas) — solo se activa (.on) cuando heroSlideshow()
+         encuentra el producto actual en HERO_CUTOUTS (assets/home-motion.js); vacío hoy,
+         así que estas 2 capas quedan siempre invisibles y el camino fotográfico de arriba
+         (hsA/hsB) es el único que se ve. -->
+    <div class="hs-cut-bg" id="hsCutBg"></div>
+    <img class="hs-cut-fg" id="hsCutFg" alt="">
     <div class="hs-dots" id="hsDots"></div>
   </div>
   <div class="hero-scroll"><span data-i18n="landing.scroll">Explorar</span><div class="scroll-line"></div></div>
+</section>
 </section>
 
 <!-- COLLECTIONS -->
 <section id="collections">
   <div class="container">
-    <div class="reveal"><div class="section-label" data-i18n="landing.collectionsLabel">Nuestras colecciones</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
+    <div><div class="section-label" data-i18n="landing.collectionsLabel">Nuestras colecciones</div></div>
+    <div><h2 class="section-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
-      <a class="col-card reveal-left" href="./ui_kits/store/categoria/cadenas/">
+      <a class="col-card" href="./ui_kits/store/categoria/cadenas/">
         <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content">
@@ -558,22 +593,22 @@ html,body{overflow-x:hidden}
           <div class="col-cta" data-i18n="landing.colExplore">Explorar →</div>
         </div>
       </a>
-      <a class="col-card reveal" data-delay="2" href="./ui_kits/store/categoria/anillos/">
+      <a class="col-card" href="./ui_kits/store/categoria/anillos/">
         <div class="col-bg gB" data-cat="Anillos" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagFeatured">Destacado</div><div class="col-title" data-i18n="landing.colAnillos">Anillos</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </a>
-      <a class="col-card reveal" data-delay="3" href="./ui_kits/store/categoria/hombres/">
+      <a class="col-card" href="./ui_kits/store/categoria/hombres/">
         <div class="col-bg gE" data-cat="Hombres" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagMen">Para ellos</div><div class="col-title" data-i18n="landing.colHombres">Hombres</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </a>
-      <a class="col-card reveal" data-delay="4" href="./ui_kits/store/categoria/pulseras/">
+      <a class="col-card" href="./ui_kits/store/categoria/pulseras/">
         <div class="col-bg gD" data-cat="Pulseras" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagHandmade">Hecho a mano</div><div class="col-title" data-i18n="landing.colPulseras">Pulseras</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
       </a>
-      <a class="col-card reveal" data-delay="5" href="./ui_kits/store/categoria/aretes/">
+      <a class="col-card" href="./ui_kits/store/categoria/aretes/">
         <div class="col-bg gC" data-cat="Aretes" style="position:absolute;inset:0"></div>
         <div class="col-overlay"></div>
         <div class="col-content"><div class="col-tag" data-i18n="landing.colTagElegance">Elegancia</div><div class="col-title" data-i18n="landing.colAretes">Aretes</div><div class="col-cta" data-i18n="landing.colSee">Ver →</div></div>
@@ -587,13 +622,13 @@ html,body{overflow-x:hidden}
   <div class="container">
     <div style="display:flex;align-items:flex-end;justify-content:space-between">
       <div>
-        <div class="reveal"><div class="section-label" data-i18n="landing.bestsellersLabel">Más vendidos</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h" id="bestsellersH2">Favoritas<br>de la <em>semana</em></h2></div>
+        <div><div class="section-label" data-i18n="landing.bestsellersLabel">Más vendidos</div></div>
+        <div><h2 class="section-h" id="bestsellersH2">Favoritas<br>de la <em>semana</em></h2></div>
       </div>
-      <div class="reveal" data-delay="2"><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--ink);text-decoration:none" data-i18n="landing.seeAll">Ver todo →</a></div>
+      <div><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--ink);text-decoration:none" data-i18n="landing.seeAll">Ver todo →</a></div>
     </div>
     <div class="prod-grid" id="prodGrid">
-      <div class="prod-card reveal" data-delay="1" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
+      <div class="prod-card" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
         <div class="prod-badge">Best seller</div>
         <div class="prod-img gA"><div class="prod-quick">Vista rápida →</div></div>
         <div class="prod-body">
@@ -602,7 +637,7 @@ html,body{overflow-x:hidden}
           <div class="prod-footer"><span class="prod-price">$45.00</span><button class="prod-add">+ Añadir</button></div>
         </div>
       </div>
-      <div class="prod-card reveal" data-delay="2" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
+      <div class="prod-card" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
         <div class="prod-img gB"><div class="prod-quick">Vista rápida →</div></div>
         <div class="prod-body">
           <div class="prod-cat">Gold Edition</div>
@@ -610,7 +645,7 @@ html,body{overflow-x:hidden}
           <div class="prod-footer"><span class="prod-price">$38.00</span><button class="prod-add">+ Añadir</button></div>
         </div>
       </div>
-      <div class="prod-card reveal" data-delay="3" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
+      <div class="prod-card" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
         <div class="prod-img gC"><div class="prod-quick">Vista rápida →</div></div>
         <div class="prod-body">
           <div class="prod-cat">Personalizado</div>
@@ -618,7 +653,7 @@ html,body{overflow-x:hidden}
           <div class="prod-footer"><span class="prod-price">$32.00</span><button class="prod-add">+ Añadir</button></div>
         </div>
       </div>
-      <div class="prod-card reveal" data-delay="4" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
+      <div class="prod-card" onclick="window.location.href='./ui_kits/store/'" style="cursor:none">
         <div class="prod-img gD"><div class="prod-quick">Vista rápida →</div></div>
         <div class="prod-body">
           <div class="prod-cat">Colección</div>
@@ -635,20 +670,20 @@ html,body{overflow-x:hidden}
   <div class="container">
     <div class="story-grid">
       <div>
-        <div class="reveal-left"><div class="story-label" id="hStoryLabel">Nuestra historia</div></div>
-        <div class="reveal-left" data-delay="1"><h2 class="story-h" id="hStoryTitle">Artesanos<br>del <em>corazón</em></h2></div>
-        <div class="reveal-left" data-delay="2"><div class="story-quote" id="hStoryQuote">"Cada pieza, una historia única"</div></div>
-        <div class="reveal-left" data-delay="3"><p class="story-body" id="hStoryBody">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
-        <div class="story-stats reveal-left" data-delay="4" id="hStoryStats">
+        <div><div class="story-label" id="hStoryLabel">Nuestra historia</div></div>
+        <div><h2 class="story-h" id="hStoryTitle">Artesanos<br>del <em>corazón</em></h2></div>
+        <div><div class="story-quote" id="hStoryQuote">"Cada pieza, una historia única"</div></div>
+        <div><p class="story-body" id="hStoryBody">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
+        <div class="story-stats" id="hStoryStats">
           <div><div class="stat-num" data-count="650">650</div><div class="stat-label">Piezas creadas</div></div>
           <div><div class="stat-num" data-count="5">5</div><div class="stat-label">Países</div></div>
           <div><div class="stat-num" data-count="100">100</div><div class="stat-label">% Artesanal</div></div>
         </div>
       </div>
       <div class="story-visual">
-        <div class="s-img reveal-right" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" width="1080" height="1920" style="width:100%;height:100%;object-fit:cover;display:block"></div>
-        <div class="s-img reveal-right" data-delay="1" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
-        <div class="s-img reveal-right" data-delay="2" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
+        <div class="s-img" style="height:180px"><img src="./assets/story-artesanos.jpg" alt="Artesanos de CACUSA elaborando joyería personalizada a mano en plata 925 y baño de oro 18k" loading="lazy" width="1080" height="1920" style="width:100%;height:100%;object-fit:cover;display:block"></div>
+        <div class="s-img" style="height:160px"><div class="gB" id="storyImg2" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
+        <div class="s-img" style="height:160px"><div class="gC" id="storyImg3" style="width:100%;height:100%;background-size:cover;background-position:center"></div></div>
       </div>
     </div>
   </div>
@@ -659,16 +694,16 @@ html,body{overflow-x:hidden}
   <div class="container">
     <div class="person-grid">
       <div>
-        <div class="reveal"><div class="section-label" id="hPersonLabel">Personalización</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
-        <div class="reveal" data-delay="2"><p class="section-sub" id="hPersonSub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
+        <div><div class="section-label" id="hPersonLabel">Personalización</div></div>
+        <div><h2 class="section-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
+        <div><p class="section-sub" id="hPersonSub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
         <div class="person-steps" id="hPersonSteps">
-          <div class="step reveal" data-delay="2"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
-          <div class="step reveal" data-delay="3"><div class="step-num">2</div><div><div class="step-title">Personaliza</div><div class="step-desc">Nombre, fecha o mensaje especial</div></div></div>
-          <div class="step reveal" data-delay="4"><div class="step-num">3</div><div><div class="step-title">Nosotros creamos</div><div class="step-desc">Hecho a mano, listo en 5–10 días</div></div></div>
+          <div class="step"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
+          <div class="step"><div class="step-num">2</div><div><div class="step-title">Personaliza</div><div class="step-desc">Nombre, fecha o mensaje especial</div></div></div>
+          <div class="step"><div class="step-num">3</div><div><div class="step-title">Nosotros creamos</div><div class="step-desc">Hecho a mano, listo en 5–10 días</div></div></div>
         </div>
       </div>
-      <div class="reveal-right" data-delay="2">
+      <div>
         <div class="person-form">
           <div class="pf-title" data-i18n="landing.formTitle">Comienza tu pieza</div>
           <div class="pf-row">
@@ -691,25 +726,25 @@ html,body{overflow-x:hidden}
 <!-- WHY CACUSA -->
 <section id="why-cacusa">
   <div class="container" style="text-align:center">
-    <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.whyLabel">Calidad que se nota</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
+    <div><div class="section-label" style="text-align:center" data-i18n="landing.whyLabel">Calidad que se nota</div></div>
+    <div><h2 class="section-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
     <div class="wc-grid">
-      <div class="wc-card reveal" data-delay="1">
+      <div class="wc-card">
         <div class="wc-symbol">✦</div>
         <div class="wc-title" data-i18n="landing.wcSilverTitle">Plata 925</div>
         <div class="wc-text" data-i18n="landing.wcSilverText">Autenticidad y durabilidad en cada pieza.</div>
       </div>
-      <div class="wc-card reveal" data-delay="2">
+      <div class="wc-card">
         <div class="wc-symbol">✧</div>
         <div class="wc-title" data-i18n="landing.wcGoldTitle">Baño de oro 18k</div>
         <div class="wc-text" data-i18n="landing.wcGoldText">Acabado elegante que se cuida con el tiempo.</div>
       </div>
-      <div class="wc-card reveal" data-delay="3">
+      <div class="wc-card">
         <div class="wc-symbol">✓</div>
         <div class="wc-title" data-i18n="landing.wcSteelTitle">Acero inoxidable</div>
         <div class="wc-text" data-i18n="landing.wcSteelText">Resistente para el uso diario, sin perder el brillo.</div>
       </div>
-      <div class="wc-card reveal" data-delay="4">
+      <div class="wc-card">
         <div class="wc-symbol">♡</div>
         <div class="wc-title" data-i18n="landing.wcHandmadeTitle">Hecho a mano</div>
         <div class="wc-text" data-i18n="landing.wcHandmadeText">Cada pieza se revisa a mano antes de enviarse.</div>
@@ -721,8 +756,8 @@ html,body{overflow-x:hidden}
 <!-- TESTIMONIALS -->
 <section id="testimonials">
   <div class="container" style="text-align:center">
-    <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
+    <div><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
+    <div><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
   </div>
   <div class="testi-wrap"><div class="testi-track" id="tTrack2">
     <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"Mi collar llegó perfectamente, exactamente como lo soñé. CACUSA lo hizo realidad."</div><div class="tcard-name">Valentina M.</div><div class="tcard-loc">Quito, Ecuador</div></div>
@@ -738,9 +773,9 @@ html,body{overflow-x:hidden}
 <section id="instagram" style="padding:80px 0 0;overflow:hidden">
   <div class="container">
     <div style="text-align:center;margin-bottom:14px">
-      <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.igLabel">Síguenos en Instagram</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">@cacusabytaitus</h2></div>
-      <div class="reveal" data-delay="2">
+      <div><div class="section-label" style="text-align:center" data-i18n="landing.igLabel">Síguenos en Instagram</div></div>
+      <div><h2 class="section-h" style="text-align:center">@cacusabytaitus</h2></div>
+      <div>
         <p style="font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-top:10px;margin-bottom:28px;line-height:1.7" data-i18n="landing.igBody">Mira las últimas creaciones, historias y piezas personalizadas</p>
         <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.06em;border-radius:999px;padding:13px 28px;text-decoration:none;box-shadow:0 4px 20px rgba(238,111,168,.35);margin-bottom:40px">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"></circle></svg>
@@ -767,6 +802,7 @@ html,body{overflow-x:hidden}
     </div>
   </div>
 </section>
+</main>
 
 <!-- FOOTER -->
 <footer>
@@ -839,6 +875,7 @@ const BEHOLD_FEED_ID = 'epdmnoueNX30Pw0QDynG';
 const __LANDING_EN = {
   "landing.navCollections":"Collections","landing.navStore":"Store","landing.navUs":"About Us",
   "landing.navPersonalize":"Customize","landing.navGuides":"Guides","landing.navCta":"See collection →",
+  "landing.skipLink":"Skip to content",
   "landing.heroLabel":"Handcrafted, personalized jewelry",
   "landing.heroDesc":"\"we create to make you look more beautiful than you already are\"",
   "landing.heroBtnShop":"See collection","landing.heroBtnCustom":"Customize →","landing.scroll":"Explore",
@@ -1092,48 +1129,45 @@ window.addEventListener('scroll',()=>{
 });
 
 // ── HERO CANVAS — bright watercolor, CACUSA palette ─────────
+// Simplificado (rediseño hero): de 10 blobs a 4, alpha bajado, SIN el pulso Math.sin
+// (era literalmente el "constant floating/bouncing" que el brief de rediseño prohíbe) —
+// los blobs solo derivan lento, sin respirar. El gating de performance
+// (IntersectionObserver + visibilitychange + _reduceMotion) se conserva tal cual.
 const canvas = document.getElementById('hero-canvas');
 const ctx = canvas.getContext('2d');
 let W,H,blobs=[];
-// CACUSA true colors: pink, lilac, sky, peach — ALL LIGHT
+// CACUSA true colors: pink + un rosa-lila muy desaturado — paleta de 2 tonos, no arcoíris
 const palette=[
-  [238,111,168],[245,160,200],[196,160,236],[136,200,240],
-  [245,200,168],[245,160,200],[136,200,240],[238,111,168],
-  [196,160,236],[220,240,252]
+  [238,111,168],[196,160,236],[238,111,168],[245,160,200]
 ];
 function initCanvas(){
   W=canvas.width=canvas.offsetWidth;
   H=canvas.height=canvas.offsetHeight;
-  blobs=Array.from({length:10},(_,i)=>({
+  blobs=Array.from({length:4},(_,i)=>({
     x:Math.random()*W, y:Math.random()*H,
     vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
     r:160+Math.random()*220,
     c:palette[i%palette.length],
-    a:.28+Math.random()*.22,
-    phase:Math.random()*Math.PI*2,
-    speed:.0025+Math.random()*.003
+    a:.10+Math.random()*.06
   }));
 }
 let _canvasRunning=false, _canvasRAF=null;
 function drawCanvas(){
   ctx.clearRect(0,0,W,H);
-  // base: soft pink-white
+  // base: pearl → rosa-blanco muy desaturado (2 stops, no el gradiente de 4 tonos de antes)
   const bg=ctx.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,'#F9D0E8');
-  bg.addColorStop(.35,'#E8C0F0');
-  bg.addColorStop(.7,'#C0DEFF');
-  bg.addColorStop(1,'#F5E0C8');
+  bg.addColorStop(0,'#FEF8FF');
+  bg.addColorStop(1,'#FBEAF2');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
   blobs.forEach(b=>{
-    b.x+=b.vx; b.y+=b.vy; b.phase+=b.speed;
+    b.x+=b.vx; b.y+=b.vy;
     if(b.x<-b.r)b.x=W+b.r; if(b.x>W+b.r)b.x=-b.r;
     if(b.y<-b.r)b.y=H+b.r; if(b.y>H+b.r)b.y=-b.r;
-    const pulse=1+.1*Math.sin(b.phase);
-    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*pulse);
+    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
     g.addColorStop(0,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},${b.a})`);
     g.addColorStop(1,`rgba(${b.c[0]},${b.c[1]},${b.c[2]},0)`);
     ctx.fillStyle=g;
-    ctx.beginPath(); ctx.arc(b.x,b.y,b.r*pulse,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
   });
   if(_canvasRunning) _canvasRAF=requestAnimationFrame(drawCanvas);
 }
@@ -1165,11 +1199,18 @@ if (_reduceMotion) {
   });
   startCanvasAnim();
 }
+// Marquee de #testimonials — se conserva como firma de movimiento de la sección (no se le
+// suma ningún tratamiento GSAP encima), pero respeta prefers-reduced-motion igual que el
+// resto del sitio — este pausado no depende de que GSAP haya cargado.
+if (_reduceMotion) {
+  const _testiTrack = document.getElementById('tTrack2');
+  if (_testiTrack) _testiTrack.style.animationPlayState = 'paused';
+}
 
-// ── SCROLL REVEAL ───────────────────────────────────────────
-const revEls=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reveal-scale');
-const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
-revEls.forEach(el=>obs.observe(el));
+// El sistema .reveal/.reveal-left/.reveal-right/.reveal-scale (fade-up genérico) se retiró
+// del rediseño — cada sección ahora tiene su propio tratamiento GSAP en
+// assets/home-motion.js (initSectionMotion()), con el contenido visible por defecto si
+// GSAP no llega a cargar (progressive enhancement, no requisito duro).
 
 // ── COLECCIONES — primera foto de cada categoría ────────────
 function fillCollectionCards(){
@@ -1202,18 +1243,42 @@ function heroSlideshow(){
   dotsWrap.innerHTML = '';
   for (let i = 0; i < N; i++){ const d = document.createElement('div'); d.className = 'hs-dot'; dotsWrap.appendChild(d); dots.push(d); }
   let front = A;
+  // Camino cutout (paralaje de 2 capas) — elementos estáticos ya presentes en el HTML
+  // (assets/home-motion.js los anima incondicionalmente durante el pin del hero; solo
+  // quedan visibles cuando show() les agrega .on). Si el PNG del cutout falla en cargar,
+  // vuelve al camino fotográfico en vez de dejar un ícono roto (mismo patrón onerror que
+  // ya usa renderFeaturedProducts()).
+  const cutBg = document.getElementById('hsCutBg');
+  const cutFg = document.getElementById('hsCutFg');
+  if (cutFg) cutFg.onerror = () => { cutFg.classList.remove('on'); if (cutBg) cutBg.classList.remove('on'); };
   const show = idx => {
     const p = all[idx];
     const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
-    const back = front === A ? B : A;
-    back.style.backgroundImage = 'url("' + p.imageUrl + '")';
-    back.style.backgroundPosition = fx + '% ' + fy + '%';
-    back.classList.add('on'); front.classList.remove('on');
-    front = back;
+    const cutoutUrl = (window.HERO_CUTOUTS || {})[p.id];
+    if (cutoutUrl && cutBg && cutFg) {
+      cutBg.style.backgroundImage = 'url("' + p.imageUrl + '")';
+      cutBg.style.backgroundPosition = fx + '% ' + fy + '%';
+      cutFg.src = cutoutUrl;
+      cutBg.classList.add('on'); cutFg.classList.add('on');
+      A.classList.remove('on'); B.classList.remove('on');
+    } else {
+      if (cutBg) cutBg.classList.remove('on');
+      if (cutFg) cutFg.classList.remove('on');
+      const back = front === A ? B : A;
+      back.style.backgroundImage = 'url("' + p.imageUrl + '")';
+      back.style.backgroundPosition = fx + '% ' + fy + '%';
+      back.classList.add('on'); front.classList.remove('on');
+      front = back;
+    }
     dots.forEach((d, i) => d.classList.toggle('active', i === idx));
   };
   show(0);
   stage.onclick = () => { window.location.href = './ui_kits/store/'; };
+  // Expone pause()/resume() globalmente para que assets/home-motion.js pueda pausar el
+  // crossfade por tiempo mientras el pin del hero está activo (nunca compiten
+  // crossfade+scroll-scrub en el mismo pixel a la vez).
+  window._heroSlideshowPause = () => {};
+  window._heroSlideshowResume = () => {};
   if (N <= 1 || _reduceMotion) return;
   let cur = 0;
   let timer = setInterval(() => { cur = (cur + 1) % N; show(cur); }, 4000);
@@ -1223,6 +1288,8 @@ function heroSlideshow(){
   stage.addEventListener('mouseleave', resume);
   stage.addEventListener('focusin', pause);
   stage.addEventListener('focusout', resume);
+  window._heroSlideshowPause = pause;
+  window._heroSlideshowResume = resume;
 }
 
 // ── PRODUCTOS DESTACADOS desde products.json ─────────────────
@@ -1247,8 +1314,7 @@ function renderFeaturedProducts(){
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;
     const badge = p.tag ? `<div class="prod-badge">${esc(p.tag)}</div>` : '';
     const card = document.createElement('div');
-    card.className = 'prod-card reveal';
-    card.dataset.delay = String(i + 1);
+    card.className = 'prod-card';
     card.setAttribute('onclick', "window.location.href='./ui_kits/store/'");
     card.setAttribute('role', 'link');
     card.tabIndex = 0;
@@ -1262,7 +1328,10 @@ function renderFeaturedProducts(){
     card.setAttribute('aria-label', _nameLbl);
     card.innerHTML = `${badge}<div class="prod-img" style="overflow:hidden">${img}<div class="prod-quick">${_qv}</div></div><div class="prod-body"><div class="prod-cat">${esc(_catLbl)}</div><div class="prod-name">${esc(_nameLbl)}</div><div class="prod-footer"><span class="prod-price">${price}${oldP}</span><button class="prod-add" tabindex="-1" aria-hidden="true">${_ab}</button></div></div>`;
     grid.appendChild(card);
-    obs.observe(card);
+    // Tarjetas inyectadas después del fetch — mismo helper de assets/home-motion.js que ya
+    // trata las tarjetas placeholder estáticas (scale-in con lift), registrado acá porque
+    // recién ahora existen en el DOM (mismo problema de timing que antes resolvía obs.observe(card)).
+    if (window.CacusaMotion && window.CacusaMotion.animateProductCard) window.CacusaMotion.animateProductCard(card, i);
   });
 }
 
@@ -1368,6 +1437,7 @@ function renderIgPlaceholders(grid){
       </a>`;
     grid.appendChild(item);
   }
+  if (window.CacusaMotion && window.CacusaMotion.animateIgGrid) window.CacusaMotion.animateIgGrid(grid);
 }
 
 if(igG && BEHOLD_FEED_ID){
@@ -1404,6 +1474,7 @@ if(igG && BEHOLD_FEED_ID){
         const el = document.getElementById(id); const src = pic(post);
         if (el && src) { el.style.backgroundImage = 'url("' + src + '")'; el.className = ''; }
       });
+      if (window.CacusaMotion && window.CacusaMotion.animateIgGrid) window.CacusaMotion.animateIgGrid(igG);
     }catch(e){
       renderIgPlaceholders(igG);
     }
@@ -1513,30 +1584,56 @@ document.getElementById('vigBtn').addEventListener('click',async ()=>{
 window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.reload(); };
 </script>
 <script>
+// ─── FOCUS TRAP (portado de ui_kits/store/index.html:1913-1933) ────────────
+// Cicla el Tab dentro de modalEl y cierra con Escape. Devuelve una función para liberar los listeners.
+function trapFocus(modalEl, onClose) {
+  const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  const _prevFocused = document.activeElement;
+  function getFocusable(){ return Array.from(modalEl.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null); }
+  function onKeydown(e){
+    if (e.key === 'Escape'){ onClose(); return; }
+    if (e.key !== 'Tab') return;
+    const items = getFocusable();
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  }
+  document.addEventListener('keydown', onKeydown);
+  const items = getFocusable();
+  if (items.length) items[0].focus();
+  return function release(){
+    document.removeEventListener('keydown', onKeydown);
+    if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
+  };
+}
+
 // Mobile nav drawer
 (function(){
   const btn   = document.getElementById('navMenuBtn');
   const drawer= document.getElementById('navDrawer');
   const close = document.getElementById('navDrawerClose');
   if (!btn || !drawer) return;
+  let _releaseTrap = null;
 
   function openDrawer(){
     drawer.classList.add('open');
     btn.classList.add('open');
     btn.setAttribute('aria-expanded','true');
     document.body.style.overflow='hidden';
+    _releaseTrap = trapFocus(drawer, closeDrawer);
   }
   function closeDrawer(){
     drawer.classList.remove('open');
     btn.classList.remove('open');
     btn.setAttribute('aria-expanded','false');
     document.body.style.overflow='';
+    if (_releaseTrap) { _releaseTrap(); _releaseTrap = null; }
   }
 
   btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
   if (close) close.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
 })();
 </script>
 </body>
