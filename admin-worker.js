@@ -424,26 +424,22 @@ function isInternalIngest(request, env) {
   return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
 }
 
-// Rate limit best-effort por colo vía Cache API — no gasta escrituras de KV (plan
-// free: 1.000/día compartidas). Devuelve false si ya se pasó del tope.
-async function cacheRateLimit(name, key, max, windowSec) {
+// Rate limit sin gastar escrituras de KV (plan free): contador en memoria dentro de
+// una instancia de la DO GiftCardLedger por name:key (ruta /rl, no toca su storage).
+// No usa la Cache API: en *.workers.dev no tiene efecto. Si la instancia se descarta
+// por inactividad el contador vuelve a 0 (best-effort). Ante error, no bloquea.
+async function rateLimit(env, name, key, max, windowSec) {
   try {
-    const cache = caches.default;
-    const req = new Request(`https://rl.internal/${name}/${encodeURIComponent(String(key))}`);
-    const hit = await cache.match(req);
-    let data = null;
-    if (hit) { try { data = await hit.json(); } catch (_) {} }
-    const now = Date.now();
-    if (!data || !(data.exp > now)) data = { n: 0, exp: now + windowSec * 1000 };
-    if (data.n >= max) return false;
-    data.n++;
-    const ttl = Math.max(1, Math.ceil((data.exp - now) / 1000));
-    await cache.put(req, new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${ttl}` },
-    }));
-    return true;
+    if (!env || !env.GIFT_CARD_LEDGER) return true;
+    const id = env.GIFT_CARD_LEDGER.idFromName(`rl:${name}:${String(key)}`);
+    const r = await env.GIFT_CARD_LEDGER.get(id).fetch('https://gc/rl', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ max, windowSec }),
+    });
+    const d = await r.json();
+    return d.allowed !== false;
   } catch (e) {
-    console.error('cacheRateLimit falló:', e.message);
+    console.error('rateLimit falló:', e.message);
     return true;
   }
 }
@@ -459,8 +455,8 @@ function sanitizePushText(v) {
 }
 
 // Máx. 1 correo por destinatario por hora (correos disparados desde rutas públicas).
-async function emailRecipientAllowed(email) {
-  return cacheRateLimit('emailrcpt', String(email || '').toLowerCase().trim(), 1, 3600);
+async function emailRecipientAllowed(env, email) {
+  return rateLimit(env, 'emailrcpt', String(email || '').toLowerCase().trim(), 1, 3600);
 }
 
 // Push best-effort a las admins (nunca rompe el flujo que lo llama).
@@ -1171,7 +1167,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   // guardado de verdad), nunca en un reintento (idem: ya devolvió antes de llegar acá).
   // Pedidos públicos: máx. 1 correo por destinatario por hora (se salta en silencio).
   if (ctx) ctx.waitUntil((async () => {
-    if (!trusted && !(await emailRecipientAllowed(orderEmailLc))) return;
+    if (!trusted && !(await emailRecipientAllowed(env, orderEmailLc))) return;
     await sendOrderConfirmationEmail(newOrder, env);
   })().catch(e => console.error('email confirmación pedido falló:', e.message)));
 
@@ -1432,6 +1428,16 @@ export class GiftCardLedger {
     try { body = await request.json(); } catch (_) {}
     const code = String(body.code || '');
     const orderRef = String(body.orderRef || '');
+
+    // Contador de rate limit (ver rateLimit()): solo memoria, nunca storage.
+    if (url.pathname === '/rl') {
+      const now = Date.now();
+      const max = Math.max(1, Number(body.max) || 1);
+      if (!this.rl || this.rl.exp <= now) this.rl = { n: 0, exp: now + Math.max(1, Number(body.windowSec) || 60) * 1000 };
+      if (this.rl.n >= max) return Response.json({ allowed: false });
+      this.rl.n++;
+      return Response.json({ allowed: true });
+    }
 
     if (url.pathname === '/reserve') {
       const amountCents = Number(body.amountCents) || 0;
@@ -2565,14 +2571,14 @@ async function handleLoversShippingCode(body, env, origin, request) {
   if (!env.SESSION_SECRET) return err('No disponible', 500, origin);
 
   const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  if (!(await cacheRateLimit('shipcode-ip', ip, 10, 3600))) {
+  if (!(await rateLimit(env, 'shipcode-ip', ip, 10, 3600))) {
     return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
   }
 
   const name = String(body.name || '').trim().slice(0, 100);
   const phoneDigits = String(body.phone || '').replace(/\D/g, '');
   if (!name || phoneDigits.length < 7) return ok(SHIPPING_CODE_GENERIC, origin);
-  if (!(await cacheRateLimit('shipcode-phone', phoneDigits.slice(-7), 1, 3600))) {
+  if (!(await rateLimit(env, 'shipcode-phone', phoneDigits.slice(-7), 1, 3600))) {
     return ok(SHIPPING_CODE_GENERIC, origin);
   }
   const lovers = await lookupActiveLoversPhone(phoneDigits, env);
@@ -2773,7 +2779,7 @@ async function handleLoversRegister(body, env, origin, request) {
     : 'https://cacusabytaitus.com/cacusa-lovers.html?confirm=') + encodeURIComponent(token);
   try {
     // Máx. 1 correo de confirmación por destinatario por hora (se salta en silencio).
-    if (await emailRecipientAllowed(email)) {
+    if (await emailRecipientAllowed(env, email)) {
       await sendGmail(env, { to: email, ...loversRegisterEmailContent(nombre, confirmUrl, idioma) });
     }
   } catch (e) {
