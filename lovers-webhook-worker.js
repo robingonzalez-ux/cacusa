@@ -502,15 +502,16 @@ export default {
       if (!email || !email.includes('@')) return adminJson({ error: 'Email inválido' }, 400);
 
       const key = subscriberKey(email);
-      // Si ya existe y no está 'pendiente' (activo/pago_fallido/cancelado), no se
-      // toca nada: misma respuesta de éxito + aviso a las admins.
+      // Si ya existe con suscripción vigente (activo/pago_fallido), no se toca nada:
+      // misma respuesta de éxito + aviso a las admins. Una 'cancelado' que vuelve a
+      // suscribirse sí puede actualizar su dirección (sin envíos vigentes que desviar).
       let current;
       try {
         current = await getSubscriberByKey(key, dbUrl, fbAuth);
       } catch (e) {
         return adminJson({ error: 'Firebase no disponible' }, 500);
       }
-      if (current && current.estado_pago && current.estado_pago !== 'pendiente') {
+      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
         console.warn('confirm-register: re-registro ignorado para', email, 'estado:', current.estado_pago);
         const txt = current.estado_pago === 'activo'
           ? `⚠ Intento de re-registro de una suscriptora activa: ${email}`
