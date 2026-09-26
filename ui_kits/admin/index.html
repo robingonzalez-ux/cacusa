@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-lovers-webhook.facturacioncacusa.workers.dev https://api.mymemory.translated.net https://photon.komoot.io; object-src 'none'; base-uri 'self'; form-action 'self'">
+<script>
+// Anti-clickjacking: el panel nunca debe mostrarse dentro de un iframe ajeno
+if (window.top !== window.self) {
+  document.documentElement.style.display = 'none';
+  try { window.top.location = window.self.location; } catch (_) {}
+}
+</script>
 <title>CACUSA Admin · Panel de Administración</title>
 <link rel="manifest" href="/manifest-admin.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -245,6 +252,8 @@ async function apiCall(endpoint, payload) {
   if (!r.ok) { const e = new Error(data.error || `Error ${r.status}`); e.status = r.status; throw e; }
   return data;
 }
+// Estrellas de reseña: dato de Firebase puede venir fuera de rango o no numérico
+function clampStars(v) { return Math.max(0, Math.min(5, Math.round(Number(v) || 0))); }
 // Inicia sesión → devuelve un token de sesión temporal (no credenciales)
 const apiLogin  = (user, pass)            => apiCall('login', { user, pass });
 
@@ -1411,14 +1420,14 @@ function ProductModal({ product, onSave, onClose, token, categories, materials, 
                 <div key={r.key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 0', borderBottom: '1px solid #f0e8f8', background: r.approved === false ? '#FFFBEB' : 'transparent' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{r.name || 'Anónimo'}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{String(r.name ?? '') || 'Anónimo'}</span>
                       {r.approved === false && (
                         <span style={{ background: '#FEF3C7', color: '#92400E', borderRadius: 6, padding: '1px 7px', fontSize: 10, fontWeight: 700 }}>Sin aprobar</span>
                       )}
-                      <span style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>{'★'.repeat(r.rating || 0)}{'☆'.repeat(5 - (r.rating || 0))}</span>
+                      <span style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>{'★'.repeat(clampStars(r.rating))}{'☆'.repeat(5 - clampStars(r.rating))}</span>
                       <span style={{ fontSize: 11, color: '#767676', marginLeft: 'auto' }}>{r.date || ''}</span>
                     </div>
-                    {r.comment && <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>{r.comment}</div>}
+                    {r.comment != null && r.comment !== '' && <div style={{ fontSize: 12, color: '#555', lineHeight: 1.5 }}>{String(r.comment ?? '')}</div>}
                   </div>
                   <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {r.approved === false && (
@@ -4622,7 +4631,19 @@ function App() {
               try { await apiCall('logout-all', { token: session.token }); } catch (_) {}
               sessionStorage.clear(); setSession(null);
             }],
-            ['↩ Cerrar sesión', () => { sessionStorage.clear(); setSession(null); }]
+            // Revoca el token en el servidor (fire-and-forget; /logout puede dar 404 hasta
+            // que se despliegue el Worker nuevo — se ignora cualquier error)
+            ['↩ Cerrar sesión', () => {
+              try {
+                const ctl = new AbortController();
+                setTimeout(() => ctl.abort(), 3000);
+                fetch(`${ADMIN_API}/logout`, {
+                  method: 'POST', headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ token: session.token }), keepalive: true, signal: ctl.signal
+                }).catch(() => {});
+              } catch (_) {}
+              sessionStorage.clear(); setSession(null);
+            }]
           ].map(([l, fn]) => (
             <button key={l} onClick={fn} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '9px 12px', fontSize: 13, color: '#333', borderRadius: 8, transition: 'background .15s', border: 'none', cursor: 'pointer', background: 'none', fontFamily: 'inherit' }}>{l}</button>
           ))}
@@ -5030,7 +5051,27 @@ function App() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// Si un componente revienta (ej. dato inesperado de Firebase), mostrar un aviso en vez de pantalla en blanco
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(error, info) { console.error('Error en el panel:', error, info && info.componentStack); }
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div role="alert" style={{ maxWidth: 420, margin: '80px auto', padding: 24, background: 'white', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,.1)', textAlign: 'center', fontFamily: 'inherit' }}>
+        <div style={{ fontSize: 22, color: '#EE6FA8', marginBottom: 8 }}>✦</div>
+        <p style={{ fontSize: 14, color: '#333', margin: '0 0 16px' }}>Algo falló al mostrar esta sección — recarga la página</p>
+        <button onClick={() => window.location.reload()}
+          style={{ padding: '10px 22px', background: '#EE6FA8', color: 'white', border: 'none', borderRadius: 99, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+          Recargar
+        </button>
+      </div>
+    );
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>);
 
 // Service worker para Web Push (notificaciones de pedidos nuevas, sin apps de terceros).
 // Scope explícito a esta carpeta para no chocar con el /sw.js (solo caché) de la tienda.

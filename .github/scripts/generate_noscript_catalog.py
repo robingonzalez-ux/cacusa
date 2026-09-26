@@ -96,7 +96,7 @@ def product_param(p, lang):
 
 
 def esc(s):
-    return html.escape(str(s or ""), quote=False).replace("'", "&#x27;")
+    return html.escape(str(s or ""), quote=True)
 
 
 def group_by_category(products, categories_order):

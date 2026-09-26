@@ -1,4 +1,5 @@
-const CACHE_V = 'cacusa-store-v1';
+// v2: purga respuestas de error que pudieron quedar cacheadas con la v1
+const CACHE_V = 'cacusa-store-v2';
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -22,6 +23,8 @@ self.addEventListener('fetch', e => {
   // Skip Firebase, Cloudflare Worker, Square
   if (url.hostname.includes('firebase') || url.hostname.includes('workers.dev') ||
       url.hostname.includes('square') || url.hostname.includes('squareup')) return;
+  // Panel admin: nunca pasa por la caché (siempre red)
+  if (url.origin === self.location.origin && url.pathname.startsWith('/ui_kits/admin/')) return;
 
   // Navigation: network-first, fallback a caché
   if (e.request.mode === 'navigate') {
@@ -32,8 +35,8 @@ self.addEventListener('fetch', e => {
           // caches.open() (async), el navegador ya puede haber empezado a leer
           // el body de r para pintar la página, y clonar un body ya consumido
           // revienta con "Response body is already used".
-          const copy = r.clone();
-          caches.open(CACHE_V).then(c => c.put(e.request, copy));
+          // Solo se cachean respuestas OK (200-299) — nunca un 404/500
+          if (r.ok) { const copy = r.clone(); caches.open(CACHE_V).then(c => c.put(e.request, copy)); }
           return r;
         })
         .catch(() => caches.match(e.request))
@@ -47,8 +50,8 @@ self.addEventListener('fetch', e => {
       caches.match(e.request).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(r => {
-          const copy = r.clone();
-          caches.open(CACHE_V).then(c => c.put(e.request, copy));
+          // Solo se cachean respuestas OK (200-299) — nunca un 404/500
+          if (r.ok) { const copy = r.clone(); caches.open(CACHE_V).then(c => c.put(e.request, copy)); }
           return r;
         });
       })
@@ -61,8 +64,8 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       caches.match(e.request).then(cached => {
         const network = fetch(e.request).then(r => {
-          const copy = r.clone();
-          caches.open(CACHE_V).then(c => c.put(e.request, copy));
+          // Solo se cachean respuestas OK (200-299) — nunca un 404/500
+          if (r.ok) { const copy = r.clone(); caches.open(CACHE_V).then(c => c.put(e.request, copy)); }
           return r;
         });
         return cached || network;

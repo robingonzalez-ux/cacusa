@@ -113,7 +113,9 @@ def text_esc(s):
 
 
 def set_title(html_text, value):
-    return re.sub(r"<title>.*?</title>", "<title>" + text_esc(value) + "</title>", html_text, count=1, flags=re.DOTALL)
+    # Reemplazo con función: un `\` en el nombre (ej. `\d`) rompía re.sub como plantilla
+    title = "<title>" + text_esc(value) + "</title>"
+    return re.sub(r"<title>.*?</title>", lambda _: title, html_text, count=1, flags=re.DOTALL)
 
 
 def set_meta_content(html_text, elem_id, value):
@@ -152,8 +154,17 @@ def replace_schema_block(html_text, new_block):
     return pattern.sub(lambda _: new_block, html_text)
 
 
-def inject_static_var(html_text, js_line):
-    return html_text.replace("<head>", "<head>\n  <script>" + js_line + "</script>", 1)
+CSP_META_RE = re.compile(r'<meta\s+http-equiv="Content-Security-Policy"[^>]*>', re.IGNORECASE)
+
+
+def inject_static_var(html_text, var_name, value):
+    # Va DESPUÉS del meta CSP (y del charset) — antes de cualquier otro <script> del
+    # head, que es lo que lee la variable. json_for_script_tag evita cerrar el <script>.
+    tag = "\n  <script>window." + var_name + " = " + json_for_script_tag(value) + ";</script>"
+    m = CSP_META_RE.search(html_text)
+    if not m:
+        raise RuntimeError("No se encontró el meta Content-Security-Policy en el archivo base")
+    return html_text[: m.end()] + tag + html_text[m.end():]
 
 
 def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_details, reviews_by_product, surcharges):
@@ -210,7 +221,7 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
     if images:
         html_text = set_meta_content(html_text, "tw-image", images[0])
     html_text = replace_schema_block(html_text, schema_block)
-    html_text = inject_static_var(html_text, f"window.__CACUSA_STATIC_PRODUCT_ID = {json.dumps(str(p.get('id')))};")
+    html_text = inject_static_var(html_text, "__CACUSA_STATIC_PRODUCT_ID", str(p.get("id")))
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text
 
@@ -271,7 +282,7 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
     if first_img:
         html_text = set_meta_content(html_text, "tw-image", first_img)
     html_text = replace_schema_block(html_text, schema_block)
-    html_text = inject_static_var(html_text, f"window.__CACUSA_STATIC_CATEGORY = {json.dumps(cat)};")
+    html_text = inject_static_var(html_text, "__CACUSA_STATIC_CATEGORY", cat)
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text
 

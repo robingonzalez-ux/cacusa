@@ -3,3 +3,9 @@ C*tmp*.txt
 *_diff.txt
 __pycache__/
 *.pyc
+.env
+.env.*
+.dev.vars
+.wrangler/
+node_modules/
+*.pem

@@ -1194,6 +1194,10 @@ const revEls=document.querySelectorAll('.reveal,.reveal-left,.reveal-right,.reve
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');});},{threshold:.1});
 revEls.forEach(el=>obs.observe(el));
 
+// focalX/focalY/zoom vienen de products.json y van dentro de style= — forzar número y rango
+function _focal(v) { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 50; }
+function _zoom(v)  { const n = Number(v); return Number.isFinite(n) ? Math.max(0.5, Math.min(4, n)) : 1; }
+
 // ── COLECCIONES — primera foto de cada categoría ────────────
 function fillCollectionCards(){
   const all   = (window._cacusaProds || []).filter(p => p.available !== false && p.imageUrl);
@@ -1203,7 +1207,7 @@ function fillCollectionCards(){
     const pickedId = picks[cat];
     const p = (pickedId && all.find(x => x.id === pickedId)) || all.find(x => x.category === cat);
     if (!p) return; // sin producto con foto → mantiene el degradado
-    const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
+    const fx = _focal(p.focalX), fy = _focal(p.focalY);
     el.style.backgroundImage = 'url("' + p.imageUrl + '")';
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = fx + '% ' + fy + '%';
@@ -1227,7 +1231,7 @@ function heroSlideshow(){
   let front = A;
   const show = idx => {
     const p = all[idx];
-    const fx = p.focalX ?? 50, fy = p.focalY ?? 50;
+    const fx = _focal(p.focalX), fy = _focal(p.focalY);
     const back = front === A ? B : A;
     back.style.backgroundImage = 'url("' + p.imageUrl + '")';
     back.style.backgroundPosition = fx + '% ' + fy + '%';
@@ -1264,7 +1268,7 @@ function renderFeaturedProducts(){
   prods.forEach((p, i) => {
     const price = p.price ? '$' + parseFloat(p.price).toFixed(2) : '';
     const oldP  = p.oldPrice ? `<span style="text-decoration:line-through;color:var(--ink-muted);font-size:11px;margin-left:4px">$${parseFloat(p.oldPrice).toFixed(2)}</span>` : '';
-    const fx = p.focalX ?? 50, fy = p.focalY ?? 50, z = p.zoom ?? 1;
+    const fx = _focal(p.focalX), fy = _focal(p.focalY), z = _zoom(p.zoom);
     const img = p.imageUrl
       ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" loading="lazy" width="400" height="400" onerror="this.style.display='none';this.parentElement.classList.add('${gh[i]}')" style="width:100%;height:100%;object-fit:cover;object-position:${fx}% ${fy}%;transform:scale(${z});transform-origin:${fx}% ${fy}%">`
       : `<div class="${gh[i]}" style="width:100%;height:100%"></div>`;

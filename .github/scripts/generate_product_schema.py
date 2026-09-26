@@ -121,6 +121,17 @@ def fetch_reviews_by_product():
         return {}
 
 
+def parse_rating(v):
+    """Rating de una reseña pública (sin validar en Firebase): número 1..5 o None si no sirve."""
+    try:
+        r = float(v)
+    except (TypeError, ValueError):
+        return None
+    if r != r or r in (float("inf"), float("-inf")):
+        return None
+    return max(1.0, min(5.0, r))
+
+
 def build_review_fields(product_id, reviews_by_product):
     reviews = reviews_by_product.get(str(product_id))
     if not isinstance(reviews, dict) or not reviews:
@@ -131,23 +142,23 @@ def build_review_fields(product_id, reviews_by_product):
     # así que no puede alimentarse de reseñas que todavía nadie revisó.
     approved = [rv for rv in reviews.values()
                 if isinstance(rv, dict) and rv.get("approved") is not False]
-    if not approved:
+    # Rating ausente cuenta como 5 (como antes); inválido (texto, NaN) se descarta
+    rated = [(rv, parse_rating(rv.get("rating", 5))) for rv in approved]
+    rated = [(rv, rt) for rv, rt in rated if rt is not None]
+    if not rated:
         return None
-    ratings = [float(rv.get("rating", 5)) for rv in approved]
-    if not ratings:
-        return None
+    ratings = [rt for _, rt in rated]
     avg = sum(ratings) / len(ratings)
-    items = sorted(approved, key=lambda rv: rv.get("date", ""), reverse=True)
+    items = sorted(rated, key=lambda x: str(x[0].get("date", "")), reverse=True)
     review_list = [
         {
             "@type": "Review",
             "author": {"@type": "Person", "name": rv.get("name") or "Anónimo"},
-            "reviewRating": {"@type": "Rating", "ratingValue": str(rv.get("rating", 5)), "bestRating": "5", "worstRating": "1"},
+            "reviewRating": {"@type": "Rating", "ratingValue": f"{rt:g}", "bestRating": "5", "worstRating": "1"},
             "reviewBody": rv.get("comment", ""),
             "datePublished": rv.get("date", ""),
         }
-        for rv in items[:5]
-        if isinstance(rv, dict)
+        for rv, rt in items[:5]
     ]
     return {
         "aggregateRating": {
