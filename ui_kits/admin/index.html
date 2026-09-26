@@ -252,6 +252,15 @@ async function apiCall(endpoint, payload) {
   if (!r.ok) { const e = new Error(data.error || `Error ${r.status}`); e.status = r.status; throw e; }
   return data;
 }
+// Abre un PDF base64 vía blob: (los navegadores bloquean navegar a data: en pestaña nueva)
+function openPdfBase64(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
 // Estrellas de reseña: dato de Firebase puede venir fuera de rango o no numérico
 function clampStars(v) { return Math.max(0, Math.min(5, Math.round(Number(v) || 0))); }
 // Inicia sesión → devuelve un token de sesión temporal (no credenciales)
@@ -1892,11 +1901,20 @@ function OrderCard({ order, token, uspsDefault, onStatusChange, onDelete, onTrac
             📦 Generar guía USPS
           </button>
         )}
-        {order.labelBase64 && (
-          <a href={`data:application/pdf;base64,${order.labelBase64}`} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'block', marginTop: 8, textAlign: 'center', padding: '8px', background: '#EFF6FF', color: '#3B82F6', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+        {(order.labelBase64 || order.labelStored) && (
+          <button type="button" onClick={async () => {
+              // El PDF ya no viaja en orders_cache (límite de 25 MB de KV): si no está
+              // en memoria se pide aparte a /order/label.
+              try {
+                let b64 = order.labelBase64;
+                if (!b64) b64 = (await apiCall('order/label', { token, orderId: order.id })).labelBase64;
+                if (!b64) throw new Error('Guía no encontrada');
+                openPdfBase64(b64);
+              } catch (e) { alert('No se pudo abrir la guía: ' + e.message); }
+            }}
+            style={{ display: 'block', width: '100%', marginTop: 8, textAlign: 'center', padding: '8px', background: '#EFF6FF', color: '#3B82F6', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
             🖨️ Ver/imprimir guía USPS
-          </a>
+          </button>
         )}
       </div>
       {showLabelModal && (
@@ -1908,7 +1926,7 @@ function OrderCard({ order, token, uspsDefault, onStatusChange, onDelete, onTrac
           onSuccess={data => {
             setShowLabelModal(false);
             onLabelGenerated && onLabelGenerated(order, data);
-            if (data.labelBase64) window.open(`data:application/pdf;base64,${data.labelBase64}`, '_blank');
+            if (data.labelBase64) openPdfBase64(data.labelBase64);
           }}
         />
       )}
@@ -4887,7 +4905,7 @@ function App() {
                                 onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
                                 onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
                                 onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
-                                onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64 } : x)); }}
+                                onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64, labelStored: true } : x)); }}
                               />
                             ))}
                           </div>
@@ -4961,7 +4979,7 @@ function App() {
                                   onTrackingChange={(ord, tracking) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking } : x)); updateOrderRemote(ord.id, { tracking }); }}
                                   onCarrierChange={(ord, carrier) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, carrier } : x)); updateOrderRemote(ord.id, { carrier }); }}
                                   onClienteUpdate={(ord, updates) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, cliente: { ...x.cliente, ...updates } } : x)); updateOrderRemote(ord.id, { cliente: updates }); }}
-                                  onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64 } : x)); }}
+                                  onLabelGenerated={(ord, data) => { setOrders(orders.map(x => x.id === ord.id ? { ...x, tracking: data.tracking, carrier: 'USPS', labelBase64: data.labelBase64, labelStored: true } : x)); }}
                                 />
                               ))}
                             </div>
