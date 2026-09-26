@@ -266,6 +266,25 @@ section{padding:96px 0}
 .pf-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(238,111,168,.5)}
 .pf-btn:active{transform:scale(.98)}
 
+/* ── WHY CACUSA ─────────────────────────────────────── */
+#why-cacusa{background:var(--pink-pale)}
+.wc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:44px}
+.wc-card{text-align:center}
+.wc-symbol{font-size:30px;color:var(--pink-deep);margin-bottom:14px;line-height:1}
+.wc-title{font-family:var(--fu);font-weight:600;font-size:15px;color:var(--ink);margin-bottom:6px}
+.wc-text{font-family:var(--fe);font-size:14px;font-style:italic;color:var(--ink-muted);line-height:1.6}
+
+/* Personalización: los 3 pasos entran en secuencia desde la izquierda (1 → 2 → 3) */
+.person-steps .step:nth-child(2){transition-delay:.15s}
+.person-steps .step:nth-child(3){transition-delay:.3s}
+/* Por qué CACUSA: la tarjeta solo aparece (sin subir) y el símbolo entra girando con un rebote */
+.wc-card.reveal{transform:none;transition:opacity .5s ease-out}
+.wc-card .wc-symbol{opacity:0;transform:scale(.3) rotate(-45deg);transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.34,1.56,.64,1)}
+.wc-card.visible .wc-symbol{opacity:1;transform:none}
+.wc-card:nth-child(2){transition-delay:.1s}.wc-card:nth-child(3){transition-delay:.2s}.wc-card:nth-child(4){transition-delay:.3s}
+.wc-card:nth-child(1) .wc-symbol{transition-delay:.1s}.wc-card:nth-child(2) .wc-symbol{transition-delay:.2s}.wc-card:nth-child(3) .wc-symbol{transition-delay:.3s}.wc-card:nth-child(4) .wc-symbol{transition-delay:.4s}
+@media (prefers-reduced-motion: reduce){.wc-card .wc-symbol,.wc-card.reveal,.person-steps .step{opacity:1;transform:none;transition:none}}
+
 /* ── TESTIMONIALS ──────────────────────────────────── */
 #testimonials{background:var(--lilac-pale)}
 .testi-wrap{overflow:hidden;margin-top:48px;-webkit-mask:linear-gradient(to right,transparent,black 8%,black 92%,transparent)}
@@ -410,6 +429,7 @@ html,body{overflow-x:hidden}
 
   /* PERSONALIZACIÓN */
   .person-grid{grid-template-columns:1fr;gap:36px}
+  .wc-grid{grid-template-columns:1fr 1fr;gap:28px 20px}
   .person-form{padding:26px 20px}
 
   /* INSTAGRAM */
@@ -432,6 +452,7 @@ html,body{overflow-x:hidden}
   .col-grid{grid-template-columns:1fr}
   .col-card:first-child{grid-column:auto}
   .ig-grid{grid-template-columns:repeat(2,1fr)}
+  .wc-grid{grid-template-columns:1fr}
   /* Auditoría S04 (20 sep): mismo popup que ui_kits/store/index.html — el fix de
      SEO-05 (19 sep) nunca se copió acá. Se achica el alto máximo con scroll interno
      de respaldo para que nunca cubra el 100% del viewport. */
@@ -658,12 +679,12 @@ html,body{overflow-x:hidden}
         <div class="reveal" data-delay="1"><h2 class="section-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
         <div class="reveal" data-delay="2"><p class="section-sub" id="hPersonSub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
         <div class="person-steps" id="hPersonSteps">
-          <div class="step reveal" data-delay="2"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
-          <div class="step reveal" data-delay="3"><div class="step-num">2</div><div><div class="step-title">Personaliza</div><div class="step-desc">Nombre, fecha o mensaje especial</div></div></div>
-          <div class="step reveal" data-delay="4"><div class="step-num">3</div><div><div class="step-title">We create it</div><div class="step-desc">Handmade, ready in 5–10 days</div></div></div>
+          <div class="step reveal-left"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
+          <div class="step reveal-left"><div class="step-num">2</div><div><div class="step-title">Personaliza</div><div class="step-desc">Nombre, fecha o mensaje especial</div></div></div>
+          <div class="step reveal-left"><div class="step-num">3</div><div><div class="step-title">We create it</div><div class="step-desc">Handmade, ready in 5–10 days</div></div></div>
         </div>
       </div>
-      <div class="reveal-right" data-delay="2">
+      <div class="reveal" data-delay="2">
         <div class="person-form">
           <div class="pf-title" data-i18n="landing.formTitle">Comienza tu pieza</div>
           <div class="pf-row">
@@ -689,22 +710,22 @@ html,body{overflow-x:hidden}
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.whyLabel">Calidad que se nota</div></div>
     <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
     <div class="wc-grid">
-      <div class="wc-card reveal" data-delay="1">
+      <div class="wc-card reveal">
         <div class="wc-symbol">✦</div>
         <div class="wc-title" data-i18n="landing.wcSilverTitle">925 Silver</div>
         <div class="wc-text" data-i18n="landing.wcSilverText">Autenticidad y durabilidad en cada pieza.</div>
       </div>
-      <div class="wc-card reveal" data-delay="2">
+      <div class="wc-card reveal">
         <div class="wc-symbol">✧</div>
         <div class="wc-title" data-i18n="landing.wcGoldTitle">Baño de oro 18k</div>
         <div class="wc-text" data-i18n="landing.wcGoldText">Acabado elegante que se cuida con el tiempo.</div>
       </div>
-      <div class="wc-card reveal" data-delay="3">
+      <div class="wc-card reveal">
         <div class="wc-symbol">✓</div>
         <div class="wc-title" data-i18n="landing.wcSteelTitle">Stainless Steel</div>
         <div class="wc-text" data-i18n="landing.wcSteelText">Resistente para el uso diario, sin perder el brillo.</div>
       </div>
-      <div class="wc-card reveal" data-delay="4">
+      <div class="wc-card reveal">
         <div class="wc-symbol">♡</div>
         <div class="wc-title" data-i18n="landing.wcHandmadeTitle">Hecho a mano</div>
         <div class="wc-text" data-i18n="landing.wcHandmadeText">Cada pieza se revisa a mano antes de enviarse.</div>
