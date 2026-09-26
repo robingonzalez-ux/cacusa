@@ -31,7 +31,7 @@ necesita tocarse si cambia algo de la arquitectura general descrita abajo.
   Dominio: `cacusabytaitus.com` (`CNAME`).
 - **Catálogo**: `data/products.json` — productos, config de textos/categorías/
   envío/materiales, todo en un solo archivo. Se edita en producción directo
-  desde el panel admin (`ui_kits/admin/`), que comitea a `main` vía la API de
+  desde el panel admin (`admin.cacusabytaitus.com`), que comitea a `main` vía la API de
   GitHub — no pasa por Pull Request. Es normal ver commits automáticos
   `[Admin] Productos - robin.gonzalez` / `tita.jaramillo`.
 - **Base de datos**: Firebase Realtime Database — suscriptoras de Cacusa
@@ -46,8 +46,13 @@ necesita tocarse si cambia algo de la arquitectura general descrita abajo.
   `data/products.json`. Hay además ~200 páginas físicas por producto/categoría
   (`ui_kits/store/producto/`, `ui_kits/store/categoria/`, y sus equivalentes
   `en/`) generadas automáticamente para SEO — ver "Automatizaciones" abajo.
-- **Admin panel**: `ui_kits/admin/index.html` — React vía Babel Standalone en
-  el navegador (sin build), login con sesión firmada.
+- **Admin panel**: vive en su **propio repo, `robingonzalez-ux/cacusa-admin`**,
+  publicado en `https://admin.cacusabytaitus.com` (GitHub Pages + CNAME) —
+  separado de la tienda a propósito, para que la sesión del admin no comparta
+  origen con páginas públicas que cargan scripts de terceros (GTM). React vía
+  Babel Standalone en el navegador (sin build), login con sesión firmada.
+  Cambios al panel se hacen en ese repo; `ui_kits/admin/` en este repo solo
+  redirige al dominio nuevo (y su `sw.js` se desregistra solo).
 
 ## Cloudflare Workers — código fuente fuera de `main`
 
