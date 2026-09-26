@@ -458,7 +458,19 @@ html,body{overflow-x:hidden}
      de respaldo para que nunca cubra el 100% del viewport. */
   .vig-box{max-height:85vh;overflow-y:auto}
 }
+
+/* ── MOTION FINO (assets/landing-motion.js) — todo esto solo actúa con html.lm, que agrega
+   el script; sin JS o con prefers-reduced-motion la página queda exactamente como antes. ── */
+html.lm .mask-h:not(.lm-split){visibility:hidden}
+.mask-h .ml{display:block;overflow:hidden;padding:.08em 0 .16em;margin:-.08em 0 -.16em}
+.mask-h .ml-i{display:inline-block;translate:0 110%;transition:translate .85s cubic-bezier(.2,.7,.2,1)}
+.mask-h.lm-in .ml-i{translate:0 0}
+html.lm .hero-h1{opacity:1;animation:none}
+html.lm .col-bg{inset:-24px 0!important}
+#story::before{translate:0 var(--sp1,0px)}
+#story::after{translate:0 var(--sp2,0px)}
 </style>
+<script defer src="../assets/landing-motion.js"></script>
 </head>
 <body>
 <!--NOSCRIPT_HOME_START-->
@@ -543,7 +555,7 @@ html,body{overflow-x:hidden}
   <canvas id="hero-canvas"></canvas>
   <div class="hero-content">
     <h2 class="hero-label" data-i18n="landing.heroLabel">Joyería artesanal personalizada</h2>
-    <h1 class="hero-h1" id="heroH1">Hecha<br>para <em>ti.</em></h1>
+    <h1 class="hero-h1 mask-h" id="heroH1" data-mask-delay="1">Hecha<br>para <em>ti.</em></h1>
     <div class="hero-script">by Taitus</div>
     <p class="hero-desc" data-i18n="landing.heroDesc">"creamos para que luzcas más bella de lo que ya eres"</p>
     <div class="hero-btns">
@@ -563,7 +575,7 @@ html,body{overflow-x:hidden}
 <section id="collections">
   <div class="container">
     <div class="reveal"><div class="section-label" data-i18n="landing.collectionsLabel">Nuestras colecciones</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
+    <div><h2 class="section-h mask-h" id="collectionsH2">Encuentra<br>tu <em>pieza perfecta</em></h2></div>
     <div class="col-grid">
       <a class="col-card reveal-left" href="./ui_kits/store/categoria/cadenas/">
         <div class="col-bg gA" data-cat="Cadenas" style="position:absolute;inset:0"></div>
@@ -604,7 +616,7 @@ html,body{overflow-x:hidden}
     <div style="display:flex;align-items:flex-end;justify-content:space-between">
       <div>
         <div class="reveal"><div class="section-label" data-i18n="landing.bestsellersLabel">Más vendidos</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h" id="bestsellersH2">Favoritas<br>de la <em>semana</em></h2></div>
+        <div><h2 class="section-h mask-h" id="bestsellersH2">Favoritas<br>de la <em>semana</em></h2></div>
       </div>
       <div class="reveal" data-delay="2"><a href="./ui_kits/store/" style="font-family:var(--fu);font-size:13px;font-weight:500;color:var(--ink);text-decoration:none" data-i18n="landing.seeAll">Ver todo →</a></div>
     </div>
@@ -652,7 +664,7 @@ html,body{overflow-x:hidden}
     <div class="story-grid">
       <div>
         <div class="reveal-left"><div class="story-label" id="hStoryLabel">Nuestra historia</div></div>
-        <div class="reveal-left" data-delay="1"><h2 class="story-h" id="hStoryTitle">Artesanos<br>del <em>corazón</em></h2></div>
+        <div><h2 class="story-h mask-h" id="hStoryTitle">Artesanos<br>del <em>corazón</em></h2></div>
         <div class="reveal-left" data-delay="2"><div class="story-quote" id="hStoryQuote">"Cada pieza, una historia única"</div></div>
         <div class="reveal-left" data-delay="3"><p class="story-body" id="hStoryBody">Somos CACUSA by Taitus, artesanos de joyería personalizada con presencia en Ecuador y Estados Unidos. Creamos piezas para mujeres valientes, independientes y con valores — y para los hombres que las acompañan.</p></div>
         <div class="story-stats reveal-left" data-delay="4" id="hStoryStats">
@@ -676,7 +688,7 @@ html,body{overflow-x:hidden}
     <div class="person-grid">
       <div>
         <div class="reveal"><div class="section-label" id="hPersonLabel">Personalización</div></div>
-        <div class="reveal" data-delay="1"><h2 class="section-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
+        <div><h2 class="section-h mask-h" id="hPersonTitle">Tu pieza,<br><em>tu historia</em></h2></div>
         <div class="reveal" data-delay="2"><p class="section-sub" id="hPersonSub">Cuéntanos qué la hace especial y la creamos para ti.</p></div>
         <div class="person-steps" id="hPersonSteps">
           <div class="step reveal-left"><div class="step-num">1</div><div><div class="step-title">Elige tu pieza</div><div class="step-desc">Collar, pulsera, anillo o aretes</div></div></div>
@@ -708,7 +720,7 @@ html,body{overflow-x:hidden}
 <section id="why-cacusa">
   <div class="container" style="text-align:center">
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.whyLabel">Calidad que se nota</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
+    <div><h2 class="section-h mask-h" style="text-align:center" id="whyH2">¿Por qué <em>CACUSA</em>?</h2></div>
     <div class="wc-grid">
       <div class="wc-card reveal">
         <div class="wc-symbol">✦</div>
@@ -738,7 +750,7 @@ html,body{overflow-x:hidden}
 <section id="testimonials">
   <div class="container" style="text-align:center">
     <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.testiLabel">Lo que dicen</div></div>
-    <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
+    <div><h2 class="section-h mask-h" style="text-align:center" id="testiH2">Ellas <em>confían</em> en CACUSA</h2></div>
   </div>
   <div class="testi-wrap"><div class="testi-track" id="tTrack2">
     <div class="tcard"><div class="tcard-stars"><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div><div class="tcard-star"></div></div><div class="tcard-text">"My necklace arrived perfectly, exactly as I dreamed it. CACUSA made it happen."</div><div class="tcard-name">Valentina M.</div><div class="tcard-loc">Quito, Ecuador</div></div>
@@ -755,7 +767,7 @@ html,body{overflow-x:hidden}
   <div class="container">
     <div style="text-align:center;margin-bottom:14px">
       <div class="reveal"><div class="section-label" style="text-align:center" data-i18n="landing.igLabel">Síguenos en Instagram</div></div>
-      <div class="reveal" data-delay="1"><h2 class="section-h" style="text-align:center">@cacusabytaitus</h2></div>
+      <div><h2 class="section-h mask-h" style="text-align:center">@cacusabytaitus</h2></div>
       <div class="reveal" data-delay="2">
         <p style="font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-top:10px;margin-bottom:28px;line-height:1.7" data-i18n="landing.igBody">Mira las últimas creaciones, historias y piezas personalizadas</p>
         <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:13px;letter-spacing:.06em;border-radius:999px;padding:13px 28px;text-decoration:none;box-shadow:0 4px 20px rgba(238,111,168,.35);margin-bottom:40px">
@@ -774,7 +786,7 @@ html,body{overflow-x:hidden}
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 25% 50%,rgba(255,255,255,.18),transparent 55%)"></div>
     <div style="position:relative;z-index:1">
       <div id="ctaScript" style="font-family:var(--fs);font-size:34px;color:white;margin-bottom:8px" data-i18n="landing.ctaScript">¿Lista para tu pieza?</div>
-      <div id="ctaH" style="font-family:var(--fd);font-weight:900;font-size:clamp(30px,4vw,48px);color:white;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.1);letter-spacing:.02em" data-i18n="landing.ctaH">Tu joya te está esperando</div>
+      <div id="ctaH" class="mask-h" style="font-family:var(--fd);font-weight:900;font-size:clamp(30px,4vw,48px);color:white;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.1);letter-spacing:.02em" data-i18n="landing.ctaH">Tu joya te está esperando</div>
       <p id="ctaP" style="font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:440px;margin:0 auto 32px;line-height:1.7">"creamos para que luzcas más bella<br>de lo que ya eres"</p>
       <a href="./ui_kits/store/" style="display:inline-flex;align-items:center;gap:10px;background:white;color:var(--ink);font-family:var(--fu);font-weight:700;font-size:14px;letter-spacing:.05em;border-radius:999px;padding:16px 40px;text-decoration:none;box-shadow:0 4px 24px rgba(139,42,90,.2);transition:all .3s">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 01-8 0"></path></svg>
