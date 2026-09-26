@@ -128,7 +128,7 @@ export default {
       if (path.endsWith('/webauthn/reg-challenge'))   return await handleWaRegChallenge(body, env, allowOrigin, request);
       if (path.endsWith('/webauthn/register'))        return await handleWaRegister(body, env, allowOrigin, request);
 
-      if (path.endsWith('/login')) return await handleLogin(body, env, allowOrigin, request);
+      if (path.endsWith('/login')) return await handleLogin(body, env, allowOrigin, request, ctx);
 
       // /order: guarda pedido desde la tienda (sin token de admin), o desde cacusa-square
       // (con ORDER_INGEST_KEY) una vez que el webhook de Square confirmó el pago.
@@ -322,8 +322,21 @@ export default {
             for (const k of page.keys) { await env.CACUSA_KV.delete(k.name); revoked++; }
             cursor = page.list_complete ? null : page.cursor;
           } while (cursor);
+          // También las suscripciones push de esta cuenta (push:<user>:<hash>).
+          cursor = undefined;
+          do {
+            const page = await env.CACUSA_KV.list({ prefix: `push:${session.user}:`, cursor, limit: 1000 });
+            for (const k of page.keys) await env.CACUSA_KV.delete(k.name);
+            cursor = page.list_complete ? null : page.cursor;
+          } while (cursor);
         }
         return ok({ ok: true, revoked }, allowOrigin);
+      }
+
+      // Cierra solo la sesión actual (borra sess:<user>:<jti> de este token).
+      if (path.endsWith('/logout')) {
+        if (env.CACUSA_KV && session.jti) await env.CACUSA_KV.delete(sessionKey(session.user, session.jti));
+        return ok({ ok: true }, allowOrigin);
       }
 
       if (path.endsWith('/test-ntfy')) {
@@ -347,6 +360,7 @@ export default {
       if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/usps-label')) return await handleUspsLabel(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/order/label'))    return await handleOrderLabelGet(body, env, allowOrigin);
       if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
@@ -410,7 +424,57 @@ function isInternalIngest(request, env) {
   return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
 }
 
-async function handleLogin(body, env, origin, request) {
+// Rate limit best-effort por colo vía Cache API — no gasta escrituras de KV (plan
+// free: 1.000/día compartidas). Devuelve false si ya se pasó del tope.
+async function cacheRateLimit(name, key, max, windowSec) {
+  try {
+    const cache = caches.default;
+    const req = new Request(`https://rl.internal/${name}/${encodeURIComponent(String(key))}`);
+    const hit = await cache.match(req);
+    let data = null;
+    if (hit) { try { data = await hit.json(); } catch (_) {} }
+    const now = Date.now();
+    if (!data || !(data.exp > now)) data = { n: 0, exp: now + windowSec * 1000 };
+    if (data.n >= max) return false;
+    data.n++;
+    const ttl = Math.max(1, Math.ceil((data.exp - now) / 1000));
+    await cache.put(req, new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${ttl}` },
+    }));
+    return true;
+  } catch (e) {
+    console.error('cacheRateLimit falló:', e.message);
+    return true;
+  }
+}
+
+// Texto de push armado con input público: sin saltos/control, sin URLs, 40 chars.
+function sanitizePushText(v) {
+  return String(v == null ? '' : v)
+    .replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]+/g, ' ')
+    .replace(/\b(?:https?:\/\/|www\.)\S*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 40);
+}
+
+// Máx. 1 correo por destinatario por hora (correos disparados desde rutas públicas).
+async function emailRecipientAllowed(email) {
+  return cacheRateLimit('emailrcpt', String(email || '').toLowerCase().trim(), 1, 3600);
+}
+
+// Push best-effort a las admins (nunca rompe el flujo que lo llama).
+async function adminPush(env, title, body, tag = 'cacusa-system', urgency = 'high') {
+  if (!env.VAPID_PRIVATE_KEY_JWK || !env.CACUSA_KV) return;
+  try {
+    await sendWebPushAll(env, { title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag, urgency });
+  } catch (e) {
+    console.error('adminPush falló:', e.message);
+  }
+}
+
+const LOGIN_USER_MAX_FAILS = 10;
+async function handleLogin(body, env, origin, request, ctx) {
   if (env.CACUSA_KV) {
     const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
     const rlKey = `loginrl:${ip}`;
@@ -419,6 +483,14 @@ async function handleLogin(body, env, origin, request) {
   }
   const user     = (body.user || '').trim();
   const pass     = body.pass || '';
+  // Contador de fallos por usuario (solo usuarios reales; se escribe solo al fallar).
+  const userRlKey = VALID_USERS.has(user) ? `loginrlu:${user}` : null;
+  let userFails = 0;
+  if (userRlKey && env.CACUSA_KV) {
+    userFails = parseInt((await env.CACUSA_KV.get(userRlKey)) || '0', 10);
+    // Bloqueado 1h: mismo error genérico, sin más escrituras.
+    if (userFails >= LOGIN_USER_MAX_FAILS) return err('Usuario o contraseña incorrectos.', 401, origin);
+  }
   const expected = passwordFor(user, env);
   if (!expected || !safeEqual(pass, expected)) {
     if (env.CACUSA_KV) {
@@ -426,10 +498,20 @@ async function handleLogin(body, env, origin, request) {
       const rlKey = `loginrl:${ip}`;
       const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
       await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+      if (userRlKey) {
+        await env.CACUSA_KV.put(userRlKey, String(userFails + 1), { expirationTtl: 3600 });
+        if (userFails + 1 === LOGIN_USER_MAX_FAILS) {
+          const p = adminPush(env, 'CACUSA · Cuenta bloqueada', `⚠ ${LOGIN_USER_MAX_FAILS} intentos fallidos: ${user} bloqueado 1 hora`);
+          if (ctx) ctx.waitUntil(p); else await p;
+        }
+      }
     }
     return err('Usuario o contraseña incorrectos.', 401, origin);
   }
+  if (userRlKey && userFails > 0 && env.CACUSA_KV) await env.CACUSA_KV.delete(userRlKey).catch(() => {});
   const token = await createSession(user, env);
+  const p = adminPush(env, 'CACUSA · Inicio de sesión', `🔐 Inicio de sesión con contraseña: ${user}`, 'cacusa-login', 'normal');
+  if (ctx) ctx.waitUntil(p); else await p;
   return ok({ token, user }, origin);
 }
 
@@ -552,7 +634,8 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
   return {
     id:        Date.now(),
     fecha:     new Date().toISOString(),
-    numero:    str(order.numero, 30) || undefined,
+    // Solo formatos seguros (ej. CA-260906-1234); si no, handleOrder usa el id.
+    numero:    NUMERO_RE.test(str(order.numero, 30)) ? str(order.numero, 30) : undefined,
     estado:    'Nuevo',
     pago:      strictPago
       ? (allowedPago.includes(order.pago) ? order.pago : 'Otro')
@@ -608,7 +691,9 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
   };
 }
 
+const NUMERO_RE = /^[A-Za-z0-9#-]{1,30}$/;
 function orderKey(id) { return 'order:' + String(id); }
+function labelKey(id) { return 'label:' + String(id); }
 async function orderGet(env, id) {
   const raw = await env.CACUSA_KV.get(orderKey(id));
   return raw ? JSON.parse(raw) : null;
@@ -652,7 +737,12 @@ async function listAllOrders(env) {
   return orders;
 }
 async function refreshOrdersCache(env) {
-  const orders = await listAllOrders(env);
+  // El PDF de la guía nunca va en la caché (pesa); el panel lo pide a /order/label.
+  const orders = (await listAllOrders(env)).map((o) => {
+    if (!o || !o.labelBase64) return o;
+    const { labelBase64, ...rest } = o;
+    return { ...rest, labelStored: true };
+  });
   const data = { version: '1.0', lastUpdated: new Date().toISOString(), orders };
   await env.CACUSA_KV.put('orders_cache', JSON.stringify(data));
   return data;
@@ -948,6 +1038,8 @@ async function handleOrder(body, env, origin, ctx, request) {
     if (order.cuponAplicado) {
       coupon = await couponGet(env, order.cuponAplicado);
       if (!coupon || !(await couponIsValid(coupon, cliente.email, cliente.telefono, env))) coupon = null;
+      // Mismo tope mensual de referidos que /coupon/validate.
+      if (coupon && coupon.kind === 'referral' && await referralMonthlyCapReached(env, coupon.code)) coupon = null;
     }
     let discount = 0;
     if (coupon) {
@@ -977,7 +1069,10 @@ async function handleOrder(body, env, origin, ctx, request) {
   // canónica del CONTENIDO (calculada acá, sobre datos ya recalculados server-side)
   // contra la guardada: si no coincide, alguien reusa una key ajena o el contenido
   // cambió — se rechaza con 409 sin revelar nada del pedido existente.
-  const idemKey = str(order.idempotencyKey, 100);
+  // Keys públicas con prefijo 'pub:' — nunca chocan con las internas (referenceId de
+  // Square, lovershipinvoice:...).
+  const rawIdemKey = str(order.idempotencyKey, 100);
+  const idemKey = rawIdemKey ? (trusted ? rawIdemKey : 'pub:' + rawIdemKey) : '';
   const fingerprint = idemKey ? await orderFingerprint(newOrder) : null;
   // Auditoría externa (22 sep, S04): el chequeo de KV de abajo (get→...→put, no
   // atómico) puede dejar pasar 2 pedidos si 2 requests con la misma idemKey llegan
@@ -1025,6 +1120,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   // El id ya no depende de ningún chequeo previo contra KV — ver assignOrderId() más
   // arriba (F03-b, cierra la ventana de carrera del viejo ensureUniqueOrderId()).
   assignOrderId(newOrder);
+  if (!newOrder.numero && order.numero) newOrder.numero = String(newOrder.id);
   const orderRef = orderKey(newOrder.id);
 
   // Redención de gift card — reserva ATÓMICA (Durable Object GiftCardLedger, ver más
@@ -1073,7 +1169,11 @@ async function handleOrder(body, env, origin, ctx, request) {
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
   // Correo de confirmación de pedido — nunca antes de este punto (el pedido ya está
   // guardado de verdad), nunca en un reintento (idem: ya devolvió antes de llegar acá).
-  if (ctx) ctx.waitUntil(sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido falló:', e.message)));
+  // Pedidos públicos: máx. 1 correo por destinatario por hora (se salta en silencio).
+  if (ctx) ctx.waitUntil((async () => {
+    if (!trusted && !(await emailRecipientAllowed(orderEmailLc))) return;
+    await sendOrderConfirmationEmail(newOrder, env);
+  })().catch(e => console.error('email confirmación pedido falló:', e.message)));
 
   if (env.NTFY_TOPIC) {
     await sendNtfy(newOrder, env);
@@ -1086,7 +1186,7 @@ async function handleOrder(body, env, origin, ctx, request) {
     try {
       await sendWebPushAll(env, {
         title: 'CACUSA · Nuevo pedido',
-        body:  `${icon} ${newOrder.pago} · ${newOrder.cliente?.nombre || 'Cliente'} · $${newOrder.total}`,
+        body:  `${icon} ${newOrder.pago} · ${sanitizePushText(newOrder.cliente?.nombre) || 'Cliente'} · $${newOrder.total}`,
         url:   'https://cacusabytaitus.com/ui_kits/admin/',
         tag: 'cacusa-order',
         urgency: 'high',
@@ -1112,6 +1212,7 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   newOrder.createdBy = session.user;
 
   assignOrderId(newOrder);
+  if (!newOrder.numero && order.numero) newOrder.numero = String(newOrder.id);
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
@@ -1138,6 +1239,7 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
 
   if (body.delete === true) {
     await env.CACUSA_KV.delete(orderKey(id));
+    if (order.labelStored) await env.CACUSA_KV.delete(labelKey(id)).catch(() => {});
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
     return ok({ ok: true, deleted: true }, origin);
   }
@@ -1957,7 +2059,8 @@ ${ctaHtml}
 // justo después de persistir el pedido de verdad (nunca antes, nunca en un reintento).
 function orderConfirmationEmailContent(order, lang) {
   const nombre = (order.cliente && order.cliente.nombre || '').trim();
-  const numero = order.numero || ('#' + order.id);
+  const numeroRaw = String(order.numero || ('#' + order.id));
+  const numero = esc(numeroRaw); // va al HTML (preheader incluido)
   const money = n => '$' + (Number(n) || 0).toFixed(2);
   const rows = (order.productos || []).map(p => `
 <tr>
@@ -1983,7 +2086,7 @@ ${order.impuesto ? totalsRow(lang === 'en' ? 'Tax' : 'Impuesto', order.impuesto)
   const storeUrl = lang === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
   if (lang === 'en') {
     return {
-      subject: `Order confirmed — ${numero} — CACUSA by Taitus`,
+      subject: `Order confirmed — ${numeroRaw} — CACUSA by Taitus`,
       html: emailShellGeneric({
         lang, preheader: `We've got your order ${numero} — here's what you ordered.`,
         eyebrow: 'Order confirmed', title: `Thank you${nombre ? ', ' + esc(nombre) : ''}! ✦`,
@@ -1992,7 +2095,7 @@ ${order.impuesto ? totalsRow(lang === 'en' ? 'Tax' : 'Impuesto', order.impuesto)
     };
   }
   return {
-    subject: `Pedido confirmado — ${numero} — CACUSA by Taitus`,
+    subject: `Pedido confirmado — ${numeroRaw} — CACUSA by Taitus`,
     html: emailShellGeneric({
       lang, preheader: `Ya tenemos tu pedido ${numero} — esto es lo que compraste.`,
       eyebrow: 'Pedido confirmado', title: `¡Gracias${nombre ? ', ' + esc(nombre) : ''}! ✦`,
@@ -2279,18 +2382,22 @@ function loversFetch(env, path, options) {
 // ── Verifica contra cacusa-lovers-webhook (Worker-a-Worker, ORDER_INGEST_KEY) si un
 // teléfono pertenece a una suscriptora activa de Cacusa Lovers. Falla cerrado: cualquier
 // error de red o de configuración se trata como "no activa", nunca como "activa".
-async function isActiveLoversPhone(phoneDigits, env) {
-  if (!env.ORDER_INGEST_KEY) return false;
+async function lookupActiveLoversPhone(phoneDigits, env) {
+  if (!env.ORDER_INGEST_KEY) return { active: false };
   try {
     const r = await loversFetch(env, `/internal/lovers/active?phone=${encodeURIComponent(phoneDigits)}`, {
       headers: { 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
     });
-    if (!r.ok) return false;
+    if (!r.ok) return { active: false };
     const d = await r.json().catch(() => ({}));
-    return !!d.active;
+    // email/idioma solo vienen si está activa (lovers-webhook >= 26 sep).
+    return { active: !!d.active, email: d.active ? (d.email || '') : '', idioma: d.idioma === 'en' ? 'en' : 'es' };
   } catch (e) {
-    return false;
+    return { active: false };
   }
+}
+async function isActiveLoversPhone(phoneDigits, env) {
+  return (await lookupActiveLoversPhone(phoneDigits, env)).active;
 }
 
 // ── Límite de "1 regalo de referido por mes" — por código (= por suscriptora que
@@ -2418,24 +2525,58 @@ async function loversShippingCode(phoneDigits, env) {
   return 'ENVIO' + clean.slice(0, 8);
 }
 
+function loversShippingCodeEmailContent(code, idioma) {
+  const bodyHtml = `
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 18px;">
+<tr><td style="background:#FCE8F3;border:1.5px dashed #C0336E;border-radius:10px;padding:14px 30px;">
+<span style="font-family:Georgia,'Bodoni Moda',serif;font-size:24px;font-weight:700;letter-spacing:3px;color:#C0336E;">${esc(code)}</span>
+</td></tr>
+</table>
+<p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#96486F;text-align:center;margin:0;">${idioma === 'en'
+    ? 'Use it at checkout for free shipping on every store order while your subscription is active.'
+    : 'Úsalo al pagar para tener envío gratis en todas tus compras mientras tu suscripción esté activa.'}</p>`;
+  const storeUrl = idioma === 'en' ? 'https://cacusabytaitus.com/en/ui_kits/store/' : 'https://cacusabytaitus.com/ui_kits/store/';
+  if (idioma === 'en') {
+    return {
+      subject: 'Your free shipping code — Cacusa Lovers',
+      html: emailShellGeneric({
+        lang: 'en', preheader: 'Your personal Cacusa Lovers free shipping code.',
+        eyebrow: 'Cacusa Lovers', title: 'Free shipping, always ✦',
+        bodyHtml, ctaText: 'Go to the store →', ctaUrl: storeUrl,
+      }),
+    };
+  }
+  return {
+    subject: 'Tu código de envío gratis — Cacusa Lovers',
+    html: emailShellGeneric({
+      lang: 'es', preheader: 'Tu código personal de envío gratis de Cacusa Lovers.',
+      eyebrow: 'Cacusa Lovers', title: 'Envío gratis, siempre ✦',
+      bodyHtml, ctaText: 'Ir a la tienda →', ctaUrl: storeUrl,
+    }),
+  };
+}
+
+// Nunca devuelve el código: si el teléfono es de una suscriptora activa, se le manda
+// al correo que tiene guardado. La respuesta es SIEMPRE la misma (no revela si es
+// suscriptora). Rate limits por Cache API: 10/h por IP (429) y 1 correo/h por teléfono.
+const SHIPPING_CODE_GENERIC = { ok: true, sent: true };
 async function handleLoversShippingCode(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   if (!env.SESSION_SECRET) return err('No disponible', 500, origin);
 
   const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `shiprl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await cacheRateLimit('shipcode-ip', ip, 10, 3600))) {
+    return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
+  }
 
   const name = String(body.name || '').trim().slice(0, 100);
   const phoneDigits = String(body.phone || '').replace(/\D/g, '');
-  if (!name || phoneDigits.length < 7) {
-    return err('Faltan nombre o teléfono válido', 400, origin);
+  if (!name || phoneDigits.length < 7) return ok(SHIPPING_CODE_GENERIC, origin);
+  if (!(await cacheRateLimit('shipcode-phone', phoneDigits.slice(-7), 1, 3600))) {
+    return ok(SHIPPING_CODE_GENERIC, origin);
   }
-  if (!(await isActiveLoversPhone(phoneDigits, env))) {
-    return err('Este beneficio es exclusivo para suscriptoras activas de Cacusa Lovers.', 403, origin);
-  }
+  const lovers = await lookupActiveLoversPhone(phoneDigits, env);
+  if (!lovers.active) return ok(SHIPPING_CODE_GENERIC, origin);
 
   const code = await loversShippingCode(phoneDigits, env);
   let coupon = await couponGet(env, code);
@@ -2465,7 +2606,16 @@ async function handleLoversShippingCode(body, env, origin, request) {
   // tecleó al pedirlo, así que no se puede recalcular. Escribirlo en cada pedido, y no
   // solo al crear, deja indexados también los cupones anteriores a este cambio.
   await env.CACUSA_KV.put(loversShipIndexKey(phoneDigits), code);
-  return ok({ ok: true, code: coupon.code, type: coupon.type }, origin);
+  if (isValidEmail(lovers.email)) {
+    try {
+      await sendGmail(env, { to: lovers.email, ...loversShippingCodeEmailContent(coupon.code, lovers.idioma) });
+    } catch (e) {
+      console.error('email código de envío Lovers falló:', e.message);
+    }
+  } else {
+    console.error('shipping-code: suscriptora activa sin email válido guardado');
+  }
+  return ok(SHIPPING_CODE_GENERIC, origin);
 }
 
 // ── Aviso de "nueva suscripción pendiente" de Cacusa Lovers ───────────────────
@@ -2512,7 +2662,7 @@ async function handleLoversNotifyPending(body, env, origin, request) {
       const esAnual = String(claim.plan || '').toLowerCase().includes('anual');
       await sendWebPushAll(env, {
         title: 'CACUSA · Nueva suscripción pendiente',
-        body:  `🕐 ${claim.nombre} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que complete el pago`,
+        body:  `🕐 ${sanitizePushText(claim.nombre) || 'Alguien'} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que complete el pago`,
         url:   'https://cacusabytaitus.com/ui_kits/admin/',
         tag: 'cacusa-lovers',
         urgency: 'normal',
@@ -2608,7 +2758,7 @@ async function handleLoversRegister(body, env, origin, request) {
       const esAnual = String(pendingData.plan || '').toLowerCase().includes('anual');
       await sendWebPushAll(env, {
         title: 'CACUSA · Nueva suscripción pendiente',
-        body: `🕐 ${nombre} llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que confirme el correo y complete el pago`,
+        body: `🕐 ${sanitizePushText(nombre) || 'Alguien'} (sin confirmar) llenó el formulario (${esAnual ? 'anual' : 'mensual'}) — falta que confirme el correo y complete el pago`,
         url: 'https://cacusabytaitus.com/ui_kits/admin/',
         tag: 'cacusa-lovers',
         urgency: 'normal',
@@ -2622,7 +2772,10 @@ async function handleLoversRegister(body, env, origin, request) {
     ? 'https://cacusabytaitus.com/en/cacusa-lovers.html?confirm='
     : 'https://cacusabytaitus.com/cacusa-lovers.html?confirm=') + encodeURIComponent(token);
   try {
-    await sendGmail(env, { to: email, ...loversRegisterEmailContent(nombre, confirmUrl, idioma) });
+    // Máx. 1 correo de confirmación por destinatario por hora (se salta en silencio).
+    if (await emailRecipientAllowed(email)) {
+      await sendGmail(env, { to: email, ...loversRegisterEmailContent(nombre, confirmUrl, idioma) });
+    }
   } catch (e) {
     // Best-effort — el pago sigue su curso igual aunque el correo falle (la clienta
     // puede confirmar más tarde si el formulario le ofrece un botón de reenviar, o
@@ -3094,7 +3247,7 @@ async function handleCouponUse(body, env, origin) {
 // ── Notificación ntfy ────────────────────────────────────────────────────────
 async function sendNtfy(order, env) {
   const icon  = order.pago === 'WhatsApp' ? '📱' : '💳';
-  const body  = `${icon} ${order.pago} · ${order.cliente?.nombre || 'Cliente'} · $${order.total}`;
+  const body  = `${icon} ${order.pago} · ${sanitizePushText(order.cliente?.nombre) || 'Cliente'} · $${order.total}`;
   try {
     const r = await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, {
       method:  'POST',
@@ -3211,10 +3364,11 @@ async function sendWebPushOne(sub, env, payload) {
 }
 // Devuelve estadísticas del envío — sirve para que /push/test le diga al usuario si
 // realmente hay suscripciones guardadas en vez de reportar éxito a ciegas.
-async function sendWebPushAll(env, payload) {
+async function sendWebPushAll(env, payload, { excludeKey } = {}) {
   const list = await env.CACUSA_KV.list({ prefix: 'push:' });
   const stats = { total: list.keys.length, sent: 0, failed: 0, cleaned: 0 };
   for (const k of list.keys) {
+    if (excludeKey && k.name === excludeKey) continue;
     const raw = await env.CACUSA_KV.get(k.name);
     if (!raw) continue;
     try {
@@ -3235,11 +3389,32 @@ async function pushKeyFor(username, endpoint) {
   const hex  = [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
   return `push:${username}:${hex}`;
 }
+// Solo push services reales (FCM, Mozilla, Windows, Apple) — nunca una URL arbitraria.
+function isAllowedPushEndpoint(endpoint) {
+  let u;
+  try { u = new URL(String(endpoint)); } catch (_) { return false; }
+  if (u.protocol !== 'https:' || u.username || u.password || u.port) return false;
+  const h = u.hostname.toLowerCase();
+  return h === 'fcm.googleapis.com' || h.endsWith('.push.services.mozilla.com') ||
+    h.endsWith('.notify.windows.com') || h === 'web.push.apple.com' || h.endsWith('.push.apple.com');
+}
 async function handlePushSubscribe(body, env, origin, session) {
   const sub = body.subscription;
   if (!sub || !sub.endpoint || !sub.keys) return err('Suscripción inválida', 400, origin);
+  if (!isAllowedPushEndpoint(sub.endpoint)) return err('Endpoint de push no permitido', 400, origin);
   const key = await pushKeyFor(session.user, sub.endpoint);
+  const existed = !!(await env.CACUSA_KV.get(key));
   await env.CACUSA_KV.put(key, JSON.stringify({ endpoint: sub.endpoint, keys: sub.keys }));
+  // Dispositivo nuevo: avisar a los demás ya suscritos.
+  if (!existed && env.VAPID_PRIVATE_KEY_JWK) {
+    await sendWebPushAll(env, {
+      title: 'CACUSA · Nuevo dispositivo',
+      body: `🔔 Un dispositivo nuevo empezó a recibir avisos (usuario ${session.user})`,
+      url: 'https://cacusabytaitus.com/ui_kits/admin/',
+      tag: 'cacusa-system',
+      urgency: 'normal',
+    }, { excludeKey: key }).catch((e) => console.error('push dispositivo nuevo falló:', e.message));
+  }
   return ok({ ok: true }, origin);
 }
 async function handlePushUnsubscribe(body, env, origin, session) {
@@ -3571,12 +3746,25 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
   if (!(weightOz > 0 && lengthIn > 0 && widthIn > 0 && heightIn > 0)) {
     return err('Peso y las 3 dimensiones del paquete son obligatorios para generar la guía.', 400, origin);
   }
+  // Límites de USPS: 70 lb y largo + contorno ≤ 108 in (largo = lado mayor).
+  if (weightOz > 70 * 16) return err('El paquete supera el peso máximo de USPS (70 lb).', 400, origin);
+  const dims = [lengthIn, widthIn, heightIn].sort((a, b) => b - a);
+  if (dims[0] + 2 * (dims[1] + dims[2]) > 108) {
+    return err('El paquete supera el tamaño máximo de USPS (largo + contorno ≤ 108 in).', 400, origin);
+  }
+  // Nunca comprar una 2da guía por accidente: solo con reprint explícito.
+  const isReprint = body.reprint === true;
+  if (order.tracking && !isReprint) {
+    return err('Este pedido ya tiene guía/tracking. Para generar otra, confirmá la reimpresión.', 409, origin);
+  }
 
   try {
     const oauthToken = await uspsOAuthToken(env);
     const paymentToken = await uspsPaymentToken(env, oauthToken);
     const label = await uspsCreateLabel(env, {
-      oauthToken, paymentToken, weightOz, lengthIn, widthIn, heightIn, orderId: order.id,
+      oauthToken, paymentToken, weightOz, lengthIn, widthIn, heightIn,
+      // Reimpresión con idempotency key propia (si no USPS devolvería la guía vieja).
+      orderId: isReprint && order.tracking ? `${order.id}-r${(Number(order.labelReprints) || 0) + 1}` : order.id,
       toAddress: {
         firstName: cliente.nombre,
         lastName: cliente.apellido,
@@ -3588,22 +3776,42 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
         phone: cliente.telefono || undefined,
       },
     });
+    const wasReprint = isReprint && !!order.tracking;
+    const prevTracking = order.tracking || '';
     order.tracking = label.trackingNumber || '';
     order.carrier = 'USPS';
-    order.labelBase64 = label.labelImage || '';
+    // El PDF va en su propia key (label:<id>), nunca dentro de order:/orders_cache.
+    const labelBase64 = label.labelImage || '';
+    await env.CACUSA_KV.put(labelKey(order.id), labelBase64);
+    delete order.labelBase64;
+    order.labelStored = true;
     order.labelFormat = 'PDF';
+    if (wasReprint) order.labelReprints = (Number(order.labelReprints) || 0) + 1;
     // Necesarios para que handleUspsSchedulePickup() sepa cuántas guías se generaron
     // HOY y cuánto pesan en total, sin tener que adivinar ni volver a leer nada más.
     order.labelGeneratedAt = new Date().toISOString();
     order.labelWeightOz = weightOz;
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
-    if (ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
-    return ok({ ok: true, tracking: order.tracking, labelBase64: order.labelBase64, labelFormat: order.labelFormat }, origin);
+    // En reimpresión solo se avisa a la clienta si cambió el número de guía.
+    if (ctx && (!wasReprint || order.tracking !== prevTracking)) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
+    return ok({ ok: true, tracking: order.tracking, labelBase64, labelFormat: order.labelFormat, labelStored: true }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
     return err('No se pudo generar la guía: ' + e.message, 502, origin);
   }
+}
+
+// PDF de la guía de UN pedido (label:<id>; fallback a pedidos viejos con el PDF inline).
+async function handleOrderLabelGet(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.orderId;
+  if (id == null) return err('Falta orderId', 400, origin);
+  const order = await orderGet(env, id);
+  if (!order) return err('Pedido no encontrado', 404, origin);
+  const labelBase64 = (await env.CACUSA_KV.get(labelKey(order.id))) || order.labelBase64 || '';
+  if (!labelBase64) return err('Este pedido no tiene guía guardada', 404, origin);
+  return ok({ ok: true, orderId: order.id, tracking: order.tracking || '', labelBase64, labelFormat: order.labelFormat || 'PDF' }, origin);
 }
 
 // Carrier Pickup — pide que el cartero pase por la dirección de remitente
