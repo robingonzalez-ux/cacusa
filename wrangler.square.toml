@@ -26,6 +26,9 @@
 name = "cacusa-square"
 main = "square-payment-worker.js"
 compatibility_date = "2026-09-19"
+# Conserva las variables de texto puestas en el dashboard (VAPID_PUBLIC_KEY, USPS_ENV…):
+# sin esto, `wrangler deploy` las borra (ya pasó 2 veces: 20 sep y 26 sep).
+keep_vars = true
 
 [[durable_objects.bindings]]
 name = "GIFT_CARD_LEDGER"
