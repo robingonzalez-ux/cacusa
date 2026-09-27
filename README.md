@@ -1,4 +1,12 @@
-# CACUSA Design System
+# CACUSA by Taitus
+
+**Sitio oficial y tienda online: [cacusabytaitus.com](https://cacusabytaitus.com)** · [English](https://cacusabytaitus.com/en/) · [Instagram](https://www.instagram.com/cacusabytaitus/) · [TikTok](https://www.tiktok.com/@cacusabytaitus)
+
+Joyería personalizada hecha a mano, con envíos a Ecuador y Estados Unidos. Este repositorio es solo el código del sitio: para ver el catálogo y comprar, entra a [cacusabytaitus.com](https://cacusabytaitus.com).
+
+---
+
+## CACUSA Design System
 
 **Brand:** CACUSA by Taitus  
 **Industry:** Personalized Artisan Jewelry  
