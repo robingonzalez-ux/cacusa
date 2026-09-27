@@ -80,11 +80,11 @@ BASE_BREADCRUMB_RE = re.compile(
     re.DOTALL,
 )
 
-# Mismas descripciones que CATEGORY_DESC_ES/EN en ui_kits/store/index.html
+# Mismas descripciones que CATEGORY_DESC_ES/EN en ui_kits/store/app.js (y en/)
 # (_updateCategorySeo) — duplicadas a propósito, igual que CATEGORY_LABELS en
 # generate_noscript_catalog.py: no hay forma de compartir el objeto entre el
 # JS del cliente y este script sin un paso de build. Si se edita una acá,
-# editar también la otra copia en el <script> de la tienda.
+# editar también la otra copia en app.js de la tienda.
 CATEGORY_DESC_ES = {
     "cadenas": "Cadenas y collares artesanales en plata 925, baño de oro 18k y acero inoxidable — con dijes y personalización disponible por WhatsApp.",
     "aretes": "Aretes artesanales personalizados en plata 925, baño de oro 18k y acero inoxidable — desde argollas hasta ear cuffs.",

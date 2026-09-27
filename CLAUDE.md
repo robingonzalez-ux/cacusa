@@ -261,6 +261,11 @@ Dos patrones conviven en el sitio:
   `generate_product_schema.py` son la fuente única de verdad de las URLs —
   las reusan los demás scripts, así que sitemap/noscript/JSON-LD/páginas
   físicas nunca quedan en desacuerdo entre sí.
+- JS de la tienda extraído a `ui_kits/store/app.js` y `en/ui_kits/store/app.js`
+  (27 sep; antes ~140 KB en línea repetidos en cada una de las ~200 páginas) —
+  **editar la lógica de la tienda ahí, no en el `index.html`**. El `?v=` de
+  app.js/styles.css lo pone `bump_asset_versions.py` en `product-schema.yml`
+  (que también corre al cambiar esos archivos) — no tocarlo a mano.
 - CSS compartido de la tienda extraído a `ui_kits/store/styles.css`
   (referenciado con ruta absoluta `/ui_kits/store/styles.css`, funciona
   igual sin importar la profundidad de carpeta del archivo que lo usa) en
@@ -286,7 +291,7 @@ Dos patrones conviven en el sitio:
 ## Accesibilidad — patrones ya establecidos (WCAG 2.1 AA)
 
 - **Modales/overlays**: `trapFocus(modalEl, onClose)` en
-  `ui_kits/store/index.html` — atrapa Tab, cierra con Escape, devuelve el
+  `ui_kits/store/app.js` — atrapa Tab, cierra con Escape, devuelve el
   foco al elemento que lo abrió. Todo overlay nuevo debe engancharse a esa
   función.
 - **Admin (React)**: componente `Modal` compartido, mismo algoritmo.

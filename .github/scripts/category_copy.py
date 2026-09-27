@@ -2,8 +2,8 @@
 
 Los usa generate_product_pages.py para las páginas físicas de categoría
 (ui_kits/store/categoria/<slug>/ y en/). CATEGORY_TITLE_ES/EN está duplicado
-a propósito en el <script> de ui_kits/store/index.html y
-en/ui_kits/store/index.html (_updateCategorySeo), igual que CATEGORY_DESC_*:
+a propósito en ui_kits/store/app.js y
+en/ui_kits/store/app.js (_updateCategorySeo), igual que CATEGORY_DESC_*:
 si se edita un título acá, editar también esas dos copias — si no, el JS
 pisa el <title> con otro texto apenas carga la página.
 

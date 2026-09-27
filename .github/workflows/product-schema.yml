@@ -45,6 +45,10 @@ on:
       # con GITHUB_TOKEN, y GitHub no dispara workflows por commits de GITHUB_TOKEN.
       - "ui_kits/store/index.html"
       - "en/ui_kits/store/index.html"
+      - "ui_kits/store/app.js"
+      - "en/ui_kits/store/app.js"
+      - "ui_kits/store/styles.css"
+      - ".github/scripts/bump_asset_versions.py"
       - ".github/scripts/generate_*.py"
       - ".github/scripts/category_copy.py"
   workflow_dispatch: {}
@@ -68,6 +72,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: main
+
+      # Primero: ?v=<hash> de app.js/styles.css en las plantillas, así las páginas
+      # físicas (que se copian de ellas en el último paso) salen con la versión nueva.
+      - name: Versionar app.js y styles.css
+        run: python3 .github/scripts/bump_asset_versions.py
 
       - name: Generar JSON-LD estático
         run: python3 .github/scripts/generate_product_schema.py
