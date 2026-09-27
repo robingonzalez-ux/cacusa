@@ -2138,6 +2138,17 @@ function _productSlugFor(p, lang) {
   return (slug ? slug + '-' : '') + p.id;
 }
 function _categorySlug(cat) { return _slugify(cat); }
+// <title> de una ficha: misma regla que product_title() en
+// .github/scripts/generate_product_pages.py (máx. 70 caracteres, aviso de Bing).
+function _productTitle(name) {
+  const full = name + ' — CACUSA by Taitus';
+  if (full.length <= 70) return full;
+  const short = name + ' | CACUSA';
+  if (short.length <= 70) return short;
+  const room = 70 - '… | CACUSA'.length;
+  const cut = name.slice(0, room).replace(/\s+\S*$/, '').replace(/[\s,.;:\-—]+$/, '');
+  return cut + '… | CACUSA';
+}
 function _setMeta(id, val) { const el = document.getElementById(id); if (el) el.setAttribute('content', val); }
 function _setCanonical(url) { const el = document.getElementById('canonicalLink'); if (el) el.setAttribute('href', url); }
 // Barrido SEO (19 sep): las URLs limpias (/producto/<slug>-<id>/, /categoria/<slug>/) son
@@ -2258,17 +2269,17 @@ function _injectProductSchema(p) {
   const enSlug = _productSlugFor(p, 'en');
   const url  = (__LANG === 'en' ? _STORE_BASE_EN : _STORE_BASE_ES) + 'producto/' + (__LANG === 'en' ? enSlug : esSlug) + '/';
   // Título y meta description (lo que Google muestra en resultados)
-  document.title = name + ' — CACUSA by Taitus';
+  document.title = _productTitle(name);
   _setMeta('meta-desc', (desc || name).slice(0, 160));
   _setCanonical(url);
   _setHreflang(_STORE_BASE_ES + 'producto/' + esSlug + '/', _STORE_BASE_EN + 'producto/' + enSlug + '/');
   { const h1el = document.querySelector('.store-hero-h'); if (h1el) h1el.textContent = name; }
   // OG + Twitter
   _setMeta('og-url', url);
-  _setMeta('og-title', name + ' — CACUSA by Taitus');
+  _setMeta('og-title', _productTitle(name));
   _setMeta('og-description', desc || name);
   if (imgs.length) _setMeta('og-image', imgs[0]);
-  _setMeta('tw-title', name + ' — CACUSA by Taitus');
+  _setMeta('tw-title', _productTitle(name));
   _setMeta('tw-description', desc || name);
   if (imgs.length) _setMeta('tw-image', imgs[0]);
   // BreadcrumbList + Product JSON-LD

@@ -206,6 +206,24 @@ MATERIAL_EN = {
 }
 
 
+TITLE_MAX = 70  # Bing marca "Title too long" por encima de 70 caracteres
+
+
+def product_title(name):
+    """"<nombre> — CACUSA by Taitus"; si pasa de 70 caracteres, "<nombre> | CACUSA", y si
+    aun así no entra, el nombre se corta en una palabra entera con "…". Misma regla que
+    _productTitle() en ui_kits/store/app.js y en/ — si se cambia una, cambiar la otra."""
+    full = f"{name} — CACUSA by Taitus"
+    if len(full) <= TITLE_MAX:
+        return full
+    short = f"{name} | CACUSA"
+    if len(short) <= TITLE_MAX:
+        return short
+    room = TITLE_MAX - len("… | CACUSA")
+    cut = name[:room].rsplit(" ", 1)[0].rstrip(" ,.;:-—")
+    return f"{cut}… | CACUSA"
+
+
 def clean(s):
     """Nombres del catálogo con espacios de más (42 terminaban en espacio → "Anillo  —")."""
     return re.sub(r"\s+", " ", str(s or "")).strip()
@@ -273,7 +291,7 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
     name = clean(p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name"))
     desc = clean(p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description"))
     url = product_page_url(p, lang, store_path)
-    title = f"{name} — CACUSA by Taitus"
+    title = product_title(name)
     meta_desc = (desc or name or "")[:160]
     images = p.get("images") if isinstance(p.get("images"), list) and p.get("images") else (
         [p["imageUrl"]] if p.get("imageUrl") else []
