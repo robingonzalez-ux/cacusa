@@ -1,0 +1,25 @@
+name: Avisar a Bing (IndexNow)
+
+# Manda todas las URLs de sitemap.xml a IndexNow (Bing, Yandex, Seznam, Naver).
+# Corre cuando alguien edita sitemap.xml a mano o este workflow/script, y con el botón
+# manual. Los cambios de catálogo desde el panel ya avisan solos desde
+# product-schema.yml (los commits del bot no disparan otros workflows).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sitemap.xml"
+      - ".github/workflows/indexnow.yml"
+      - ".github/scripts/indexnow_ping.py"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enviar URLs a IndexNow
+        run: python3 .github/scripts/indexnow_ping.py

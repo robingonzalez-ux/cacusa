@@ -76,6 +76,7 @@ jobs:
         run: python3 .github/scripts/generate_product_pages.py
 
       - name: Commitear si hubo cambios
+        id: commit
         run: |
           git config user.name "cacusa-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -87,6 +88,7 @@ jobs:
             exit 0
           fi
           git commit -m "Regenerar JSON-LD, sitemap, catálogo noscript, llms.txt y páginas estáticas [skip ci]"
+          echo "changed=1" >> "$GITHUB_OUTPUT"
           # Varias ediciones de producto seguidas desde el admin (comitean directo a main
           # vía la API de GitHub) disparan varias corridas de este workflow casi a la vez.
           # Si otra ya empujó a main mientras esta regeneraba, el push simple se rechaza
@@ -106,3 +108,10 @@ jobs:
             fi
           done
           echo "No se pudo pushear tras varios intentos — la próxima edición de producto va a disparar una corrida nueva que se pone al día sola."
+
+      # Los commits de este bot no disparan indexnow.yml (regla de GitHub para
+      # GITHUB_TOKEN), así que el aviso a Bing se hace acá mismo. Nunca falla el job.
+      - name: Avisar a Bing (IndexNow)
+        if: steps.commit.outputs.changed == '1'
+        continue-on-error: true
+        run: python3 .github/scripts/indexnow_ping.py

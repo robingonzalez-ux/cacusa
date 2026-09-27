@@ -173,6 +173,9 @@ recargo con tarjeta desde el panel) y regenera automáticamente:
 5. Páginas físicas por producto/categoría, ES+EN (`generate_product_pages.py`,
    corre último — depende de 1 y 2 ya regenerados en la misma corrida, y
    borra solo las carpetas de productos eliminados del catálogo)
+6. Aviso a Bing vía IndexNow con todas las URLs del sitemap
+   (`indexnow_ping.py`) — solo si hubo cambios. `indexnow.yml` hace lo
+   mismo al editar `sitemap.xml` a mano o con el botón manual.
 
 Los 5 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
 Python, replicando `_slugify`/`_productParam` del JS del cliente) — deben
