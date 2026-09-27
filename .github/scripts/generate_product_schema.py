@@ -252,7 +252,7 @@ def category_page_url(cat, lang, store_path):
 
 
 def build_product_entry(p, lang, store_path, shipping_details, reviews_by_product, surcharges):
-    name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
+    name = " ".join(str((p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")) or "").split())
     desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")
     url = product_page_url(p, lang, store_path)
     entry = {
@@ -260,6 +260,7 @@ def build_product_entry(p, lang, store_path, shipping_details, reviews_by_produc
         "name": name or "",
         "description": desc or name or "",
         "url": url,
+        "sku": str(p.get("id")),
         "brand": {"@type": "Brand", "name": "CACUSA by Taitus"},
         "offers": {
             "@type": "Offer",

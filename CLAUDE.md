@@ -177,6 +177,22 @@ recargo con tarjeta desde el panel) y regenera automáticamente:
    (`indexnow_ping.py`) — solo si hubo cambios. `indexnow.yml` hace lo
    mismo al editar `sitemap.xml` a mano o con el botón manual.
 
+Desde el 27 sep `product-schema.yml` también corre cuando cambian las 2
+plantillas de la tienda o los generadores (las ~204 páginas físicas son
+copias de la plantilla — antes un cambio a mano no llegaba hasta el
+próximo cambio de catálogo). Cada página física de producto trae en el HTML
+migas visibles (Inicio › Tienda › Categoría › Producto), foto, precio y
+descripción (`static-pdp`), y cada categoría un texto de introducción; los
+títulos e intros por categoría viven en `category_copy.py` (los títulos
+están duplicados en el JS de las 2 plantillas — editar ambos). **No
+correr el pipeline a mano para publicar**: fuera de GitHub Actions no se
+leen reseñas ni recargos, y las páginas saldrían sin ellos; dejar que el
+workflow regenere.
+
+`.github/workflows/en-guides.yml` genera `en/<guía>.html` (las 9 guías)
+desde el archivo en español con `generate_en_guides.py` — ver "Patrón de
+idiomas".
+
 Los 5 scripts reusan la misma lógica de slug (`slugify`/`product_param` en
 Python, replicando `_slugify`/`_productParam` del JS del cliente) — deben
 coincidir siempre. No entra en loop: solo escucha cambios en
@@ -205,7 +221,13 @@ Dos patrones conviven en el sitio:
   `como-combinar-joyas.html`, `regalos-hombre-y-joyeria-religiosa.html` → un
   solo archivo, `data-i18n` + objeto `I18N_EN`/`T` en JS, cambia con
   `window.cacusaLang('es'|'en')`. Más simple de mantener — usar este
-  patrón para contenido nuevo tipo guía/página informativa.
+  patrón para contenido nuevo tipo guía/página informativa. Desde el 27
+  sep cada una tiene además su copia estática en `en/<guía>.html`
+  (hreflang recíproco, en el sitemap) que genera `generate_en_guides.py`
+  aplicando el diccionario EN de la propia página — nunca editar esos
+  `en/` a mano; se editan el archivo en español y su diccionario, y el
+  workflow `en-guides.yml` regenera. Una guía nueva hay que agregarla a
+  la lista del script, del workflow y del sitemap.
 
 ## Convenciones de marca ya establecidas
 

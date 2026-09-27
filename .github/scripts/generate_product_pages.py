@@ -60,9 +60,25 @@ from generate_product_schema import (  # noqa: E402
     slugify,
 )
 from generate_noscript_catalog import CATEGORY_LABELS  # noqa: E402
+from category_copy import (  # noqa: E402
+    CATEGORY_INTRO_EN,
+    CATEGORY_INTRO_ES,
+    CATEGORY_TITLE_EN,
+    CATEGORY_TITLE_ES,
+)
 
 SCHEMA_MARKER_START = "<!-- STATIC_PRODUCT_SCHEMA:START -->"
 SCHEMA_MARKER_END = "<!-- STATIC_PRODUCT_SCHEMA:END -->"
+NOSCRIPT_MARKER_RE = re.compile(r"<!--NOSCRIPT_PRODUCTS_START-->.*?<!--NOSCRIPT_PRODUCTS_END-->", re.DOTALL)
+# El cierre del bloque .store-hero del archivo base: el contenido estático de cada
+# ficha/categoría se inserta justo debajo (ver insert_static_section).
+HERO_END_RE = re.compile(r'(<p class="store-hero-value">.*?</p>\s*</div>)', re.DOTALL)
+# Nodo BreadcrumbList genérico (CACUSA > Tienda) del @graph del archivo base — en una
+# ficha/categoría compite con la ruta completa que arma este script, así que se saca.
+BASE_BREADCRUMB_RE = re.compile(
+    r'\n    \{"@type":"BreadcrumbList","itemListElement":\[\s*\{"@type":"ListItem","position":1,.*?"position":2,[^\]]*\]\},',
+    re.DOTALL,
+)
 
 # Mismas descripciones que CATEGORY_DESC_ES/EN en ui_kits/store/index.html
 # (_updateCategorySeo) — duplicadas a propósito, igual que CATEGORY_LABELS en
@@ -167,9 +183,95 @@ def inject_static_var(html_text, var_name, value):
     return html_text[: m.end()] + tag + html_text[m.end():]
 
 
+UI = {
+    "es": {"home": "Inicio", "store": "Tienda", "crumbs": "Ruta de navegación", "material": "Material",
+           "in_stock": "Disponible", "out": "Agotado", "view": "Ver detalles y comprar",
+           "more": "Ver más {cat}", "perso": "Se puede personalizar con nombre, inicial o fecha: escríbenos por WhatsApp y te damos el precio final. Listo en 5 a 10 días hábiles.",
+           "ship": "Envío a Ecuador y Estados Unidos. Gratis en compras desde $90."},
+    "en": {"home": "Home", "store": "Store", "crumbs": "Breadcrumb", "material": "Material",
+           "in_stock": "In stock", "out": "Sold out", "view": "View details and buy",
+           "more": "See more {cat}", "perso": "Can be personalized with a name, initial or date: message us on WhatsApp for the final price. Ready in 5 to 10 business days.",
+           "ship": "Ships to Ecuador and the United States. Free on orders over $90."},
+}
+
+# Material viene en español desde el panel; en las páginas /en/ se traduce con este
+# mapa (clave en minúsculas). Un material que no esté acá se muestra tal cual.
+MATERIAL_EN = {
+    "baño de oro 18k": "18k gold plating",
+    "acero inoxidable": "Stainless steel",
+    "gold filled": "Gold filled",
+    "baño de rodio": "Rhodium plating",
+    "plata 925": "925 silver",
+    "plata 925 con un baño de oro de 18k": "925 silver with 18k gold plating",
+}
+
+
+def clean(s):
+    """Nombres del catálogo con espacios de más (42 terminaban en espacio → "Anillo  —")."""
+    return re.sub(r"\s+", " ", str(s or "")).strip()
+
+
+def category_label(cat, lang):
+    return CATEGORY_LABELS.get(cat, cat) if lang == "en" else cat
+
+
+def home_path(lang):
+    return "/en/" if lang == "en" else "/"
+
+
+def crumbs_html(items, lang):
+    """items: [(label, url|None)] — el último es la página actual (sin enlace)."""
+    lis = []
+    for label, href in items:
+        if href:
+            lis.append(f'<li><a href="{attr_esc(href)}">{text_esc(label)}</a></li>')
+        else:
+            lis.append(f'<li aria-current="page">{text_esc(label)}</li>')
+    return f'<nav class="static-crumbs" aria-label="{UI[lang]["crumbs"]}"><ol>{"".join(lis)}</ol></nav>'
+
+
+def breadcrumb_ld(items):
+    return {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": i + 1, "name": label, "item": url}
+            for i, (label, url) in enumerate(items)
+        ],
+    }
+
+
+def money(x):
+    try:
+        return f"${float(x):.2f}"
+    except (TypeError, ValueError):
+        return ""
+
+
+def insert_static_section(html_text, section_html):
+    if not HERO_END_RE.search(html_text):
+        raise RuntimeError("No se encontró el cierre de .store-hero en el archivo base")
+    return HERO_END_RE.sub(lambda m: m.group(1) + "\n" + section_html, html_text, count=1)
+
+
+def page_meta_fixes(html_text, og_type):
+    """og:type correcto y sin og:image:width/height fijos (1200x630 es la medida de la
+    imagen genérica de la tienda, no la de la foto del producto que la reemplaza)."""
+    html_text = html_text.replace('<meta property="og:type" content="website">',
+                                  f'<meta property="og:type" content="{og_type}">', 1)
+    html_text = re.sub(r'\s*<meta property="og:image:(?:width|height)" content="\d+">', "", html_text)
+    return html_text
+
+
+def strip_page_specific_blocks(html_text):
+    # El <noscript> con los 93 productos se queda solo en la tienda general: repetido
+    # en cada ficha/categoría inflaba ~200 páginas con el mismo catálogo.
+    html_text = NOSCRIPT_MARKER_RE.sub("", html_text, count=1)
+    return BASE_BREADCRUMB_RE.sub("", html_text, count=1)
+
+
 def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_details, reviews_by_product, surcharges):
-    name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
-    desc = p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description")
+    name = clean(p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name"))
+    desc = clean(p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description"))
     url = product_page_url(p, lang, store_path)
     title = f"{name} — CACUSA by Taitus"
     meta_desc = (desc or name or "")[:160]
@@ -177,6 +279,16 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
         [p["imageUrl"]] if p.get("imageUrl") else []
     )
     store_label = "Store" if lang == "en" else "Tienda"
+    cat = p.get("category") or ""
+    cat_label = category_label(cat, lang)
+    cat_url = category_page_url(cat, lang, store_path) if cat else None
+    crumb_items_ld = [("CACUSA", BASE_URL + home_path(lang)), (store_label, f"{BASE_URL}{store_path}")]
+    crumb_items = [(UI[lang]["home"], home_path(lang)), (store_label, store_path)]
+    if cat_url:
+        crumb_items_ld.append((cat_label, cat_url))
+        crumb_items.append((cat_label, cat_url[len(BASE_URL):]))
+    crumb_items_ld.append((name, url))
+    crumb_items.append((name, None))
     entry = build_product_entry(p, lang, store_path, shipping_details, reviews_by_product, surcharges)
     graph = {
         "@context": "https://schema.org",
@@ -184,9 +296,8 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
             {
                 "@type": "BreadcrumbList",
                 "itemListElement": [
-                    {"@type": "ListItem", "position": 1, "name": "CACUSA", "item": BASE_URL},
-                    {"@type": "ListItem", "position": 2, "name": store_label, "item": f"{BASE_URL}{store_path}"},
-                    {"@type": "ListItem", "position": 3, "name": name, "item": url},
+                    {"@type": "ListItem", "position": i + 1, "name": label, "item": item_url}
+                    for i, (label, item_url) in enumerate(crumb_items_ld)
                 ],
             },
             entry,
@@ -221,14 +332,49 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
     if images:
         html_text = set_meta_content(html_text, "tw-image", images[0])
     html_text = replace_schema_block(html_text, schema_block)
+    html_text = strip_page_specific_blocks(html_text)
+    html_text = page_meta_fixes(html_text, "product")
+    html_text = insert_static_section(html_text, product_section_html(
+        p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges))
     html_text = inject_static_var(html_text, "__CACUSA_STATIC_PRODUCT_ID", str(p.get("id")))
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text
 
 
+def product_section_html(p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges):
+    t = UI[lang]
+    img = ""
+    if images:
+        img = (f'<img class="static-pdp-img" src="{attr_esc(images[0])}" alt="{attr_esc(name)} — CACUSA by Taitus" '
+               f'width="600" height="600" decoding="async" fetchpriority="high">')
+    price = money(priced(p, surcharges))
+    old = p.get("oldPrice")
+    old_html = f' <s class="static-pdp-old">{money(old)}</s>' if old and money(old) != price else ""
+    material = clean(p.get("material"))
+    if material and lang == "en":
+        material = MATERIAL_EN.get(material.lower(), material)
+    stock = t["out"] if p.get("available") is False else t["in_stock"]
+    meta = " · ".join(x for x in [f'{t["material"]}: {material}' if material else "", stock] if x)
+    perso = f'<p class="static-pdp-note">{text_esc(t["perso"])}</p>' if p.get("personalized") else ""
+    more = (f'<a class="static-pdp-more" href="{attr_esc(cat_url[len(BASE_URL):])}">'
+            f'{text_esc(t["more"].format(cat=cat_label.lower()))}</a>') if cat_url else ""
+    pid = json_for_script_tag(p.get("id"))
+    return (
+        f'<section class="static-pdp">{crumbs_html(crumb_items, lang)}'
+        f'<div class="static-pdp-grid">{img}<div class="static-pdp-info">'
+        f'<p class="static-pdp-price">{price}{old_html}</p>'
+        f'<p class="static-pdp-meta">{text_esc(meta)}</p>'
+        f'<p class="static-pdp-desc">{text_esc(desc or name)}</p>{perso}'
+        f'<p class="static-pdp-ship">{text_esc(t["ship"])}</p>'
+        f'<div class="static-pdp-actions"><button type="button" class="static-pdp-cta" '
+        f'onclick="openModal({attr_esc(pid)})">{text_esc(t["view"])}</button>{more}</div>'
+        f'</div></div></section>'
+    )
+
+
 def build_category_page(base_html, cat, lang, store_path, extra_levels, products):
     key = cat.lower()
-    label = CATEGORY_LABELS.get(cat, cat) if lang == "en" else cat
+    label = category_label(cat, lang)
     desc = (CATEGORY_DESC_EN if lang == "en" else CATEGORY_DESC_ES).get(key) or (
         f"Handmade {label} — personalized jewelry in 925 silver, 18k gold plating and stainless steel."
         if lang == "en"
@@ -238,7 +384,10 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
     url = category_page_url(cat, lang, store_path)
     es_url = category_page_url(cat, "es", "/ui_kits/store/")
     en_url = category_page_url(cat, "en", "/en/ui_kits/store/")
-    title = f"{label} — CACUSA by Taitus"
+    title = (CATEGORY_TITLE_EN if lang == "en" else CATEGORY_TITLE_ES).get(key) or f"{label} — CACUSA by Taitus"
+    intro = (CATEGORY_INTRO_EN if lang == "en" else CATEGORY_INTRO_ES).get(key) or desc
+    store_label = "Store" if lang == "en" else "Tienda"
+    crumbs = crumbs_html([(UI[lang]["home"], home_path(lang)), (store_label, store_path), (label, None)], lang)
     cat_products = [p for p in products if p.get("category") == cat and p.get("available") is not False]
     first_img = None
     if cat_products:
@@ -257,10 +406,15 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
             for i, p in enumerate(cat_products[:30])
         ],
     }
+    # Migas en su propio <script>: renderStoreItemListLd() del JS de la tienda reescribe
+    # #ld-storelist entero al cargar, y se llevaría la BreadcrumbList si fueran juntas.
+    crumbs_graph = {"@context": "https://schema.org", **breadcrumb_ld(
+        [("CACUSA", BASE_URL + home_path(lang)), (store_label, f"{BASE_URL}{store_path}"), (label, url)])}
     schema_block = (
         f"{SCHEMA_MARKER_START}\n"
         f"<!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->\n"
         f'<script type="application/ld+json" id="ld-storelist">{json_for_script_tag(item_list)}</script>\n'
+        f'<script type="application/ld+json" id="ld-breadcrumb">{json_for_script_tag(crumbs_graph)}</script>\n'
         f"{SCHEMA_MARKER_END}"
     )
 
@@ -282,6 +436,12 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
     if first_img:
         html_text = set_meta_content(html_text, "tw-image", first_img)
     html_text = replace_schema_block(html_text, schema_block)
+    html_text = strip_page_specific_blocks(html_text)
+    html_text = page_meta_fixes(html_text, "website")
+    html_text = insert_static_section(
+        html_text,
+        f'<section class="static-cat">{crumbs}<p class="static-cat-intro">{text_esc(intro)}</p></section>',
+    )
     html_text = inject_static_var(html_text, "__CACUSA_STATIC_CATEGORY", cat)
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text

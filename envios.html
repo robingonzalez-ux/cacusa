@@ -7,7 +7,23 @@
 <meta name="theme-color" content="#EE6FA8">
 <meta name="description" content="Política de envíos de CACUSA by Taitus — conoce tiempos de entrega, costos, envío gratis a partir de cierto monto y zonas de cobertura en Ecuador y Estados Unidos.">
 <title>Envíos — CACUSA by Taitus</title>
+<!-- GUIDE_SEO:START (generado por .github/scripts/generate_en_guides.py) -->
 <link rel="canonical" href="https://cacusabytaitus.com/envios.html">
+<link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/envios.html">
+<link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/envios.html">
+<link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/envios.html">
+<meta property="og:title" content="Envíos — CACUSA by Taitus">
+<meta property="og:description" content="Política de envíos de CACUSA by Taitus — conoce tiempos de entrega, costos, envío gratis a partir de cierto monto y zonas de cobertura en Ecuador y Estados Unidos.">
+<meta property="og:image" content="https://cacusabytaitus.com/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://cacusabytaitus.com/envios.html">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="es_EC">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:site_name" content="CACUSA by Taitus">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://cacusabytaitus.com/envios.html#article","headline":"Envíos","description":"Política de envíos de CACUSA by Taitus — conoce tiempos de entrega, costos, envío gratis a partir de cierto monto y zonas de cobertura en Ecuador y Estados Unidos.","inLanguage":"es","url":"https://cacusabytaitus.com/envios.html","image":"https://cacusabytaitus.com/assets/og-image.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://cacusabytaitus.com/envios.html"},"author":{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg"}},"publisher":{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg"}}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Inicio","item":"https://cacusabytaitus.com/"},{"@type":"ListItem","position":2,"name":"Guías","item":"https://cacusabytaitus.com/guias.html"},{"@type":"ListItem","position":3,"name":"Envíos","item":"https://cacusabytaitus.com/envios.html"}]}]}</script>
+<!-- GUIDE_SEO:END -->
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -31,8 +47,8 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5
 .nav-back{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink-deep);border:1.5px solid var(--ink-light);border-radius:999px;padding:9px 20px;transition:all .2s}
 .nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
 .lang-sw{display:flex;align-items:center;gap:2px}
-.lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
-.lang-sw button.on{background:var(--pink);color:white}
+.lang-sw button,.lang-sw a{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.lang-sw button.on,.lang-sw a.on{background:var(--pink);color:white}
 
 /* HEADER */
 header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
@@ -91,7 +107,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
   <div style="display:flex;align-items:center;gap:14px">
-    <div class="lang-sw"><button id="lEs" onclick="cacusaLang('es')">ES</button><button id="lEn" onclick="cacusaLang('en')">EN</button></div>
+    <div class="lang-sw"><a id="lEs" class="on" aria-current="page" href="/envios.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" href="/en/envios.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
     <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
   </div>
 </nav>
@@ -184,7 +200,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   var _L=localStorage.getItem('cacusa-lang')||'es';
   document.documentElement.lang=_L;
   try{
-    const res=await fetch('./data/products.json?v='+Date.now());
+    const res=await fetch('/data/products.json?v='+Date.now());
     if(res.ok){
       const data=await res.json();
       const cfg=data.config||{};
@@ -227,7 +243,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
 })();
-window.cacusaLang=l=>{localStorage.setItem('cacusa-lang',l);location.reload();};
+window.cacusaLang=l=>{try{localStorage.setItem('cacusa-lang',l);}catch(e){}location.href=l==='en'?'/en/envios.html':'/envios.html';};
 </script>
 </body>
 </html>

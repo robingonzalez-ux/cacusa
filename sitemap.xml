@@ -7,7 +7,7 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/"/>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -17,7 +17,7 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/"/>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -27,7 +27,7 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/ui_kits/store/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/ui_kits/store/"/>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -37,7 +37,7 @@
     <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/ui_kits/store/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/ui_kits/store/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/ui_kits/store/"/>
-    <lastmod>2026-09-13</lastmod>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
@@ -64,58 +64,184 @@
 
   <url>
     <loc>https://cacusabytaitus.com/envios.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/envios.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/envios.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/envios.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/envios.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/envios.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/envios.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/envios.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/devoluciones.html</loc>
-    <lastmod>2026-09-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/devoluciones.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/devoluciones.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/devoluciones.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/devoluciones.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/devoluciones.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/devoluciones.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/devoluciones.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/cuidados.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cuidados.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cuidados.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cuidados.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/cuidados.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/cuidados.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/cuidados.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/cuidados.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/guia-tallas.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guia-tallas.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guia-tallas.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guia-tallas.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/guia-tallas.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guia-tallas.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guia-tallas.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guia-tallas.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/guia-regalos.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guia-regalos.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guia-regalos.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guia-regalos.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/guia-regalos.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guia-regalos.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guia-regalos.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guia-regalos.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/guias.html</loc>
-    <lastmod>2026-09-13</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guias.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guias.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guias.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/guias.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/guias.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/guias.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/guias.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/significado-piedras.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/significado-piedras.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/significado-piedras.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/significado-piedras.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/significado-piedras.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/significado-piedras.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/significado-piedras.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/significado-piedras.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/como-combinar-joyas.html</loc>
-    <lastmod>2026-09-12</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/como-combinar-joyas.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/como-combinar-joyas.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/como-combinar-joyas.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/como-combinar-joyas.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/como-combinar-joyas.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/como-combinar-joyas.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/como-combinar-joyas.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <url>
     <loc>https://cacusabytaitus.com/regalos-hombre-y-joyeria-religiosa.html</loc>
-    <lastmod>2026-09-20</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/regalos-hombre-y-joyeria-religiosa.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/regalos-hombre-y-joyeria-religiosa.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/regalos-hombre-y-joyeria-religiosa.html"/>
+    <lastmod>2026-09-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+
+  <url>
+    <loc>https://cacusabytaitus.com/en/regalos-hombre-y-joyeria-religiosa.html</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cacusabytaitus.com/regalos-hombre-y-joyeria-religiosa.html"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://cacusabytaitus.com/en/regalos-hombre-y-joyeria-religiosa.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cacusabytaitus.com/regalos-hombre-y-joyeria-religiosa.html"/>
+    <lastmod>2026-09-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- STATIC_PRODUCT_URLS:START -->
   <url>
     <loc>https://cacusabytaitus.com/ui_kits/store/producto/anillo-doble-gg-1/</loc>

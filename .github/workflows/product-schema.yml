@@ -38,6 +38,15 @@ on:
     branches: [main]
     paths:
       - "data/products.json"
+      # 27 sep: también cuando cambian los generadores o las plantillas de la tienda
+      # (las ~204 páginas físicas son copias de ui_kits/store/index.html y en/) — antes
+      # un cambio a mano en la plantilla no llegaba a las páginas hasta el próximo
+      # cambio de catálogo. Tampoco entra en loop: el commit de este workflow se hace
+      # con GITHUB_TOKEN, y GitHub no dispara workflows por commits de GITHUB_TOKEN.
+      - "ui_kits/store/index.html"
+      - "en/ui_kits/store/index.html"
+      - ".github/scripts/generate_*.py"
+      - ".github/scripts/category_copy.py"
   workflow_dispatch: {}
   # Auditoría SEO externa (20 sep): el recargo del 4% con tarjeta vive en
   # Cloudflare KV, no en data/products.json — prender/apagarlo desde el panel

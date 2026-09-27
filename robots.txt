@@ -3,6 +3,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Google (búsqueda)
 User-agent: Googlebot
@@ -10,6 +15,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Google (entrenamiento de IA / AI Overviews / Gemini)
 User-agent: Google-Extended
@@ -17,6 +27,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Bing
 User-agent: bingbot
@@ -24,6 +39,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # ChatGPT / OpenAI
 User-agent: GPTBot
@@ -31,16 +51,31 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: OAI-SearchBot
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Perplexity
 User-agent: PerplexityBot
@@ -48,11 +83,21 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: Perplexity-User
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Anthropic (Claude)
 User-agent: ClaudeBot
@@ -60,21 +105,41 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: anthropic-ai
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: Claude-User
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: Claude-SearchBot
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Amazon (Alexa+ / Rufus)
 User-agent: Amazonbot
@@ -82,6 +147,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Meta (Facebook/Instagram — vista previa de links y Meta AI)
 User-agent: FacebookBot
@@ -89,11 +159,21 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: Meta-ExternalAgent
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Pinterest (descubrimiento visual — muy relevante para joyería)
 User-agent: Pinterestbot
@@ -101,6 +181,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Apple (Siri / Apple Intelligence / Spotlight)
 User-agent: Applebot
@@ -108,11 +193,21 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 User-agent: Applebot-Extended
 Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # Common Crawl (fuente de entrenamiento de muchos modelos de IA)
 User-agent: CCBot
@@ -120,6 +215,11 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 # ByteDance / TikTok
 User-agent: Bytespider
@@ -127,5 +227,10 @@ Allow: /
 Disallow: /ui_kits/admin/
 Disallow: /preview/
 Disallow: /.github/
+Disallow: /exports/
+Disallow: /tools/
+Disallow: /uploads/
+Disallow: /README.md
+Disallow: /SKILL.md
 
 Sitemap: https://cacusabytaitus.com/sitemap.xml
