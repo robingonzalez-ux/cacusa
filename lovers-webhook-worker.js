@@ -32,7 +32,8 @@
  *
  * Square events subscribed (in Square Dashboard → Webhooks):
  *   subscription.created            → crea registro en Firebase cuando nace la suscripción
- *   invoice.payment_made            → marca suscriptora como "activo"
+ *   invoice.payment_made            → marca suscriptora como "activo" (suscripción vieja de
+ *                                     Square O factura de Lovers — ver "Cobro por factura")
  *   invoice.scheduled_charge_failed → marca suscriptora como "pago_fallido"
  *   subscription.updated            → si status=CANCELED, marca "cancelado"
  *
@@ -53,6 +54,22 @@
  *   POST   /admin/reviews/{productId}/{reviewId}/approve → publica una reseña pendiente
  *   Todas las rutas /admin/* se autentican con el header X-Admin-Key, que lleva el token de
  *   sesión del panel admin (no la firma de Square, y ya no una clave fija).
+ *
+ * Cobro por factura (2 oct — Apple Pay):
+ *   Square no acepta Apple Pay en Square Subscriptions (solo tarjeta guardada). Las altas
+ *   NUEVAS ya no usan los links fijos de suscripción: cada ciclo es una FACTURA de Square
+ *   (su página de pago sí ofrece Apple Pay/Google Pay/tarjeta). Primer pago: AW
+ *   /lovers/register → POST /internal/lovers/start-invoice (acá) → factura SHARE_MANUALLY
+ *   y la página redirige a su public_url. Renovaciones: el cron diario (scheduled(),
+ *   runLoversBilling) manda por EMAIL la factura del ciclo siguiente 3 días antes de
+ *   `vence`; a los 7 días de `vence` sin pagar → estado_pago 'vencido' (cupones apagados,
+ *   push a Tita/Robin, correo "se pausó"); si paga después, invoice.payment_made reactiva.
+ *   Registro con modo_cobro:'factura'. Las suscriptoras viejas (Square Subscriptions,
+ *   square_subscription_id) siguen exactamente como antes. Requiere el Cron Trigger en
+ *   Cloudflare (Settings → Triggers → Cron, ej. 0 14 * * *) y opcionalmente el secret
+ *   SQUARE_LOCATION_ID (si falta, se usa la ubicación principal de la cuenta).
+ *   Rutas nuevas: POST /internal/lovers/start-invoice (Worker-a-Worker),
+ *   POST /admin/cancel-lovers-invoice, POST /admin/lovers-billing-run (corre el cron a mano).
  *
  * Por qué existe este worker en el medio (en vez de que el admin hable directo con Firebase):
  *   Las reglas de Firebase para cacusa_lovers / cacusa_lovers_photos / cacusa_reviews solo
@@ -307,6 +324,288 @@ async function cancelSquareSubscription(subscriptionId, squareToken) {
   return { ok: r.ok, status: r.status, body: d };
 }
 
+// ── Cobro por factura (2 oct) ─────────────────────────────────────────────────
+// Ver el bloque "Cobro por factura" del encabezado. Montos en centavos — mismos precios
+// que muestra la página (config.lovers en data/products.json); si cambian allá, cambiar acá.
+const LOVERS_PRICES_CENTS = { mensual: 1999, anual: 21989 };
+const LOVERS_MONTO_TXT = { mensual: '$19.99/mes', anual: '$219.89/año' };
+const LOVERS_INVOICE_LEAD_DAYS = 3;  // la factura de renovación sale 3 días antes de `vence`
+const LOVERS_GRACE_DAYS = 7;         // a los 7 días de `vence` sin pagar → 'vencido'
+const SQUARE_VERSION = '2024-11-20';
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+function addDaysIso(iso, n) {
+  const d = new Date(iso + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+// +1 mes (31 ene → 28/29 feb, nunca salta a marzo) o +1 año.
+function addPeriodIso(iso, periodo) {
+  const d = new Date(iso + 'T00:00:00Z');
+  if (periodo === 'anual') {
+    d.setUTCFullYear(d.getUTCFullYear() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+  const day = d.getUTCDate();
+  const y = d.getUTCFullYear(), m = d.getUTCMonth() + 1;
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(y, m, Math.min(day, last))).toISOString().slice(0, 10);
+}
+function planPeriodo(plan) { return /anual|annual/i.test(String(plan || '')) ? 'anual' : 'mensual'; }
+function planNombre(periodo) { return periodo === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers'; }
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+// Claves de idempotencia deterministas: si un reintento repite la misma llamada, Square
+// devuelve el mismo objeto en vez de crear otro (nunca 2 facturas para el mismo ciclo).
+async function idemKey(...parts) { return (await sha256Hex(parts.join('|'))).slice(0, 40); }
+
+async function squareApi(env, path, method = 'GET', body) {
+  const r = await fetch(`${SQUARE_API}${path}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${env.SQUARE_ACCESS_TOKEN}`,
+      'Square-Version': SQUARE_VERSION,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(`Square ${method} ${path} → ${r.status}: ${JSON.stringify(d.errors || d).slice(0, 300)}`);
+    e.status = r.status;
+    throw e;
+  }
+  return d;
+}
+
+async function loversLocationId(env) {
+  if (env.SQUARE_LOCATION_ID) return env.SQUARE_LOCATION_ID;
+  const d = await squareApi(env, '/locations/main');
+  return d.location.id;
+}
+
+// Cliente de Square por email (la factura necesita un customer_id con email para que
+// Square pueda mandarla por correo). Busca primero para no duplicar clientes.
+async function ensureSquareCustomer(env, { email, nombre, apellido }) {
+  const s = await squareApi(env, '/customers/search', 'POST', {
+    query: { filter: { email_address: { exact: email } } }, limit: 1,
+  });
+  if (s.customers && s.customers[0]) return s.customers[0].id;
+  const c = await squareApi(env, '/customers', 'POST', {
+    idempotency_key: await idemKey('lovers-cust', email),
+    email_address: email,
+    ...(nombre ? { given_name: String(nombre).slice(0, 100) } : {}),
+    ...(apellido ? { family_name: String(apellido).slice(0, 100) } : {}),
+  });
+  return c.customer.id;
+}
+
+// Crea + publica la factura de un ciclo. `tag` identifica el ciclo (alta-<fecha> o la
+// fecha de vence que renueva): con la misma key+periodo+tag nunca se crea una segunda
+// factura (KV + claves de idempotencia de Square). El order lleva en metadata todo lo
+// que invoice.payment_made necesita para saber de quién es y qué periodo cubre.
+async function createLoversInvoice(env, { key, email, nombre, apellido, periodo, desde, dueDate, delivery, idioma, tag }) {
+  const kvKey = `loversinv:${key}:${periodo}:${tag}`;
+  if (env.CACUSA_KV) {
+    const cached = await env.CACUSA_KV.get(kvKey);
+    if (cached) { try { const c = JSON.parse(cached); if (c && c.url) return { ...c, reused: true }; } catch (_) {} }
+  }
+  const en = idioma === 'en';
+  const customerId = await ensureSquareCustomer(env, { email, nombre, apellido });
+  const locationId = await loversLocationId(env);
+  const itemName = periodo === 'anual'
+    ? (en ? 'Cacusa Lovers — annual membership' : 'Cacusa Lovers — membresía anual')
+    : (en ? 'Cacusa Lovers — monthly membership' : 'Cacusa Lovers — membresía mensual');
+  const order = await squareApi(env, '/orders', 'POST', {
+    idempotency_key: await idemKey('lovers-ord', kvKey),
+    order: {
+      location_id: locationId,
+      customer_id: customerId,
+      reference_id: 'lovers',
+      line_items: [{ name: itemName, quantity: '1', base_price_money: { amount: LOVERS_PRICES_CENTS[periodo], currency: 'USD' } }],
+      metadata: { lovers_key: key, lovers_periodo: periodo, lovers_desde: desde || 'pago', lovers_idioma: en ? 'en' : 'es' },
+    },
+  });
+  const reminders = delivery === 'EMAIL' ? [
+    { relative_scheduled_days: 0, message: en ? 'Your Cacusa Lovers payment is due today. Pay with Apple Pay, Google Pay or card.' : 'Hoy vence tu pago de Cacusa Lovers. Puedes pagar con Apple Pay, Google Pay o tarjeta.' },
+    { relative_scheduled_days: 3, message: en ? 'Reminder: your Cacusa Lovers payment is still pending. Your benefits pause 7 days after the due date.' : 'Recordatorio: tu pago de Cacusa Lovers sigue pendiente. Tus beneficios se pausan 7 días después del vencimiento.' },
+  ] : undefined;
+  const inv = await squareApi(env, '/invoices', 'POST', {
+    idempotency_key: await idemKey('lovers-inv', kvKey),
+    invoice: {
+      location_id: locationId,
+      order_id: order.order.id,
+      primary_recipient: { customer_id: customerId },
+      payment_requests: [{
+        request_type: 'BALANCE',
+        due_date: dueDate,
+        automatic_payment_source: 'NONE',
+        ...(reminders ? { reminders } : {}),
+      }],
+      delivery_method: delivery,
+      // card:true habilita también Apple Pay y Google Pay en la página de pago de Square.
+      accepted_payment_methods: { card: true, square_gift_card: false, bank_account: false, buy_now_pay_later: false, cash_app_pay: false },
+      title: 'Cacusa Lovers',
+      description: periodo === 'anual'
+        ? (en ? '2 handmade pieces every month for a year. Thank you for being part of the club ♡' : '2 piezas hechas a mano cada mes durante un año. Gracias por ser parte del club ♡')
+        : (en ? '2 handmade pieces this month. Thank you for being part of the club ♡' : '2 piezas hechas a mano este mes. Gracias por ser parte del club ♡'),
+    },
+  });
+  const pub = await squareApi(env, `/invoices/${inv.invoice.id}/publish`, 'POST', {
+    version: inv.invoice.version,
+    idempotency_key: await idemKey('lovers-pub', kvKey),
+  });
+  const out = { invoiceId: pub.invoice.id, url: pub.invoice.public_url || '', customerId, dueDate };
+  if (env.CACUSA_KV && out.url) await env.CACUSA_KV.put(kvKey, JSON.stringify(out), { expirationTtl: 400 * 86400 });
+  return out;
+}
+
+// Correo "tu suscripción se pausó" (lo arma y manda cacusa-admin, igual que el de
+// bienvenida). Best-effort.
+async function notifyPausedEmail(email, fields, env) {
+  if (!env.ORDER_INGEST_KEY || !email) return;
+  try {
+    const r = await adminFetch(env, '/internal/lovers/paused-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ email, ...fields }),
+    });
+    if (!r.ok) console.error('paused-email failed:', r.status, await r.text().catch(() => ''));
+  } catch (e) {
+    console.error('paused-email error:', e.message);
+  }
+}
+
+function idiomaDe(s) {
+  return s && (s.idioma === 'es' || s.idioma === 'en') ? s.idioma : (s && s.pais === 'Ecuador' ? 'es' : 'en');
+}
+
+// Cron diario: factura de renovación 3 días antes de `vence` y pausa a los 7 días sin
+// pagar. Solo toca registros modo_cobro:'factura'. Cada suscriptora va en su propio
+// try/catch: un error de Square con una no frena a las demás.
+async function runLoversBilling(env) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const fbAuth = env.FB_DB_SECRET;
+  const summary = { facturas: 0, vencidas: 0, errores: [] };
+  if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) { summary.errores.push('Faltan FB_DB_SECRET o SQUARE_ACCESS_TOKEN'); return summary; }
+  const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+  if (!r.ok) { summary.errores.push(`Firebase ${r.status}`); return summary; }
+  const all = (await r.json()) || {};
+  const today = todayIso();
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || s.modo_cobro !== 'factura' || s.estado_pago !== 'activo') continue;
+    if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
+    try {
+      let facturaUrl = s.factura_actual || '';
+      if (today >= addDaysIso(s.vence, -LOVERS_INVOICE_LEAD_DAYS) && s.factura_actual_ciclo !== s.vence) {
+        const inv = await createLoversInvoice(env, {
+          key, email: s.email, nombre: s.nombre, apellido: s.apellido,
+          periodo: planPeriodo(s.plan), desde: s.vence,
+          dueDate: s.vence < today ? today : s.vence,
+          delivery: 'EMAIL', idioma: idiomaDe(s), tag: s.vence,
+        });
+        facturaUrl = inv.url;
+        const ok = await updateSubscriber(key, null, {
+          factura_actual: inv.url, factura_actual_id: inv.invoiceId, factura_actual_ciclo: s.vence,
+        }, dbUrl, fbAuth);
+        if (!ok) throw new Error('No se pudo guardar factura_actual en Firebase');
+        if (!inv.reused) summary.facturas++;
+      }
+      if (today > addDaysIso(s.vence, LOVERS_GRACE_DAYS)) {
+        const ok = await updateSubscriber(key, 'vencido', { fecha_vencido: today }, dbUrl, fbAuth);
+        if (!ok) throw new Error('No se pudo marcar vencido en Firebase');
+        summary.vencidas++;
+        const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email;
+        await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
+        await notifyAdminPush('CACUSA · Lovers sin pagar', `⏸ ${nombre} no pagó su factura (vencía ${s.vence}) — se pausaron sus beneficios`, env);
+        await notifyPausedEmail(s.email, { nombre: s.nombre, idioma: idiomaDe(s), url: facturaUrl }, env);
+      }
+    } catch (e) {
+      console.error('runLoversBilling:', key, e.message);
+      summary.errores.push(`${key}: ${e.message}`.slice(0, 300));
+    }
+  }
+  console.log('runLoversBilling:', JSON.stringify(summary));
+  return summary;
+}
+
+// invoice.payment_made de una factura de Lovers (sin subscription_id, con metadata
+// lovers_* en su order). Devuelve dbOk. Reusa los mismos avisos/cupón/envío/correo que
+// el camino de suscripción, con las mismas reglas de idempotencia.
+async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
+  const key = String(meta.lovers_key || '');
+  if (!validId(key, true)) { console.warn('factura Lovers con lovers_key inválido:', invoice.id); return true; }
+  const periodo = meta.lovers_periodo === 'anual' ? 'anual' : 'mensual';
+  const today = todayIso();
+  const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+  const alreadyProcessed = !!invoice.id && existing?.square_invoice_id === invoice.id;
+  const wasActive = existing?.estado_pago === 'activo';
+  // Periodo anclado al ciclo que cubre la factura (lovers_desde = vence anterior en una
+  // renovación). Si se paga tan tarde que ese periodo ya pasó, arranca desde hoy.
+  const desde = ISO_DATE_RE.test(meta.lovers_desde || '') ? meta.lovers_desde : today;
+  let vence = addPeriodIso(desde, periodo);
+  if (vence <= today) vence = addPeriodIso(today, periodo);
+  if (existing?.vence && existing.vence > vence && alreadyProcessed) vence = existing.vence;
+
+  let customer = null;
+  const customerId = invoice.primary_recipient?.customer_id || '';
+  if (!existing) customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
+  const email = existing?.email || invoice.primary_recipient?.email_address || customer?.email_address || key.replace(/,/g, '.');
+  const hasAddress = !!(existing && existing.direccion);
+  const plan = planNombre(periodo);
+  const fields = {
+    ultimo_pago: today,
+    square_invoice_id: invoice.id || '',
+    square_customer_id: customerId,
+    modo_cobro: 'factura',
+    plan,
+    monto: LOVERS_MONTO_TXT[periodo],
+    vence,
+    // La factura pagada deja de ser "la pendiente".
+    ...(existing?.factura_actual_id === invoice.id || !existing?.factura_actual_id ? { factura_actual: '', factura_actual_id: '' } : {}),
+    // Pagó antes de confirmar su correo: todavía no hay dirección confirmada (doble
+    // opt-in, S07), así que el envío del ciclo queda pendiente hasta que confirme
+    // (ver /internal/lovers/confirm-register).
+    ...(!hasAddress ? { envio_pendiente: invoice.id || '' } : {}),
+    ...(!existing ? {
+      email: String(email).toLowerCase(),
+      nombre: customer?.given_name || '',
+      apellido: customer?.family_name || '',
+      fecha: today,
+      metodo_pago: 'square',
+      idioma: meta.lovers_idioma === 'en' ? 'en' : 'es',
+    } : {}),
+  };
+  const dbOk = await updateSubscriber(key, 'activo', fields, dbUrl, fbAuth);
+  if (!dbOk) return false;
+  const merged = { ...(existing || {}), ...fields };
+  const nombre = [merged.nombre, merged.apellido].filter(Boolean).join(' ') || email;
+  if (!alreadyProcessed) {
+    const txt = wasActive
+      ? `🔁 ${nombre} pagó su ${periodo === 'anual' ? 'renovación anual' : 'mes'} (vence ${vence})`
+      : (hasAddress ? `✅ ${nombre} confirmó su pago (${periodo})` : `✅ ${nombre} pagó (${periodo}) — falta que confirme su correo para tener la dirección`);
+    await notifyAdminPush('CACUSA · Pago confirmado - Lovers', txt, env);
+  }
+  await notifyExclusiveCoupon('activate', email, merged.idioma || merged.pais, env);
+  if (hasAddress) {
+    await notifyLoversShipment({
+      nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
+      direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
+      estado: existing.estado, zip: existing.zip, pais: existing.pais,
+    }, plan, invoice.id || '', env);
+  }
+  if (!wasActive) {
+    await notifySubscriptionEmail(email, {
+      nombre: merged.nombre, apellido: merged.apellido, plan, monto: LOVERS_MONTO_TXT[periodo], idioma: idiomaDe(merged),
+    }, env);
+  }
+  return true;
+}
+
 // ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
 // Valida el mismo token HMAC-SHA256 firmado que emite el login de cacusa-admin, usando el
 // secret compartido SESSION_SECRET. Este worker nunca EMITE tokens (no hay login acá), solo
@@ -395,6 +694,10 @@ export default {
   async fetch(request, env) {
     return withAdminOrigin(request, await handleRequest(request, env));
   },
+  // Cron Trigger diario (Cloudflare → Settings → Triggers → Cron) — ver runLoversBilling().
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runLoversBilling(env));
+  },
 };
 
 // CORS de /admin/*: refleja el Origin solo si es uno de los orígenes del panel.
@@ -438,7 +741,11 @@ async function handleRequest(request, env) {
       const match = Object.values(subscribers).find(s => {
         if (!s || String(s.telefono || '').replace(/\D/g, '').slice(-7) !== phoneDigits.slice(-7)) return false;
         if (s.estado_pago !== 'activo') return false;
-        if (s.vence && s.vence < todayIso) return false;
+        // Factura: los beneficios siguen durante los 7 días de gracia después de `vence`
+        // (el cron la pasa a 'vencido' recién ahí). Manual: `vence` es el límite exacto.
+        const limite = s.modo_cobro === 'factura' && ISO_DATE_RE.test(s.vence || '')
+          ? addDaysIso(s.vence, LOVERS_GRACE_DAYS) : s.vence;
+        if (limite && limite < todayIso) return false;
         return true;
       });
       // email/idioma solo para cacusa-admin (manda el código de envío por correo).
@@ -498,6 +805,49 @@ async function handleRequest(request, env) {
       return adminJson({ notify: true, nombre, plan: existing.plan || 'Cacusa Lovers' }, 200);
     }
 
+    // ── POST /internal/lovers/start-invoice — Worker-a-Worker (ORDER_INGEST_KEY). Lo
+    // llama cacusa-admin desde /lovers/register: crea (o reusa) la factura del PRIMER
+    // pago y devuelve su URL pública para que la página redirija ahí (Apple Pay). La
+    // factura es SHARE_MANUALLY: Square no le manda ningún correo a nadie, así que un
+    // email ajeno escrito en el formulario no recibe nada (el rate limit por IP vive en
+    // cacusa-admin). No escribe en Firebase: el registro lo crea la confirmación del
+    // correo (doble opt-in) o el pago.
+    if (url.pathname === '/internal/lovers/start-invoice') {
+      if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+      if (!isInternalIngest(request, env)) return adminJson({ error: 'Unauthorized' }, 401);
+      if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) return adminJson({ error: 'Worker no configurado' }, 500);
+      const b = await request.json().catch(() => ({}));
+      const email = String(b.email || '').trim().toLowerCase().slice(0, 150);
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return adminJson({ error: 'Email inválido' }, 400);
+      const key = subscriberKey(email);
+      if (!validId(key, true)) return adminJson({ error: 'Email inválido' }, 400);
+      let current;
+      try { current = await getSubscriberByKey(key, dbUrl, fbAuth); }
+      catch (e) { return adminJson({ error: 'Firebase no disponible' }, 500); }
+      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
+        return adminJson({ already: true }, 200);
+      }
+      // Ya tenía una factura de renovación sin pagar: se le devuelve esa misma.
+      if (current && current.estado_pago === 'vencido' && current.factura_actual) {
+        return adminJson({ url: current.factura_actual }, 200);
+      }
+      const periodo = planPeriodo(b.plan);
+      const today = todayIso();
+      try {
+        const inv = await createLoversInvoice(env, {
+          key, email,
+          nombre: String(b.nombre || '').slice(0, 100), apellido: String(b.apellido || '').slice(0, 100),
+          periodo, desde: 'pago', dueDate: today, delivery: 'SHARE_MANUALLY',
+          idioma: b.idioma === 'en' ? 'en' : 'es', tag: `alta-${today}`,
+        });
+        if (!inv.url) return adminJson({ error: 'Square no devolvió la URL de la factura' }, 502);
+        return adminJson({ url: inv.url }, 200);
+      } catch (e) {
+        console.error('start-invoice:', e.message);
+        return adminJson({ error: 'No se pudo crear la factura en Square' }, 502);
+      }
+    }
+
     // ── POST /internal/lovers/confirm-register — Worker-a-Worker, autenticado con
     // ORDER_INGEST_KEY. Nuevo (22 sep — auditoría externa S07): antes el formulario
     // público (cacusa-lovers.html) escribía DIRECTO a este mismo nodo de Firebase
@@ -526,6 +876,29 @@ async function handleRequest(request, env) {
         current = await getSubscriberByKey(key, dbUrl, fbAuth);
       } catch (e) {
         return adminJson({ error: 'Firebase no disponible' }, 500);
+      }
+      // Cobro por factura: si pagó ANTES de confirmar su correo, el registro ya está
+      // 'activo' pero sin dirección (el pago no trae una dirección confirmada). Esta
+      // confirmación es justamente la prueba de que controla el email: recién acá se
+      // guarda la dirección y se crea el envío del ciclo que quedó pendiente.
+      if (current && current.estado_pago === 'activo' && current.modo_cobro === 'factura' && !current.direccion) {
+        const addr = {
+          nombre: current.nombre || String(b.nombre || '').slice(0, 100),
+          apellido: current.apellido || String(b.apellido || '').slice(0, 100),
+          telefono: String(b.telefono || '').slice(0, 30),
+          direccion: String(b.direccion || '').slice(0, 200),
+          apto: String(b.apto || '').slice(0, 40),
+          ciudad: String(b.ciudad || '').slice(0, 100),
+          estado: String(b.estado || '').slice(0, 50),
+          zip: String(b.zip || '').slice(0, 20),
+          pais: String(b.pais || '').slice(0, 40),
+        };
+        const okAddr = await updateSubscriber(key, null, { ...addr, envio_pendiente: '' }, dbUrl, fbAuth);
+        if (!okAddr) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
+        if (current.envio_pendiente && addr.direccion) {
+          await notifyLoversShipment(addr, current.plan, current.envio_pendiente, env);
+        }
+        return adminJson({ ok: true }, 200);
       }
       if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
         console.warn('confirm-register: re-registro ignorado para', email, 'estado:', current.estado_pago);
@@ -559,6 +932,7 @@ async function handleRequest(request, env) {
 
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
+        url.pathname === '/admin/cancel-lovers-invoice' || url.pathname === '/admin/lovers-billing-run' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
         url.pathname.startsWith('/admin/reviews/')) {
 
@@ -601,6 +975,44 @@ async function handleRequest(request, env) {
         } catch (e) { console.error('Firebase update after cancel failed:', e.message); }
 
         return adminJson({ ok: true }, 200);
+      }
+
+      // POST /admin/cancel-lovers-invoice — cancelar una suscriptora de cobro por factura:
+      // anula en Square la factura pendiente (si hay) y la marca 'cancelado'. Ya no se le
+      // generan más facturas (el cron solo factura a las 'activo').
+      if (url.pathname === '/admin/cancel-lovers-invoice') {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        const { firebaseKey } = (await request.json().catch(() => null)) || {};
+        if (!validId(firebaseKey, true)) return adminJson({ error: 'Id inválido' }, 400);
+        let s;
+        try { s = await getSubscriberByKey(firebaseKey, dbUrl, fbAuth); }
+        catch (e) { return adminJson({ error: 'Firebase no disponible' }, 502); }
+        if (!s) return adminJson({ error: 'No existe esa suscriptora' }, 404);
+        if (s.factura_actual_id && validId(s.factura_actual_id)) {
+          try {
+            const g = await squareApi(env, `/invoices/${s.factura_actual_id}`);
+            const st = g.invoice?.status;
+            if (st === 'UNPAID' || st === 'SCHEDULED' || st === 'DRAFT') {
+              await squareApi(env, `/invoices/${s.factura_actual_id}/cancel`, 'POST', { version: g.invoice.version });
+            }
+          } catch (e) {
+            console.error('cancel-lovers-invoice:', e.message);
+            return adminJson({ error: 'Square rechazó la anulación de la factura', detail: e.message }, 502);
+          }
+        }
+        const ok = await updateSubscriber(firebaseKey, 'cancelado', {
+          fecha_cancelacion: todayIso(), factura_actual: '', factura_actual_id: '',
+        }, dbUrl, fbAuth);
+        if (!ok) return adminJson({ error: 'No se pudo marcar cancelado en Firebase' }, 502);
+        await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
+        return adminJson({ ok: true }, 200);
+      }
+
+      // POST /admin/lovers-billing-run — corre el cron de facturación a mano (para probar
+      // sin esperar al día siguiente). Idempotente: no duplica facturas ni avisos.
+      if (url.pathname === '/admin/lovers-billing-run') {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        return adminJson(await runLoversBilling(env), 200);
       }
 
       // GET /admin/lovers — lista de suscriptoras + fotos destacadas
@@ -718,7 +1130,7 @@ async function handleRequest(request, env) {
           // key no existe) — esta ruta no está dentro del try/catch general del webhook
           // más abajo, así que se envuelve acá para no dejar una excepción sin atrapar.
           let existing = null;
-          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'activo') {
+          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'activo') {
             try {
               existing = await getSubscriberByKey(id, dbUrl, fbAuth);
             } catch (e) {
@@ -739,7 +1151,7 @@ async function handleRequest(request, env) {
           if (existing && existing.estado_pago !== fields.estado_pago) {
             const email = existing.email || '';
             const idioma = fields.idioma || existing.idioma || existing.pais;
-            if (fields.estado_pago === 'cancelado') {
+            if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido') {
               await notifyExclusiveCoupon('deactivate', email, idioma, env, existing.telefono);
             } else {
               await notifyExclusiveCoupon('activate', email, idioma, env);
@@ -927,10 +1339,20 @@ async function handleRequest(request, env) {
       else if (type === 'invoice.payment_made') {
         const invoice = data?.invoice;
 
-        // Solo procesar facturas de suscripción recurrente; ignorar pagos únicos
+        // Sin subscription_id: puede ser una factura de Lovers (cobro por factura, 2 oct —
+        // se reconoce por la metadata lovers_* de su order) o cualquier otra factura de la
+        // cuenta (esas se siguen ignorando).
         if (!invoice?.subscription_id) {
-          console.log('Ignoring non-subscription invoice:', invoice?.id);
-          return new Response('OK', { status: 200 });
+          const orderId = invoice?.order_id;
+          const meta = orderId && validId(orderId)
+            ? ((await squareApi(env, `/orders/${orderId}`)).order?.metadata || {})
+            : {};
+          if (!meta.lovers_key) {
+            console.log('Ignoring non-subscription invoice:', invoice?.id);
+            return new Response('OK', { status: 200 });
+          }
+          dbOk = await handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth);
+          return new Response(dbOk ? 'OK' : 'Firebase write failed', { status: dbOk ? 200 : 500 });
         }
 
         const customerId = invoice?.primary_recipient?.customer_id;

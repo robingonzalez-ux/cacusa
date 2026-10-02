@@ -276,6 +276,14 @@ export default {
       // (primer pago real o resuscripción, nunca una renovación normal — ver
       // wasActive en invoice.payment_made). Mismo guard Worker-a-Worker que el resto
       // de rutas internas (ORDER_INGEST_KEY compartido).
+      // Correo "tu suscripción se pausó" (cobro por factura sin pagar 7 días después de
+      // vencer) — lo pide el cron de lovers-webhook-worker.js. Mismo guard interno.
+      if (path.endsWith('/internal/lovers/paused-email')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        await sendLoversPausedEmail(body, env).catch(e => console.error('paused-email interno falló:', e.message));
+        return ok({ ok: true }, allowOrigin);
+      }
+
       if (path.endsWith('/internal/lovers/subscription-email')) {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         await sendSubscriptionConfirmationEmail(body, env).catch(e => console.error('subscription-email interno falló:', e.message));
@@ -2792,7 +2800,28 @@ async function handleLoversRegister(body, env, origin, request) {
     // Tita/Robin pueden confirmarla a mano desde el panel como ya hacían antes).
     console.error('email de confirmación de Lovers falló:', e.message);
   }
-  return ok({ ok: true }, origin);
+
+  // Cobro por factura (2 oct): la página redirige a la factura del primer pago (Apple
+  // Pay/Google Pay/tarjeta) en vez de a los links fijos de suscripción de Square — ver
+  // "Cobro por factura" en lovers-webhook-worker.js. Si algo falla, payUrl queda vacío y
+  // la página cae a los links viejos (tarjeta), así nunca se pierde una alta.
+  let payUrl = '', already = false;
+  if (env.ORDER_INGEST_KEY) {
+    try {
+      const r = await loversFetch(env, '/internal/lovers/start-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+        body: JSON.stringify({ email, nombre, apellido: pendingData.apellido, plan: pendingData.plan, idioma }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok && typeof d.url === 'string' && /^https:\/\/[a-z0-9.-]*square(up)?\.(com|site|link)\//i.test(d.url)) payUrl = d.url;
+      if (r.ok && d.already) already = true;
+      if (!r.ok) console.error('start-invoice respondió', r.status, JSON.stringify(d).slice(0, 300));
+    } catch (e) {
+      console.error('start-invoice falló:', e.message);
+    }
+  }
+  return ok({ ok: true, payUrl, already }, origin);
 }
 
 async function handleLoversConfirm(body, env, origin) {
@@ -3589,6 +3618,48 @@ async function sendSubscriptionConfirmationEmail(body, env) {
     await sendGmail(env, { to: email, ...subscriptionConfirmationEmailContent(body, lang) });
   } catch (e) {
     console.error('email de confirmación de suscripción falló:', e.message);
+  }
+}
+
+// Correo "tu suscripción se pausó" — cobro por factura (2 oct). Solo acepta como botón
+// una URL de Square (la factura pendiente); si no hay, el botón lleva a la página de
+// Lovers para volver a suscribirse.
+function loversPausedEmailContent(nombre, url, lang) {
+  const safeUrl = /^https:\/\/[a-z0-9.-]*square(up)?\.(com|site|link)\//i.test(url || '') ? url
+    : (lang === 'en' ? 'https://cacusabytaitus.com/en/cacusa-lovers.html' : 'https://cacusabytaitus.com/cacusa-lovers.html');
+  const p = (t) => `<p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#96486F;text-align:center;margin:0 0 14px;">${t}</p>`;
+  if (lang === 'en') {
+    return {
+      subject: 'Your Cacusa Lovers membership is paused',
+      html: emailShellGeneric({
+        lang, preheader: 'Your payment is pending — pay anytime to reactivate.',
+        eyebrow: 'Cacusa Lovers', title: `We miss you${nombre ? ', ' + esc(nombre) : ''} ♡`,
+        bodyHtml: p('We didn\'t receive your Cacusa Lovers payment, so your benefits (5% off and free shipping) are paused for now.')
+          + p('You can reactivate anytime by paying your pending invoice with Apple Pay, Google Pay or card.'),
+        ctaText: 'Pay and reactivate →', ctaUrl: safeUrl,
+      }),
+    };
+  }
+  return {
+    subject: 'Tu membresía Cacusa Lovers está en pausa',
+    html: emailShellGeneric({
+      lang, preheader: 'Tu pago está pendiente — paga cuando quieras para reactivarla.',
+      eyebrow: 'Cacusa Lovers', title: `Te extrañamos${nombre ? ', ' + esc(nombre) : ''} ♡`,
+      bodyHtml: p('No recibimos tu pago de Cacusa Lovers, así que tus beneficios (5% de descuento y envío gratis) quedaron en pausa por ahora.')
+        + p('Puedes reactivarla cuando quieras pagando tu factura pendiente con Apple Pay, Google Pay o tarjeta.'),
+      ctaText: 'Pagar y reactivar →', ctaUrl: safeUrl,
+    }),
+  };
+}
+
+async function sendLoversPausedEmail(body, env) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!isValidEmail(email)) return;
+  const lang = body.idioma === 'en' ? 'en' : 'es';
+  try {
+    await sendGmail(env, { to: email, ...loversPausedEmailContent(String(body.nombre || '').slice(0, 100), String(body.url || ''), lang) });
+  } catch (e) {
+    console.error('email de suscripción pausada falló:', e.message);
   }
 }
 
