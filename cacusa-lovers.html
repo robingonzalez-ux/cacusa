@@ -535,7 +535,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
           Suscribirme · $19.99/mes <span class="spin"></span>
         </button>
         <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
-        <p class="sub-legal" id="subLegal">Al continuar serás redirigida a Square (pago seguro) donde ingresarás tu tarjeta. Square cobra automáticamente cada mes.</p>
+        <p class="sub-legal" id="subLegal">Al continuar irás a la página de pago segura de Square, donde puedes pagar con Apple Pay, Google Pay o tarjeta.</p>
       </div>
     </div>
   </div>
@@ -664,7 +664,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <li>Acceso anticipado a nuevas colecciones</li>
           </ul>
           <a href="#" class="btn-join" onclick="joinNow('mensual',true);return false;">♡ Suscribirme mensual →</a>
-          <p class="plan-note">Cobro automático cada mes</p>
+          <p class="plan-note">Factura cada mes · paga con Apple Pay o tarjeta</p>
         </div>
       </div>
 
@@ -690,7 +690,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <li>Acceso VIP anticipado — 48h antes que el plan mensual</li>
           </ul>
           <a href="#" class="btn-join btn-join--annual" onclick="joinNow('anual',true);return false;">♡ Suscribirme anual →</a>
-          <p class="plan-note">Un solo pago · Máximo ahorro · Renueva automáticamente</p>
+          <p class="plan-note">Un solo pago al año · Máximo ahorro</p>
         </div>
       </div>
 
@@ -789,7 +789,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       </div>
       <div class="faq-item reveal" data-delay="4">
         <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA4"><span>¿Cómo es el pago mensual?</span><span class="faq-icon">+</span></button>
-        <div class="faq-a" id="faqA4"><p>El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro.</p></div>
+        <div class="faq-a" id="faqA4"><p>Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago.</p></div>
       </div>
     </div>
   </div>
@@ -804,8 +804,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 </script>
 <script type="application/ld+json" id="productJsonLd">
 {"@context":"https://schema.org","@type":"Product","@id":"https://cacusabytaitus.com/cacusa-lovers.html#product","name":"Cacusa Lovers","description":"Club de suscripción mensual de joyería: 2 piezas en acero inoxidable cada mes, seleccionadas a mano, con envío incluido a Ecuador y USA.","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"category":"Suscripción de joyería","image":"https://cacusabytaitus.com/assets/og-image.jpg","offers":[
-{"@type":"Offer","name":"Plan mensual","description":"Cobro recurrente mensual · 2 piezas en acero inoxidable · envío incluido","price":"19.99","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/cacusa-lovers.html"},
-{"@type":"Offer","name":"Plan anual","description":"Cobro recurrente anual · 8% de descuento vs. el plan mensual · acceso VIP 48h antes que el plan mensual","price":"219.89","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/cacusa-lovers.html"}
+{"@type":"Offer","name":"Plan mensual","description":"Pago mensual por factura (Apple Pay, Google Pay o tarjeta) · 2 piezas en acero inoxidable · envío incluido","price":"19.99","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/cacusa-lovers.html"},
+{"@type":"Offer","name":"Plan anual","description":"Pago anual por factura (Apple Pay, Google Pay o tarjeta) · 8% de descuento vs. el plan mensual · acceso VIP 48h antes que el plan mensual","price":"219.89","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/cacusa-lovers.html"}
 ]}
 </script>
 
@@ -836,8 +836,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <div class="cond-item reveal" data-delay="1">
         <div class="cond-icon" aria-hidden="true">↻</div>
         <div class="cond-text">
-          <div class="cond-title">Pago recurrente mensual</div>
-          <div class="cond-desc">El cobro de $19.99 se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus.</div>
+          <div class="cond-title">Pago mensual por factura</div>
+          <div class="cond-desc">Tres días antes de tu fecha de renovación te llega por correo una factura de Square por $19.99 ($219.89 en el plan anual). La pagas con Apple Pay, Google Pay o tarjeta. El cargo aparece en tu estado de cuenta como CACUSA by Taitus.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="2">
@@ -879,14 +879,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <div class="cond-icon" aria-hidden="true">✕</div>
         <div class="cond-text">
           <div class="cond-title">Política de cancelación</div>
-          <div class="cond-desc">Puedes cancelar tu suscripción cuando quieras directamente desde el enlace "Manage subscription" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a facturacioncacusa@gmail.com y te ayudamos.</div>
+          <div class="cond-desc">No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp o a facturacioncacusa@gmail.com y la anulamos. No ofrecemos reembolsos sobre pagos ya hechos: recibes la caja de ese período. Si te suscribiste antes de octubre de 2026 con cobro automático de tarjeta, puedes cancelar desde el enlace "Manage subscription" que Square te envía con cada pago, o escribirnos y te ayudamos.</div>
         </div>
       </div>
       <div class="cond-item cond-item--critical reveal" data-delay="2">
         <div class="cond-icon" aria-hidden="true">!</div>
         <div class="cond-text">
-          <div class="cond-title">Pago fallido</div>
-          <div class="cond-desc">Si tu pago no se procesa exitosamente, Square intentará el cobro nuevamente de forma automática. Mientras el pago esté pendiente, el envío del mes quedará suspendido hasta que se regularice la situación.</div>
+          <div class="cond-title">Pago pendiente</div>
+          <div class="cond-desc">Si no pagas la factura en su fecha, Square te envía recordatorios. A los 7 días sin pago tu membresía se pausa: el 5% de descuento, el envío gratis y la caja del mes quedan en espera. Puedes reactivarla cuando quieras pagando la factura pendiente.</div>
         </div>
       </div>
       <div class="cond-item reveal" data-delay="3">
@@ -940,6 +940,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
+// Respaldo: solo se usan si no se pudo crear la factura (ver submitSubscription).
 const SQUARE_PAYMENT_LINK         = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/6JKDMFNS3AMD55HRRD7ZQVBW';  // mensual $19.99
 const SQUARE_PAYMENT_LINK_ANNUAL  = 'https://checkout.square.site/merchant/MLSJ7VBAS8S7J/checkout/RJD6DHOGFOTPKVWHC6OXN3VS';  // anual $219.89
 let _selectedPlan    = 'mensual';
@@ -1512,20 +1513,35 @@ async function submitSubscription(){
   // click en ese link (ver checkReturn() más abajo, que maneja ?confirm=). El pago
   // sigue disparándose de inmediato después de esto, sin esperar la confirmación —
   // misma experiencia de siempre.
-  // keepalive:true es imprescindible porque el redirect a Square ocurre en la línea
-  // siguiente y sin eso el navegador cancela la petición antes de que salga. Este
-  // mismo llamado ya dispara el aviso por push de "suscripción pendiente" del lado
-  // del Worker (ver handleLoversRegister) — no hace falta ningún llamado aparte.
+  // Este mismo llamado dispara el aviso push de "suscripción pendiente" (ver
+  // handleLoversRegister) — no hace falta ningún llamado aparte.
+  // Cobro por factura (2 oct): el Worker devuelve la URL de la factura del primer pago
+  // (página de Square con Apple Pay, Google Pay o tarjeta). Ya no se usa keepalive: hay
+  // que esperar la respuesta para saber a dónde redirigir. Si el Worker no responde a
+  // tiempo o falla, se cae a los links fijos de suscripción de siempre (solo tarjeta),
+  // así nunca se pierde una alta.
+  let payUrl = '';
   try {
-    await fetch(`${ADMIN_WORKER_URL}/lovers/register`, {
-      method:    'POST',
-      headers:   { 'Content-Type': 'application/json' },
-      body:      JSON.stringify(subscriber),
-      keepalive: true,
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    const resp = await fetch(`${ADMIN_WORKER_URL}/lovers/register`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(subscriber),
+      signal:  ctrl.signal,
     });
+    clearTimeout(timer);
+    const data = await resp.json().catch(() => ({}));
+    if (data && data.already) {
+      err.textContent = 'Ya tienes una membresía activa con este correo. Si necesitas ayuda, escríbenos por WhatsApp.';
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      return;
+    }
+    if (data && typeof data.payUrl === 'string' && /^https:\/\//.test(data.payUrl)) payUrl = data.payUrl;
   } catch(e){ console.warn('[lovers-register]', e); }
 
-  const link = _selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK;
+  const link = payUrl || (_selectedPlan === 'anual' ? SQUARE_PAYMENT_LINK_ANNUAL : SQUARE_PAYMENT_LINK);
   window.location.href = link;
 }
 

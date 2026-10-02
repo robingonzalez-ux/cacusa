@@ -247,7 +247,14 @@ Dos patrones conviven en el sitio:
   entrega — nunca devolución estándar por cambio de opinión.
 - **Cacusa Lovers**: club de suscripción mensual, 2 piezas de acero
   inoxidable al mes. Plan mensual y anual (8% de descuento). El beneficio
-  extra del plan anual es acceso VIP 48h antes que el mensual.
+  extra del plan anual es acceso VIP 48h antes que el mensual. Desde el 2 oct
+  las altas nuevas pagan cada ciclo con una **factura de Square** (Apple Pay,
+  Google Pay o tarjeta — Square no acepta Apple Pay en sus suscripciones
+  automáticas): la factura de renovación sale sola 3 días antes de vencer
+  (cron diario del Worker `cacusa-lovers-webhook`) y a los 7 días sin pagar se
+  pausan los beneficios. Las suscriptoras viejas con cobro automático siguen
+  igual. Los montos cobrados viven en el Worker (`LOVERS_PRICES_CENTS`), no en
+  el precio que muestra la página. Detalle: repo privado.
 - **WhatsApp es el canal de coordinación principal** para personalización,
   dudas de talla/color, Zelle/transferencia, y soporte post-venta.
 

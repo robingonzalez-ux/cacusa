@@ -280,8 +280,8 @@
       ],
       "conditions": [
         {
-          "title": "Pago recurrente mensual",
-          "desc": "El cobro se realiza automáticamente cada mes, el mismo día en que te suscribiste. El cargo aparecerá en tu estado de cuenta como CACUSA by Taitus."
+          "title": "Pago mensual por factura",
+          "desc": "Tres días antes de tu fecha de renovación te llega por correo una factura de Square por $19.99 ($219.89 en el plan anual). La pagas con Apple Pay, Google Pay o tarjeta. El cargo aparece en tu estado de cuenta como CACUSA by Taitus."
         },
         {
           "title": "Envío tras confirmación de pago",
@@ -305,11 +305,11 @@
         },
         {
           "title": "Política de cancelación",
-          "desc": "Puedes cancelar tu suscripción cuando quieras directamente desde el enlace \"Manage subscription\" que Square te envía por correo al confirmarse cada pago — no necesitas escribirnos ni esperar respuesta. La cancelación aplica a partir del siguiente ciclo de cobro: si el cargo del mes o año en curso ya se procesó, tu suscripción sigue activa y recibirás la caja correspondiente a ese período — no ofrecemos reembolsos sobre cobros ya procesados. Para que la cancelación aplique antes del próximo cobro, hazlo con al menos 5 días de anticipación a tu fecha de renovación. Si tienes problemas para encontrar el enlace, escríbenos por WhatsApp o a facturacioncacusa@gmail.com y te ayudamos."
+          "desc": "No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp o a facturacioncacusa@gmail.com y la anulamos. No ofrecemos reembolsos sobre pagos ya hechos: recibes la caja de ese período. Si te suscribiste antes de octubre de 2026 con cobro automático de tarjeta, puedes cancelar desde el enlace \"Manage subscription\" que Square te envía con cada pago, o escribirnos y te ayudamos."
         },
         {
-          "title": "Pago fallido",
-          "desc": "Si tu pago no se procesa exitosamente, Square intentará el cobro nuevamente de forma automática. Mientras el pago esté pendiente, el envío del mes quedará suspendido hasta que se regularice la situación."
+          "title": "Pago pendiente",
+          "desc": "Si no pagas la factura en su fecha, Square te envía recordatorios. A los 7 días sin pago tu membresía se pausa: el 5% de descuento, el envío gratis y la caja del mes quedan en espera. Puedes reactivarla cuando quieras pagando la factura pendiente."
         },
         {
           "title": "Cambios de precio",
@@ -339,7 +339,7 @@
         },
         {
           "q": "¿Cómo es el pago mensual?",
-          "a": "El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro."
+          "a": "Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago."
         }
       ],
       "ctaScript": "¿Lista para unirte?",
@@ -390,8 +390,8 @@
       ],
       "conditions": [
         {
-          "title": "Recurring monthly payment",
-          "desc": "The charge is processed automatically every month, on the same day you subscribed. The charge will appear on your statement as CACUSA by Taitus."
+          "title": "Monthly payment by invoice",
+          "desc": "Three days before your renewal date you get a Square invoice by email for $19.99 ($219.89 on the annual plan). Pay it with Apple Pay, Google Pay or card. The charge appears on your statement as CACUSA by Taitus."
         },
         {
           "title": "Shipping after payment confirmation",
@@ -415,11 +415,11 @@
         },
         {
           "title": "Cancellation policy",
-          "desc": "You can cancel your subscription anytime directly from the \"Manage subscription\" link that Square emails you when each payment is confirmed — no need to write to us or wait for a reply. Cancellation takes effect starting the next billing cycle: if the current month's or year's charge has already been processed, your subscription remains active and you'll receive the box for that period — we don't offer refunds on charges already processed. For cancellation to apply before your next charge, do it at least 5 days before your renewal date. If you have trouble finding the link, message us on WhatsApp or at facturacioncacusa@gmail.com and we'll help you."
+          "desc": "There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp or at facturacioncacusa@gmail.com and we'll void it. We don't refund payments already made: you receive that period's box. If you subscribed before October 2026 with automatic card billing, you can cancel from the \"Manage subscription\" link Square emails you with each payment, or write to us and we'll help."
         },
         {
-          "title": "Failed payment",
-          "desc": "If your payment isn't processed successfully, Square will automatically try to charge again. While payment is pending, that month's shipment will be put on hold until the situation is resolved."
+          "title": "Pending payment",
+          "desc": "If you don't pay the invoice by its due date, Square sends you reminders. After 7 days without payment your membership is paused: the 5% discount, free shipping and that month's box are put on hold. You can reactivate it anytime by paying the pending invoice."
         },
         {
           "title": "Price changes",
@@ -449,7 +449,7 @@
         },
         {
           "q": "How does the monthly payment work?",
-          "a": "You're charged automatically every month on your card through Square, our secure payment processor. Square sends you a receipt by email after each charge."
+          "a": "Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."
         }
       ],
       "ctaScript": "Ready to join?",
