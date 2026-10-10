@@ -3688,8 +3688,41 @@ async function sendLoversPausedEmail(body, env) {
 function uspsBaseUrl(env) {
   return env.USPS_ENV === 'prod' ? 'https://apis.usps.com' : 'https://apis-tem.usps.com';
 }
+// Caché de tokens (10 oct): USPS aprobó Shipping Suite 0 con un límite de 50 llamadas
+// por día y pide expresamente NO regenerar el OAuth token ni el payment token en cada
+// llamada (ambos valen 8 h). Se guardan en KV con un margen antes de que venzan. La
+// clave incluye el ambiente (tem/prod) y un hash del Consumer Key, así un cambio de
+// credenciales o de ambiente nunca reusa un token viejo. Sin KV, se piden cada vez.
+async function uspsTokenKey(env, kind) {
+  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(env.USPS_CONSUMER_KEY || '')));
+  const hex = [...new Uint8Array(h)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `uspstok:${kind}:${env.USPS_ENV === 'prod' ? 'prod' : 'tem'}:${hex}`;
+}
+async function uspsClearTokens(env) {
+  if (!env.CACUSA_KV) return;
+  await env.CACUSA_KV.delete(await uspsTokenKey(env, 'oauth'));
+  await env.CACUSA_KV.delete(await uspsTokenKey(env, 'pay'));
+}
+// Corre fn(oauthToken, paymentToken) con tokens del caché; si USPS responde 401 (token
+// revocado antes de tiempo), limpia el caché y reintenta UNA vez con tokens nuevos.
+async function uspsWithTokens(env, needPayment, fn) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const oauthToken = await uspsOAuthToken(env);
+    const paymentToken = needPayment ? await uspsPaymentToken(env, oauthToken) : null;
+    try {
+      return await fn(oauthToken, paymentToken);
+    } catch (e) {
+      if (attempt === 0 && e && e.status === 401) { await uspsClearTokens(env); continue; }
+      throw e;
+    }
+  }
+}
+function uspsError(msg, status) { const e = new Error(msg); e.status = status; return e; }
+
 async function uspsOAuthToken(env) {
   if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) throw new Error('USPS_CONSUMER_KEY/USPS_CONSUMER_SECRET no configurados');
+  const cacheKey = env.CACUSA_KV ? await uspsTokenKey(env, 'oauth') : null;
+  if (cacheKey) { const c = await env.CACUSA_KV.get(cacheKey); if (c) return c; }
   const r = await fetch(`${uspsBaseUrl(env)}/oauth2/v3/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3701,12 +3734,15 @@ async function uspsOAuthToken(env) {
   });
   if (!r.ok) throw new Error(`USPS OAuth falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
   const d = await r.json();
+  if (cacheKey && d.access_token) {
+    const ttl = Math.max(60, Math.min(Number(d.expires_in) || 28800, 28800) - 600);
+    await env.CACUSA_KV.put(cacheKey, d.access_token, { expirationTtl: ttl });
+  }
   return d.access_token;
 }
 // El Payment Authorization Token (Payments API, POST /payment-authorization) es
 // distinto del OAuth token — autoriza cargar el franqueo real a la cuenta EPS.
-// Vale 8h; como este Worker no guarda estado entre invocaciones, se pide de nuevo
-// en cada guía (volumen bajo — mismo criterio ya aceptado para gmailAccessToken()).
+// Vale 8h; se guarda en KV 7h30 (ver uspsTokenKey/uspsWithTokens).
 //
 // Payload verificado (20 sep) contra el spec OpenAPI real de la Payments API
 // (payments_5_0.yaml, descargado por el usuario de developers.usps.com/paymentsv3):
@@ -3720,6 +3756,8 @@ async function uspsPaymentToken(env, oauthToken) {
   const required = ['USPS_CRID', 'USPS_MID', 'USPS_MANIFEST_MID', 'USPS_EPS_ACCOUNT'];
   const missing = required.filter((k) => !env[k]);
   if (missing.length) throw new Error(`Faltan secrets de USPS: ${missing.join(', ')}`);
+  const cacheKey = env.CACUSA_KV ? await uspsTokenKey(env, 'pay') : null;
+  if (cacheKey) { const c = await env.CACUSA_KV.get(cacheKey); if (c) return c; }
   const r = await fetch(`${uspsBaseUrl(env)}/payments/v3/payment-authorization`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json' },
@@ -3730,8 +3768,11 @@ async function uspsPaymentToken(env, oauthToken) {
       ],
     }),
   });
-  if (!r.ok) throw new Error(`USPS payment authorization falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) throw uspsError(`USPS payment authorization falló (${r.status}): ${(await r.text()).slice(0, 200)}`, r.status);
   const d = await r.json();
+  if (cacheKey && d.paymentAuthorizationToken) {
+    await env.CACUSA_KV.put(cacheKey, d.paymentAuthorizationToken, { expirationTtl: 27000 });
+  }
   return d.paymentAuthorizationToken;
 }
 // fromAddress (dirección de remitente) sale de un secret, NUNCA hardcodeada acá —
@@ -3790,7 +3831,7 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
       },
     }),
   });
-  if (!r.ok) throw new Error(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 300)}`);
+  if (!r.ok) throw uspsError(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 300)}`, r.status);
   return await r.json();
 }
 
@@ -3840,9 +3881,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
   }
 
   try {
-    const oauthToken = await uspsOAuthToken(env);
-    const paymentToken = await uspsPaymentToken(env, oauthToken);
-    const label = await uspsCreateLabel(env, {
+    const label = await uspsWithTokens(env, true, (oauthToken, paymentToken) => uspsCreateLabel(env, {
       oauthToken, paymentToken, weightOz, lengthIn, widthIn, heightIn,
       // Reimpresión con idempotency key propia (si no USPS devolvería la guía vieja).
       orderId: isReprint && order.tracking ? `${order.id}-r${(Number(order.labelReprints) || 0) + 1}` : order.id,
@@ -3856,7 +3895,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
         ZIPCode: String(cliente.zip).split('-')[0],
         phone: cliente.telefono || undefined,
       },
-    });
+    }));
     const wasReprint = isReprint && !!order.tracking;
     const prevTracking = order.tracking || '';
     order.tracking = label.trackingNumber || '';
@@ -3933,7 +3972,7 @@ async function uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, 
       nextAvailablePickup: true,
     }),
   });
-  if (!r.ok) throw new Error(`USPS pickup falló (${r.status}): ${(await r.text()).slice(0, 300)}`);
+  if (!r.ok) throw uspsError(`USPS pickup falló (${r.status}): ${(await r.text()).slice(0, 300)}`, r.status);
   return await r.json();
 }
 
@@ -3966,8 +4005,8 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
   catch { return err('USPS_FROM_ADDRESS no es JSON válido', 500, origin); }
 
   try {
-    const oauthToken = await uspsOAuthToken(env);
-    const pickup = await uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today });
+    const pickup = await uspsWithTokens(env, false, (oauthToken) =>
+      uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today }));
     const result = { confirmationNumber: pickup.confirmationNumber, pickupDate: pickup.pickupDate, packageCount };
     await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 });
     return ok({ ok: true, alreadyRequested: false, ...result }, origin);
