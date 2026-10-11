@@ -1127,10 +1127,11 @@ export default {
     ctx.waitUntil((async () => {
       await runLoversBilling(env).catch(e => console.error('runLoversBilling:', e.message));
       await reconcileLoversWithSquare(env, { dryRun: false }).catch(e => console.error('reconcile:', e.message));
-      // Del 11 al 21: arma (o completa) el lote del mes. Idempotente.
+      // Del 11 a fin de mes: arma (o completa) el lote del mes — así un pago recuperado
+      // tarde igual entra solo. Idempotente: nunca duplica.
       const hoy = todayIso();
       const dia = Number(hoy.slice(8, 10));
-      if (dia > LOVERS_CUTOFF_DAY && dia <= 21) {
+      if (dia > LOVERS_CUTOFF_DAY) {
         const b = await buildLoversBatch(env, { month: hoy.slice(0, 7), dryRun: false }).catch(e => { console.error('lote:', e.message); return null; });
         if (b && b.creados > 0) {
           await notifyAdminPush('CACUSA · Lote Lovers ' + hoy.slice(0, 7),
