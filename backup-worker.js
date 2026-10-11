@@ -79,7 +79,8 @@
  *       body = backup.firebase
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
- *    .webauthnCredentials / .leads / .loversShipIndex / .couponUsage / .uspsLabels:
+ *    .webauthnCredentials / .leads / .loversShipIndex / .couponUsage / .uspsLabels /
+ *    .loversLote / .loversShipInvoice / .loversInvoices (valores planos, misma condición):
  *       env.CACUSA_KV.put(key, typeof value === 'string' ? value : JSON.stringify(value))
  *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
  *    tal cual). OJO (F19, 20 sep): loversShipIndex guarda un STRING plano (el código
@@ -216,8 +217,13 @@ async function getKvValue(env, key) {
 // 26 sep: `label:*` — el PDF de la guía USPS salió de order:/orders_cache a su propia
 // llave (límite de 25 MB de KV); sin esto una restauración dejaría los pedidos con
 // labelStored:true pero sin la guía.
+//
+// 11 oct: marcadores de Cacusa Lovers — `loverslote:` (1 caja por suscriptora por lote
+// mensual), `lovershipinvoice:` (pedidos de envío creados por pago, antes del lote) y
+// `loversinv:` (factura del ciclo ya creada). Sin ellos, después de una restauración la
+// tarea diaria volvería a crear cajas/facturas ya hechas — duplicados reales.
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
@@ -226,10 +232,13 @@ async function exportKv(env) {
     listKvPrefix(env, 'loversship:'),
     listKvPrefix(env, 'cpused:'),
     listKvPrefix(env, 'label:'),
+    listKvPrefix(env, 'loverslote:'),
+    listKvPrefix(env, 'lovershipinvoice:'),
+    listKvPrefix(env, 'loversinv:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, surcharges, markets };
 }
 
 function backupKey(iso, trigger) {

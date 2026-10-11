@@ -252,6 +252,15 @@ function subscriberKey(email) {
   return String(email || '').replace(/\s+/g, '').toLowerCase().replace(/[.#$[\]/]/g, ',');
 }
 
+// Dos fichas con el mismo nombre son personas distintas si tienen suscripciones de
+// Square distintas o teléfonos distintos (últimos 7 dígitos).
+function dedupeConflict(a, b) {
+  if (a.square_subscription_id && b.square_subscription_id && a.square_subscription_id !== b.square_subscription_id) return true;
+  const ta = String(a.telefono || '').replace(/\D/g, '').slice(-7);
+  const tb = String(b.telefono || '').replace(/\D/g, '').slice(-7);
+  return ta.length === 7 && tb.length === 7 && ta !== tb;
+}
+
 // ── Ubicar a la suscriptora de un evento de Square (11 oct) ──────────────────
 // Bug real: cada renovación creaba una suscriptora DUPLICADA cuando el email que trae
 // Square (factura o cliente) no daba exactamente la misma key que el del formulario
@@ -534,14 +543,24 @@ function idiomaDe(s) {
 // Cron diario: factura de renovación 3 días antes de `vence` y pausa a los 7 días sin
 // pagar. Solo toca registros modo_cobro:'factura'. Cada suscriptora va en su propio
 // try/catch: un error de Square con una no frena a las demás.
-async function runLoversBilling(env) {
+// Lectura única de cacusa_lovers para la tarea diaria (11 oct, revisión): en el plan
+// gratis de Cloudflare cada ejecución tiene un tope de llamadas externas (~50); las 3
+// fases (facturas, sincronización con Square, lote) comparten esta lectura en vez de
+// hacer una cada una.
+async function loadAllLovers(env) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${env.FB_DB_SECRET}`);
+  if (!r.ok) throw new Error(`Firebase ${r.status}`);
+  return (await r.json()) || {};
+}
+
+async function runLoversBilling(env, { all: preloaded } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   const summary = { facturas: 0, vencidas: 0, errores: [] };
   if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) { summary.errores.push('Faltan FB_DB_SECRET o SQUARE_ACCESS_TOKEN'); return summary; }
-  const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
-  if (!r.ok) { summary.errores.push(`Firebase ${r.status}`); return summary; }
-  const all = (await r.json()) || {};
+  let all = preloaded;
+  if (!all) { try { all = await loadAllLovers(env); } catch (e) { summary.errores.push(e.message); return summary; } }
   const today = todayIso();
   summary.recordatorios = 0;
   // Suscripciones MANUALES (transferencia): recordatorio por correo cuando faltan 7 días
@@ -878,21 +897,36 @@ async function squareCustomerFor(env, s) {
   }
   return '';
 }
-async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
+// En la tarea diaria (cron:true) solo se revisa a quien puede tener un cobro nuevo y con
+// un tope por corrida (ver loadAllLovers); el botón del panel revisa a todas.
+const LOVERS_SYNC_CRON_MAX = 12;
+function syncDue(s, today) {
+  if (s.estado_pago === 'vencido' || s.estado_pago === 'pago_fallido') return true;
+  if (s.estado_pago === 'pendiente') return ISO_DATE_RE.test(s.fecha || '') && s.fecha >= addDaysIso(today, -14);
+  if (s.estado_pago !== 'activo') return false;
+  if (!ISO_DATE_RE.test(s.ultimo_pago || '')) return true;
+  return s.ultimo_pago <= addDaysIso(today, planPeriodo(s.plan) === 'anual' ? -360 : -25);
+}
+async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   const out = { dryRun, pagosSinRegistrar: [], pagosAnteriores: [], pagosFallidos: [], noEncontradas: [], registrados: 0, errores: [] };
   if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) { out.errores.push('Faltan FB_DB_SECRET o SQUARE_ACCESS_TOKEN'); return out; }
-  const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
-  if (!rAll.ok) { out.errores.push(`Firebase ${rAll.status}`); return out; }
-  const all = (await rAll.json()) || {};
+  let all = preloaded;
+  if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
+  let entries = Object.entries(all).filter(([k, s]) => s && typeof s === 'object' && s.estado_pago !== 'cancelado' && s.metodo_pago !== 'manual' && validId(k, true));
+  if (cron) {
+    const t0 = todayIso();
+    entries = entries.filter(([, s]) => syncDue(s, t0))
+      .sort((a, b) => String(a[1].ultimo_pago || '').localeCompare(String(b[1].ultimo_pago || '')))
+      .slice(0, max);
+    if (!entries.length) return out;
+  }
   const locs = ((await squareApi(env, '/locations')).locations || []).map(l => l.id).slice(0, 10);
   if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
   const since = addDaysIso(todayIso(), -LOVERS_SYNC_DAYS);
   const today = todayIso();
-  for (const [key, s] of Object.entries(all)) {
-    if (!s || typeof s !== 'object' || s.estado_pago === 'cancelado' || s.metodo_pago === 'manual') continue;
-    if (!validId(key, true)) continue;
+  for (const [key, s] of entries) {
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
     try {
       const customerId = await squareCustomerFor(env, s);
@@ -950,7 +984,8 @@ async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
             const ok = await processPaidInvoice({ ...inv, _paid_date: due }, env, dbUrl, fbAuth);
             if (!ok) throw new Error(`No se pudo registrar la factura ${inv.id}`);
             out.registrados++;
-            await notifyAdminPush('CACUSA · Pago recuperado - Lovers', `🔁 Se registró el pago de ${nombre} (${due}) — pedido de envío creado`, env);
+            // (processPaidInvoice ya avisa "Pago confirmado"; sin un segundo push acá para
+            // no gastar llamadas de la tarea diaria.)
           }
         } else if (inv.status === 'FAILED' || (inv.status === 'UNPAID' && due && due < today)) {
           out.pagosFallidos.push(item);
@@ -983,19 +1018,23 @@ function loteFechas(month) {
     envio: `${month}-15`,
   };
 }
-async function buildLoversBatch(env, { month, dryRun = true } = {}) {
+async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, maxNew = Infinity } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
-  const out = { month, dryRun, incluidas: [], yaConPedido: [], sinDireccion: [], creados: 0, errores: [] };
+  const out = { month, dryRun, incluidas: [], yaConPedido: [], sinDireccion: [], creados: 0, pendientes: 0, errores: [] };
   if (!/^\d{4}-\d{2}$/.test(month || '')) { out.errores.push('Mes inválido'); return out; }
   if (!fbAuth) { out.errores.push('Falta FB_DB_SECRET'); return out; }
   const { desde, corte, envio } = loteFechas(month);
-  const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
-  if (!rAll.ok) { out.errores.push(`Firebase ${rAll.status}`); return out; }
-  const all = (await rAll.json()) || {};
+  let all = preloaded;
+  if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
   for (const [key, s] of Object.entries(all)) {
-    if (!s || typeof s !== 'object' || !validId(key, true)) continue;
+    if (!s || typeof s !== 'object') continue;
     if (s.estado_pago !== 'activo' && s.estado_pago !== 'pausado') continue;
+    if (!validId(key, true)) {
+      // Antes se saltaba en silencio: así queda a la vista en el panel.
+      out.errores.push(`Revisar el email de ${[s.nombre, s.apellido].filter(Boolean).join(' ') || 'una suscriptora'}: tiene caracteres que el sistema no acepta, no entró al lote`);
+      continue;
+    }
     const periodo = planPeriodo(s.plan);
     const manual = s.metodo_pago === 'manual';
     const pago = ISO_DATE_RE.test(s.ultimo_pago || '') ? s.ultimo_pago : '';
@@ -1021,6 +1060,10 @@ async function buildLoversBatch(env, { month, dryRun = true } = {}) {
     if (!s.direccion) { out.sinDireccion.push(item); continue; }
     out.incluidas.push(item);
     if (!dryRun) {
+      // Si la caja ya se creó (marcador en KV), no se gasta una llamada a cacusa-admin.
+      if (env.CACUSA_KV && await env.CACUSA_KV.get(`loverslote:${month}:${key}`)) continue;
+      // Tope por ejecución (tarea diaria): las que falten se crean al día siguiente.
+      if (out.creados >= maxNew) { out.pendientes++; continue; }
       const res = await notifyLoversShipment({
         nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
         direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
@@ -1125,17 +1168,26 @@ export default {
   // Cron Trigger diario (Cloudflare → Settings → Triggers → Cron) — ver runLoversBilling().
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
-      await runLoversBilling(env).catch(e => console.error('runLoversBilling:', e.message));
-      await reconcileLoversWithSquare(env, { dryRun: false }).catch(e => console.error('reconcile:', e.message));
+      let all;
+      try { all = await loadAllLovers(env); } catch (e) { console.error('cron Firebase:', e.message); return; }
+      await runLoversBilling(env, { all }).catch(e => console.error('runLoversBilling:', e.message));
+      const dia0 = Number(todayIso().slice(8, 10));
+      const rec = await reconcileLoversWithSquare(env, { dryRun: false, all, cron: true, max: dia0 > LOVERS_CUTOFF_DAY ? 8 : LOVERS_SYNC_CRON_MAX }).catch(e => { console.error('reconcile:', e.message); return null; });
+      // Si la sincronización registró pagos, se vuelve a leer para que entren hoy al lote.
+      if (rec && (rec.registrados > 0 || (rec.fechasCorregidas || []).length > 0)) {
+        try { all = await loadAllLovers(env); } catch (_) {}
+      }
       // Del 11 a fin de mes: arma (o completa) el lote del mes — así un pago recuperado
       // tarde igual entra solo. Idempotente: nunca duplica.
       const hoy = todayIso();
       const dia = Number(hoy.slice(8, 10));
       if (dia > LOVERS_CUTOFF_DAY) {
-        const b = await buildLoversBatch(env, { month: hoy.slice(0, 7), dryRun: false }).catch(e => { console.error('lote:', e.message); return null; });
+        // Tope de 20 cajas nuevas por ejecución: en el plan gratis de Cloudflare cada
+        // ejecución tiene ~50 llamadas externas; el resto sale al día siguiente.
+        const b = await buildLoversBatch(env, { month: hoy.slice(0, 7), dryRun: false, all, maxNew: 20 }).catch(e => { console.error('lote:', e.message); return null; });
         if (b && b.creados > 0) {
           await notifyAdminPush('CACUSA · Lote Lovers ' + hoy.slice(0, 7),
-            `📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21`, env);
+            `📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`, env);
         }
       }
     })());
@@ -1486,7 +1538,11 @@ async function handleRequest(request, env) {
             : '';
           for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, fullName]) {
             if (!id) continue;
-            if (byId[id]) parent[find(k)] = find(byId[id]); else byId[id] = k;
+            if (!byId[id]) { byId[id] = k; continue; }
+            // Por nombre solo se une si no hay datos que digan que son personas distintas
+            // (revisión 11 oct): suscripciones de Square distintas o teléfonos distintos.
+            if (id.startsWith('n:') && dedupeConflict(all[k], all[byId[id]])) continue;
+            parent[find(k)] = find(byId[id]);
           }
         }
         const groups = {};
@@ -1495,6 +1551,16 @@ async function handleRequest(request, env) {
         for (const g of Object.values(groups)) {
           if (g.length < 2) continue;
           g.sort((a, c) => String(all[a].fecha || '9999').localeCompare(String(all[c].fecha || '9999')));
+          // ¿Comparten algún id de Square? Si no, el grupo se armó solo por el nombre.
+          const ids = new Set();
+          let compartenId = false;
+          for (const k2 of g) {
+            for (const id of [all[k2].square_subscription_id && 's:' + all[k2].square_subscription_id, all[k2].square_customer_id && 'c:' + all[k2].square_customer_id]) {
+              if (!id) continue;
+              if (ids.has(id)) compartenId = true;
+              ids.add(id);
+            }
+          }
           const keep = g[0];
           const rest = g.slice(1);
           const recs = g.map(k => all[k]);
@@ -1514,6 +1580,7 @@ async function handleRequest(request, env) {
             conservar: { id: keep, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
             borrar: rest.map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
             actualizar: merged,
+            soloNombre: !compartenId,
           });
         }
         if (dryRun) return adminJson({ dryRun: true, grupos: plan }, 200);
@@ -1705,12 +1772,24 @@ async function handleRequest(request, env) {
             fields.beneficios_off = false;
             const venceVigente = ISO_DATE_RE.test(fields.vence || existing.vence || '') && (fields.vence || existing.vence) >= todayIso();
             if (existing.square_subscription_id && existing.modo_cobro !== 'factura' && existing.metodo_pago !== 'manual') {
+              let cancelóPausaPendiente = false;
               try {
-                await squareApi(env, `/subscriptions/${existing.square_subscription_id}/resume`, 'POST', { resume_change_timing: 'IMMEDIATE' });
+                // La pausa de Square empieza en el próximo ciclo: si se reanuda antes, la
+                // suscripción sigue ACTIVE con una acción PAUSE pendiente y /resume falla.
+                // En ese caso basta con borrar esa acción (sigue cobrando normal).
+                const g = await squareApi(env, `/subscriptions/${existing.square_subscription_id}?include=actions`);
+                const sub = g.subscription || {};
+                const pausa = (sub.actions || []).find(a => a.type === 'PAUSE');
+                if (sub.status === 'ACTIVE' && pausa && validId(pausa.id)) {
+                  await squareApi(env, `/subscriptions/${existing.square_subscription_id}/actions/${pausa.id}`, 'DELETE');
+                  cancelóPausaPendiente = true;
+                } else if (sub.status !== 'ACTIVE') {
+                  await squareApi(env, `/subscriptions/${existing.square_subscription_id}/resume`, 'POST', { resume_change_timing: 'IMMEDIATE' });
+                }
               } catch (e) {
                 return adminJson({ error: 'Square no permitió reanudar la suscripción', detail: e.message }, 502);
               }
-              if (!venceVigente) {
+              if (!venceVigente && !cancelóPausaPendiente) {
                 // Se activa cuando Square confirme el cobro (invoice.payment_made).
                 fields.estado_pago = 'pendiente';
                 aviso = 'Reanudada en Square: se activa sola cuando Square confirme el cobro.';
