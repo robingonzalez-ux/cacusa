@@ -609,6 +609,16 @@ async function runLoversBilling(env) {
 // invoice.payment_made de una factura de Lovers (sin subscription_id, con metadata
 // lovers_* en su order). Devuelve dbOk. Reusa los mismos avisos/cupón/envío/correo que
 // el camino de suscripción, con las mismas reglas de idempotencia.
+// Fecha REAL del pago (11 oct): el webhook llega el mismo día del cobro, pero un pago
+// recuperado por la sincronización con Square se procesa días después — antes se
+// anotaba la fecha del registro como ultimo_pago y eso sacaba a la clienta del lote
+// que le tocaba (caso real: Alejandra, anual pagada el 6 sep, registrada el 11 oct).
+// La sincronización pasa la fecha de cobro en invoice._paid_date.
+function paidDateOf(invoice) {
+  const d = invoice && invoice._paid_date;
+  return ISO_DATE_RE.test(d || '') && d <= todayIso() ? d : todayIso();
+}
+
 async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
   let key = String(meta.lovers_key || '');
   if (!validId(key, true)) { console.warn('factura Lovers con lovers_key inválido:', invoice.id); return true; }
@@ -637,7 +647,7 @@ async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
   const hasAddress = !!(existing && existing.direccion);
   const plan = planNombre(periodo);
   const fields = {
-    ultimo_pago: today,
+    ultimo_pago: paidDateOf(invoice),
     square_invoice_id: invoice.id || '',
     square_customer_id: customerId,
     modo_cobro: 'factura',
@@ -764,7 +774,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
       // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
       // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
       dbOk = await updateSubscriber(key, 'activo', {
-        ultimo_pago: today,
+        ultimo_pago: paidDateOf(invoice),
         square_invoice_id: invoice?.id || '',
         square_subscription_id: invoiceSubId,
         ...(customerId ? { square_customer_id: customerId } : {}),
@@ -807,7 +817,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
         plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
         monto: isAnnual ? '$219.89/año' : '$19.99/mes',
         fecha: today,
-        ultimo_pago: today,
+        ultimo_pago: paidDateOf(invoice),
         square_invoice_id: invoice?.id || '',
         // Auditoría de integridad (19 sep, F08): este era el único camino que
         // creaba un registro 'activo' SIN guardar square_subscription_id — dejaba
@@ -914,7 +924,20 @@ async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
         if (inv.status === 'PAID') {
           const yaProcesada = s.square_invoice_id === inv.id
             || (env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${inv.id}`));
-          if (yaProcesada) { yaHayReciente = true; continue; }
+          if (yaProcesada) {
+            // Reparación: si se registró con la fecha del registro en vez de la del
+            // cobro, se corrige para que entre al lote correcto.
+            if (!yaHayReciente && s.square_invoice_id === inv.id && ISO_DATE_RE.test(due || '') && due <= today
+                && ISO_DATE_RE.test(s.ultimo_pago || '') && s.ultimo_pago > due) {
+              out.fechasCorregidas = (out.fechasCorregidas || []);
+              out.fechasCorregidas.push({ ...item, antes: s.ultimo_pago });
+              if (!dryRun) {
+                if (!(await updateSubscriber(key, null, { ultimo_pago: due }, dbUrl, fbAuth))) throw new Error('No se pudo corregir ultimo_pago');
+                s.ultimo_pago = due;
+              }
+            }
+            yaHayReciente = true; continue;
+          }
           if (yaHayReciente) { out.pagosAnteriores.push(item); continue; }
           yaHayReciente = true;
           out.pagosSinRegistrar.push(item);
@@ -924,7 +947,7 @@ async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
             const ids = { square_customer_id: customerId, ...(inv.subscription_id && !s.square_subscription_id ? { square_subscription_id: inv.subscription_id } : {}) };
             if (!(await updateSubscriber(key, null, ids, dbUrl, fbAuth))) throw new Error('No se pudo guardar los ids de Square');
             Object.assign(s, ids);
-            const ok = await processPaidInvoice(inv, env, dbUrl, fbAuth);
+            const ok = await processPaidInvoice({ ...inv, _paid_date: due }, env, dbUrl, fbAuth);
             if (!ok) throw new Error(`No se pudo registrar la factura ${inv.id}`);
             out.registrados++;
             await notifyAdminPush('CACUSA · Pago recuperado - Lovers', `🔁 Se registró el pago de ${nombre} (${due}) — pedido de envío creado`, env);
