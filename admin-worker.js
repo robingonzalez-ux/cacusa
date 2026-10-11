@@ -278,6 +278,14 @@ export default {
       // de rutas internas (ORDER_INGEST_KEY compartido).
       // Correo "tu suscripción se pausó" (cobro por factura sin pagar 7 días después de
       // vencer) — lo pide el cron de lovers-webhook-worker.js. Mismo guard interno.
+      // Correos de ciclo de vida de Lovers (11 oct): 'expiring' (manual por vencer) y
+      // 'goodbye' (cancelación). Los pide lovers-webhook-worker.js.
+      if (path.endsWith('/internal/lovers/email')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        await sendLoversLifecycleEmail(body, env).catch(e => console.error('lovers email interno falló:', e.message));
+        return ok({ ok: true }, allowOrigin);
+      }
+
       if (path.endsWith('/internal/lovers/paused-email')) {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         await sendLoversPausedEmail(body, env).catch(e => console.error('paused-email interno falló:', e.message));
@@ -3650,6 +3658,71 @@ function loversPausedEmailContent(nombre, url, lang) {
       ctaText: 'Pagar y reactivar →', ctaUrl: safeUrl,
     }),
   };
+}
+
+function loversLifecycleEmailContent(kind, nombre, vence, lang) {
+  const p = (t) => `<p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#96486F;text-align:center;margin:0 0 14px;">${t}</p>`;
+  const en = lang === 'en';
+  const loversUrl = en ? 'https://cacusabytaitus.com/en/cacusa-lovers.html' : 'https://cacusabytaitus.com/cacusa-lovers.html';
+  const wa = 'https://wa.me/17867375336';
+  const fechaTxt = /^\d{4}-\d{2}-\d{2}$/.test(vence || '')
+    ? new Date(vence + 'T12:00:00Z').toLocaleDateString(en ? 'en-US' : 'es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : '';
+  const hi = nombre ? ', ' + esc(nombre) : '';
+  if (kind === 'expiring') {
+    return en ? {
+      subject: 'Your Cacusa Lovers membership is about to expire',
+      html: emailShellGeneric({
+        lang, preheader: 'Renew to keep receiving your monthly pieces.',
+        eyebrow: 'Cacusa Lovers', title: `Just a reminder${hi} ♡`,
+        bodyHtml: p(`Your Cacusa Lovers membership ${fechaTxt ? 'expires on <strong>' + esc(fechaTxt) + '</strong>' : 'is about to expire'}.`)
+          + p('To keep receiving your 2 handmade pieces every month, plus your 5% off and free shipping, message us on WhatsApp to renew.'),
+        ctaText: 'Renew on WhatsApp →', ctaUrl: wa,
+      }),
+    } : {
+      subject: 'Tu membresía Cacusa Lovers está por vencer',
+      html: emailShellGeneric({
+        lang, preheader: 'Renueva para seguir recibiendo tus piezas cada mes.',
+        eyebrow: 'Cacusa Lovers', title: `Un recordatorio${hi} ♡`,
+        bodyHtml: p(`Tu membresía Cacusa Lovers ${fechaTxt ? 'vence el <strong>' + esc(fechaTxt) + '</strong>' : 'está por vencer'}.`)
+          + p('Para seguir recibiendo tus 2 piezas hechas a mano cada mes, además de tu 5% de descuento y el envío gratis, escríbenos por WhatsApp y la renovamos.'),
+        ctaText: 'Renovar por WhatsApp →', ctaUrl: wa,
+      }),
+    };
+  }
+  // goodbye
+  return en ? {
+    subject: 'Thank you for being a Cacusa Lover ♡',
+    html: emailShellGeneric({
+      lang, preheader: 'Your membership has been canceled — the door is always open.',
+      eyebrow: 'Cacusa Lovers', title: `Thank you${hi} ♡`,
+      bodyHtml: p('Your Cacusa Lovers membership has been canceled. Thank you for being part of our community and for letting us create pieces just for you every month.')
+        + p('We\'d love to have you back soon — new handmade designs arrive every month, and the club will be waiting for you whenever you\'re ready.'),
+      ctaText: 'Come back to Cacusa Lovers →', ctaUrl: loversUrl,
+    }),
+  } : {
+    subject: 'Gracias por ser una Cacusa Lover ♡',
+    html: emailShellGeneric({
+      lang, preheader: 'Tu membresía fue cancelada — la puerta siempre está abierta.',
+      eyebrow: 'Cacusa Lovers', title: `Gracias${hi} ♡`,
+      bodyHtml: p('Tu membresía Cacusa Lovers fue cancelada. Gracias por haber sido parte de nuestra comunidad y por dejarnos crear piezas pensadas en ti cada mes.')
+        + p('Nos encantaría tenerte de vuelta pronto: cada mes llegan diseños nuevos hechos a mano, y el club te estará esperando cuando quieras volver.'),
+      ctaText: 'Volver a Cacusa Lovers →', ctaUrl: loversUrl,
+    }),
+  };
+}
+
+async function sendLoversLifecycleEmail(body, env) {
+  const email = String(body.email || '').toLowerCase().trim();
+  if (!isValidEmail(email)) return;
+  const kind = body.kind === 'expiring' ? 'expiring' : (body.kind === 'goodbye' ? 'goodbye' : null);
+  if (!kind) return;
+  const lang = body.idioma === 'en' ? 'en' : 'es';
+  try {
+    await sendGmail(env, { to: email, ...loversLifecycleEmailContent(kind, String(body.nombre || '').slice(0, 100), String(body.vence || ''), lang) });
+  } catch (e) {
+    console.error('email Lovers', kind, 'falló:', e.message);
+  }
 }
 
 async function sendLoversPausedEmail(body, env) {

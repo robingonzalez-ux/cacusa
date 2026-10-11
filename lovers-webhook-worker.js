@@ -510,6 +510,21 @@ async function notifyPausedEmail(email, fields, env) {
   }
 }
 
+// Correos de ciclo de vida de Lovers (11 oct) que arma y manda cacusa-admin:
+// 'expiring' (suscripción manual por vencer en ≤7 días) y 'goodbye' (cancelación).
+// Best-effort, igual que notifyPausedEmail().
+async function notifyLoversEmail(kind, s, env, extra = {}) {
+  if (!env.ORDER_INGEST_KEY || !s || !s.email) return;
+  try {
+    const r = await adminFetch(env, '/internal/lovers/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ kind, email: s.email, nombre: s.nombre || '', idioma: idiomaDe(s), vence: s.vence || '', ...extra }),
+    });
+    if (!r.ok) console.error('lovers email', kind, 'failed:', r.status);
+  } catch (e) { console.error('lovers email', kind, 'error:', e.message); }
+}
+
 function idiomaDe(s) {
   return s && (s.idioma === 'es' || s.idioma === 'en') ? s.idioma : (s && s.pais === 'Ecuador' ? 'es' : 'en');
 }
@@ -526,6 +541,20 @@ async function runLoversBilling(env) {
   if (!r.ok) { summary.errores.push(`Firebase ${r.status}`); return summary; }
   const all = (await r.json()) || {};
   const today = todayIso();
+  summary.recordatorios = 0;
+  // Suscripciones MANUALES (transferencia): recordatorio por correo cuando faltan 7 días
+  // o menos para `vence` — una sola vez por fecha de vencimiento (recordatorio_vence).
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || s.metodo_pago !== 'manual' || s.estado_pago !== 'activo') continue;
+    if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
+    if (s.vence < today || s.vence > addDaysIso(today, 7) || s.recordatorio_vence === s.vence) continue;
+    try {
+      const ok = await updateSubscriber(key, null, { recordatorio_vence: s.vence }, dbUrl, fbAuth);
+      if (!ok) throw new Error('No se pudo marcar recordatorio_vence');
+      await notifyLoversEmail('expiring', s, env);
+      summary.recordatorios++;
+    } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
+  }
   for (const [key, s] of Object.entries(all)) {
     if (!s || s.modo_cobro !== 'factura' || s.estado_pago !== 'activo') continue;
     if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
@@ -1282,6 +1311,12 @@ async function handleRequest(request, env) {
 
         // Reflejar la cancelación en Firebase de inmediato — el webhook subscription.updated
         // de Square también la marcará al llegar, esto solo evita la espera en el admin.
+        // El correo de despedida va acá solo si todavía no estaba cancelada (el webhook
+        // que llega después ve 'cancelado' y no lo repite).
+        try {
+          const prev = await getSubscriberByKey(firebaseKey, dbUrl, fbAuth);
+          if (prev && prev.estado_pago !== 'cancelado') await notifyLoversEmail('goodbye', prev, env);
+        } catch (e) { console.error('goodbye tras cancelar:', e.message); }
         try {
           await updateSubscriber(firebaseKey, 'cancelado', {
             fecha_cancelacion: new Date().toISOString().slice(0, 10),
@@ -1319,6 +1354,7 @@ async function handleRequest(request, env) {
         }, dbUrl, fbAuth);
         if (!ok) return adminJson({ error: 'No se pudo marcar cancelado en Firebase' }, 502);
         await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
+        if (s.estado_pago !== 'cancelado') await notifyLoversEmail('goodbye', s, env);
         return adminJson({ ok: true }, 200);
       }
 
@@ -1523,12 +1559,30 @@ async function handleRequest(request, env) {
           // key no existe) — esta ruta no está dentro del try/catch general del webhook
           // más abajo, así que se envuelve acá para no dejar una excepción sin atrapar.
           let existing = null;
-          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'activo') {
+          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'activo' || fields.estado_pago === 'pausado') {
             try {
               existing = await getSubscriberByKey(id, dbUrl, fbAuth);
             } catch (e) {
               return adminJson({ error: 'No se pudo leer la suscriptora antes de actualizar', detail: e.message }, 502);
             }
+          }
+          // Pausa (11 oct): solo para suscripciones MANUALES — en las de Square el cobro
+          // seguiría corriendo aunque el panel diga "pausada".
+          if (fields.estado_pago === 'pausado') {
+            if (!existing || existing.metodo_pago !== 'manual') {
+              return adminJson({ error: 'La pausa solo está disponible para suscripciones manuales' }, 400);
+            }
+            if (existing.estado_pago !== 'pausado') fields.fecha_pausa = todayIso();
+          }
+          // Al reanudar una pausa, `vence` se corre los días que estuvo pausada.
+          let venceNuevo = null;
+          if (existing && existing.estado_pago === 'pausado' && fields.estado_pago === 'activo') {
+            if (ISO_DATE_RE.test(existing.vence || '') && ISO_DATE_RE.test(existing.fecha_pausa || '')) {
+              const dias = Math.max(0, Math.round((Date.parse(todayIso()) - Date.parse(existing.fecha_pausa)) / 86400000));
+              venceNuevo = addDaysIso(existing.vence, dias);
+              fields.vence = venceNuevo;
+            }
+            fields.fecha_pausa = '';
           }
 
           const r = await fetch(`${dbUrl}/cacusa_lovers/${id}.json?auth=${fbAuth}`, {
@@ -1544,13 +1598,14 @@ async function handleRequest(request, env) {
           if (existing && existing.estado_pago !== fields.estado_pago) {
             const email = existing.email || '';
             const idioma = fields.idioma || existing.idioma || existing.pais;
-            if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido') {
+            if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'pausado') {
               await notifyExclusiveCoupon('deactivate', email, idioma, env, existing.telefono);
+              if (fields.estado_pago === 'cancelado') await notifyLoversEmail('goodbye', existing, env);
             } else {
               await notifyExclusiveCoupon('activate', email, idioma, env);
             }
           }
-          return adminJson({ ok: true }, 200);
+          return adminJson({ ok: true, ...(venceNuevo ? { vence: venceNuevo } : {}), ...(fields.fecha_pausa !== undefined ? { fecha_pausa: fields.fecha_pausa } : {}) }, 200);
         }
 
         if (request.method === 'DELETE') {
@@ -1813,6 +1868,7 @@ async function handleRequest(request, env) {
                 if (dbOk) {
                   console.log('Marked cancelado:', email);
                   await notifyExclusiveCoupon('deactivate', email, existing.idioma || existing.pais, env, existing.telefono);
+                  if (existing.estado_pago !== 'cancelado') await notifyLoversEmail('goodbye', existing, env);
                 }
               }
             } else {
