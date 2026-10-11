@@ -285,7 +285,7 @@
         },
         {
           "title": "Envío tras confirmación de pago",
-          "desc": "Los envíos se realizan durante la tercera semana de cada mes, una vez confirmado el pago. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — los envíos aún no han salido."
+          "desc": "Los envíos se realizan juntos durante la tercera semana de cada mes (del 15 al 21). Entran en el envío del mes los pagos confirmados hasta el día 10; los pagos posteriores salen en el envío del mes siguiente. El tiempo de entrega es de 5 a 15 días hábiles según el país de destino."
         },
         {
           "title": "Sin devoluciones",
@@ -322,12 +322,12 @@
       ],
       "shippingNotice": {
         "title": "Importante sobre los tiempos de envío",
-        "text": "Las suscripciones se envían todas juntas durante la tercera semana del mes. Esto es diferente a un pedido regular de la tienda. Si te unes a mediados de mes, tu primera caja saldrá en la tercera semana del mes siguiente. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — simplemente aún no ha llegado el momento del envío mensual."
+        "text": "Las suscripciones se envían todas juntas durante la tercera semana del mes (del 15 al 21). Esto es diferente a un pedido regular de la tienda. Si tu pago se confirma hasta el día 10, tu caja sale ese mes; si es después, sale en la tercera semana del mes siguiente. Si aún no has recibido tu caja en los primeros días del mes, no es una demora — simplemente aún no ha llegado el momento del envío mensual."
       },
       "faq": [
         {
           "q": "¿Cuándo recibiré mi primera caja?",
-          "a": "Tu primera caja se envía dentro de los primeros 5 días hábiles después de tu suscripción. A partir del segundo mes, los envíos salen durante la tercera semana del mes, junto con todas las suscripciones."
+          "a": "Todas las cajas, incluida la primera, salen juntas en la tercera semana del mes (del 15 al 21). Si tu pago se confirma hasta el día 10, tu caja sale ese mismo mes; si es después del 10, sale en la tercera semana del mes siguiente."
         },
         {
           "q": "¿Puedo elegir las joyas que recibo?",
@@ -395,7 +395,7 @@
         },
         {
           "title": "Shipping after payment confirmation",
-          "desc": "Shipments go out during the third week of each month, once payment is confirmed. Delivery time is 5 to 15 business days depending on the destination country. If you haven't received your box in the first few days of the month, it isn't a delay — shipments simply haven't gone out yet."
+          "desc": "Shipments go out together during the third week of each month (15th–21st). Payments confirmed by the 10th are included in that month's shipment; later payments ship the following month. Delivery time is 5 to 15 business days depending on the destination country."
         },
         {
           "title": "No returns",
@@ -432,12 +432,12 @@
       ],
       "shippingNotice": {
         "title": "Important about shipping times",
-        "text": "Subscriptions all ship together during the third week of the month. This is different from a regular store order. If you join mid-month, your first box will ship in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment."
+        "text": "Subscriptions all ship together during the third week of the month (15th–21st). This is different from a regular store order. If your payment is confirmed by the 10th, your box ships that month; if it's later, it ships in the third week of the following month. If you haven't received your box in the first few days of the month, it isn't a delay — it's simply not yet time for the monthly shipment."
       },
       "faq": [
         {
           "q": "When will I receive my first box?",
-          "a": "Your first box ships within the first 5 business days after you subscribe. Starting the second month, shipments go out during the third week of the month, along with all subscriptions."
+          "a": "All boxes, including the first one, ship together in the third week of the month (15th–21st). If your payment is confirmed by the 10th, your box ships that same month; if it's after the 10th, it ships in the third week of the following month."
         },
         {
           "q": "Can I choose the jewelry I receive?",

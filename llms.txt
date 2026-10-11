@@ -66,6 +66,8 @@ puerta del cliente. <!--LLMS:LOVERS_PRICE_ES-->Plan mensual: $19.99/mes. Plan an
 descuento vs. pagar mes a mes)<!--/LLMS:LOVERS_PRICE_ES-->, con acceso VIP 48h antes que el plan mensual.
 Envíos a Ecuador y Estados Unidos. El pago es por factura de Square cada mes (o
 año) y se paga con Apple Pay, Google Pay o tarjeta — sin cobros automáticos.
+Todas las cajas salen juntas la tercera semana del mes (pagos confirmados
+hasta el día 10 entran en el envío de ese mes).
 Las suscriptoras activas pueden referir
 amigas: la amiga referida recibe 10% de descuento en su primera compra en la
 tienda.
@@ -78,7 +80,8 @@ the customer's door. <!--LLMS:LOVERS_PRICE_EN-->Monthly plan: $19.99/month. Annu
 (8% off vs. paying month to month)<!--/LLMS:LOVERS_PRICE_EN-->, with VIP early access 48h before the
 monthly plan. Ships to Ecuador and the United States. Payment is by Square
 invoice each month (or year), paid with Apple Pay, Google Pay or card — no
-automatic charges. Active subscribers can
+automatic charges. All boxes ship together in the third week of the month
+(payments confirmed by the 10th ship that month). Active subscribers can
 refer friends: the referred friend gets 10% off her first purchase in the
 store.
 
