@@ -907,6 +907,14 @@ function syncDue(s, today) {
   if (!ISO_DATE_RE.test(s.ultimo_pago || '')) return true;
   return s.ultimo_pago <= addDaysIso(today, planPeriodo(s.plan) === 'anual' ? -360 : -25);
 }
+// Reparación única (11 oct): los pagos recuperados con "Sincronizar" ANTES del arreglo de
+// paidDateOf quedaron con ultimo_pago = día del registro (2026-10-11). syncDue no vuelve a
+// mirar un pago "reciente", así que la tarea diaria nunca corregía esa fecha y el lote de
+// octubre las dejaba fuera (caso real: Ale, Maria Lopez — Pedidos sin sus cajas). Se
+// revisan primero en la fila de la tarea diaria; cuando todas pasaron sin error se marca
+// en KV y no se repite. Solo cambia la fecha si Square dice que ESA factura se cobró antes.
+const LOVERS_FECHA_MALA = '2026-10-11';
+const LOVERS_REPAIR_KEY = 'loversrepair:fechas-2026-10-11';
 async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
@@ -915,12 +923,23 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
   let all = preloaded;
   if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
   let entries = Object.entries(all).filter(([k, s]) => s && typeof s === 'object' && s.estado_pago !== 'cancelado' && s.metodo_pago !== 'manual' && validId(k, true));
+  let reparar = null; // keys de la reparación única, si está pendiente
+  const fallidas = new Set();
   if (cron) {
     const t0 = todayIso();
-    entries = entries.filter(([, s]) => syncDue(s, t0))
-      .sort((a, b) => String(a[1].ultimo_pago || '').localeCompare(String(b[1].ultimo_pago || '')))
-      .slice(0, max);
-    if (!entries.length) return out;
+    if (env.CACUSA_KV && !dryRun && !(await env.CACUSA_KV.get(LOVERS_REPAIR_KEY))) {
+      reparar = entries.filter(([, s]) => s.ultimo_pago === LOVERS_FECHA_MALA).map(([k]) => k);
+    }
+    const esReparar = k => !!reparar && reparar.includes(k);
+    entries = [
+      ...entries.filter(([k]) => esReparar(k)),
+      ...entries.filter(([k, s]) => !esReparar(k) && syncDue(s, t0))
+        .sort((a, b) => String(a[1].ultimo_pago || '').localeCompare(String(b[1].ultimo_pago || ''))),
+    ].slice(0, max);
+    if (!entries.length) {
+      if (reparar) await env.CACUSA_KV.put(LOVERS_REPAIR_KEY, t0);
+      return out;
+    }
   }
   const locs = ((await squareApi(env, '/locations')).locations || []).map(l => l.id).slice(0, 10);
   if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
@@ -992,8 +1011,13 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
         }
       }
     } catch (e) {
+      fallidas.add(key);
       out.errores.push(`${nombre}: ${e.message}`.slice(0, 300));
     }
+  }
+  if (reparar) {
+    const revisadas = new Set(entries.map(([k]) => k));
+    if (reparar.every(k => revisadas.has(k) && !fallidas.has(k))) await env.CACUSA_KV.put(LOVERS_REPAIR_KEY, todayIso());
   }
   console.log('reconcileLoversWithSquare:', JSON.stringify({ dryRun, sinRegistrar: out.pagosSinRegistrar.length, registrados: out.registrados, fallidos: out.pagosFallidos.length, errores: out.errores.length }));
   return out;
@@ -1021,7 +1045,9 @@ function loteFechas(month) {
 async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, maxNew = Infinity } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
-  const out = { month, dryRun, incluidas: [], yaConPedido: [], sinDireccion: [], creados: 0, pendientes: 0, errores: [] };
+  // fueraDelLote: activas/pausadas que NO entran a este lote, con el motivo — para ver
+  // de un vistazo por qué alguien que pagó no tiene caja (antes solo se veían las que sí).
+  const out = { month, dryRun, incluidas: [], yaConPedido: [], sinDireccion: [], fueraDelLote: [], creados: 0, pendientes: 0, errores: [] };
   if (!/^\d{4}-\d{2}$/.test(month || '')) { out.errores.push('Mes inválido'); return out; }
   if (!fbAuth) { out.errores.push('Falta FB_DB_SECRET'); return out; }
   const { desde, corte, envio } = loteFechas(month);
@@ -1040,18 +1066,29 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
     const pago = ISO_DATE_RE.test(s.ultimo_pago || '') ? s.ultimo_pago : '';
     let vence = ISO_DATE_RE.test(s.vence || '') ? s.vence : '';
     if (!vence && periodo === 'anual' && pago) vence = addPeriodIso(pago, 'anual');
+    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
     let motivo = '';
+    let fuera = '';
     if (periodo === 'anual') {
       const inicio = pago || (ISO_DATE_RE.test(s.fecha || '') ? s.fecha : '');
       if (vence && vence >= envio && inicio && inicio <= corte) motivo = 'anual';
+      else if (!inicio) fuera = 'anual sin fecha de pago';
+      else if (!vence || vence < envio) fuera = `anual vencida${vence ? ` el ${vence}` : ''}`;
+      else fuera = `anual pagada el ${inicio}, después del corte del ${corte}: entra desde el lote siguiente`;
     } else if (manual) {
       if (vence && vence >= envio) motivo = 'mensual manual';
+      else fuera = vence ? `pago manual vence el ${vence}, antes del ${envio}` : 'pago manual sin fecha de vencimiento';
     } else if (pago && pago >= desde && pago <= corte) {
       motivo = 'mensual';
+    } else {
+      fuera = !pago ? 'sin fecha de último pago'
+        : pago > corte ? `pagó el ${pago}, después del corte del ${corte}: va al lote del mes siguiente`
+        : `último pago el ${pago}: el cobro de este mes todavía no llega`;
     }
-    if (s.estado_pago === 'pausado' && !(vence && vence >= envio) && motivo !== 'mensual') motivo = '';
-    if (!motivo) continue;
-    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+    if (s.estado_pago === 'pausado' && !(vence && vence >= envio) && motivo !== 'mensual' && motivo) {
+      motivo = ''; fuera = `pausada, vigente solo hasta ${vence || '—'}`;
+    }
+    if (!motivo) { out.fueraDelLote.push({ id: key, nombre, plan: periodo, motivo: fuera }); continue; }
     const item = { id: key, nombre, plan: periodo, motivo, ciudad: s.ciudad || '', pais: s.pais || '' };
     // Transición: pedidos ya creados por pago (antes del lote) para este mismo ciclo.
     if (motivo === 'mensual' && s.square_invoice_id && env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${s.square_invoice_id}`)) {
@@ -1184,10 +1221,22 @@ export default {
       if (dia > LOVERS_CUTOFF_DAY) {
         // Tope de 20 cajas nuevas por ejecución: en el plan gratis de Cloudflare cada
         // ejecución tiene ~50 llamadas externas; el resto sale al día siguiente.
-        const b = await buildLoversBatch(env, { month: hoy.slice(0, 7), dryRun: false, all, maxNew: 20 }).catch(e => { console.error('lote:', e.message); return null; });
-        if (b && b.creados > 0) {
-          await notifyAdminPush('CACUSA · Lote Lovers ' + hoy.slice(0, 7),
-            `📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`, env);
+        const mes = hoy.slice(0, 7);
+        const b = await buildLoversBatch(env, { month: mes, dryRun: false, all, maxNew: 20 }).catch(e => { console.error('lote:', e.message); return null; });
+        // Las que entran al lote pero no tienen dirección no reciben caja: se avisa una vez
+        // por mes (y de nuevo solo si la lista cambia), para que no queden olvidadas.
+        const sinDir = b ? b.sinDireccion.map(x => x.id).sort().join('|') : '';
+        const avisoKey = `loversloteaviso:${mes}`;
+        const avisarSinDir = !!sinDir && !!env.CACUSA_KV && (await env.CACUSA_KV.get(avisoKey)) !== sinDir;
+        if (b && (b.creados > 0 || avisarSinDir)) {
+          const partes = [];
+          if (b.creados > 0) partes.push(`📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`);
+          if (avisarSinDir) {
+            const nombres = b.sinDireccion.slice(0, 3).map(x => x.nombre).join(', ') + (b.sinDireccion.length > 3 ? '…' : '');
+            partes.push(`${b.sinDireccion.length} sin dirección (${nombres}): complétala en Lovers para que entren`);
+          }
+          await notifyAdminPush('CACUSA · Lote Lovers ' + mes, partes.join(' · '), env);
+          if (avisarSinDir) await env.CACUSA_KV.put(avisoKey, sinDir, { expirationTtl: 60 * 60 * 24 * 45 });
         }
       }
     })());
