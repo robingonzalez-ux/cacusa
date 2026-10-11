@@ -247,7 +247,37 @@ async function verifySignature(request, body, sigKey) {
 // Firebase no permite '.', '#', '$', '[', ']', '/' en una key, por eso se
 // reemplazan por ','.
 function subscriberKey(email) {
-  return String(email || '').trim().toLowerCase().replace(/[.#$[\]/]/g, ',');
+  return String(email || '').replace(/\s+/g, '').toLowerCase().replace(/[.#$[\]/]/g, ',');
+}
+
+// ── Ubicar a la suscriptora de un evento de Square (11 oct) ──────────────────
+// Bug real: cada renovación creaba una suscriptora DUPLICADA cuando el email que trae
+// Square (factura o cliente) no daba exactamente la misma key que el del formulario
+// (otro correo, un punto de más, espacios) — la búsqueda era solo por email, así que
+// caía en "Subscriber not in Firebase yet" y creaba otro registro 'activo'. Ahora se
+// busca primero por los IDs de Square ya guardados (square_subscription_id, después
+// square_customer_id) y recién si no aparecen se usa el email. Una lectura de toda
+// cacusa_lovers por evento — la lista es chica (decenas) y se hace igual en otras rutas.
+async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, customerId }) {
+  if (subscriptionId || customerId) {
+    const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+    if (!r.ok) throw new Error(`Firebase GET falló (${r.status}) para cacusa_lovers`);
+    const all = (await r.json()) || {};
+    const entries = Object.entries(all).filter(([, v]) => v && typeof v === 'object');
+    // Si varias coinciden (duplicados viejos), se prefiere la más antigua: es la original.
+    const oldest = list => list.sort((a, b) => String(a[1].fecha || '').localeCompare(String(b[1].fecha || '')))[0];
+    if (subscriptionId) {
+      const m = entries.filter(([, v]) => v.square_subscription_id === subscriptionId);
+      if (m.length) { const [key, existing] = oldest(m); return { key, existing }; }
+    }
+    if (customerId) {
+      const m = entries.filter(([, v]) => v.square_customer_id === customerId);
+      if (m.length) { const [key, existing] = oldest(m); return { key, existing }; }
+    }
+  }
+  if (!email) return { key: null, existing: null };
+  const key = subscriberKey(email);
+  return { key, existing: await getSubscriberByKey(key, dbUrl, fbAuth) };
 }
 
 // ── Lee un registro por su key determinística — lookup directo por ID, no una
@@ -537,11 +567,17 @@ async function runLoversBilling(env) {
 // lovers_* en su order). Devuelve dbOk. Reusa los mismos avisos/cupón/envío/correo que
 // el camino de suscripción, con las mismas reglas de idempotencia.
 async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
-  const key = String(meta.lovers_key || '');
+  let key = String(meta.lovers_key || '');
   if (!validId(key, true)) { console.warn('factura Lovers con lovers_key inválido:', invoice.id); return true; }
   const periodo = meta.lovers_periodo === 'anual' ? 'anual' : 'mensual';
   const today = todayIso();
-  const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+  let existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+  // Misma protección contra duplicados que el camino de suscripción: si la key de la
+  // factura no existe pero el cliente de Square ya está guardado en otra, se usa esa.
+  if (!existing && invoice.primary_recipient?.customer_id) {
+    const found = await resolveSubscriber(dbUrl, fbAuth, { customerId: invoice.primary_recipient.customer_id });
+    if (found.existing) { key = found.key; existing = found.existing; }
+  }
   const alreadyProcessed = !!invoice.id && existing?.square_invoice_id === invoice.id;
   const wasActive = existing?.estado_pago === 'activo';
   // Periodo anclado al ciclo que cubre la factura (lovers_desde = vence anterior en una
@@ -933,6 +969,7 @@ async function handleRequest(request, env) {
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
         url.pathname === '/admin/cancel-lovers-invoice' || url.pathname === '/admin/lovers-billing-run' ||
+        url.pathname === '/admin/lovers-dedupe' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
         url.pathname.startsWith('/admin/reviews/')) {
 
@@ -1006,6 +1043,78 @@ async function handleRequest(request, env) {
         if (!ok) return adminJson({ error: 'No se pudo marcar cancelado en Firebase' }, 502);
         await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
         return adminJson({ ok: true }, 200);
+      }
+
+      // POST /admin/lovers-dedupe — junta suscriptoras duplicadas (11 oct, ver
+      // resolveSubscriber). Agrupa por square_subscription_id y por square_customer_id;
+      // en cada grupo conserva la MÁS ANTIGUA (fecha) con su dirección/notas/idioma, le
+      // copia lo más reciente de las demás (ultimo_pago, vence, square_invoice_id, ids
+      // de Square, y 'activo' si alguna lo está) y borra las demás. Por defecto es una
+      // vista previa (dryRun) que no toca nada; solo borra con {dryRun:false}.
+      if (url.pathname === '/admin/lovers-dedupe') {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        const b = (await request.json().catch(() => null)) || {};
+        const dryRun = b.dryRun !== false;
+        const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+        if (!rAll.ok) return adminJson({ error: 'No se pudo leer cacusa_lovers' }, 502);
+        const all = (await rAll.json()) || {};
+        // Unión de grupos por cualquiera de los 2 ids (union-find chico).
+        const parent = {};
+        const find = k => { while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; } return k; };
+        const keys = Object.keys(all).filter(k => all[k] && typeof all[k] === 'object' && validId(k, true));
+        keys.forEach(k => { parent[k] = k; });
+        const byId = {};
+        for (const k of keys) {
+          // También por nombre completo: el registro ORIGINAL (formulario) muchas veces
+          // no tiene ningún id de Square — justamente porque el email no coincidió y el
+          // id quedó guardado solo en el duplicado. Por eso la vista previa es obligatoria.
+          const fullName = [all[k].nombre, all[k].apellido].every(x => String(x || '').trim())
+            ? 'n:' + [all[k].nombre, all[k].apellido].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+            : '';
+          for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, fullName]) {
+            if (!id) continue;
+            if (byId[id]) parent[find(k)] = find(byId[id]); else byId[id] = k;
+          }
+        }
+        const groups = {};
+        keys.forEach(k => { (groups[find(k)] = groups[find(k)] || []).push(k); });
+        const plan = [];
+        for (const g of Object.values(groups)) {
+          if (g.length < 2) continue;
+          g.sort((a, c) => String(all[a].fecha || '9999').localeCompare(String(all[c].fecha || '9999')));
+          const keep = g[0];
+          const rest = g.slice(1);
+          const recs = g.map(k => all[k]);
+          const maxOf = f => recs.map(x => x[f] || '').sort().pop() || '';
+          const newestBy = (f, src) => { const x = recs.filter(y => y[src]).sort((a, c) => String(a[src]).localeCompare(String(c[src]))).pop(); return x ? x[f] || '' : ''; };
+          const merged = {};
+          if (maxOf('ultimo_pago')) merged.ultimo_pago = maxOf('ultimo_pago');
+          if (maxOf('vence')) merged.vence = maxOf('vence');
+          const inv = newestBy('square_invoice_id', 'ultimo_pago'); if (inv) merged.square_invoice_id = inv;
+          const subId = all[keep].square_subscription_id || newestBy('square_subscription_id', 'ultimo_pago'); if (subId) merged.square_subscription_id = subId;
+          const custId = all[keep].square_customer_id || newestBy('square_customer_id', 'ultimo_pago'); if (custId) merged.square_customer_id = custId;
+          if (recs.some(x => x.estado_pago === 'activo')) merged.estado_pago = 'activo';
+          for (const f of ['direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'telefono', 'nombre', 'apellido']) {
+            if (!all[keep][f]) { const v = rest.map(k => all[k][f]).find(Boolean); if (v) merged[f] = v; }
+          }
+          plan.push({
+            conservar: { id: keep, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
+            borrar: rest.map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
+            actualizar: merged,
+          });
+        }
+        if (dryRun) return adminJson({ dryRun: true, grupos: plan }, 200);
+        const hechos = [];
+        for (const p of plan) {
+          const ok = await updateSubscriber(p.conservar.id, null, p.actualizar, dbUrl, fbAuth);
+          if (!ok) return adminJson({ error: `No se pudo actualizar ${p.conservar.id}`, hechos }, 502);
+          for (const d of p.borrar) {
+            const rd = await fetch(`${dbUrl}/cacusa_lovers/${d.id}.json?auth=${fbAuth}`, { method: 'DELETE' });
+            if (!rd.ok) return adminJson({ error: `No se pudo borrar ${d.id}`, hechos }, 502);
+          }
+          hechos.push(p.conservar.id);
+        }
+        return adminJson({ ok: true, fusionadas: hechos.length, grupos: plan }, 200);
       }
 
       // POST /admin/lovers-billing-run — corre el cron de facturación a mano (para probar
@@ -1281,8 +1390,7 @@ async function handleRequest(request, env) {
           const addr = customer?.address || {};
           // Detect annual: monthly price ~$19.99 = ~2000 cents; annual ~$219.89 = ~21989 cents
           const isAnnual = (sub.price_money?.amount || 0) > 5000;
-          const key = subscriberKey(email);
-          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId: sub.id, customerId });
           const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
           // A04 (auditoría externa, 19 sep): Square reintenta un webhook si no recibió un
           // 200 rápido, o si esta misma función devolvió 500 antes por una falla transitoria
@@ -1306,6 +1414,7 @@ async function handleRequest(request, env) {
               monto: isAnnual ? '$219.89/año' : '$19.99/mes',
               fecha: today,
               square_subscription_id: sub.id || '',
+              ...(customerId ? { square_customer_id: customerId } : {}),
             }, dbUrl, fbAuth);
             console.log('Created subscriber record (subscription.created):', email, '→', key);
           } else {
@@ -1313,6 +1422,7 @@ async function handleRequest(request, env) {
             // sin tocar sus datos ni su estado_pago actual.
             dbOk = await updateSubscriber(key, null, {
               square_subscription_id: sub.id || '',
+              ...(customerId ? { square_customer_id: customerId } : {}),
             }, dbUrl, fbAuth);
             console.log('Attached square_subscription_id to existing record (subscription.created):', email);
           }
@@ -1374,8 +1484,9 @@ async function handleRequest(request, env) {
             zip:       addr.postal_code      || '',
             pais:      addr.country          || '',
           };
-          const key = subscriberKey(email);
-          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
+            email, subscriptionId: invoice.subscription_id, customerId,
+          });
           // Correo de bienvenida/confirmación de suscripción (22 sep) — se calcula ANTES
           // de que updateSubscriber() escriba 'activo' más abajo, así que captura el
           // estado VIEJO. Cubre pendiente→activo (primer pago real, o el registro ni
@@ -1419,6 +1530,7 @@ async function handleRequest(request, env) {
               ultimo_pago: today,
               square_invoice_id: invoice?.id || '',
               square_subscription_id: invoiceSubId,
+              ...(customerId ? { square_customer_id: customerId } : {}),
             }, dbUrl, fbAuth);
             if (dbOk) {
               if (!alreadyProcessed) {
@@ -1474,6 +1586,7 @@ async function handleRequest(request, env) {
               // factura vieja/de otra suscripción en el futuro, porque no tenía nada
               // guardado contra qué comparar.
               square_subscription_id: invoiceSubId,
+              ...(customerId ? { square_customer_id: customerId } : {}),
             }, dbUrl, fbAuth);
             if (dbOk) {
               console.log('Created activo record for:', email, '→', key);
@@ -1512,9 +1625,10 @@ async function handleRequest(request, env) {
         const email = invoice?.primary_recipient?.email_address
           || (customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null);
 
-        if (email) {
-          const key = subscriberKey(email);
-          const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+        if (email || invoice?.subscription_id || customerId) {
+          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
+            email, subscriptionId: invoice?.subscription_id, customerId,
+          });
           if (existing) {
             // Auditoría de integridad (19 sep, F08; endurecido 22 sep — S06c): a
             // diferencia de invoice.payment_made (arriba), esta rama degradaba el
@@ -1558,9 +1672,8 @@ async function handleRequest(request, env) {
         if (sub?.status === 'CANCELED') {
           const customerId = sub?.customer_id;
           const email = customerId ? await getSquareCustomerEmail(customerId, env.SQUARE_ACCESS_TOKEN) : null;
-          if (email) {
-            const key = subscriberKey(email);
-            const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+          if (email || sub?.id) {
+            const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId: sub?.id, customerId });
             if (existing) {
               // Auditoría externa (22 sep, S06b): esta rama nunca comparaba la
               // suscripción del evento contra la ya guardada — a diferencia de
