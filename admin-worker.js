@@ -4103,7 +4103,12 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
 async function handleLoversShipmentIngest(body, env, origin, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const invoiceId = String(body.squareInvoiceId || '').slice(0, 100);
-  if (!invoiceId) return err('Falta squareInvoiceId', 400, origin);
+  // Lote mensual (11 oct): el pedido nace del lote de envío (corte día 10, sale la
+  // 3ra semana), no de cada pago — su clave de idempotencia es loteKey
+  // ("<YYYY-MM>:<suscriptora>"): 1 pedido por suscriptora por lote.
+  const loteKey = /^\d{4}-\d{2}:[A-Za-z0-9_@,+-]{1,128}$/.test(String(body.loteKey || '')) ? String(body.loteKey) : '';
+  const lote = loteKey ? loteKey.slice(0, 7) : '';
+  if (!invoiceId && !loteKey) return err('Falta squareInvoiceId o loteKey', 400, origin);
 
   // Idempotencia real (no solo un intento): un reintento de Square del mismo cobro
   // no debe crear un segundo pedido de envío para el mismo ciclo. Mismo patrón que
@@ -4115,7 +4120,7 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
   // el `put` del pedido y el `put` del marcador. Reclamar la key en
   // OrderIdempotency primero (misma DO que ya usa handleOrder(), ver más arriba)
   // cierra esa carrera. Sin binding todavía, cae al comportamiento de siempre.
-  const dedupeKey = 'lovershipinvoice:' + invoiceId;
+  const dedupeKey = loteKey ? 'loverslote:' + loteKey : 'lovershipinvoice:' + invoiceId;
   const claim = await orderIdemClaim(env, dedupeKey);
   if (!claim.claimed) {
     if (claim.timedOut) return err('Esta operación ya se está procesando, intentá de nuevo en un momento', 409, origin);
@@ -4136,8 +4141,11 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
     productos: [],
     pago: 'Lovers',
     total: 0, subtotal: 0, envio: 0, impuesto: 0,
-    notas: `Envío ${body.plan || 'Cacusa Lovers'} — pendiente de elegir piezas del ciclo`,
+    notas: lote
+      ? `Lote Lovers ${lote} — ${body.plan || 'Cacusa Lovers'} · sale la 3ra semana (15–21) · elegir 2 piezas`
+      : `Envío ${body.plan || 'Cacusa Lovers'} — pendiente de elegir piezas del ciclo`,
   }, { strictPago: false });
+  if (lote) newOrder.lote = lote;
 
   assignOrderId(newOrder);
   try {
