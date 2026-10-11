@@ -642,6 +642,280 @@ async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
   return true;
 }
 
+// invoice.payment_made (suscripción o factura de Lovers). Extraído (11 oct) para que lo
+// usen igual el webhook y la sincronización con Square (reconcileLoversWithSquare),
+// que recupera pagos cuyo webhook nunca llegó. Devuelve dbOk.
+async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
+  let dbOk = true;
+
+  // Sin subscription_id: puede ser una factura de Lovers (cobro por factura, 2 oct —
+  // se reconoce por la metadata lovers_* de su order) o cualquier otra factura de la
+  // cuenta (esas se siguen ignorando).
+  if (!invoice?.subscription_id) {
+    const orderId = invoice?.order_id;
+    const meta = orderId && validId(orderId)
+      ? ((await squareApi(env, `/orders/${orderId}`)).order?.metadata || {})
+      : {};
+    if (!meta.lovers_key) {
+      console.log('Ignoring non-subscription invoice:', invoice?.id);
+      return true;
+    }
+    dbOk = await handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth);
+    return dbOk;
+  }
+
+  const customerId = invoice?.primary_recipient?.customer_id;
+  const customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
+  const email = invoice?.primary_recipient?.email_address
+    || customer?.email_address
+    || null;
+
+  if (email) {
+    const today = new Date().toISOString().slice(0, 10);
+    const addr = customer?.address || {};
+    const customerFields = {
+      nombre:    customer?.given_name  || '',
+      apellido:  customer?.family_name || '',
+      direccion: addr.address_line_1   || '',
+      apto:      addr.address_line_2   || '',
+      ciudad:    addr.locality         || '',
+      estado:    addr.administrative_district_level_1 || '',
+      zip:       addr.postal_code      || '',
+      pais:      addr.country          || '',
+    };
+    const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
+      email, subscriptionId: invoice.subscription_id, customerId,
+    });
+    // Correo de bienvenida/confirmación de suscripción (22 sep) — se calcula ANTES
+    // de que updateSubscriber() escriba 'activo' más abajo, así que captura el
+    // estado VIEJO. Cubre pendiente→activo (primer pago real, o el registro ni
+    // siquiera existía todavía) y cancelado→activo (resuscripción) — NO cubre
+    // activo→activo (renovación normal, no debe mandar nada).
+    const wasActive = existing?.estado_pago === 'activo';
+    // A04 (auditoría externa, 19 sep): mismo patrón que subscription.created de arriba —
+    // Square reintenta el webhook si no ve un 200 rápido, o si esta función devolvió 500
+    // antes por una falla transitoria de Firebase. Sin este chequeo, la MISMA factura
+    // procesada 2 veces mandaba 2 avisos push de "pago confirmado" para el mismo pago
+    // (notifyExclusiveCoupon ya era idempotente por su cuenta, pero igual se salta acá
+    // para no repetir el llamado sin necesidad).
+    const alreadyProcessed = !!invoice?.id && existing?.square_invoice_id === invoice.id;
+    // Auditoría externa (19 sep, ronda nueva; generalizado 22 sep — S06): esta
+    // rama reactivaba con CUALQUIER factura de esa clienta, sin comparar la
+    // suscripción de la factura contra la que ya se conocía. El fix del 19 sep
+    // solo cerró el caso "cancelado + misma suscripción vieja reenviada" — dejaba
+    // un hueco real: una factura VIEJA de una suscripción YA REEMPLAZADA por otra
+    // (ej. existing sigue 'activo' bajo la suscripción B, pero llega/reintenta una
+    // factura de la suscripción A, anterior) no era detectada como stale (el
+    // chequeo solo miraba `estado_pago === 'cancelado'`) — pisaba
+    // `square_subscription_id` con el id VIEJO y podía disparar de nuevo avisos/
+    // cupón como si fuera un evento real. `invoice.subscription_id` ya viene
+    // garantizado no-nulo (se filtra arriba). Regla generalizada: si ya hay una
+    // suscripción guardada, el id de esta factura NO coincide, y el estado actual
+    // NO es 'cancelado' (o sea, no es una resuscripción legítima tras cancelar),
+    // se trata como evento viejo/de otra suscripción y se ignora — sin importar si
+    // el estado actual es 'activo' o 'pendiente'. Si el estado SÍ es 'cancelado' y
+    // el id difiere, es una suscripción genuinamente nueva/resuscripción — se
+    // reactiva normal y se actualiza la referencia.
+    const invoiceSubId = invoice.subscription_id;
+    const hasStoredSub = !!existing?.square_subscription_id;
+    const subMatches = hasStoredSub && invoiceSubId === existing.square_subscription_id;
+    const isStaleEvent = hasStoredSub && !subMatches && existing?.estado_pago !== 'cancelado';
+    if (isStaleEvent) {
+      console.warn('invoice.payment_made ignorado: factura de otra suscripción (vieja/reemplazada)', email, invoiceSubId, 'vs', existing?.square_subscription_id);
+    } else if (existing) {
+      // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
+      // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
+      dbOk = await updateSubscriber(key, 'activo', {
+        ultimo_pago: today,
+        square_invoice_id: invoice?.id || '',
+        square_subscription_id: invoiceSubId,
+        ...(customerId ? { square_customer_id: customerId } : {}),
+      }, dbUrl, fbAuth);
+      if (dbOk) {
+        if (!alreadyProcessed) {
+          console.log('Marked activo:', email);
+          const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
+          await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
+        }
+        // Auditoría de integridad (19 sep, F09): antes esta llamada vivía DENTRO del
+        // `!alreadyProcessed` — si la primera entrega de esta factura ya había guardado
+        // square_invoice_id pero notifyExclusiveCoupon() nunca llegó a completarse (ej.
+        // el Service Binding hacia cacusa-admin falló), una redelivery de Square de la
+        // MISMA factura veía alreadyProcessed=true y saltaba el cupón para siempre, sin
+        // volver a intentarlo. handleLoversExclusiveCoupon() ya es idempotente por su
+        // cuenta (no repite nada si el cupón ya existe y está activo), así que llamarla
+        // en cada entrega solo recupera un intento que había fallado, nunca duplica.
+        await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
+        // El pedido de envío se crea con la dirección de Firebase (existing),
+        // NUNCA con customerFields de Square — mismo criterio que el resto de
+        // esta rama: no pisar/mezclar con datos de Square que suelen venir
+        // incompletos, la fuente de verdad de la dirección ya confirmada es
+        // Firebase.
+        await notifyLoversShipment({
+          nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
+          direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
+          estado: existing.estado, zip: existing.zip, pais: existing.pais,
+        }, existing.plan, invoice?.id || '', env);
+        if (!wasActive) {
+          const idiomaResuelto = existing.idioma === 'es' || existing.idioma === 'en'
+            ? existing.idioma
+            : (existing.pais === 'Ecuador' ? 'es' : 'en');
+          await notifySubscriptionEmail(email, {
+            nombre: existing.nombre, apellido: existing.apellido,
+            plan: existing.plan, monto: existing.monto, idioma: idiomaResuelto,
+          }, env);
+        }
+      }
+    } else {
+      // Subscriber not in Firebase yet — create minimal record
+      // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
+      const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
+      const isAnnual = amountCents > 5000;
+      dbOk = await updateSubscriber(key, 'activo', {
+        email: email.toLowerCase(),
+        ...customerFields,
+        plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+        monto: isAnnual ? '$219.89/año' : '$19.99/mes',
+        fecha: today,
+        ultimo_pago: today,
+        square_invoice_id: invoice?.id || '',
+        // Auditoría de integridad (19 sep, F08): este era el único camino que
+        // creaba un registro 'activo' SIN guardar square_subscription_id — dejaba
+        // la guardia de arriba (isStaleForCanceled) incapaz de reconocer una
+        // factura vieja/de otra suscripción en el futuro, porque no tenía nada
+        // guardado contra qué comparar.
+        square_subscription_id: invoiceSubId,
+        ...(customerId ? { square_customer_id: customerId } : {}),
+      }, dbUrl, fbAuth);
+      if (dbOk) {
+        console.log('Created activo record for:', email, '→', key);
+        const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
+        await notifyAdminPush(
+          'CACUSA · Nueva suscriptora Lovers',
+          `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
+          env
+        );
+        await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
+        await notifyLoversShipment({
+          nombre: customerFields.nombre, apellido: customerFields.apellido, telefono: '',
+          direccion: customerFields.direccion, apto: customerFields.apto, ciudad: customerFields.ciudad,
+          estado: customerFields.estado, zip: customerFields.zip, pais: customerFields.pais,
+        }, isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers', invoice?.id || '', env);
+        // wasActive es siempre false acá (existing era null) — se mantiene el mismo
+        // guard por simetría/legibilidad con la rama de arriba, no porque haga
+        // falta la condición.
+        if (!wasActive) {
+          await notifySubscriptionEmail(email, {
+            nombre: customerFields.nombre, apellido: customerFields.apellido,
+            plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
+            monto: isAnnual ? '$219.89/año' : '$19.99/mes',
+            idioma: customerFields.pais === 'Ecuador' ? 'es' : 'en',
+          }, env);
+        }
+      }
+    }
+  }
+  return dbOk;
+}
+
+// ── Sincronización con Square (11 oct) ────────────────────────────────────────
+// El sistema se enteraba de un pago SOLO por el webhook invoice.payment_made. Si el
+// aviso no llegaba, fallaba o caía en una ficha duplicada (bug del email, mismo día),
+// el pago se perdía en silencio: la suscriptora quedaba sin "Último pago" y sin pedido
+// del mes (caso real: [clienta], renovación de octubre). Esto le pregunta directo a Square
+// por las facturas de cada suscriptora y procesa las PAGADAS que nunca se registraron,
+// con el mismo processPaidInvoice() del webhook (pedido idempotente por factura:
+// lovershipinvoice:<id>). Corre en el cron diario y a mano desde el panel (vista previa
+// primero). Solo mira los últimos LOVERS_SYNC_DAYS días.
+const LOVERS_SYNC_DAYS = 60;
+async function squareCustomerFor(env, s) {
+  if (s.square_customer_id && validId(s.square_customer_id)) return s.square_customer_id;
+  const email = String(s.email || '').trim().toLowerCase();
+  if (email) {
+    const d = await squareApi(env, '/customers/search', 'POST', { query: { filter: { email_address: { exact: email } } }, limit: 1 });
+    if (d.customers && d.customers[0]) return d.customers[0].id;
+  }
+  const digits = String(s.telefono || '').replace(/\D/g, '');
+  const e164 = digits.length === 10 ? '+1' + digits : (digits.length === 11 && digits[0] === '1' ? '+' + digits : (digits.length > 7 ? '+' + digits : ''));
+  if (e164) {
+    const d = await squareApi(env, '/customers/search', 'POST', { query: { filter: { phone_number: { exact: e164 } } }, limit: 1 });
+    if (d.customers && d.customers[0]) return d.customers[0].id;
+  }
+  return '';
+}
+async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const fbAuth = env.FB_DB_SECRET;
+  const out = { dryRun, pagosSinRegistrar: [], pagosAnteriores: [], pagosFallidos: [], noEncontradas: [], registrados: 0, errores: [] };
+  if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) { out.errores.push('Faltan FB_DB_SECRET o SQUARE_ACCESS_TOKEN'); return out; }
+  const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+  if (!rAll.ok) { out.errores.push(`Firebase ${rAll.status}`); return out; }
+  const all = (await rAll.json()) || {};
+  const locs = ((await squareApi(env, '/locations')).locations || []).map(l => l.id).slice(0, 10);
+  if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
+  const since = addDaysIso(todayIso(), -LOVERS_SYNC_DAYS);
+  const today = todayIso();
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || typeof s !== 'object' || s.estado_pago === 'cancelado' || s.metodo_pago === 'manual') continue;
+    if (!validId(key, true)) continue;
+    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+    try {
+      const customerId = await squareCustomerFor(env, s);
+      if (!customerId) { out.noEncontradas.push({ id: key, nombre, email: s.email || '' }); continue; }
+      const d = await squareApi(env, '/invoices/search', 'POST', {
+        query: { filter: { location_ids: locs, customer_ids: [customerId] }, sort: { field: 'INVOICE_SORT_DATE', order: 'DESC' } },
+        limit: 50,
+      });
+      // Solo el pago sin registrar MÁS RECIENTE de cada suscriptora crea pedido: los
+      // anteriores (ej. el primer mes de alguien que nunca quedó registrada) casi
+      // seguro ya se enviaron a mano — se listan aparte, sin crear pedido.
+      let yaHayReciente = false;
+      const invs = (d.invoices || []).slice().sort((a, c) => String(c.payment_requests?.[0]?.due_date || c.created_at || '').localeCompare(String(a.payment_requests?.[0]?.due_date || a.created_at || '')));
+      for (const inv of invs) {
+        const due = inv.payment_requests?.[0]?.due_date || String(inv.created_at || '').slice(0, 10);
+        if (due && due < since) continue;
+        // Solo facturas de Lovers: de su suscripción (o de cualquier suscripción si aún no
+        // tiene una guardada), o facturas de Lovers por factura (reference 'lovers').
+        const esSuya = inv.subscription_id
+          ? (!s.square_subscription_id || inv.subscription_id === s.square_subscription_id)
+          : false;
+        let esFacturaLovers = false;
+        if (!inv.subscription_id && inv.order_id && validId(inv.order_id)) {
+          const o = (await squareApi(env, `/orders/${inv.order_id}`)).order || {};
+          esFacturaLovers = !!(o.metadata && o.metadata.lovers_key);
+        }
+        if (!esSuya && !esFacturaLovers) continue;
+        const item = { id: key, nombre, factura: inv.id, fecha: due, monto: (inv.payment_requests?.[0]?.computed_amount_money?.amount || 0) / 100, estado: inv.status };
+        if (inv.status === 'PAID') {
+          const yaProcesada = s.square_invoice_id === inv.id
+            || (env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${inv.id}`));
+          if (yaProcesada) { yaHayReciente = true; continue; }
+          if (yaHayReciente) { out.pagosAnteriores.push(item); continue; }
+          yaHayReciente = true;
+          out.pagosSinRegistrar.push(item);
+          if (!dryRun) {
+            // Deja los ids de Square en SU ficha antes de procesar, así processPaidInvoice
+            // la encuentra a ella (y no crea un duplicado si el email de Square es otro).
+            const ids = { square_customer_id: customerId, ...(inv.subscription_id && !s.square_subscription_id ? { square_subscription_id: inv.subscription_id } : {}) };
+            if (!(await updateSubscriber(key, null, ids, dbUrl, fbAuth))) throw new Error('No se pudo guardar los ids de Square');
+            Object.assign(s, ids);
+            const ok = await processPaidInvoice(inv, env, dbUrl, fbAuth);
+            if (!ok) throw new Error(`No se pudo registrar la factura ${inv.id}`);
+            out.registrados++;
+            await notifyAdminPush('CACUSA · Pago recuperado - Lovers', `🔁 Se registró el pago de ${nombre} (${due}) — pedido de envío creado`, env);
+          }
+        } else if (inv.status === 'FAILED' || (inv.status === 'UNPAID' && due && due < today)) {
+          out.pagosFallidos.push(item);
+        }
+      }
+    } catch (e) {
+      out.errores.push(`${nombre}: ${e.message}`.slice(0, 300));
+    }
+  }
+  console.log('reconcileLoversWithSquare:', JSON.stringify({ dryRun, sinRegistrar: out.pagosSinRegistrar.length, registrados: out.registrados, fallidos: out.pagosFallidos.length, errores: out.errores.length }));
+  return out;
+}
+
 // ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
 // Valida el mismo token HMAC-SHA256 firmado que emite el login de cacusa-admin, usando el
 // secret compartido SESSION_SECRET. Este worker nunca EMITE tokens (no hay login acá), solo
@@ -732,7 +1006,10 @@ export default {
   },
   // Cron Trigger diario (Cloudflare → Settings → Triggers → Cron) — ver runLoversBilling().
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runLoversBilling(env));
+    ctx.waitUntil((async () => {
+      await runLoversBilling(env).catch(e => console.error('runLoversBilling:', e.message));
+      await reconcileLoversWithSquare(env, { dryRun: false }).catch(e => console.error('reconcile:', e.message));
+    })());
   },
 };
 
@@ -969,7 +1246,7 @@ async function handleRequest(request, env) {
     // ── Rutas de administración (todas usan X-Admin-Key, no la firma de Square) ──
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
         url.pathname === '/admin/cancel-lovers-invoice' || url.pathname === '/admin/lovers-billing-run' ||
-        url.pathname === '/admin/lovers-dedupe' ||
+        url.pathname === '/admin/lovers-dedupe' || url.pathname === '/admin/lovers-sync' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
         url.pathname.startsWith('/admin/reviews/')) {
 
@@ -1115,6 +1392,13 @@ async function handleRequest(request, env) {
           hechos.push(p.conservar.id);
         }
         return adminJson({ ok: true, fusionadas: hechos.length, grupos: plan }, 200);
+      }
+
+      // POST /admin/lovers-sync — sincronización con Square (vista previa por defecto).
+      if (url.pathname === '/admin/lovers-sync') {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        const b = (await request.json().catch(() => null)) || {};
+        return adminJson(await reconcileLoversWithSquare(env, { dryRun: b.dryRun !== false }), 200);
       }
 
       // POST /admin/lovers-billing-run — corre el cron de facturación a mano (para probar
@@ -1447,176 +1731,10 @@ async function handleRequest(request, env) {
 
       // ── invoice.payment_made → activo ──────────────────────────────────────
       else if (type === 'invoice.payment_made') {
-        const invoice = data?.invoice;
-
-        // Sin subscription_id: puede ser una factura de Lovers (cobro por factura, 2 oct —
-        // se reconoce por la metadata lovers_* de su order) o cualquier otra factura de la
-        // cuenta (esas se siguen ignorando).
-        if (!invoice?.subscription_id) {
-          const orderId = invoice?.order_id;
-          const meta = orderId && validId(orderId)
-            ? ((await squareApi(env, `/orders/${orderId}`)).order?.metadata || {})
-            : {};
-          if (!meta.lovers_key) {
-            console.log('Ignoring non-subscription invoice:', invoice?.id);
-            return new Response('OK', { status: 200 });
-          }
-          dbOk = await handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth);
-          return new Response(dbOk ? 'OK' : 'Firebase write failed', { status: dbOk ? 200 : 500 });
-        }
-
-        const customerId = invoice?.primary_recipient?.customer_id;
-        const customer = customerId ? await getSquareCustomer(customerId, env.SQUARE_ACCESS_TOKEN) : null;
-        const email = invoice?.primary_recipient?.email_address
-          || customer?.email_address
-          || null;
-
-        if (email) {
-          const today = new Date().toISOString().slice(0, 10);
-          const addr = customer?.address || {};
-          const customerFields = {
-            nombre:    customer?.given_name  || '',
-            apellido:  customer?.family_name || '',
-            direccion: addr.address_line_1   || '',
-            apto:      addr.address_line_2   || '',
-            ciudad:    addr.locality         || '',
-            estado:    addr.administrative_district_level_1 || '',
-            zip:       addr.postal_code      || '',
-            pais:      addr.country          || '',
-          };
-          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
-            email, subscriptionId: invoice.subscription_id, customerId,
-          });
-          // Correo de bienvenida/confirmación de suscripción (22 sep) — se calcula ANTES
-          // de que updateSubscriber() escriba 'activo' más abajo, así que captura el
-          // estado VIEJO. Cubre pendiente→activo (primer pago real, o el registro ni
-          // siquiera existía todavía) y cancelado→activo (resuscripción) — NO cubre
-          // activo→activo (renovación normal, no debe mandar nada).
-          const wasActive = existing?.estado_pago === 'activo';
-          // A04 (auditoría externa, 19 sep): mismo patrón que subscription.created de arriba —
-          // Square reintenta el webhook si no ve un 200 rápido, o si esta función devolvió 500
-          // antes por una falla transitoria de Firebase. Sin este chequeo, la MISMA factura
-          // procesada 2 veces mandaba 2 avisos push de "pago confirmado" para el mismo pago
-          // (notifyExclusiveCoupon ya era idempotente por su cuenta, pero igual se salta acá
-          // para no repetir el llamado sin necesidad).
-          const alreadyProcessed = !!invoice?.id && existing?.square_invoice_id === invoice.id;
-          // Auditoría externa (19 sep, ronda nueva; generalizado 22 sep — S06): esta
-          // rama reactivaba con CUALQUIER factura de esa clienta, sin comparar la
-          // suscripción de la factura contra la que ya se conocía. El fix del 19 sep
-          // solo cerró el caso "cancelado + misma suscripción vieja reenviada" — dejaba
-          // un hueco real: una factura VIEJA de una suscripción YA REEMPLAZADA por otra
-          // (ej. existing sigue 'activo' bajo la suscripción B, pero llega/reintenta una
-          // factura de la suscripción A, anterior) no era detectada como stale (el
-          // chequeo solo miraba `estado_pago === 'cancelado'`) — pisaba
-          // `square_subscription_id` con el id VIEJO y podía disparar de nuevo avisos/
-          // cupón como si fuera un evento real. `invoice.subscription_id` ya viene
-          // garantizado no-nulo (se filtra arriba). Regla generalizada: si ya hay una
-          // suscripción guardada, el id de esta factura NO coincide, y el estado actual
-          // NO es 'cancelado' (o sea, no es una resuscripción legítima tras cancelar),
-          // se trata como evento viejo/de otra suscripción y se ignora — sin importar si
-          // el estado actual es 'activo' o 'pendiente'. Si el estado SÍ es 'cancelado' y
-          // el id difiere, es una suscripción genuinamente nueva/resuscripción — se
-          // reactiva normal y se actualiza la referencia.
-          const invoiceSubId = invoice.subscription_id;
-          const hasStoredSub = !!existing?.square_subscription_id;
-          const subMatches = hasStoredSub && invoiceSubId === existing.square_subscription_id;
-          const isStaleEvent = hasStoredSub && !subMatches && existing?.estado_pago !== 'cancelado';
-          if (isStaleEvent) {
-            console.warn('invoice.payment_made ignorado: factura de otra suscripción (vieja/reemplazada)', email, invoiceSubId, 'vs', existing?.square_subscription_id);
-          } else if (existing) {
-            // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
-            // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
-            dbOk = await updateSubscriber(key, 'activo', {
-              ultimo_pago: today,
-              square_invoice_id: invoice?.id || '',
-              square_subscription_id: invoiceSubId,
-              ...(customerId ? { square_customer_id: customerId } : {}),
-            }, dbUrl, fbAuth);
-            if (dbOk) {
-              if (!alreadyProcessed) {
-                console.log('Marked activo:', email);
-                const nombreActivo = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
-                await notifyAdminPush('CACUSA · Pago confirmado - Lovers', `✅ ${nombreActivo} confirmó su pago`, env);
-              }
-              // Auditoría de integridad (19 sep, F09): antes esta llamada vivía DENTRO del
-              // `!alreadyProcessed` — si la primera entrega de esta factura ya había guardado
-              // square_invoice_id pero notifyExclusiveCoupon() nunca llegó a completarse (ej.
-              // el Service Binding hacia cacusa-admin falló), una redelivery de Square de la
-              // MISMA factura veía alreadyProcessed=true y saltaba el cupón para siempre, sin
-              // volver a intentarlo. handleLoversExclusiveCoupon() ya es idempotente por su
-              // cuenta (no repite nada si el cupón ya existe y está activo), así que llamarla
-              // en cada entrega solo recupera un intento que había fallado, nunca duplica.
-              await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
-              // El pedido de envío se crea con la dirección de Firebase (existing),
-              // NUNCA con customerFields de Square — mismo criterio que el resto de
-              // esta rama: no pisar/mezclar con datos de Square que suelen venir
-              // incompletos, la fuente de verdad de la dirección ya confirmada es
-              // Firebase.
-              await notifyLoversShipment({
-                nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
-                direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
-                estado: existing.estado, zip: existing.zip, pais: existing.pais,
-              }, existing.plan, invoice?.id || '', env);
-              if (!wasActive) {
-                const idiomaResuelto = existing.idioma === 'es' || existing.idioma === 'en'
-                  ? existing.idioma
-                  : (existing.pais === 'Ecuador' ? 'es' : 'en');
-                await notifySubscriptionEmail(email, {
-                  nombre: existing.nombre, apellido: existing.apellido,
-                  plan: existing.plan, monto: existing.monto, idioma: idiomaResuelto,
-                }, env);
-              }
-            }
-          } else {
-            // Subscriber not in Firebase yet — create minimal record
-            // Detect annual vs monthly from invoice amount (annual = ~$219.89 = 21989 cents)
-            const amountCents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
-            const isAnnual = amountCents > 5000;
-            dbOk = await updateSubscriber(key, 'activo', {
-              email: email.toLowerCase(),
-              ...customerFields,
-              plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-              monto: isAnnual ? '$219.89/año' : '$19.99/mes',
-              fecha: today,
-              ultimo_pago: today,
-              square_invoice_id: invoice?.id || '',
-              // Auditoría de integridad (19 sep, F08): este era el único camino que
-              // creaba un registro 'activo' SIN guardar square_subscription_id — dejaba
-              // la guardia de arriba (isStaleForCanceled) incapaz de reconocer una
-              // factura vieja/de otra suscripción en el futuro, porque no tenía nada
-              // guardado contra qué comparar.
-              square_subscription_id: invoiceSubId,
-              ...(customerId ? { square_customer_id: customerId } : {}),
-            }, dbUrl, fbAuth);
-            if (dbOk) {
-              console.log('Created activo record for:', email, '→', key);
-              const nombreCompleto2 = [customerFields.nombre, customerFields.apellido].filter(Boolean).join(' ') || email;
-              await notifyAdminPush(
-                'CACUSA · Nueva suscriptora Lovers',
-                `✨ ${nombreCompleto2} se unió al club (${isAnnual ? 'anual' : 'mensual'})`,
-                env
-              );
-              await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
-              await notifyLoversShipment({
-                nombre: customerFields.nombre, apellido: customerFields.apellido, telefono: '',
-                direccion: customerFields.direccion, apto: customerFields.apto, ciudad: customerFields.ciudad,
-                estado: customerFields.estado, zip: customerFields.zip, pais: customerFields.pais,
-              }, isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers', invoice?.id || '', env);
-              // wasActive es siempre false acá (existing era null) — se mantiene el mismo
-              // guard por simetría/legibilidad con la rama de arriba, no porque haga
-              // falta la condición.
-              if (!wasActive) {
-                await notifySubscriptionEmail(email, {
-                  nombre: customerFields.nombre, apellido: customerFields.apellido,
-                  plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
-                  monto: isAnnual ? '$219.89/año' : '$19.99/mes',
-                  idioma: customerFields.pais === 'Ecuador' ? 'es' : 'en',
-                }, env);
-              }
-            }
-          }
-        }
+        const r = await processPaidInvoice(data?.invoice, env, dbUrl, fbAuth);
+        if (r === false) dbOk = false;
       }
+
 
       // ── invoice.scheduled_charge_failed → pago_fallido ────────────────────
       else if (type === 'invoice.scheduled_charge_failed' || type === 'invoice.payment_failed') {
