@@ -140,17 +140,19 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
 // siempre, sin generación automática de guía para ese ciclo. squareInvoiceId es la
 // clave de idempotencia real del lado de cacusa-admin (nunca crea 2 pedidos para el
 // mismo cobro, ni siquiera si Square reintenta la entrega del webhook).
-async function notifyLoversShipment(direccionFields, plan, squareInvoiceId, env) {
-  if (!env.ORDER_INGEST_KEY) return;
+async function notifyLoversShipment(direccionFields, plan, squareInvoiceId, env, loteKey) {
+  if (!env.ORDER_INGEST_KEY) return null;
   try {
     const r = await adminFetch(env, '/order/lovers-shipment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ ...direccionFields, plan, squareInvoiceId }),
+      body: JSON.stringify({ ...direccionFields, plan, squareInvoiceId, ...(loteKey ? { loteKey } : {}) }),
     });
-    if (!r.ok) console.error('order/lovers-shipment failed:', r.status, await r.text().catch(() => ''));
+    if (!r.ok) { console.error('order/lovers-shipment failed:', r.status, await r.text().catch(() => '')); return null; }
+    return await r.json().catch(() => ({}));
   } catch (e) {
     console.error('order/lovers-shipment error:', e.message);
+    return null;
   }
 }
 
@@ -668,13 +670,8 @@ async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
     await notifyAdminPush('CACUSA · Pago confirmado - Lovers', txt, env);
   }
   await notifyExclusiveCoupon('activate', email, merged.idioma || merged.pais, env);
-  if (hasAddress) {
-    await notifyLoversShipment({
-      nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
-      direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
-      estado: existing.estado, zip: existing.zip, pais: existing.pais,
-    }, plan, invoice.id || '', env);
-  }
+  // Lote mensual (11 oct): el pago ya NO crea el pedido de envío; la suscriptora entra al
+  // lote del mes que le toca (buildLoversBatch, corte día 10, sale la 3ra semana).
   if (!wasActive) {
     await notifySubscriptionEmail(email, {
       nombre: merged.nombre, apellido: merged.apellido, plan, monto: LOVERS_MONTO_TXT[periodo], idioma: idiomaDe(merged),
@@ -787,16 +784,8 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
         // cuenta (no repite nada si el cupón ya existe y está activo), así que llamarla
         // en cada entrega solo recupera un intento que había fallado, nunca duplica.
         await notifyExclusiveCoupon('activate', email, existing.idioma || existing.pais, env);
-        // El pedido de envío se crea con la dirección de Firebase (existing),
-        // NUNCA con customerFields de Square — mismo criterio que el resto de
-        // esta rama: no pisar/mezclar con datos de Square que suelen venir
-        // incompletos, la fuente de verdad de la dirección ya confirmada es
-        // Firebase.
-        await notifyLoversShipment({
-          nombre: existing.nombre, apellido: existing.apellido, telefono: existing.telefono,
-          direccion: existing.direccion, apto: existing.apto, ciudad: existing.ciudad,
-          estado: existing.estado, zip: existing.zip, pais: existing.pais,
-        }, existing.plan, invoice?.id || '', env);
+        // Lote mensual (11 oct): el pago ya NO crea el pedido de envío; la suscriptora entra al
+        // lote del mes que le toca (buildLoversBatch, corte día 10, sale la 3ra semana).
         if (!wasActive) {
           const idiomaResuelto = existing.idioma === 'es' || existing.idioma === 'en'
             ? existing.idioma
@@ -837,11 +826,6 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
           env
         );
         await notifyExclusiveCoupon('activate', email, customerFields.pais, env);
-        await notifyLoversShipment({
-          nombre: customerFields.nombre, apellido: customerFields.apellido, telefono: '',
-          direccion: customerFields.direccion, apto: customerFields.apto, ciudad: customerFields.ciudad,
-          estado: customerFields.estado, zip: customerFields.zip, pais: customerFields.pais,
-        }, isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers', invoice?.id || '', env);
         // wasActive es siempre false acá (existing era null) — se mantiene el mismo
         // guard por simetría/legibilidad con la rama de arriba, no porque haga
         // falta la condición.
@@ -957,6 +941,76 @@ async function reconcileLoversWithSquare(env, { dryRun = true } = {}) {
   return out;
 }
 
+// ── Lote mensual de envíos (11 oct) ──────────────────────────────────────────
+// Los cobros caen cualquier día, pero TODAS las cajas salen juntas la 3ra semana
+// (15–21). Corte: día 10. Lote del mes M (YYYY-MM):
+//  - mensual Square/factura: pago (ultimo_pago) entre el 11 de M-1 y el 10 de M;
+//  - mensual manual: activa con vence >= 15 de M;
+//  - anual (cualquiera): su año cubre el 15 de M y pagó antes del corte del 10 de M;
+//  - pausada: solo si sigue vigente al 15 de M; cancelada/sin pagar/fallido: no.
+// 1 pedido por suscriptora por lote (idempotencia loverslote:<M>:<key> en cacusa-admin).
+const LOVERS_CUTOFF_DAY = 10;
+function loteFechas(month) {
+  const [y, m] = month.split('-').map(Number);
+  const pad = n => String(n).padStart(2, '0');
+  const prev = m === 1 ? `${y - 1}-12` : `${y}-${pad(m - 1)}`;
+  return {
+    desde: `${prev}-${pad(LOVERS_CUTOFF_DAY + 1)}`,
+    corte: `${month}-${pad(LOVERS_CUTOFF_DAY)}`,
+    envio: `${month}-15`,
+  };
+}
+async function buildLoversBatch(env, { month, dryRun = true } = {}) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const fbAuth = env.FB_DB_SECRET;
+  const out = { month, dryRun, incluidas: [], yaConPedido: [], sinDireccion: [], creados: 0, errores: [] };
+  if (!/^\d{4}-\d{2}$/.test(month || '')) { out.errores.push('Mes inválido'); return out; }
+  if (!fbAuth) { out.errores.push('Falta FB_DB_SECRET'); return out; }
+  const { desde, corte, envio } = loteFechas(month);
+  const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
+  if (!rAll.ok) { out.errores.push(`Firebase ${rAll.status}`); return out; }
+  const all = (await rAll.json()) || {};
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || typeof s !== 'object' || !validId(key, true)) continue;
+    if (s.estado_pago !== 'activo' && s.estado_pago !== 'pausado') continue;
+    const periodo = planPeriodo(s.plan);
+    const manual = s.metodo_pago === 'manual';
+    const pago = ISO_DATE_RE.test(s.ultimo_pago || '') ? s.ultimo_pago : '';
+    let vence = ISO_DATE_RE.test(s.vence || '') ? s.vence : '';
+    if (!vence && periodo === 'anual' && pago) vence = addPeriodIso(pago, 'anual');
+    let motivo = '';
+    if (periodo === 'anual') {
+      const inicio = pago || (ISO_DATE_RE.test(s.fecha || '') ? s.fecha : '');
+      if (vence && vence >= envio && inicio && inicio <= corte) motivo = 'anual';
+    } else if (manual) {
+      if (vence && vence >= envio) motivo = 'mensual manual';
+    } else if (pago && pago >= desde && pago <= corte) {
+      motivo = 'mensual';
+    }
+    if (s.estado_pago === 'pausado' && !(vence && vence >= envio) && motivo !== 'mensual') motivo = '';
+    if (!motivo) continue;
+    const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+    const item = { id: key, nombre, plan: periodo, motivo, ciudad: s.ciudad || '', pais: s.pais || '' };
+    // Transición: pedidos ya creados por pago (antes del lote) para este mismo ciclo.
+    if (motivo === 'mensual' && s.square_invoice_id && env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${s.square_invoice_id}`)) {
+      out.yaConPedido.push(item); continue;
+    }
+    if (!s.direccion) { out.sinDireccion.push(item); continue; }
+    out.incluidas.push(item);
+    if (!dryRun) {
+      const res = await notifyLoversShipment({
+        nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
+        direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
+        estado: s.estado, zip: s.zip, pais: s.pais,
+      }, s.plan || planNombre(periodo), '', env, `${month}:${key}`);
+      if (!res) { out.errores.push(`${nombre}: no se pudo crear el pedido`); continue; }
+      if (!res.alreadyExisted) out.creados++;
+    }
+  }
+  console.log('buildLoversBatch:', JSON.stringify({ month, dryRun, incluidas: out.incluidas.length, creados: out.creados }));
+  return out;
+}
+
 // ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
 // Valida el mismo token HMAC-SHA256 firmado que emite el login de cacusa-admin, usando el
 // secret compartido SESSION_SECRET. Este worker nunca EMITE tokens (no hay login acá), solo
@@ -1050,6 +1104,16 @@ export default {
     ctx.waitUntil((async () => {
       await runLoversBilling(env).catch(e => console.error('runLoversBilling:', e.message));
       await reconcileLoversWithSquare(env, { dryRun: false }).catch(e => console.error('reconcile:', e.message));
+      // Del 11 al 21: arma (o completa) el lote del mes. Idempotente.
+      const hoy = todayIso();
+      const dia = Number(hoy.slice(8, 10));
+      if (dia > LOVERS_CUTOFF_DAY && dia <= 21) {
+        const b = await buildLoversBatch(env, { month: hoy.slice(0, 7), dryRun: false }).catch(e => { console.error('lote:', e.message); return null; });
+        if (b && b.creados > 0) {
+          await notifyAdminPush('CACUSA · Lote Lovers ' + hoy.slice(0, 7),
+            `📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21`, env);
+        }
+      }
     })());
   },
 };
@@ -1251,9 +1315,6 @@ async function handleRequest(request, env) {
         };
         const okAddr = await updateSubscriber(key, null, { ...addr, envio_pendiente: '' }, dbUrl, fbAuth);
         if (!okAddr) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
-        if (current.envio_pendiente && addr.direccion) {
-          await notifyLoversShipment(addr, current.plan, current.envio_pendiente, env);
-        }
         return adminJson({ ok: true }, 200);
       }
       if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
@@ -1290,6 +1351,7 @@ async function handleRequest(request, env) {
     if (url.pathname === '/admin/cancel-subscription' || url.pathname === '/admin/lovers' ||
         url.pathname === '/admin/cancel-lovers-invoice' || url.pathname === '/admin/lovers-billing-run' ||
         url.pathname === '/admin/lovers-dedupe' || url.pathname === '/admin/lovers-sync' ||
+        url.pathname === '/admin/lovers-batch' ||
         url.pathname === '/admin/lovers-photos' || url.pathname.startsWith('/admin/lovers/') ||
         url.pathname.startsWith('/admin/reviews/')) {
 
@@ -1442,6 +1504,14 @@ async function handleRequest(request, env) {
           hechos.push(p.conservar.id);
         }
         return adminJson({ ok: true, fusionadas: hechos.length, grupos: plan }, 200);
+      }
+
+      // POST /admin/lovers-batch — lote mensual de envíos ({month:'YYYY-MM', dryRun}).
+      if (url.pathname === '/admin/lovers-batch') {
+        if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+        const b = (await request.json().catch(() => null)) || {};
+        const month = /^\d{4}-\d{2}$/.test(b.month || '') ? b.month : todayIso().slice(0, 7);
+        return adminJson(await buildLoversBatch(env, { month, dryRun: b.dryRun !== false }), 200);
       }
 
       // POST /admin/lovers-sync — sincronización con Square (vista previa por defecto).
