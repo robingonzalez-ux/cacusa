@@ -555,6 +555,18 @@ async function runLoversBilling(env) {
       summary.recordatorios++;
     } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
   }
+  // Pausadas: al terminar el último día pagado se apagan sus beneficios (una vez).
+  summary.pausasVencidas = 0;
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || s.estado_pago !== 'pausado' || s.beneficios_off || !validId(key, true)) continue;
+    if (ISO_DATE_RE.test(s.vence || '') && s.vence >= today) continue;
+    try {
+      const ok = await updateSubscriber(key, null, { beneficios_off: true }, dbUrl, fbAuth);
+      if (!ok) throw new Error('No se pudo marcar beneficios_off');
+      await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
+      summary.pausasVencidas++;
+    } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
+  }
   for (const [key, s] of Object.entries(all)) {
     if (!s || s.modo_cobro !== 'factura' || s.estado_pago !== 'activo') continue;
     if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
@@ -1082,6 +1094,8 @@ async function handleRequest(request, env) {
       const todayIso = new Date().toISOString().slice(0, 10);
       const match = Object.values(subscribers).find(s => {
         if (!s || String(s.telefono || '').replace(/\D/g, '').slice(-7) !== phoneDigits.slice(-7)) return false;
+        // Pausada: conserva beneficios hasta el último día ya pagado.
+        if (s.estado_pago === 'pausado') return ISO_DATE_RE.test(s.vence || '') && s.vence >= todayIso;
         if (s.estado_pago !== 'activo') return false;
         // Factura: los beneficios siguen durante los 7 días de gracia después de `vence`
         // (el cron la pasa a 'vencido' recién ahí). Manual: `vence` es el límite exacto.
@@ -1559,30 +1573,73 @@ async function handleRequest(request, env) {
           // key no existe) — esta ruta no está dentro del try/catch general del webhook
           // más abajo, así que se envuelve acá para no dejar una excepción sin atrapar.
           let existing = null;
-          if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'activo' || fields.estado_pago === 'pausado') {
+          if (['cancelado', 'vencido', 'activo', 'pausado', 'pago_fallido', 'pendiente'].includes(fields.estado_pago)) {
             try {
               existing = await getSubscriberByKey(id, dbUrl, fbAuth);
             } catch (e) {
               return adminJson({ error: 'No se pudo leer la suscriptora antes de actualizar', detail: e.message }, 502);
             }
           }
-          // Pausa (11 oct): solo para suscripciones MANUALES — en las de Square el cobro
-          // seguiría corriendo aunque el panel diga "pausada".
-          if (fields.estado_pago === 'pausado') {
-            if (!existing || existing.metodo_pago !== 'manual') {
-              return adminJson({ error: 'La pausa solo está disponible para suscripciones manuales' }, 400);
+          // Pausa (11 oct, revisado): para manuales, Square y factura. La clienta conserva
+          // sus beneficios hasta el último día ya pagado (`vence`); el cron los apaga al
+          // día siguiente (pausePastVence). No se renueva mientras esté en pausa.
+          let venceNuevo = null, aviso = '';
+          if (fields.estado_pago === 'pausado' && existing && existing.estado_pago !== 'pausado') {
+            if (existing.estado_pago !== 'activo') {
+              return adminJson({ error: 'Solo se puede pausar una suscripción activa' }, 400);
             }
-            if (existing.estado_pago !== 'pausado') fields.fecha_pausa = todayIso();
+            fields.fecha_pausa = todayIso();
+            fields.beneficios_off = false;
+            if (existing.square_subscription_id && existing.modo_cobro !== 'factura' && existing.metodo_pago !== 'manual') {
+              // Square: la pausa empieza en el próximo ciclo de cobro (no se cobra más).
+              // `vence` = hasta dónde ya pagó (charged_through_date).
+              try {
+                await squareApi(env, `/subscriptions/${existing.square_subscription_id}/pause`, 'POST', {});
+                const g = await squareApi(env, `/subscriptions/${existing.square_subscription_id}`);
+                const ctd = g.subscription?.charged_through_date;
+                if (ISO_DATE_RE.test(ctd || '')) { fields.vence = addDaysIso(ctd, -1) >= todayIso() ? addDaysIso(ctd, -1) : todayIso(); venceNuevo = fields.vence; }
+              } catch (e) {
+                return adminJson({ error: 'Square no permitió pausar la suscripción', detail: e.message }, 502);
+              }
+            } else if (!ISO_DATE_RE.test(existing.vence || '')) {
+              return adminJson({ error: 'Pon primero la fecha de vencimiento (Válido hasta) para saber hasta cuándo conserva sus beneficios' }, 400);
+            }
           }
-          // Al reanudar una pausa, `vence` se corre los días que estuvo pausada.
-          let venceNuevo = null;
+          // Reanudar: los beneficios vuelven SOLO con un pago confirmado.
           if (existing && existing.estado_pago === 'pausado' && fields.estado_pago === 'activo') {
-            if (ISO_DATE_RE.test(existing.vence || '') && ISO_DATE_RE.test(existing.fecha_pausa || '')) {
-              const dias = Math.max(0, Math.round((Date.parse(todayIso()) - Date.parse(existing.fecha_pausa)) / 86400000));
-              venceNuevo = addDaysIso(existing.vence, dias);
-              fields.vence = venceNuevo;
-            }
             fields.fecha_pausa = '';
+            fields.beneficios_off = false;
+            const venceVigente = ISO_DATE_RE.test(fields.vence || existing.vence || '') && (fields.vence || existing.vence) >= todayIso();
+            if (existing.square_subscription_id && existing.modo_cobro !== 'factura' && existing.metodo_pago !== 'manual') {
+              try {
+                await squareApi(env, `/subscriptions/${existing.square_subscription_id}/resume`, 'POST', { resume_change_timing: 'IMMEDIATE' });
+              } catch (e) {
+                return adminJson({ error: 'Square no permitió reanudar la suscripción', detail: e.message }, 502);
+              }
+              if (!venceVigente) {
+                // Se activa cuando Square confirme el cobro (invoice.payment_made).
+                fields.estado_pago = 'pendiente';
+                aviso = 'Reanudada en Square: se activa sola cuando Square confirme el cobro.';
+              }
+            } else if (existing.modo_cobro === 'factura') {
+              if (!venceVigente) {
+                try {
+                  const inv = await createLoversInvoice(env, {
+                    key: id, email: existing.email, nombre: existing.nombre, apellido: existing.apellido,
+                    periodo: planPeriodo(existing.plan), desde: todayIso(), dueDate: todayIso(),
+                    delivery: 'EMAIL', idioma: idiomaDe(existing), tag: 'reanuda-' + todayIso(),
+                  });
+                  fields.estado_pago = 'vencido';
+                  fields.factura_actual = inv.url; fields.factura_actual_id = inv.invoiceId; fields.factura_actual_ciclo = todayIso();
+                  aviso = 'Se le envió la factura por correo: se activa sola cuando la pague.';
+                } catch (e) {
+                  return adminJson({ error: 'No se pudo crear la factura para reanudar', detail: e.message }, 502);
+                }
+              }
+            } else if (!venceVigente) {
+              // Manual: pasar a Activo = confirmar que pagó. Exige la nueva fecha.
+              return adminJson({ error: 'Su vigencia ya terminó: para reactivarla confirma el pago poniendo la nueva fecha de vencimiento (Editar datos → Válido hasta) y luego cámbiala a Activo.' }, 400);
+            }
           }
 
           const r = await fetch(`${dbUrl}/cacusa_lovers/${id}.json?auth=${fbAuth}`, {
@@ -1598,14 +1655,20 @@ async function handleRequest(request, env) {
           if (existing && existing.estado_pago !== fields.estado_pago) {
             const email = existing.email || '';
             const idioma = fields.idioma || existing.idioma || existing.pais;
-            if (fields.estado_pago === 'cancelado' || fields.estado_pago === 'vencido' || fields.estado_pago === 'pausado') {
+            // Beneficios (5% + envío gratis): activos solo con 'activo'. Cancelada, sin pagar
+            // o pago fallido → apagados. Pausada → siguen hasta `vence` (los apaga el cron).
+            if (['cancelado', 'vencido', 'pago_fallido', 'pendiente'].includes(fields.estado_pago) && !(existing.estado_pago === 'pausado' && fields.estado_pago === 'pendiente' && existing.beneficios_off)) {
               await notifyExclusiveCoupon('deactivate', email, idioma, env, existing.telefono);
               if (fields.estado_pago === 'cancelado') await notifyLoversEmail('goodbye', existing, env);
-            } else {
+            } else if (fields.estado_pago === 'activo') {
               await notifyExclusiveCoupon('activate', email, idioma, env);
             }
           }
-          return adminJson({ ok: true, ...(venceNuevo ? { vence: venceNuevo } : {}), ...(fields.fecha_pausa !== undefined ? { fecha_pausa: fields.fecha_pausa } : {}) }, 200);
+          return adminJson({
+            ok: true, estado_pago: fields.estado_pago, ...(aviso ? { aviso } : {}),
+            ...(venceNuevo ? { vence: venceNuevo } : {}),
+            ...(fields.fecha_pausa !== undefined ? { fecha_pausa: fields.fecha_pausa } : {}),
+          }, 200);
         }
 
         if (request.method === 'DELETE') {
@@ -1828,6 +1891,8 @@ async function handleRequest(request, env) {
             } else {
               dbOk = await updateSubscriber(key, 'pago_fallido', {}, dbUrl, fbAuth);
               if (dbOk) {
+                // Sin pagar → beneficios pausados hasta que Square confirme el cobro.
+                await notifyExclusiveCoupon('deactivate', existing.email || email, existing.idioma || existing.pais, env, existing.telefono);
                 console.log('Marked pago_fallido:', email);
                 const nombre = [existing.nombre, existing.apellido].filter(Boolean).join(' ') || email;
                 await notifyAdminPush('CACUSA · Pago fallido - Lovers', `⚠️ A ${nombre} le falló un cobro`, env, { urgency: 'high' });
