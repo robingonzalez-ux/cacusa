@@ -4186,6 +4186,11 @@ function mergeFichaIntoOrder(o, c, { overwrite = false } = {}) {
   }
   return changed;
 }
+function orderFullName(c) {
+  const n = String((c && c.nombre) || '').trim(), a = String((c && c.apellido) || '').trim();
+  if (!a || n.toLowerCase().includes(a.toLowerCase())) return n;
+  return n ? `${n} ${a}` : a;
+}
 function cleanFichaCliente(c) {
   const str = (v, max) => typeof v === 'string' ? v.trim().slice(0, max) : '';
   c = c || {};
@@ -4339,8 +4344,9 @@ async function handleLoversReconcileOrders(body, env, origin, ctx) {
   if (!month) return err('Mes inválido', 400, origin);
   const dryRun = body.dryRun !== false;
   const subs = (Array.isArray(body.subs) ? body.subs : []).slice(0, 60);
-  const out = { month, dryRun, adoptados: [], completados: [], borrados: [], sinResolver: [], sinDireccion: [] };
+  const out = { month, dryRun, adoptados: [], completados: [], borrados: [], sinResolver: [], sinDireccion: [], vacios: [] };
   let cambios = 0;
+  const protegidos = new Set(); // pedidos viejos de suscriptoras a las que solo les falta la dirección
   for (const sub of subs) {
     const key = String((sub && sub.key) || '');
     if (!/^[A-Za-z0-9_@,+-]{1,128}$/.test(key)) continue;
@@ -4353,6 +4359,7 @@ async function handleLoversReconcileOrders(body, env, origin, ctx) {
     if (!loteOrder && !legacy.length) continue;
     if (!cliente.direccion && !(loteOrder && loteOrder.cliente && loteOrder.cliente.direccion)) {
       if (legacy.length || loteOrder) out.sinDireccion.push({ id: key, nombre });
+      legacy.forEach(o => protegidos.add(o.id));
       continue;
     }
     let ciclo = loteOrder;
@@ -4394,6 +4401,22 @@ async function handleLoversReconcileOrders(body, env, origin, ctx) {
         } else {
           out.sinResolver.push({ id: key, nombre, orden: v.id });
         }
+      }
+    }
+  }
+  // Pedidos viejos TOTALMENTE vacíos que no se pudieron ligar a nadie (sin dirección, teléfono ni
+  // correo; sin tocar y sin editar) — no se pueden enviar. Se listan y solo se borran si la
+  // usuaria lo pide (limpiar:true), nunca solos. Se protegen los de suscriptoras a las que solo
+  // les falta la dirección (su pedido sirve de recordatorio hasta que la completen).
+  if (body.vacios === true) {
+    const vacio = o => isDisposableLegacyOrder(o) && !protegidos.has(o.id)
+      && !String(o.cliente?.direccion || '').trim() && !String(o.cliente?.telefono || '').trim() && !String(o.cliente?.email || '').trim();
+    for (const o of await kvGetAllJson(env, 'order:')) {
+      if (!vacio(o)) continue;
+      out.vacios.push({ orden: o.id, nombre: orderFullName(o.cliente) || 'Cliente', fecha: String(o.fecha || '').slice(0, 10) });
+      if (!dryRun && body.limpiar === true) {
+        await env.CACUSA_KV.delete(orderKey(o.id));
+        cambios++;
       }
     }
   }

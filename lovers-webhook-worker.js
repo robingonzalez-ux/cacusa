@@ -1341,7 +1341,7 @@ function loteFechas(month) {
     envio: `${month}-15`,
   };
 }
-async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, maxNew = Infinity } = {}) {
+async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, maxNew = Infinity, vacios = false, limpiarVacios = false } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   // fueraDelLote: activas/pausadas que NO entran a este lote, con el motivo — para ver
@@ -1440,16 +1440,16 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
   // Una sola llamada a cacusa-admin: completa los pedidos del lote con la dirección de la
   // ficha, adopta los viejos y quita los duplicados que nadie tocó (ver
   // handleLoversReconcileOrders en admin-worker.js). En la vista previa solo informa.
-  if (reconciliar.length && env.ORDER_INGEST_KEY && cronBudget(1)) {
+  if ((reconciliar.length || vacios) && env.ORDER_INGEST_KEY && cronBudget(1)) {
     try {
       const r = await adminFetch(env, '/internal/lovers/reconcile-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-        body: JSON.stringify({ month, dryRun, subs: reconciliar }),
+        body: JSON.stringify({ month, dryRun, subs: reconciliar, vacios, limpiar: limpiarVacios }),
       });
       if (r.ok) {
         const d = await r.json().catch(() => null);
-        if (d) out.reparacion = { adoptados: d.adoptados || [], completados: d.completados || [], borrados: d.borrados || [], sinResolver: d.sinResolver || [], sinDireccion: d.sinDireccion || [] };
+        if (d) out.reparacion = { adoptados: d.adoptados || [], completados: d.completados || [], borrados: d.borrados || [], sinResolver: d.sinResolver || [], sinDireccion: d.sinDireccion || [], vacios: d.vacios || [] };
       } else {
         console.error('reconcile-orders respondió', r.status);
         out.errores.push(`No se pudo revisar los pedidos viejos de Lovers (${r.status})`);
@@ -2208,7 +2208,8 @@ async function handleRequest(request, env) {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
         const b = (await request.json().catch(() => null)) || {};
         const month = /^\d{4}-\d{2}$/.test(b.month || '') ? b.month : todayIso().slice(0, 7);
-        return adminJson(await withBudget(() => buildLoversBatch(env, { month, dryRun: b.dryRun !== false, maxNew: 40 })), 200);
+        // Desde el panel: también lista (y con limpiarVacios:true quita) los pedidos viejos vacíos.
+        return adminJson(await withBudget(() => buildLoversBatch(env, { month, dryRun: b.dryRun !== false, maxNew: 40, vacios: true, limpiarVacios: b.limpiarVacios === true })), 200);
       }
 
       // POST /admin/lovers-sync — sincronización con Square (vista previa por defecto).
