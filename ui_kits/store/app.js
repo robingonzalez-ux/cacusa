@@ -1572,7 +1572,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
   const result = await submitOrder({
     numero:    _currentOrderNum,
-    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, email: zelleEmailVal, idioma: __LANG },
+    cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, pais: paisVal, email: zelleEmailVal, idioma: __LANG },
     productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.hasSurcharge ? i.basePrice : i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:     totalConGC,
     subtotal:  zelleSubtotal,
@@ -1899,7 +1899,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   const emailVal = (document.getElementById('coEmail').value || '').trim();
   const result = await submitOrder({
     numero:  _currentOrderNum,
-    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, email: emailVal, idioma: __LANG },
+    cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, pais: pais || '', email: emailVal, idioma: __LANG },
     productos: cart.map(i => ({ id: i.id, isCombo: !!i.isCombo, name: i.name, price: i.price, qty: i.qty || 1, personalization: i.personalization || undefined, material: i.material || undefined })),
     total:  totalConGC,
     subtotal: total,
