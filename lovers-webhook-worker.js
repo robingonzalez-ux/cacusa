@@ -1132,6 +1132,29 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
   if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
   const since = addDaysIso(todayIso(), -LOVERS_SYNC_DAYS);
   const today = todayIso();
+  // Pagos de la ventana (una sola lista por corrida, hasta 2 páginas de 100 por ubicación):
+  // un pago por link queda ligado al CLIENTE (Payment.customer_id / buyer_email_address),
+  // pero su orden muchas veces no — por eso buscar la orden por cliente no la encontraba
+  // (caso [clienta]: Square la muestra en el filtro "Customer", orders/search no).
+  let pagosCache = null;
+  const pagosDeLaVentana = async () => {
+    if (pagosCache) return pagosCache;
+    pagosCache = [];
+    for (const loc of locs.slice(0, 3)) {
+      let cursor = '';
+      for (let pg = 0; pg < 2; pg++) {
+        if (!cronBudget(1, reserve)) return pagosCache;
+        const q = `begin_time=${encodeURIComponent(since + 'T00:00:00Z')}&sort_order=DESC&limit=100&location_id=${encodeURIComponent(loc)}${cursor ? '&cursor=' + encodeURIComponent(cursor) : ''}`;
+        const d = await squareApi(env, '/payments?' + q);
+        pagosCache.push(...(d.payments || []));
+        cursor = d.cursor || '';
+        if (!cursor) break;
+      }
+    }
+    return pagosCache;
+  };
+  const esOrdenLovers = o => !!o && o.reference_id !== 'lovers' && validId(o.id || '')
+    && (o.line_items || []).some(li => /lovers/i.test(li.name || ''));
   const revisadas = new Set();
   for (const [key, s] of entries) {
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
@@ -1212,21 +1235,41 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
       // registrar y la suscriptora fuera del lote. Si en la ventana no hay ninguna factura
       // pagada, se busca la última orden COMPLETADA de este cliente con un producto de Lovers.
       if (!yaHayReciente && cronBudget(5, reserve)) {
-        const od = await squareApi(env, '/orders/search', 'POST', {
-          location_ids: locs,
-          query: {
-            filter: {
-              customer_filter: { customer_ids: [customerId] },
-              state_filter: { states: ['COMPLETED'] },
-              date_time_filter: { closed_at: { start_at: since + 'T00:00:00Z' } },
-            },
-            sort: { sort_field: 'CLOSED_AT', sort_order: 'DESC' },
-          },
-          limit: 10,
-        });
-        const orden = (od.orders || []).find(o => o.reference_id !== 'lovers'
-          && (o.line_items || []).some(li => /lovers/i.test(li.name || ''))
-          && (o.total_money?.amount || 0) > 0 && validId(o.id || ''));
+        let orden = null;
+        try {
+          const emailLc = String(s.email || '').trim().toLowerCase();
+          const candidatos = (await pagosDeLaVentana()).filter(pg => pg.status === 'COMPLETED' && (pg.amount_money?.amount || 0) > 0
+            && pg.order_id && validId(pg.order_id)
+            && (pg.customer_id === customerId || (emailLc && String(pg.buyer_email_address || '').trim().toLowerCase() === emailLc)));
+          for (const pg of candidatos.slice(0, 3)) {
+            if (!cronBudget(1, reserve)) break;
+            const o = (await squareApi(env, `/orders/${pg.order_id}`)).order;
+            if (esOrdenLovers(o)) { orden = { id: o.id, closed_at: pg.created_at, total_money: pg.amount_money }; break; }
+          }
+          // Respaldo: órdenes del cliente (por si el pago no trae cliente ni correo).
+          if (!orden && cronBudget(2, reserve)) {
+            const od = await squareApi(env, '/orders/search', 'POST', {
+              location_ids: locs,
+              query: {
+                filter: {
+                  customer_filter: { customer_ids: [customerId] },
+                  state_filter: { states: ['COMPLETED'] },
+                  date_time_filter: { closed_at: { start_at: since + 'T00:00:00Z' } },
+                },
+                sort: { sort_field: 'CLOSED_AT', sort_order: 'DESC' },
+              },
+              limit: 10,
+            });
+            orden = (od.orders || []).find(o => esOrdenLovers(o) && (o.total_money?.amount || 0) > 0) || null;
+          }
+        } catch (e) {
+          out.errores.push(`${nombre} (buscando pagos por link): ${e.message}`.slice(0, 300));
+        }
+        if (!orden && !ISO_DATE_RE.test(s.ultimo_pago || '')) {
+          // Para que el panel diga por qué no se encontró nada, en vez de quedarse callado.
+          out.sinPagoEncontrado = out.sinPagoEncontrado || [];
+          out.sinPagoEncontrado.push({ id: key, nombre, clienteSquare: customerId });
+        }
         const fechaLink = orden ? String(orden.closed_at || orden.created_at || '').slice(0, 10) : '';
         if (orden && ISO_DATE_RE.test(fechaLink) && s.pago_link_id !== orden.id) {
           const cents = orden.total_money.amount;
