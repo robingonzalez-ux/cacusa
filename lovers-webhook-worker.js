@@ -89,8 +89,29 @@
 
 const SQUARE_API = 'https://connect.squareup.com/v2';
 // El primero es el valor por defecto de ADMIN_CORS; withAdminOrigin() refleja el que corresponda.
-const ADMIN_ORIGINS = ['https://admin.cacusabytaitus.com', 'https://cacusabytaitus.com'];
+// Auditoría (12 oct): la tienda (cacusabytaitus.com, carga GTM) ya no es un origen del
+// panel desde que se mudó a su subdominio (26 sep) — se quita para que un script de
+// terceros en la tienda no pueda llamar /admin/* aunque consiguiera un token.
+const ADMIN_ORIGINS = ['https://admin.cacusabytaitus.com'];
+const ADMIN_PANEL_URL = 'https://admin.cacusabytaitus.com/';
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
+
+// ── Presupuesto de llamadas externas de la tarea diaria (12 oct, auditoría) ─────
+// En el plan gratis de Cloudflare cada ejecución tiene ~50 llamadas externas; pasado el
+// tope, fetch() lanza "Too many subrequests" y un paso puede quedar a medias (ej. marcar
+// beneficios_off sin llegar a apagar el cupón). Mientras corre scheduled(), este fetch()
+// (sombrea al global dentro de este módulo) y adminFetch() cuentan cada llamada; cada
+// fase deja margen para las siguientes y lo que no entra hoy se hace mañana (todo es
+// idempotente). Fuera de la tarea diaria no limita nada.
+const CRON_SUBREQ_MAX = 45;
+let cronSubreq = null; // { n } solo mientras corre scheduled()
+function fetch(input, init) {
+  if (cronSubreq) cronSubreq.n++;
+  return globalThis.fetch(input, init);
+}
+function cronBudget(need, reserve = 0) {
+  return !cronSubreq || cronSubreq.n + need + reserve <= CRON_SUBREQ_MAX;
+}
 // Mismos usuarios válidos que admin-worker.js (duplicado a propósito — no hay módulos
 // compartidos entre Workers). verifyToken() los usa para revalidar el token de sesión,
 // no solo su firma — ver el comentario en verifyToken() más abajo.
@@ -105,7 +126,9 @@ const VALID_USERS = new Set(['tita.jaramillo', 'robin.gonzalez']);
 // fallando. Mismo patrón que adminFetch() en square-payment-worker.js.
 function adminFetch(env, path, options) {
   const url = `${ADMIN_WORKER_URL}${path}`;
-  return env.ADMIN_WORKER ? env.ADMIN_WORKER.fetch(url, options) : fetch(url, options);
+  if (!env.ADMIN_WORKER) return fetch(url, options);
+  if (cronSubreq) cronSubreq.n++;
+  return env.ADMIN_WORKER.fetch(url, options);
 }
 
 // ── Avisa a cacusa-admin para que mande la notificación push (best-effort — nunca
@@ -123,7 +146,7 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
     const r = await adminFetch(env, '/push/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
-      body: JSON.stringify({ title, body, url: 'https://cacusabytaitus.com/ui_kits/admin/', tag: 'cacusa-lovers', urgency }),
+      body: JSON.stringify({ title, body, url: ADMIN_PANEL_URL, tag: 'cacusa-lovers', urgency }),
     });
     if (!r.ok) console.error('push/notify failed:', r.status, await r.text().catch(() => ''));
   } catch (e) {
@@ -140,6 +163,8 @@ async function notifyAdminPush(title, body, env, { urgency = 'normal' } = {}) {
 // siempre, sin generación automática de guía para ese ciclo. squareInvoiceId es la
 // clave de idempotencia real del lado de cacusa-admin (nunca crea 2 pedidos para el
 // mismo cobro, ni siquiera si Square reintenta la entrega del webhook).
+// direccionFields lleva además email/idioma (12 oct): sin email el pedido del lote nunca
+// mandaba el correo con el número de guía al generar la guía USPS.
 async function notifyLoversShipment(direccionFields, plan, squareInvoiceId, env, loteKey) {
   if (!env.ORDER_INGEST_KEY) return null;
   try {
@@ -164,8 +189,10 @@ async function notifyLoversShipment(direccionFields, plan, squareInvoiceId, env,
 // dato (suscriptora de antes de este campo, o alta manual desde el admin sin
 // idioma capturado), un nombre de país como aproximación (Ecuador → es, cualquier
 // otro → en).
+// Devuelve true si cacusa-admin confirmó (12 oct): la tarea diaria solo marca un paso
+// como hecho (beneficios_off, vencido) si el cupón de verdad se apagó.
 async function notifyExclusiveCoupon(action, email, langOrPais, env, phone) {
-  if (!env.ORDER_INGEST_KEY || !email) return;
+  if (!env.ORDER_INGEST_KEY || !email) return false;
   const lang = langOrPais === 'es' || langOrPais === 'en'
     ? langOrPais
     : (langOrPais === 'Ecuador' ? 'es' : 'en');
@@ -178,8 +205,10 @@ async function notifyExclusiveCoupon(action, email, langOrPais, env, phone) {
       body: JSON.stringify({ action, email, lang, phone: phone || '' }),
     });
     if (!r.ok) console.error('exclusive-coupon failed:', r.status, await r.text().catch(() => ''));
+    return r.ok;
   } catch (e) {
     console.error('exclusive-coupon error:', e.message);
+    return false;
   }
 }
 
@@ -525,7 +554,7 @@ async function notifyPausedEmail(email, fields, env) {
 // 'expiring' (suscripción manual por vencer en ≤7 días) y 'goodbye' (cancelación).
 // Best-effort, igual que notifyPausedEmail().
 async function notifyLoversEmail(kind, s, env, extra = {}) {
-  if (!env.ORDER_INGEST_KEY || !s || !s.email) return;
+  if (!env.ORDER_INGEST_KEY || !s || !s.email) return false;
   try {
     const r = await adminFetch(env, '/internal/lovers/email', {
       method: 'POST',
@@ -533,7 +562,8 @@ async function notifyLoversEmail(kind, s, env, extra = {}) {
       body: JSON.stringify({ kind, email: s.email, nombre: s.nombre || '', idioma: idiomaDe(s), vence: s.vence || '', ...extra }),
     });
     if (!r.ok) console.error('lovers email', kind, 'failed:', r.status);
-  } catch (e) { console.error('lovers email', kind, 'error:', e.message); }
+    return r.ok;
+  } catch (e) { console.error('lovers email', kind, 'error:', e.message); return false; }
 }
 
 function idiomaDe(s) {
@@ -554,7 +584,12 @@ async function loadAllLovers(env) {
   return (await r.json()) || {};
 }
 
-async function runLoversBilling(env, { all: preloaded } = {}) {
+// reserve: llamadas que deja libres para las fases siguientes de la tarea diaria (ver
+// cronBudget). Orden de cada paso (12 oct, auditoría): primero el efecto real (correo,
+// apagar cupón) y DESPUÉS la marca que dice "hecho" — antes era al revés, y si el efecto
+// fallaba la marca ya estaba puesta y nunca se reintentaba (ej. beneficios_off:true con el
+// cupón todavía activo).
+async function runLoversBilling(env, { all: preloaded, reserve = 0 } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   const summary = { facturas: 0, vencidas: 0, errores: [] };
@@ -563,17 +598,39 @@ async function runLoversBilling(env, { all: preloaded } = {}) {
   if (!all) { try { all = await loadAllLovers(env); } catch (e) { summary.errores.push(e.message); return summary; } }
   const today = todayIso();
   summary.recordatorios = 0;
+  summary.pendientes = 0;
+  const apagarCupones = s => s.email ? notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono) : Promise.resolve(true);
   // Suscripciones MANUALES (transferencia): recordatorio por correo cuando faltan 7 días
   // o menos para `vence` — una sola vez por fecha de vencimiento (recordatorio_vence).
   for (const [key, s] of Object.entries(all)) {
     if (!s || s.metodo_pago !== 'manual' || s.estado_pago !== 'activo') continue;
     if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
     if (s.vence < today || s.vence > addDaysIso(today, 7) || s.recordatorio_vence === s.vence) continue;
+    if (!cronBudget(2, reserve)) { summary.pendientes++; continue; }
     try {
+      if (!(await notifyLoversEmail('expiring', s, env))) throw new Error('No se pudo mandar el recordatorio');
       const ok = await updateSubscriber(key, null, { recordatorio_vence: s.vence }, dbUrl, fbAuth);
       if (!ok) throw new Error('No se pudo marcar recordatorio_vence');
-      await notifyLoversEmail('expiring', s, env);
       summary.recordatorios++;
+    } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
+  }
+  // Manuales vencidas (12 oct, auditoría): antes una manual con `vence` ya pasado seguía
+  // 'activo' para siempre — sin caja (el lote mira `vence`), pero con el 5% y el envío
+  // gratis funcionando. Al día siguiente de `vence` pasa a 'vencido' y se apagan sus
+  // cupones; se reactiva desde el panel poniendo la nueva fecha y cambiándola a Activo.
+  summary.manualesVencidas = 0;
+  for (const [key, s] of Object.entries(all)) {
+    if (!s || s.metodo_pago !== 'manual' || s.modo_cobro === 'factura' || s.estado_pago !== 'activo') continue;
+    if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || s.vence >= today) continue;
+    if (!cronBudget(3, reserve)) { summary.pendientes++; continue; }
+    try {
+      if (!(await apagarCupones(s))) throw new Error('No se pudieron apagar sus cupones');
+      const ok = await updateSubscriber(key, 'vencido', { fecha_vencido: today }, dbUrl, fbAuth);
+      if (!ok) throw new Error('No se pudo marcar vencido en Firebase');
+      s.estado_pago = 'vencido';
+      summary.manualesVencidas++;
+      const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+      await notifyAdminPush('CACUSA · Lovers manual vencida', `⏸ ${nombre} (pago manual) venció el ${s.vence} — se pausaron sus beneficios. Si ya pagó, pon la nueva fecha (Válido hasta) y cámbiala a Activo`, env);
     } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
   }
   // Pausadas: al terminar el último día pagado se apagan sus beneficios (una vez).
@@ -581,19 +638,24 @@ async function runLoversBilling(env, { all: preloaded } = {}) {
   for (const [key, s] of Object.entries(all)) {
     if (!s || s.estado_pago !== 'pausado' || s.beneficios_off || !validId(key, true)) continue;
     if (ISO_DATE_RE.test(s.vence || '') && s.vence >= today) continue;
+    if (!cronBudget(2, reserve)) { summary.pendientes++; continue; }
     try {
+      if (!(await apagarCupones(s))) throw new Error('No se pudieron apagar sus cupones');
       const ok = await updateSubscriber(key, null, { beneficios_off: true }, dbUrl, fbAuth);
       if (!ok) throw new Error('No se pudo marcar beneficios_off');
-      await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
       summary.pausasVencidas++;
     } catch (e) { summary.errores.push(`${key}: ${e.message}`.slice(0, 300)); }
   }
   for (const [key, s] of Object.entries(all)) {
     if (!s || s.modo_cobro !== 'factura' || s.estado_pago !== 'activo') continue;
     if (!validId(key, true) || !ISO_DATE_RE.test(s.vence || '') || !s.email) continue;
+    const tocaFactura = today >= addDaysIso(s.vence, -LOVERS_INVOICE_LEAD_DAYS) && s.factura_actual_ciclo !== s.vence;
+    const tocaVencer = today > addDaysIso(s.vence, LOVERS_GRACE_DAYS);
+    if (!tocaFactura && !tocaVencer) continue;
+    if (!cronBudget((tocaFactura ? 6 : 0) + (tocaVencer ? 4 : 0), reserve)) { summary.pendientes++; continue; }
     try {
       let facturaUrl = s.factura_actual || '';
-      if (today >= addDaysIso(s.vence, -LOVERS_INVOICE_LEAD_DAYS) && s.factura_actual_ciclo !== s.vence) {
+      if (tocaFactura) {
         const inv = await createLoversInvoice(env, {
           key, email: s.email, nombre: s.nombre, apellido: s.apellido,
           periodo: planPeriodo(s.plan), desde: s.vence,
@@ -607,12 +669,12 @@ async function runLoversBilling(env, { all: preloaded } = {}) {
         if (!ok) throw new Error('No se pudo guardar factura_actual en Firebase');
         if (!inv.reused) summary.facturas++;
       }
-      if (today > addDaysIso(s.vence, LOVERS_GRACE_DAYS)) {
+      if (tocaVencer) {
+        if (!(await apagarCupones(s))) throw new Error('No se pudieron apagar sus cupones');
         const ok = await updateSubscriber(key, 'vencido', { fecha_vencido: today }, dbUrl, fbAuth);
         if (!ok) throw new Error('No se pudo marcar vencido en Firebase');
         summary.vencidas++;
         const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email;
-        await notifyExclusiveCoupon('deactivate', s.email, s.idioma || s.pais, env, s.telefono);
         await notifyAdminPush('CACUSA · Lovers sin pagar', `⏸ ${nombre} no pagó su factura (vencía ${s.vence}) — se pausaron sus beneficios`, env);
         await notifyPausedEmail(s.email, { nombre: s.nombre, idioma: idiomaDe(s), url: facturaUrl }, env);
       }
@@ -636,6 +698,49 @@ async function runLoversBilling(env, { all: preloaded } = {}) {
 function paidDateOf(invoice) {
   const d = invoice && invoice._paid_date;
   return ISO_DATE_RE.test(d || '') && d <= todayIso() ? d : todayIso();
+}
+
+// ── Cajas pagadas por lote (12 oct, auditoría) ───────────────────────────────
+// Antes el lote miraba solo `ultimo_pago`: si alguien pagaba tarde (después del 10) y su
+// cobro siguiente caía antes del 10 del mes siguiente, los 2 pagos quedaban en la misma
+// ventana y una caja se perdía; y una anual pagada entre el 11 y el 14 recibía 11 cajas.
+// Ahora cada pago anota a qué lote(s) va su caja en `lotes` ({"YYYY-MM": idFactura}):
+// mensual 1, anual 12, desde su lote natural (pagado hasta el 10 → ese mes; después → el
+// siguiente), nunca antes del mes en curso (un pago recuperado tarde no cae en un lote ya
+// cerrado), y si ese mes ya tiene caja pasa al siguiente libre. Cada pago = sus cajas,
+// nunca se pierde ni se duplica una. Las fichas sin `lotes` (pagos de antes de este
+// cambio) siguen con la regla anterior en buildLoversBatch().
+function ymAdd(ym, n) {
+  const [y, m] = ym.split('-').map(Number);
+  const t = y * 12 + (m - 1) + n;
+  return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, '0')}`;
+}
+function loteNatural(isoDate) {
+  return Number(isoDate.slice(8, 10)) <= LOVERS_CUTOFF_DAY ? isoDate.slice(0, 7) : ymAdd(isoDate.slice(0, 7), 1);
+}
+// Devuelve el `lotes` nuevo, o null si este pago ya estaba anotado (reintento).
+function asignarLotes(prev, invoiceId, payDate, periodo, today = todayIso()) {
+  const lotes = {};
+  if (prev && typeof prev === 'object') {
+    for (const [k, v] of Object.entries(prev)) if (/^\d{4}-\d{2}$/.test(k) && v) lotes[k] = String(v);
+  }
+  const ref = String(invoiceId || `pago-${payDate}`).slice(0, 100);
+  if (Object.values(lotes).includes(ref)) return null;
+  const cur = today.slice(0, 7);
+  let m = ISO_DATE_RE.test(payDate || '') ? loteNatural(payDate) : cur;
+  if (m < cur) m = cur;
+  for (let n = periodo === 'anual' ? 12 : 1, guard = 0; n > 0 && guard < 60; guard++, m = ymAdd(m, 1)) {
+    if (!lotes[m]) { lotes[m] = ref; n--; }
+  }
+  const min = ymAdd(cur, -13);
+  for (const k of Object.keys(lotes)) if (k < min) delete lotes[k];
+  return lotes;
+}
+function periodoDeFactura(invoice, fallbackPlan) {
+  const cents = invoice?.payment_requests?.[0]?.computed_amount_money?.amount || 0;
+  if (cents > 5000) return 'anual';
+  if (cents > 0) return 'mensual';
+  return planPeriodo(fallbackPlan);
 }
 
 async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
@@ -665,7 +770,9 @@ async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
   const email = existing?.email || invoice.primary_recipient?.email_address || customer?.email_address || key.replace(/,/g, '.');
   const hasAddress = !!(existing && existing.direccion);
   const plan = planNombre(periodo);
+  const lotesNuevos = asignarLotes(existing?.lotes, invoice.id, paidDateOf(invoice), periodo);
   const fields = {
+    ...(lotesNuevos ? { lotes: lotesNuevos } : {}),
     ultimo_pago: paidDateOf(invoice),
     square_invoice_id: invoice.id || '',
     square_customer_id: customerId,
@@ -792,7 +899,9 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
     } else if (existing) {
       // Ya existe (vino del formulario o de subscription.created): solo confirmar el pago,
       // NO pisar sus datos con lo que tenga Square (suele venir incompleto o vacio).
+      const lotesNuevos = asignarLotes(existing.lotes, invoice?.id, paidDateOf(invoice), periodoDeFactura(invoice, existing.plan));
       dbOk = await updateSubscriber(key, 'activo', {
+        ...(lotesNuevos ? { lotes: lotesNuevos } : {}),
         ultimo_pago: paidDateOf(invoice),
         square_invoice_id: invoice?.id || '',
         square_subscription_id: invoiceSubId,
@@ -836,6 +945,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
         plan: isAnnual ? 'Cacusa Lovers Anual' : 'Cacusa Lovers',
         monto: isAnnual ? '$219.89/año' : '$19.99/mes',
         fecha: today,
+        lotes: asignarLotes(null, invoice?.id, paidDateOf(invoice), isAnnual ? 'anual' : 'mensual'),
         ultimo_pago: paidDateOf(invoice),
         square_invoice_id: invoice?.id || '',
         // Auditoría de integridad (19 sep, F08): este era el único camino que
@@ -915,7 +1025,7 @@ function syncDue(s, today) {
 // en KV y no se repite. Solo cambia la fecha si Square dice que ESA factura se cobró antes.
 const LOVERS_FECHA_MALA = '2026-10-11';
 const LOVERS_REPAIR_KEY = 'loversrepair:fechas-2026-10-11';
-async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX } = {}) {
+async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX, reserve = 0 } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   const out = { dryRun, pagosSinRegistrar: [], pagosAnteriores: [], pagosFallidos: [], noEncontradas: [], registrados: 0, errores: [] };
@@ -945,8 +1055,13 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
   if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
   const since = addDaysIso(todayIso(), -LOVERS_SYNC_DAYS);
   const today = todayIso();
+  const revisadas = new Set();
   for (const [key, s] of entries) {
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+    // Presupuesto de la tarea diaria (ver cronBudget): ~3 llamadas por ficha + las de
+    // registrar un pago; las que no entran hoy se revisan mañana.
+    if (cron && !cronBudget(4, reserve)) { out.pendientes = (out.pendientes || 0) + 1; continue; }
+    revisadas.add(key);
     try {
       const customerId = await squareCustomerFor(env, s);
       if (!customerId) { out.noEncontradas.push({ id: key, nombre, email: s.email || '' }); continue; }
@@ -1016,7 +1131,6 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
     }
   }
   if (reparar) {
-    const revisadas = new Set(entries.map(([k]) => k));
     if (reparar.every(k => revisadas.has(k) && !fallidas.has(k))) await env.CACUSA_KV.put(LOVERS_REPAIR_KEY, todayIso());
   }
   console.log('reconcileLoversWithSquare:', JSON.stringify({ dryRun, sinRegistrar: out.pagosSinRegistrar.length, registrados: out.registrados, fallidos: out.pagosFallidos.length, errores: out.errores.length }));
@@ -1055,7 +1169,11 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
   if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
   for (const [key, s] of Object.entries(all)) {
     if (!s || typeof s !== 'object') continue;
-    if (s.estado_pago !== 'activo' && s.estado_pago !== 'pausado') continue;
+    // `lotes` (ver asignarLotes): cajas ya pagadas. Si la de este mes está pagada entra
+    // aunque hoy esté pausada, vencida o con un cobro posterior fallido — esa caja se pagó.
+    const lotes = s.lotes && typeof s.lotes === 'object' && Object.keys(s.lotes).length ? s.lotes : null;
+    const pagadaEsteMes = !!(lotes && lotes[month]);
+    if (s.estado_pago !== 'activo' && s.estado_pago !== 'pausado' && !pagadaEsteMes) continue;
     if (!validId(key, true)) {
       // Antes se saltaba en silencio: así queda a la vista en el panel.
       out.errores.push(`Revisar el email de ${[s.nombre, s.apellido].filter(Boolean).join(' ') || 'una suscriptora'}: tiene caracteres que el sistema no acepta, no entró al lote`);
@@ -1067,17 +1185,26 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
     let vence = ISO_DATE_RE.test(s.vence || '') ? s.vence : '';
     if (!vence && periodo === 'anual' && pago) vence = addPeriodIso(pago, 'anual');
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
+    if (pagadaEsteMes && s.estado_pago === 'cancelado') {
+      out.fueraDelLote.push({ id: key, nombre, plan: periodo, motivo: 'cancelada, pero tenía pagada la caja de este mes: decidir a mano' });
+      continue;
+    }
     let motivo = '';
     let fuera = '';
-    if (periodo === 'anual') {
+    if (pagadaEsteMes) {
+      motivo = periodo === 'anual' ? 'anual' : 'mensual';
+    } else if (manual) {
+      if (vence && vence >= envio) motivo = 'mensual manual';
+      else fuera = vence ? `pago manual vence el ${vence}, antes del ${envio}` : 'pago manual sin fecha de vencimiento';
+    } else if (lotes) {
+      const proxima = Object.keys(lotes).filter(k => k > month).sort()[0];
+      fuera = proxima ? `su caja pagada siguiente va en el lote ${proxima}` : 'sin caja pagada para este mes (el cobro todavía no llega)';
+    } else if (periodo === 'anual') {
       const inicio = pago || (ISO_DATE_RE.test(s.fecha || '') ? s.fecha : '');
       if (vence && vence >= envio && inicio && inicio <= corte) motivo = 'anual';
       else if (!inicio) fuera = 'anual sin fecha de pago';
       else if (!vence || vence < envio) fuera = `anual vencida${vence ? ` el ${vence}` : ''}`;
       else fuera = `anual pagada el ${inicio}, después del corte del ${corte}: entra desde el lote siguiente`;
-    } else if (manual) {
-      if (vence && vence >= envio) motivo = 'mensual manual';
-      else fuera = vence ? `pago manual vence el ${vence}, antes del ${envio}` : 'pago manual sin fecha de vencimiento';
     } else if (pago && pago >= desde && pago <= corte) {
       motivo = 'mensual';
     } else {
@@ -1085,13 +1212,13 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
         : pago > corte ? `pagó el ${pago}, después del corte del ${corte}: va al lote del mes siguiente`
         : `último pago el ${pago}: el cobro de este mes todavía no llega`;
     }
-    if (s.estado_pago === 'pausado' && !(vence && vence >= envio) && motivo !== 'mensual' && motivo) {
+    if (s.estado_pago === 'pausado' && !pagadaEsteMes && !(vence && vence >= envio) && motivo !== 'mensual' && motivo) {
       motivo = ''; fuera = `pausada, vigente solo hasta ${vence || '—'}`;
     }
     if (!motivo) { out.fueraDelLote.push({ id: key, nombre, plan: periodo, motivo: fuera }); continue; }
     const item = { id: key, nombre, plan: periodo, motivo, ciudad: s.ciudad || '', pais: s.pais || '' };
     // Transición: pedidos ya creados por pago (antes del lote) para este mismo ciclo.
-    if (motivo === 'mensual' && s.square_invoice_id && env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${s.square_invoice_id}`)) {
+    if (!lotes && motivo === 'mensual' && s.square_invoice_id && env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${s.square_invoice_id}`)) {
       out.yaConPedido.push(item); continue;
     }
     if (!s.direccion) { out.sinDireccion.push(item); continue; }
@@ -1100,11 +1227,12 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
       // Si la caja ya se creó (marcador en KV), no se gasta una llamada a cacusa-admin.
       if (env.CACUSA_KV && await env.CACUSA_KV.get(`loverslote:${month}:${key}`)) continue;
       // Tope por ejecución (tarea diaria): las que falten se crean al día siguiente.
-      if (out.creados >= maxNew) { out.pendientes++; continue; }
+      if (out.creados >= maxNew || !cronBudget(1)) { out.pendientes++; continue; }
       const res = await notifyLoversShipment({
         nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
         direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
         estado: s.estado, zip: s.zip, pais: s.pais,
+        email: s.email || '', idioma: idiomaDe(s),
       }, s.plan || planNombre(periodo), '', env, `${month}:${key}`);
       if (!res) { out.errores.push(`${nombre}: no se pudo crear el pedido`); continue; }
       if (!res.alreadyExisted) out.creados++;
@@ -1205,43 +1333,52 @@ export default {
   // Cron Trigger diario (Cloudflare → Settings → Triggers → Cron) — ver runLoversBilling().
   async scheduled(event, env, ctx) {
     ctx.waitUntil((async () => {
-      let all;
-      try { all = await loadAllLovers(env); } catch (e) { console.error('cron Firebase:', e.message); return; }
-      await runLoversBilling(env, { all }).catch(e => console.error('runLoversBilling:', e.message));
-      const dia0 = Number(todayIso().slice(8, 10));
-      const rec = await reconcileLoversWithSquare(env, { dryRun: false, all, cron: true, max: dia0 > LOVERS_CUTOFF_DAY ? 8 : LOVERS_SYNC_CRON_MAX }).catch(e => { console.error('reconcile:', e.message); return null; });
-      // Si la sincronización registró pagos, se vuelve a leer para que entren hoy al lote.
-      if (rec && (rec.registrados > 0 || (rec.fechasCorregidas || []).length > 0)) {
-        try { all = await loadAllLovers(env); } catch (_) {}
-      }
-      // Del 11 a fin de mes: arma (o completa) el lote del mes — así un pago recuperado
-      // tarde igual entra solo. Idempotente: nunca duplica.
-      const hoy = todayIso();
-      const dia = Number(hoy.slice(8, 10));
-      if (dia > LOVERS_CUTOFF_DAY) {
-        // Tope de 20 cajas nuevas por ejecución: en el plan gratis de Cloudflare cada
-        // ejecución tiene ~50 llamadas externas; el resto sale al día siguiente.
-        const mes = hoy.slice(0, 7);
-        const b = await buildLoversBatch(env, { month: mes, dryRun: false, all, maxNew: 20 }).catch(e => { console.error('lote:', e.message); return null; });
-        // Las que entran al lote pero no tienen dirección no reciben caja: se avisa una vez
-        // por mes (y de nuevo solo si la lista cambia), para que no queden olvidadas.
-        const sinDir = b ? b.sinDireccion.map(x => x.id).sort().join('|') : '';
-        const avisoKey = `loversloteaviso:${mes}`;
-        const avisarSinDir = !!sinDir && !!env.CACUSA_KV && (await env.CACUSA_KV.get(avisoKey)) !== sinDir;
-        if (b && (b.creados > 0 || avisarSinDir)) {
-          const partes = [];
-          if (b.creados > 0) partes.push(`📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`);
-          if (avisarSinDir) {
-            const nombres = b.sinDireccion.slice(0, 3).map(x => x.nombre).join(', ') + (b.sinDireccion.length > 3 ? '…' : '');
-            partes.push(`${b.sinDireccion.length} sin dirección (${nombres}): complétala en Lovers para que entren`);
-          }
-          await notifyAdminPush('CACUSA · Lote Lovers ' + mes, partes.join(' · '), env);
-          if (avisarSinDir) await env.CACUSA_KV.put(avisoKey, sinDir, { expirationTtl: 60 * 60 * 24 * 45 });
-        }
-      }
+      cronSubreq = { n: 0 };
+      try { await runDailyLovers(env); }
+      finally { console.log('cron llamadas externas:', cronSubreq.n); cronSubreq = null; }
     })());
   },
 };
+
+// Tarea diaria completa. Presupuesto (ver cronBudget): cada fase deja libres las llamadas
+// que necesitan las siguientes — del 11 en adelante el lote es lo más importante.
+async function runDailyLovers(env) {
+  let all;
+  try { all = await loadAllLovers(env); } catch (e) { console.error('cron Firebase:', e.message); return; }
+  const dia0 = Number(todayIso().slice(8, 10));
+  const armaLote = dia0 > LOVERS_CUTOFF_DAY;
+  await runLoversBilling(env, { all, reserve: armaLote ? 30 : 15 }).catch(e => console.error('runLoversBilling:', e.message));
+  const rec = await reconcileLoversWithSquare(env, { dryRun: false, all, cron: true, max: armaLote ? 8 : LOVERS_SYNC_CRON_MAX, reserve: armaLote ? 12 : 1 }).catch(e => { console.error('reconcile:', e.message); return null; });
+  // Si la sincronización registró pagos, se vuelve a leer para que entren hoy al lote.
+  if (rec && (rec.registrados > 0 || (rec.fechasCorregidas || []).length > 0)) {
+    try { all = await loadAllLovers(env); } catch (_) {}
+  }
+  // Del 11 a fin de mes: arma (o completa) el lote del mes — así un pago recuperado
+  // tarde igual entra solo. Idempotente: nunca duplica.
+  const hoy = todayIso();
+  const dia = Number(hoy.slice(8, 10));
+  if (dia > LOVERS_CUTOFF_DAY) {
+    // Tope de 20 cajas nuevas por ejecución: en el plan gratis de Cloudflare cada
+    // ejecución tiene ~50 llamadas externas; el resto sale al día siguiente.
+    const mes = hoy.slice(0, 7);
+    const b = await buildLoversBatch(env, { month: mes, dryRun: false, all, maxNew: 20 }).catch(e => { console.error('lote:', e.message); return null; });
+    // Las que entran al lote pero no tienen dirección no reciben caja: se avisa una vez
+    // por mes (y de nuevo solo si la lista cambia), para que no queden olvidadas.
+    const sinDir = b ? b.sinDireccion.map(x => x.id).sort().join('|') : '';
+    const avisoKey = `loversloteaviso:${mes}`;
+    const avisarSinDir = !!sinDir && !!env.CACUSA_KV && (await env.CACUSA_KV.get(avisoKey)) !== sinDir;
+    if (b && (b.creados > 0 || avisarSinDir)) {
+      const partes = [];
+      if (b.creados > 0) partes.push(`📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`);
+      if (avisarSinDir) {
+        const nombres = b.sinDireccion.slice(0, 3).map(x => x.nombre).join(', ') + (b.sinDireccion.length > 3 ? '…' : '');
+        partes.push(`${b.sinDireccion.length} sin dirección (${nombres}): complétala en Lovers para que entren`);
+      }
+      await notifyAdminPush('CACUSA · Lote Lovers ' + mes, partes.join(' · '), env);
+      if (avisarSinDir) await env.CACUSA_KV.put(avisoKey, sinDir, { expirationTtl: 60 * 60 * 24 * 45 });
+    }
+  }
+}
 
 // CORS de /admin/*: refleja el Origin solo si es uno de los orígenes del panel.
 function withAdminOrigin(request, res) {
@@ -1369,7 +1506,9 @@ async function handleRequest(request, env) {
       let current;
       try { current = await getSubscriberByKey(key, dbUrl, fbAuth); }
       catch (e) { return adminJson({ error: 'Firebase no disponible' }, 500); }
-      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
+      // Pausada: ya tiene membresía (se reanuda desde el panel, no con un alta nueva que
+      // dejaría su suscripción de Square en pausa y otra factura aparte).
+      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido' || current.estado_pago === 'pausado')) {
         return adminJson({ already: true }, 200);
       }
       // Ya tenía una factura de renovación sin pagar: se le devuelve esa misma.
@@ -1442,7 +1581,9 @@ async function handleRequest(request, env) {
         if (!okAddr) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
         return adminJson({ ok: true }, 200);
       }
-      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido')) {
+      // 'pausado' también (12 oct): antes una pausada que volvía a llenar el formulario
+      // quedaba rebajada a 'pendiente' y perdía los días ya pagados.
+      if (current && (current.estado_pago === 'activo' || current.estado_pago === 'pago_fallido' || current.estado_pago === 'pausado')) {
         console.warn('confirm-register: re-registro ignorado para', email, 'estado:', current.estado_pago);
         const txt = current.estado_pago === 'activo'
           ? `⚠ Intento de re-registro de una suscriptora activa: ${email}`
@@ -1450,10 +1591,7 @@ async function handleRequest(request, env) {
         await notifyAdminPush('CACUSA · Lovers', txt, env);
         return adminJson({ ok: true }, 200);
       }
-      const ok = await updateSubscriber(key, 'pendiente', {
-        email,
-        nombre: String(b.nombre || '').slice(0, 100),
-        apellido: String(b.apellido || '').slice(0, 100),
+      const addrFields = {
         telefono: String(b.telefono || '').slice(0, 30),
         direccion: String(b.direccion || '').slice(0, 200),
         apto: String(b.apto || '').slice(0, 40),
@@ -1461,10 +1599,28 @@ async function handleRequest(request, env) {
         estado: String(b.estado || '').slice(0, 50),
         zip: String(b.zip || '').slice(0, 20),
         pais: String(b.pais || '').slice(0, 40),
-        plan: String(b.plan || '').slice(0, 60),
-        monto: String(b.monto || '').slice(0, 40),
-        fecha: String(b.fecha || '').slice(0, 10),
-        metodo_pago: String(b.metodo_pago || 'square').slice(0, 20),
+      };
+      // Vencida (factura sin pagar) que vuelve: solo se actualiza la dirección — su estado
+      // lo cambia el pago de la factura pendiente (start-invoice le devuelve esa misma).
+      if (current && current.estado_pago === 'vencido') {
+        const okV = await updateSubscriber(key, null, addrFields, dbUrl, fbAuth);
+        if (!okV) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
+        return adminJson({ ok: true }, 200);
+      }
+      // metodo_pago / fecha / monto los fija el servidor (12 oct, auditoría): venían del
+      // formulario público, que podía marcarse 'manual' (y quedar fuera de la
+      // sincronización con Square) o elegir una fecha vieja (y pasar por la ficha
+      // "original" al fusionar duplicados).
+      const periodoAlta = planPeriodo(b.plan);
+      const ok = await updateSubscriber(key, 'pendiente', {
+        email,
+        nombre: String(b.nombre || '').slice(0, 100),
+        apellido: String(b.apellido || '').slice(0, 100),
+        ...addrFields,
+        plan: planNombre(periodoAlta),
+        monto: LOVERS_MONTO_TXT[periodoAlta],
+        fecha: (current && ISO_DATE_RE.test(current.fecha || '')) ? current.fecha : todayIso(),
+        metodo_pago: 'square',
         idioma: b.idioma === 'en' ? 'en' : 'es',
       }, dbUrl, fbAuth);
       if (!ok) return adminJson({ error: 'No se pudo guardar en Firebase' }, 500);
@@ -1622,6 +1778,19 @@ async function handleRequest(request, env) {
           const subId = all[keep].square_subscription_id || newestBy('square_subscription_id', 'ultimo_pago'); if (subId) merged.square_subscription_id = subId;
           const custId = all[keep].square_customer_id || newestBy('square_customer_id', 'ultimo_pago'); if (custId) merged.square_customer_id = custId;
           if (recs.some(x => x.estado_pago === 'activo')) merged.estado_pago = 'activo';
+          // Cajas pagadas (`lotes`) de todas las fichas del grupo (12 oct): si 2 pagos
+          // distintos cayeron en el mismo mes, el segundo pasa al mes siguiente libre.
+          const lotesUnion = {};
+          for (const x of recs) {
+            if (!x.lotes || typeof x.lotes !== 'object') continue;
+            for (const [k, v] of Object.entries(x.lotes).sort()) {
+              if (!/^\d{4}-\d{2}$/.test(k) || !v) continue;
+              let m = k;
+              for (let guard = 0; lotesUnion[m] && lotesUnion[m] !== v && guard < 60; guard++) m = ymAdd(m, 1);
+              lotesUnion[m] = v;
+            }
+          }
+          if (Object.keys(lotesUnion).length) merged.lotes = lotesUnion;
           for (const f of ['direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'telefono', 'nombre', 'apellido']) {
             if (!all[keep][f]) { const v = rest.map(k => all[k][f]).find(Boolean); if (v) merged[f] = v; }
           }
@@ -1722,6 +1891,17 @@ async function handleRequest(request, env) {
             notas:     str(body?.notas, 500),
           };
           const key = subscriberKey(email);
+          if (!validId(key, true)) return adminJson({ error: 'Email inválido' }, 400);
+          // Auditoría (12 oct): antes pisaba en silencio una ficha existente con el mismo
+          // email (fecha, método de pago, estado) — ej. una suscriptora de Square pasaba a
+          // 'manual' con sus ids de Square todavía guardados. Solo se permite sobre una
+          // cancelada (vuelve como manual); si no, se edita la que ya existe.
+          let previa;
+          try { previa = await getSubscriberByKey(key, dbUrl, fbAuth); }
+          catch (e) { return adminJson({ error: 'No se pudo revisar si ya existe', detail: e.message }, 502); }
+          if (previa && previa.estado_pago !== 'cancelado') {
+            return adminJson({ error: `Ya existe una suscriptora con ese correo (${previa.estado_pago || 'sin estado'}). Edítala en vez de crear otra.` }, 409);
+          }
           const ok = await updateSubscriber(key, null, record, dbUrl, fbAuth);
           if (!ok) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
           await notifyExclusiveCoupon('activate', email, record.pais, env);
@@ -1770,9 +1950,53 @@ async function handleRequest(request, env) {
             'nombre', 'apellido', 'telefono', 'direccion', 'apto', 'ciudad', 'estado',
             'zip', 'pais', 'plan', 'monto', 'fecha', 'estado_pago', 'metodo_pago',
             'vence', 'notas', 'idioma',
+            // Bug real (12 oct): "Editar datos" del panel manda además estos 4 — sin ellos
+            // en la lista, CUALQUIER edición fallaba entera ("Campo no permitido: email")
+            // desde el 20 sep. email se acepta solo si no cambia (ver abajo).
+            'email', 'ultimo_pago', 'square_invoice_id', 'square_subscription_id',
           ]);
           const badField = Object.keys(fields).find((k) => !LOVERS_PATCH_FIELDS.has(k));
           if (badField) return adminJson({ error: `Campo no permitido: ${badField}` }, 400);
+          // Tipos y valores (12 oct, auditoría): antes cualquier valor pasaba tal cual —
+          // un estado inventado dejaba a la suscriptora fuera de todo flujo, y un objeto en
+          // vez de texto quedaba guardado en Firebase.
+          const LOVERS_ESTADOS = ['pendiente', 'activo', 'pausado', 'vencido', 'pago_fallido', 'cancelado'];
+          for (const [k, v] of Object.entries(fields)) {
+            if (typeof v !== 'string') return adminJson({ error: `Valor inválido en ${k}` }, 400);
+            fields[k] = v.slice(0, k === 'notas' ? 500 : 200);
+          }
+          if (fields.estado_pago !== undefined && !LOVERS_ESTADOS.includes(fields.estado_pago)) {
+            return adminJson({ error: 'Estado de pago inválido' }, 400);
+          }
+          for (const k of ['vence', 'fecha']) {
+            if (fields[k] !== undefined && fields[k] !== '' && !ISO_DATE_RE.test(fields[k])) {
+              return adminJson({ error: `Fecha inválida en ${k} (AAAA-MM-DD)` }, 400);
+            }
+          }
+          if (fields.metodo_pago !== undefined && !['square', 'manual'].includes(fields.metodo_pago)) {
+            return adminJson({ error: 'Método de pago inválido' }, 400);
+          }
+          if (fields.ultimo_pago !== undefined && fields.ultimo_pago !== '' && !ISO_DATE_RE.test(fields.ultimo_pago)) {
+            return adminJson({ error: 'Fecha inválida en ultimo_pago (AAAA-MM-DD)' }, 400);
+          }
+          for (const k of ['square_invoice_id', 'square_subscription_id']) {
+            if (fields[k] !== undefined) {
+              fields[k] = fields[k].trim();
+              if (fields[k] !== '' && !validId(fields[k])) return adminJson({ error: `Id inválido en ${k}` }, 400);
+            }
+          }
+          // El email es la llave de la ficha (subscriberKey): no se cambia acá. El panel lo
+          // manda siempre; si viene igual se ignora, si viene distinto se avisa.
+          if (fields.email !== undefined) {
+            let actual;
+            try { actual = await getSubscriberByKey(id, dbUrl, fbAuth); }
+            catch (e) { return adminJson({ error: 'No se pudo leer la suscriptora', detail: e.message }, 502); }
+            if (!actual) return adminJson({ error: 'No existe esa suscriptora' }, 404);
+            if (fields.email.trim().toLowerCase() !== String(actual.email || '').trim().toLowerCase()) {
+              return adminJson({ error: 'El correo no se puede cambiar desde acá (identifica la ficha). Si está mal, crea la suscriptora de nuevo con el correo correcto y elimina esta.' }, 400);
+            }
+            delete fields.email;
+          }
 
           // Si estado_pago cambia de/a 'cancelado', hay que reconciliar los cupones
           // asociados (el 5% exclusivo + el envío gratis) — antes solo se reconciliaban
