@@ -112,6 +112,14 @@ function fetch(input, init) {
 function cronBudget(need, reserve = 0) {
   return !cronSubreq || cronSubreq.n + need + reserve <= CRON_SUBREQ_MAX;
 }
+// Mismo presupuesto para los botones del panel (Sincronizar, Crear pedidos del lote,
+// facturación a mano): cada request también tiene ~50 llamadas en el plan gratis. Lo
+// que no entra queda en `pendientes` y se completa volviendo a tocar el botón.
+async function withBudget(fn) {
+  const prev = cronSubreq;
+  cronSubreq = { n: 0 };
+  try { return await fn(); } finally { cronSubreq = prev; }
+}
 // Mismos usuarios válidos que admin-worker.js (duplicado a propósito — no hay módulos
 // compartidos entre Workers). verifyToken() los usa para revalidar el token de sesión,
 // no solo su firma — ver el comentario en verifyToken() más abajo.
@@ -1025,7 +1033,9 @@ function syncDue(s, today) {
 // en KV y no se repite. Solo cambia la fecha si Square dice que ESA factura se cobró antes.
 const LOVERS_FECHA_MALA = '2026-10-11';
 const LOVERS_REPAIR_KEY = 'loversrepair:fechas-2026-10-11';
-async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX, reserve = 0 } = {}) {
+// start: desde qué ficha seguir (botón del panel cortado por el límite de llamadas —
+// sin esto, cada toque volvía a revisar las mismas primeras y nunca avanzaba).
+async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, cron = false, max = LOVERS_SYNC_CRON_MAX, reserve = 0, start = 0 } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;
   const out = { dryRun, pagosSinRegistrar: [], pagosAnteriores: [], pagosFallidos: [], noEncontradas: [], registrados: 0, errores: [] };
@@ -1050,6 +1060,12 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
       if (reparar) await env.CACUSA_KV.put(LOVERS_REPAIR_KEY, t0);
       return out;
     }
+  } else {
+    entries.sort((a, b) => a[0].localeCompare(b[0]));
+    out.desde = Math.max(0, Math.min(Number(start) || 0, entries.length));
+    out.total = entries.length;
+    entries = entries.slice(out.desde);
+    if (!entries.length) return out;
   }
   const locs = ((await squareApi(env, '/locations')).locations || []).map(l => l.id).slice(0, 10);
   if (!locs.length) { out.errores.push('Square no devolvió ubicaciones'); return out; }
@@ -1060,7 +1076,10 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
     const nombre = [s.nombre, s.apellido].filter(Boolean).join(' ') || s.email || key;
     // Presupuesto de la tarea diaria (ver cronBudget): ~3 llamadas por ficha + las de
     // registrar un pago; las que no entran hoy se revisan mañana.
-    if (cron && !cronBudget(4, reserve)) { out.pendientes = (out.pendientes || 0) + 1; continue; }
+    if (!cronBudget(4, reserve)) {
+      if (!out.pendientes && !cron) out.siguiente = (out.desde || 0) + revisadas.size;
+      out.pendientes = (out.pendientes || 0) + 1; continue;
+    }
     revisadas.add(key);
     try {
       const customerId = await squareCustomerFor(env, s);
@@ -1227,16 +1246,32 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
       // Si la caja ya se creó (marcador en KV), no se gasta una llamada a cacusa-admin.
       if (env.CACUSA_KV && await env.CACUSA_KV.get(`loverslote:${month}:${key}`)) continue;
       // Tope por ejecución (tarea diaria): las que falten se crean al día siguiente.
-      if (out.creados >= maxNew || !cronBudget(1)) { out.pendientes++; continue; }
+      // reserva 2: el refresco único de la lista de pedidos y el aviso final.
+      if (out.creados >= maxNew || !cronBudget(1, 2)) { out.pendientes++; continue; }
       const res = await notifyLoversShipment({
         nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
         direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
         estado: s.estado, zip: s.zip, pais: s.pais,
         email: s.email || '', idioma: idiomaDe(s),
+        // Un solo refresco de la lista de pedidos al final (ver abajo), no uno por caja.
+        noRefresh: true,
       }, s.plan || planNombre(periodo), '', env, `${month}:${key}`);
       if (!res) { out.errores.push(`${nombre}: no se pudo crear el pedido`); continue; }
       if (!res.alreadyExisted) out.creados++;
     }
+  }
+  // Las cajas se crearon con noRefresh (KV acepta 1 escritura por segundo a la misma llave:
+  // 20 refrescos seguidos de la lista de pedidos fallaban y la lista quedaba sin las
+  // últimas). Un solo refresco al final, para que aparezcan todas en Pedidos → Nuevo.
+  if (!dryRun && out.creados > 0 && env.ORDER_INGEST_KEY) {
+    try {
+      const r = await adminFetch(env, '/internal/orders/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+        body: '{}',
+      });
+      if (!r.ok) console.error('orders/refresh respondió', r.status);
+    } catch (e) { console.error('orders/refresh error:', e.message); }
   }
   console.log('buildLoversBatch:', JSON.stringify({ month, dryRun, incluidas: out.incluidas.length, creados: out.creados }));
   return out;
@@ -1820,21 +1855,21 @@ async function handleRequest(request, env) {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
         const b = (await request.json().catch(() => null)) || {};
         const month = /^\d{4}-\d{2}$/.test(b.month || '') ? b.month : todayIso().slice(0, 7);
-        return adminJson(await buildLoversBatch(env, { month, dryRun: b.dryRun !== false }), 200);
+        return adminJson(await withBudget(() => buildLoversBatch(env, { month, dryRun: b.dryRun !== false, maxNew: 40 })), 200);
       }
 
       // POST /admin/lovers-sync — sincronización con Square (vista previa por defecto).
       if (url.pathname === '/admin/lovers-sync') {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
         const b = (await request.json().catch(() => null)) || {};
-        return adminJson(await reconcileLoversWithSquare(env, { dryRun: b.dryRun !== false }), 200);
+        return adminJson(await withBudget(() => reconcileLoversWithSquare(env, { dryRun: b.dryRun !== false, reserve: 2, start: b.desde })), 200);
       }
 
       // POST /admin/lovers-billing-run — corre el cron de facturación a mano (para probar
       // sin esperar al día siguiente). Idempotente: no duplica facturas ni avisos.
       if (url.pathname === '/admin/lovers-billing-run') {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
-        return adminJson(await runLoversBilling(env), 200);
+        return adminJson(await withBudget(() => runLoversBilling(env)), 200);
       }
 
       // GET /admin/lovers — lista de suscriptoras + fotos destacadas

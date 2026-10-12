@@ -707,17 +707,18 @@ function capCustomer(c) {
   return out;
 }
 
-// Rate limit sin gastar escrituras de KV (plan free): contador en memoria dentro de
-// una instancia de la DO GiftCardLedger por name:key (ruta /rl, no toca su storage).
-// No usa la Cache API: en *.workers.dev no tiene efecto. Si la instancia se descarta
-// por inactividad el contador vuelve a 0 (best-effort). Ante error, no bloquea.
+// Rate limit sin gastar escrituras de KV (plan gratis): contador en una instancia de la
+// DO GiftCardLedger por name:key (ruta /rl). durable (12 oct): guardado en el storage
+// SQLite de la DO, así no vuelve a 0 cuando la instancia se descarta por inactividad
+// (una cacusa-admin vieja ignora el flag y sigue en memoria, como antes).
+// No usa la Cache API: en *.workers.dev no tiene efecto. Ante error, no bloquea.
 async function rateLimit(env, name, key, max, windowSec) {
   try {
     if (!env || !env.GIFT_CARD_LEDGER) return true;
     const id = env.GIFT_CARD_LEDGER.idFromName(`rl:${name}:${String(key)}`);
     const r = await env.GIFT_CARD_LEDGER.get(id).fetch('https://gc/rl', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ max, windowSec }),
+      body: JSON.stringify({ max, windowSec, durable: true }),
     });
     const d = await r.json();
     return d.allowed !== false;

@@ -173,17 +173,28 @@ async function exportFirebase(env) {
 }
 
 // ── KV: mismo patrón de paginación por prefijo ya usado en admin-worker.js (listAllOrders) ──
-async function listKvPrefix(env, prefix) {
-  const out = {};
+// 12 oct (plan gratis): cada ejecución tiene un tope de 1.000 operaciones de KV — leer
+// llave por llave hacía fallar el respaldo entero al pasar ~1.000 llaves entre todos los
+// prefijos (pedidos + leads + cupones usados + guías...). La lectura en bloque del
+// binding (get con un arreglo, hasta 100 llaves) cuenta como 1 operación; si el runtime
+// no la soportara, cae a una por una. Las guías (PDF) van de a pocas por el tamaño.
+async function listKvPrefix(env, prefix, chunk = 100) {
+  const keys = [];
   let cursor;
   do {
     const page = await env.CACUSA_KV.list({ prefix, cursor, limit: 1000 });
-    for (const k of page.keys) {
-      const raw = await env.CACUSA_KV.get(k.name);
-      if (raw != null) { try { out[k.name] = JSON.parse(raw); } catch (_) { out[k.name] = raw; } }
-    }
+    for (const k of page.keys) keys.push(k.name);
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
+  const out = {};
+  const keep = (k, raw) => { if (raw != null) { try { out[k] = JSON.parse(raw); } catch (_) { out[k] = raw; } } };
+  for (let i = 0; i < keys.length; i += chunk) {
+    const part = keys.slice(i, i + chunk);
+    let res = null;
+    if (part.length > 1) { try { res = await env.CACUSA_KV.get(part); } catch (_) { res = null; } }
+    if (res instanceof Map) { for (const k of part) keep(k, res.get(k)); }
+    else { for (const k of part) keep(k, await env.CACUSA_KV.get(k)); }
+  }
   return out;
 }
 async function getKvValue(env, key) {
@@ -231,7 +242,7 @@ async function exportKv(env) {
     listKvPrefix(env, 'lead:'),
     listKvPrefix(env, 'loversship:'),
     listKvPrefix(env, 'cpused:'),
-    listKvPrefix(env, 'label:'),
+    listKvPrefix(env, 'label:', 10),
     listKvPrefix(env, 'loverslote:'),
     listKvPrefix(env, 'lovershipinvoice:'),
     listKvPrefix(env, 'loversinv:'),
@@ -307,8 +318,10 @@ export default {
       // tope, quien tuviera la clave (o cualquiera, a fuerza de intentos) podía
       // dispararlo en loop y llenar el bucket. 5/hora alcanza de sobra para un
       // backup manual; el cron diario no pasa por acá.
-      // Va ANTES de isAuthorized() a propósito: así también topea los intentos de
-      // adivinar la clave, no solo las corridas legítimas.
+      // 12 oct (plan gratis): el contador va DESPUÉS de la clave — antes iba antes y cada
+      // intento sin clave gastaba una de las 1.000 escrituras diarias de KV de la cuenta.
+      // BACKUP_TRIGGER_KEY es un valor random largo: adivinarlo no es un riesgo real.
+      if (!isAuthorized(request, env)) return json({ error: 'No permitido' }, 403);
       if (env.CACUSA_KV) {
         const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
         const rlKey = `bkrl:${ip}`;
@@ -316,8 +329,6 @@ export default {
         if (rlCount >= 5) return json({ error: 'Demasiadas solicitudes. Intenta más tarde.' }, 429);
         await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
       }
-
-      if (!isAuthorized(request, env)) return json({ error: 'No permitido' }, 403);
       const result = await runBackup(env, { trigger: 'manual' });
       return json(result, result.ok ? 200 : 500);
     }
