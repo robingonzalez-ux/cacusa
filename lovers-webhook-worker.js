@@ -465,6 +465,26 @@ function addPeriodIso(iso, periodo) {
   return new Date(Date.UTC(y, m, Math.min(day, last))).toISOString().slice(0, 10);
 }
 function planPeriodo(plan) { return /anual|annual/i.test(String(plan || '')) ? 'anual' : 'mensual'; }
+// ¿Una suscripción 'activo' tiene el pago al día? (12 oct, caso [clienta]: "Activa" en el
+// panel sin ningún pago registrado — el estado guardado no lo decía). Misma regla que el
+// panel (pagoAlDia en cacusa-admin). No cambia el estado: lo marca para revisar.
+//  - manual: hasta `vence`;  - factura: hasta `vence` + 7 días de gracia;
+//  - Square: último pago en los últimos 35 días (370 si es anual).
+function pagoAlDia(s, today = todayIso()) {
+  if (!s || s.estado_pago !== 'activo') return { ok: true };
+  const vence = ISO_DATE_RE.test(s.vence || '') ? s.vence : '';
+  if (s.metodo_pago === 'manual') {
+    if (!vence) return { ok: false, motivo: 'pago manual sin fecha de vencimiento' };
+    return vence >= today ? { ok: true } : { ok: false, motivo: `pago manual venció el ${vence}` };
+  }
+  if (s.modo_cobro === 'factura' && vence) {
+    return addDaysIso(vence, LOVERS_GRACE_DAYS) >= today ? { ok: true } : { ok: false, motivo: `factura sin pagar desde ${vence}` };
+  }
+  const pago = ISO_DATE_RE.test(s.ultimo_pago || '') ? s.ultimo_pago : '';
+  if (!pago) return { ok: false, motivo: 'sin ningún pago registrado' };
+  const limite = addDaysIso(today, planPeriodo(s.plan) === 'anual' ? -370 : -35);
+  return pago >= limite ? { ok: true } : { ok: false, motivo: `último pago el ${pago}: no llegó el cobro siguiente` };
+}
 function planNombre(periodo) { return periodo === 'anual' ? 'Cacusa Lovers Anual' : 'Cacusa Lovers'; }
 
 async function sha256Hex(text) {
@@ -1179,6 +1199,62 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
           out.pagosFallidos.push(item);
         }
       }
+      // Pagos por LINK de Square (12 oct, caso real: [clienta], "Activa" sin fecha de
+      // pago). El link de respaldo de la página de Lovers — y cualquier link armado a mano —
+      // cobra con una orden de Checkout, no con una factura: el aviso invoice.payment_made
+      // nunca llega y esta sincronización solo buscaba facturas, así que el pago quedaba sin
+      // registrar y la suscriptora fuera del lote. Si en la ventana no hay ninguna factura
+      // pagada, se busca la última orden COMPLETADA de este cliente con un producto de Lovers.
+      if (!yaHayReciente && cronBudget(5, reserve)) {
+        const od = await squareApi(env, '/orders/search', 'POST', {
+          location_ids: locs,
+          query: {
+            filter: {
+              customer_filter: { customer_ids: [customerId] },
+              state_filter: { states: ['COMPLETED'] },
+              date_time_filter: { closed_at: { start_at: since + 'T00:00:00Z' } },
+            },
+            sort: { sort_field: 'CLOSED_AT', sort_order: 'DESC' },
+          },
+          limit: 10,
+        });
+        const orden = (od.orders || []).find(o => o.reference_id !== 'lovers'
+          && (o.line_items || []).some(li => /lovers/i.test(li.name || ''))
+          && (o.total_money?.amount || 0) > 0 && validId(o.id || ''));
+        const fechaLink = orden ? String(orden.closed_at || orden.created_at || '').slice(0, 10) : '';
+        if (orden && ISO_DATE_RE.test(fechaLink) && s.pago_link_id !== orden.id) {
+          const cents = orden.total_money.amount;
+          const periodo = cents > 5000 ? 'anual' : 'mensual';
+          out.pagosLink = out.pagosLink || [];
+          out.pagosLink.push({ id: key, nombre, orden: orden.id, fecha: fechaLink, monto: cents / 100 });
+          if (!dryRun) {
+            // ¿El link dejó una suscripción de Square? Entonces Square cobra solo los meses
+            // siguientes. Si no (pago único), pasa a cobro por factura: el sistema le manda
+            // la del ciclo siguiente 3 días antes de `vence`, como a todas las altas nuevas.
+            let subId = s.square_subscription_id || '';
+            if (!subId) {
+              const sd = await squareApi(env, '/subscriptions/search', 'POST', { query: { filter: { customer_ids: [customerId] } }, limit: 10 });
+              const sub = (sd.subscriptions || []).find(x => (x.status === 'ACTIVE' || x.status === 'PENDING') && validId(x.id || ''));
+              subId = sub ? sub.id : '';
+            }
+            const eraActiva = s.estado_pago === 'activo';
+            const lotes = asignarLotes(s.lotes, orden.id, fechaLink, periodo);
+            const campos = {
+              ultimo_pago: fechaLink, pago_link_id: orden.id, square_customer_id: customerId,
+              ...(lotes ? { lotes } : {}),
+              ...(subId
+                ? { square_subscription_id: subId }
+                : { modo_cobro: 'factura', metodo_pago: 'square', vence: addPeriodIso(fechaLink, periodo), plan: planNombre(periodo), monto: LOVERS_MONTO_TXT[periodo] }),
+            };
+            if (!(await updateSubscriber(key, 'activo', campos, dbUrl, fbAuth))) throw new Error('No se pudo registrar el pago por link');
+            Object.assign(s, campos, { estado_pago: 'activo' });
+            out.registrados++;
+            if (!eraActiva) await notifyExclusiveCoupon('activate', s.email, s.idioma || s.pais, env);
+            await notifyAdminPush('CACUSA · Pago confirmado - Lovers',
+              `💳 ${nombre} pagó con un link de Square (${fechaLink}) — registrado${subId ? '' : '; los próximos meses se le cobran por factura'}`, env);
+          }
+        }
+      }
     } catch (e) {
       fallidas.add(key);
       out.errores.push(`${nombre}: ${e.message}`.slice(0, 300));
@@ -1631,6 +1707,20 @@ async function runDailyLovers(env) {
   if (rec && (rec.registrados > 0 || (rec.fechasCorregidas || []).length > 0)) {
     try { all = await loadAllLovers(env); } catch (_) {}
   }
+  // Activas sin el pago al día (después de sincronizar, así no cuenta a quien recién se
+  // le registró el pago): aviso a Tita/Robin cuando la lista cambia — no todos los días.
+  try {
+    const sinPago = Object.entries(all).filter(([, x]) => x && typeof x === 'object' && !pagoAlDia(x).ok)
+      .map(([k, x]) => ({ k, nombre: [x.nombre, x.apellido].filter(Boolean).join(' ') || x.email || k }));
+    const firma = sinPago.map(x => x.k).sort().join('|');
+    if (env.CACUSA_KV && firma !== ((await env.CACUSA_KV.get('loverssinpago')) || '')) {
+      if (sinPago.length) {
+        const nombres = sinPago.slice(0, 3).map(x => x.nombre).join(', ') + (sinPago.length > 3 ? '…' : '');
+        await notifyAdminPush('CACUSA · Lovers sin pago al día', `⚠ ${sinPago.length} suscripción(es) en Activo sin el pago al día: ${nombres}. Revísalas en Lovers`, env);
+      }
+      await env.CACUSA_KV.put('loverssinpago', firma, { expirationTtl: 40 * 24 * 3600 });
+    }
+  } catch (e) { console.error('aviso sin pago:', e.message); }
   // Del 11 a fin de mes: arma (o completa) el lote del mes — así un pago recuperado
   // tarde igual entra solo. Idempotente: nunca duplica.
   const hoy = todayIso();
