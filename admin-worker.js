@@ -305,6 +305,16 @@ export default {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         return await handleLoversShipmentIngest(body, env, allowOrigin, ctx);
       }
+      // Reconstruye la lista de pedidos del panel UNA vez al final de un lote (12 oct):
+      // los pedidos del lote llegan con noRefresh para no escribir orders_cache 20 veces
+      // seguidas (KV acepta 1 escritura por segundo a la misma llave; las demás fallan y
+      // la lista podía quedar sin las últimas cajas).
+      if (path.endsWith('/internal/orders/refresh')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
+        const data = await refreshOrdersCache(env);
+        return ok({ ok: true, orders: data.orders.length }, allowOrigin);
+      }
 
       // Notificación push disparada desde OTRO Worker (hoy: cacusa-lovers-webhook, cuando
       // nace una suscriptora nueva) — autenticada con el mismo ORDER_INGEST_KEY compartido,
@@ -444,17 +454,20 @@ function isInternalIngest(request, env) {
   return !!env.ORDER_INGEST_KEY && safeEqual(request.headers.get('x-order-ingest-key') || '', env.ORDER_INGEST_KEY);
 }
 
-// Rate limit sin gastar escrituras de KV (plan free): contador en memoria dentro de
-// una instancia de la DO GiftCardLedger por name:key (ruta /rl, no toca su storage).
-// No usa la Cache API: en *.workers.dev no tiene efecto. Si la instancia se descarta
-// por inactividad el contador vuelve a 0 (best-effort). Ante error, no bloquea.
-async function rateLimit(env, name, key, max, windowSec) {
+// Rate limit sin gastar escrituras de KV (plan gratis: 1.000 al día para TODA la
+// cuenta — antes cada ruta pública escribía su contador en KV en cada llamada, así que
+// un abuso podía agotarlas y dejar sin guardar los pedidos del día). Contador en una
+// instancia de la DO GiftCardLedger por name:key (ruta /rl), guardado en su storage
+// SQLite (durable, 100.000 filas/día gratis). No usa la Cache API: en *.workers.dev no
+// tiene efecto. Ante error, no bloquea (best-effort, igual que antes).
+// opts.mode: 'take' (default), 'peek', 'hit', 'reset' — ver la ruta /rl de la DO.
+async function rateLimit(env, name, key, max, windowSec, { mode = 'take', durable = true } = {}) {
   try {
     if (!env || !env.GIFT_CARD_LEDGER) return true;
     const id = env.GIFT_CARD_LEDGER.idFromName(`rl:${name}:${String(key)}`);
     const r = await env.GIFT_CARD_LEDGER.get(id).fetch('https://gc/rl', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ max, windowSec }),
+      body: JSON.stringify({ max, windowSec, mode, durable }),
     });
     const d = await r.json();
     return d.allowed !== false;
@@ -462,6 +475,9 @@ async function rateLimit(env, name, key, max, windowSec) {
     console.error('rateLimit falló:', e.message);
     return true;
   }
+}
+function clientIp(request) {
+  return (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
 }
 
 // Texto de push armado con input público: sin saltos/control, sin URLs, 40 chars.
@@ -491,40 +507,33 @@ async function adminPush(env, title, body, tag = 'cacusa-system', urgency = 'hig
 
 const LOGIN_USER_MAX_FAILS = 10;
 async function handleLogin(body, env, origin, request, ctx) {
-  if (env.CACUSA_KV) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `loginrl:${ip}`;
-    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-    if (rlCount >= 5) return err('Demasiados intentos fallidos. Intenta en una hora.', 429, origin);
+  // Contadores de fallos (12 oct): en la DO (rateLimit, storage durable), no en KV —
+  // en el plan gratis cada intento fallido gastaba 1–2 de las 1.000 escrituras diarias.
+  const ip = clientIp(request);
+  if (!(await rateLimit(env, 'login-ip', ip, 5, 3600, { mode: 'peek' }))) {
+    return err('Demasiados intentos fallidos. Intenta en una hora.', 429, origin);
   }
   const user     = (body.user || '').trim();
   const pass     = body.pass || '';
-  // Contador de fallos por usuario (solo usuarios reales; se escribe solo al fallar).
-  const userRlKey = VALID_USERS.has(user) ? `loginrlu:${user}` : null;
-  let userFails = 0;
-  if (userRlKey && env.CACUSA_KV) {
-    userFails = parseInt((await env.CACUSA_KV.get(userRlKey)) || '0', 10);
-    // Bloqueado 1h: mismo error genérico, sin más escrituras.
-    if (userFails >= LOGIN_USER_MAX_FAILS) return err('Usuario o contraseña incorrectos.', 401, origin);
+  // Contador de fallos por usuario (solo usuarios reales; suma solo al fallar).
+  const realUser = VALID_USERS.has(user);
+  // Bloqueado 1h: mismo error genérico.
+  if (realUser && !(await rateLimit(env, 'login-user', user, LOGIN_USER_MAX_FAILS, 3600, { mode: 'peek' }))) {
+    return err('Usuario o contraseña incorrectos.', 401, origin);
   }
   const expected = passwordFor(user, env);
   if (!expected || !safeEqual(pass, expected)) {
-    if (env.CACUSA_KV) {
-      const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-      const rlKey = `loginrl:${ip}`;
-      const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-      await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
-      if (userRlKey) {
-        await env.CACUSA_KV.put(userRlKey, String(userFails + 1), { expirationTtl: 3600 });
-        if (userFails + 1 === LOGIN_USER_MAX_FAILS) {
-          const p = adminPush(env, 'CACUSA · Cuenta bloqueada', `⚠ ${LOGIN_USER_MAX_FAILS} intentos fallidos: ${user} bloqueado 1 hora`);
-          if (ctx) ctx.waitUntil(p); else await p;
-        }
+    await rateLimit(env, 'login-ip', ip, 5, 3600, { mode: 'hit' });
+    if (realUser) {
+      const stillOk = await rateLimit(env, 'login-user', user, LOGIN_USER_MAX_FAILS, 3600, { mode: 'hit' });
+      if (!stillOk) {
+        const p = adminPush(env, 'CACUSA · Cuenta bloqueada', `⚠ ${LOGIN_USER_MAX_FAILS} intentos fallidos: ${user} bloqueado 1 hora`);
+        if (ctx) ctx.waitUntil(p); else await p;
       }
     }
     return err('Usuario o contraseña incorrectos.', 401, origin);
   }
-  if (userRlKey && userFails > 0 && env.CACUSA_KV) await env.CACUSA_KV.delete(userRlKey).catch(() => {});
+  if (realUser) await rateLimit(env, 'login-user', user, LOGIN_USER_MAX_FAILS, 3600, { mode: 'reset' });
   const token = await createSession(user, env);
   const p = adminPush(env, 'CACUSA · Inicio de sesión', `🔐 Inicio de sesión con contraseña: ${user}`, 'cacusa-login', 'normal');
   if (ctx) ctx.waitUntil(p); else await p;
@@ -738,21 +747,46 @@ function assignOrderId(newOrder) {
 // order:<id> — nunca lee esta caché para modificarla, siempre recalcula el estado
 // real completo, así que dos escrituras cruzándose en el tiempo nunca la corrompen:
 // en el peor caso queda unos milisegundos atrasada, nunca con datos perdidos.
-async function listAllOrders(env) {
-  const orders = [];
+// ── Lectura de muchas llaves de KV (12 oct, plan gratis) ───────────────────────
+// Cada ejecución tiene un tope de 1.000 operaciones de KV (en todos los planes). Leer
+// llave por llave hacía que la lista de pedidos del panel (y el resto de listas)
+// dejara de armarse al pasar ~1.000 pedidos guardados — en silencio. La lectura en
+// bloque del binding (get con un arreglo, hasta 100 llaves) cuenta como 1 operación.
+// Si el runtime no la soportara, cae a leer una por una (lo de siempre).
+async function kvGetMany(env, keys, chunk = 100) {
+  const out = new Map();
+  for (let i = 0; i < keys.length; i += chunk) {
+    const part = keys.slice(i, i + chunk);
+    let res = null;
+    if (part.length > 1) { try { res = await env.CACUSA_KV.get(part); } catch (_) { res = null; } }
+    if (res instanceof Map) { for (const k of part) out.set(k, res.get(k) ?? null); }
+    else { for (const k of part) out.set(k, await env.CACUSA_KV.get(k)); }
+  }
+  return out;
+}
+async function kvListKeys(env, prefix) {
+  const keys = [];
   let cursor;
   do {
-    const page = await env.CACUSA_KV.list({ prefix: 'order:', cursor, limit: 1000 });
-    for (const k of page.keys) {
-      const raw = await env.CACUSA_KV.get(k.name);
-      if (raw) { try { orders.push(JSON.parse(raw)); } catch (_) {} }
-    }
+    const page = await env.CACUSA_KV.list({ prefix, cursor, limit: 1000 });
+    for (const k of page.keys) keys.push(k.name);
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
+  return keys;
+}
+async function kvGetAllJson(env, prefix) {
+  const values = await kvGetMany(env, await kvListKeys(env, prefix));
+  const out = [];
+  for (const raw of values.values()) { if (raw) { try { out.push(JSON.parse(raw)); } catch (_) {} } }
+  return out;
+}
+
+async function listAllOrders(env) {
+  const orders = await kvGetAllJson(env, 'order:');
   orders.sort((a, b) => (b.id || 0) - (a.id || 0));
   return orders;
 }
-async function refreshOrdersCache(env) {
+async function refreshOrdersCacheOnce(env) {
   // El PDF de la guía nunca va en la caché (pesa); el panel lo pide a /order/label.
   const orders = (await listAllOrders(env)).map((o) => {
     if (!o || !o.labelBase64) return o;
@@ -762,6 +796,16 @@ async function refreshOrdersCache(env) {
   const data = { version: '1.0', lastUpdated: new Date().toISOString(), orders };
   await env.CACUSA_KV.put('orders_cache', JSON.stringify(data));
   return data;
+}
+async function refreshOrdersCache(env) {
+  try {
+    return await refreshOrdersCacheOnce(env);
+  } catch (e) {
+    // KV acepta 1 escritura por segundo a la misma llave: si 2 pedidos entran casi juntos,
+    // la segunda falla. Se reintenta una vez pasado ese segundo (con el estado de ahora).
+    await new Promise((r) => setTimeout(r, 1100));
+    return refreshOrdersCacheOnce(env);
+  }
 }
 // Migración única e idempotente del blob legado `orders` (un solo JSON con todos los
 // pedidos) al esquema de una llave por pedido. Se dispara EXCLUSIVAMENTE por la
@@ -799,16 +843,7 @@ async function migrateLegacyOrdersIfNeeded(env) {
 function leadKey(email) { return 'lead:' + String(email || '').toLowerCase().trim(); }
 // Mismo patrón de paginación por prefijo que listAllOrders().
 async function listAllLeads(env) {
-  const leads = [];
-  let cursor;
-  do {
-    const page = await env.CACUSA_KV.list({ prefix: 'lead:', cursor, limit: 1000 });
-    for (const k of page.keys) {
-      const raw = await env.CACUSA_KV.get(k.name);
-      if (raw) { try { leads.push(JSON.parse(raw)); } catch (_) {} }
-    }
-    cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+  const leads = await kvGetAllJson(env, 'lead:');
   leads.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
   return leads;
 }
@@ -1005,12 +1040,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   // competir por el mismo límite (la IP que ve este Worker en ese caso es la de
   // cacusa-square, compartida entre todos los pagos con tarjeta del día).
   if (!trusted) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `rl:${ip}`;
-    const rlRaw = await env.CACUSA_KV.get(rlKey);
-    const rlCount = rlRaw ? parseInt(rlRaw) : 0;
-    if (rlCount >= 5) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+    if (!(await rateLimit(env, 'order', clientIp(request), 5, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
   }
 
   const num = (v) => typeof v === 'number' && isFinite(v) ? v : 0;
@@ -1288,13 +1318,7 @@ async function handleSquareLocations(body, env, origin, request) {
   const token = (body.access_token || '').toString().trim();
   if (!token) return err('Falta access_token', 400, origin);
 
-  if (env.CACUSA_KV) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `sqlrl:${ip}`;
-    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-    if (rlCount >= 20) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
-  }
+  if (!(await rateLimit(env, 'sq-locations', clientIp(request), 20, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
 
   try {
     const r = await fetch('https://connect.squareup.com/v2/locations', {
@@ -1322,13 +1346,7 @@ async function handleSquarePaymentLink(body, env, origin, request) {
     return err('Datos incompletos', 400, origin);
   }
 
-  if (env.CACUSA_KV) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `sqprl:${ip}`;
-    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-    if (rlCount >= 20) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
-  }
+  if (!(await rateLimit(env, 'sq-paylink', clientIp(request), 20, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
 
   try {
     const r = await fetch('https://connect.squareup.com/v2/online-checkout/payment-links', {
@@ -1453,14 +1471,33 @@ export class GiftCardLedger {
     const code = String(body.code || '');
     const orderRef = String(body.orderRef || '');
 
-    // Contador de rate limit (ver rateLimit()): solo memoria, nunca storage.
+    // Contador de rate limit (ver rateLimit()). Una instancia por nombre:clave.
+    // durable (12 oct, plan gratis): el contador vive en el storage SQLite de la DO —
+    // 100.000 filas escritas al día gratis, contra 1.000 escrituras de KV — y no se
+    // reinicia si la instancia se descarta por inactividad (antes era solo memoria, y un
+    // intento por minuto nunca llegaba al tope). mode: 'take' (consume si queda cupo),
+    // 'peek' (solo mira), 'hit' (suma sin chequear: contar fallos), 'reset' (borra).
     if (url.pathname === '/rl') {
       const now = Date.now();
       const max = Math.max(1, Number(body.max) || 1);
-      if (!this.rl || this.rl.exp <= now) this.rl = { n: 0, exp: now + Math.max(1, Number(body.windowSec) || 60) * 1000 };
-      if (this.rl.n >= max) return Response.json({ allowed: false });
-      this.rl.n++;
-      return Response.json({ allowed: true });
+      const windowMs = Math.max(1, Number(body.windowSec) || 60) * 1000;
+      const mode = ['peek', 'hit', 'reset'].includes(body.mode) ? body.mode : 'take';
+      let rl = body.durable ? await this.state.storage.get('rl') : this.rl;
+      if (!rl || rl.exp <= now) rl = { n: 0, exp: now + windowMs };
+      let allowed = rl.n < max;
+      let changed = false;
+      if (mode === 'reset') { rl = { n: 0, exp: now + windowMs }; changed = true; allowed = true; }
+      else if (mode === 'hit') { rl.n++; changed = true; allowed = rl.n < max; } // false = este fallo llenó el cupo
+      else if (mode === 'take' && allowed) { rl.n++; changed = true; }
+      if (body.durable) {
+        if (changed) {
+          if (mode === 'reset') await this.state.storage.delete('rl');
+          else await this.state.storage.put('rl', rl);
+        }
+      } else {
+        this.rl = rl;
+      }
+      return Response.json({ allowed });
     }
 
     if (url.pathname === '/reserve') {
@@ -1814,16 +1851,7 @@ async function handleGcCreate(body, env, origin, session) {
 
 async function handleGcList(env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
-  const cards = [];
-  let cursor;
-  do {
-    const res = await env.CACUSA_KV.list({ prefix: 'gc:', cursor });
-    for (const k of res.keys) {
-      const raw = await env.CACUSA_KV.get(k.name);
-      if (raw) { try { cards.push(JSON.parse(raw)); } catch (_) {} }
-    }
-    cursor = res.list_complete ? null : res.cursor;
-  } while (cursor);
+  const cards = await kvGetAllJson(env, 'gc:');
   cards.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   return ok({ cards }, origin);
 }
@@ -1869,20 +1897,14 @@ async function handleGcAdjust(body, env, origin) {
 async function handleGcValidate(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   // Rate limit por IP (15/hr)
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const ipKey = `gcvrl:ip:${ip}`;
-  const ipCount = parseInt((await env.CACUSA_KV.get(ipKey)) || '0', 10);
-  if (ipCount >= 15) return ok({ valid: false }, origin);
-  await env.CACUSA_KV.put(ipKey, String(ipCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'gc-validate-ip', clientIp(request), 15, 3600))) return ok({ valid: false }, origin);
   // Rate limit por código: max 8 intentos fallidos/hr — silencioso para no revelar existencia del código
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ valid: false }, origin);
-  const codeKey = `gcvrl:c:${rawCode}`;
-  const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
-  if (codeCount >= 8) return ok({ valid: false }, origin);
+  if (!(await rateLimit(env, 'gc-validate-code', rawCode, 8, 3600, { mode: 'peek' }))) return ok({ valid: false }, origin);
   const card = await gcGet(env, rawCode);
   const valid = !!(card && card.active !== false && card.balance > 0);
-  if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
+  if (!valid) await rateLimit(env, 'gc-validate-code', rawCode, 8, 3600, { mode: 'hit' });
   if (!valid) return ok({ valid: false }, origin);
   return ok({ valid: true, balance: card.balance }, origin);
 }
@@ -1892,11 +1914,7 @@ async function handleGcValidate(body, env, origin, request) {
 async function handleGcRedeem(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   if (!isInternalIngest(request, env)) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `gcrl:${ip}`;
-    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-    if (rlCount >= 15) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+    if (!(await rateLimit(env, 'gc-redeem', clientIp(request), 15, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
   }
   const r = await gcRedeem(env, body.code, body.amount);
   return ok(r, origin);
@@ -2473,21 +2491,14 @@ async function markReferralMonthlyUse(env, code) {
 const REFERRAL_GENERIC_MSG = 'No se pudo generar el código en este momento. Si sos suscriptora activa de Cacusa Lovers y el problema persiste, escríbenos por WhatsApp.';
 async function handleReferralCode(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `refrl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 10) return err(REFERRAL_GENERIC_MSG, 429, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'referral-ip', clientIp(request), 10, 3600))) return err(REFERRAL_GENERIC_MSG, 429, origin);
 
   const name = String(body.name || '').trim().slice(0, 100);
   const phoneDigits = String(body.phone || '').replace(/\D/g, '');
   if (!name || phoneDigits.length < 7) {
     return err('Faltan nombre o teléfono válido', 400, origin);
   }
-  const phoneRlKey = `refrlph:${phoneDigits.slice(-7)}`;
-  const phoneRlCount = parseInt((await env.CACUSA_KV.get(phoneRlKey)) || '0', 10);
-  if (phoneRlCount >= 5) return err(REFERRAL_GENERIC_MSG, 429, origin);
-  await env.CACUSA_KV.put(phoneRlKey, String(phoneRlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'referral-phone', phoneDigits.slice(-7), 5, 3600))) return err(REFERRAL_GENERIC_MSG, 429, origin);
   if (!(await isActiveLoversPhone(phoneDigits, env))) {
     return err(REFERRAL_GENERIC_MSG, 429, origin);
   }
@@ -2657,11 +2668,7 @@ async function handleLoversNotifyPending(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   if (!env.ORDER_INGEST_KEY) return ok({ ok: true, notified: false }, origin);
 
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `pendrl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 5) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'lovers-pending', clientIp(request), 5, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
 
   const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
   if (!isValidEmail(email)) return ok({ ok: true, notified: false }, origin);
@@ -2753,11 +2760,7 @@ function loversRegisterEmailContent(nombre, confirmUrl, idioma) {
 
 async function handleLoversRegister(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `loversregrl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 10) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'lovers-register', clientIp(request), 10, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
 
   const str = (v, max) => typeof v === 'string' ? v.slice(0, max) : '';
   const email = String(body.email || '').toLowerCase().trim().slice(0, 150);
@@ -2864,27 +2867,21 @@ async function handleLoversConfirm(body, env, origin) {
 async function handleCouponValidate(body, env, origin, request) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
   // Rate limit por IP (20/hr)
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const ipKey = `cprl:${ip}`;
-  const ipCount = parseInt((await env.CACUSA_KV.get(ipKey)) || '0', 10);
-  if (ipCount >= 20) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-  await env.CACUSA_KV.put(ipKey, String(ipCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'coupon-validate-ip', clientIp(request), 20, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
   // Rate limit por código: max 8 intentos fallidos/hr — silencioso
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ valid: false }, origin);
   const rawPhone = String(body.phone || '').replace(/\D/g, '').slice(0, 20);
   const rawEmail = String(body.email || '').toLowerCase().trim().slice(0, 100);
   const coupon = await couponGet(env, rawCode);
-  const codeKey = `cpvrl:c:${rawCode}`;
-  const codeCount = parseInt((await env.CACUSA_KV.get(codeKey)) || '0', 10);
-  if (codeCount >= 8) return ok({ valid: false }, origin);
+  if (!(await rateLimit(env, 'coupon-validate-code', rawCode, 8, 3600, { mode: 'peek' }))) return ok({ valid: false }, origin);
   // El chequeo de "cupón ya usado" (cpused:ph/em, saltado para cupones pensados para
   // reusarse — restrictToEmail o envío gratis de Lovers) vive DENTRO de couponIsValid()
   // desde el 22 sep (S08a) — un solo lugar, en vez de duplicarlo acá y en handleOrder().
   let valid = await couponIsValid(coupon, rawEmail, rawPhone, env);
   // Cupones de referido: máximo 1 regalo por mes por código, sin importar quién lo use.
   if (valid && coupon.kind === 'referral' && await referralMonthlyCapReached(env, rawCode)) valid = false;
-  if (!valid) await env.CACUSA_KV.put(codeKey, String(codeCount + 1), { expirationTtl: 3600 });
+  if (!valid) await rateLimit(env, 'coupon-validate-code', rawCode, 8, 3600, { mode: 'hit' });
   if (!valid) return ok({ valid: false }, origin);
   return ok({ valid: true, code: coupon.code, type: coupon.type, amount: coupon.amount }, origin);
 }
@@ -2945,11 +2942,7 @@ async function handleMarketSave(body, env, origin) {
 
 async function handleLeadRegister(body, env, origin, request, ctx) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `leadrl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 3) return ok({ ok: true }, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'lead-register', clientIp(request), 3, 3600))) return ok({ ok: true }, origin);
   const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
   if (!isValidEmail(email)) return ok({ ok: true }, origin);
   const lang = body.lang === 'en' ? 'en' : 'es';
@@ -3024,11 +3017,7 @@ async function removeCartLead(email, env) {
 // panel como "carrito abandonado" — ya no hay carrito que recuperar.
 async function handleLeadCancel(body, env, origin, request) {
   if (!env.CACUSA_KV) return ok({ ok: true }, origin);
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `leadcancelrl:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= 10) return ok({ ok: true }, origin);
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+  if (!(await rateLimit(env, 'lead-cancel', clientIp(request), 10, 3600))) return ok({ ok: true }, origin);
   const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
   if (email) await removeCartLead(email, env);
   return ok({ ok: true }, origin);
@@ -3155,11 +3144,7 @@ async function handleCouponBurnPublic(body, env, origin, request) {
   // Rate limit por IP (15/hr) — igual que /giftcard/redeem, para que no se pueda agotar el
   // maxUses de un cupón ni bloquear el teléfono/email de una clienta real sin límite.
   if (!trusted) {
-    const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-    const rlKey = `cpburnrl:${ip}`;
-    const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-    if (rlCount >= 15) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
-    await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
+    if (!(await rateLimit(env, 'coupon-burn', clientIp(request), 15, 3600))) return err('Demasiadas solicitudes. Intenta más tarde.', 429, origin);
   }
   const rawCode = String(body.code || '').toUpperCase().replace(/[^A-Z0-9_-]/g, '');
   if (!rawCode) return ok({ ok: true }, origin);
@@ -3256,16 +3241,7 @@ async function handleCouponCreate(body, env, origin, session) {
 
 async function handleCouponList(env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado', 500, origin);
-  const coupons = [];
-  let cursor;
-  do {
-    const page = await env.CACUSA_KV.list({ prefix: 'coupon:', cursor, limit: 100 });
-    for (const k of page.keys) {
-      const raw = await env.CACUSA_KV.get(k.name);
-      if (raw) try { coupons.push(JSON.parse(raw)); } catch {}
-    }
-    cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+  const coupons = await kvGetAllJson(env, 'coupon:');
   coupons.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   return ok({ coupons }, origin);
 }
@@ -4229,7 +4205,8 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
     return err('No se pudo guardar el pedido de envío, intentá de nuevo', 500, origin);
   }
   if (claim.claimed) await orderIdemFinalize(env, dedupeKey, newOrder.id).catch(() => {});
-  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  // noRefresh: el lote pide un solo refresco al final (/internal/orders/refresh).
+  if (ctx && body.noRefresh !== true) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   return ok({ ok: true, orderId: newOrder.id, alreadyExisted: false }, origin);
 }
 
@@ -4381,13 +4358,7 @@ const WA_ORIGINS = ['https://admin.cacusabytaitus.com'];
 // del resto de rutas públicas de este archivo. Límite generoso (30/hora): las 2
 // cuentas reales rara vez inician sesión más de un puñado de veces al día.
 async function waRateLimit(env, request, prefix, max = 30) {
-  if (!env.CACUSA_KV) return true;
-  const ip = (request && request.headers.get('CF-Connecting-IP')) || 'unknown';
-  const rlKey = `${prefix}:${ip}`;
-  const rlCount = parseInt((await env.CACUSA_KV.get(rlKey)) || '0', 10);
-  if (rlCount >= max) return false;
-  await env.CACUSA_KV.put(rlKey, String(rlCount + 1), { expirationTtl: 3600 });
-  return true;
+  return rateLimit(env, 'webauthn-' + prefix, clientIp(request), max, 3600);
 }
 
 async function handleWaRegChallenge(body, env, origin, request) {
