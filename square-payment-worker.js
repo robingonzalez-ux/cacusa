@@ -157,6 +157,9 @@ const SQUARE_API      = 'https://connect.squareup.com/v2/online-checkout/payment
 const SQUARE_ORDERS_API = 'https://connect.squareup.com/v2/orders';
 const SQUARE_VERSION  = '2025-05-21';
 const REDIRECT_URL    = 'https://cacusabytaitus.com/ui_kits/store/?paid=1';
+// Auditoría (12 oct): las clientas de la tienda en inglés volvían a la tienda en español
+// después de pagar. La tienda EN maneja el mismo ?paid=1.
+const REDIRECT_URL_EN = 'https://cacusabytaitus.com/en/ui_kits/store/?paid=1';
 const CATALOG_URL     = 'https://cacusabytaitus.com/data/products.json';
 const ADMIN_WORKER_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
 // Auditoría externa (22 sep, S05): este valor decía "2 horas" desde siempre, y un
@@ -180,6 +183,22 @@ const PENDING_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 días
 function adminFetch(env, path, options) {
   const url = `${ADMIN_WORKER_URL}${path}`;
   return env.ADMIN_WORKER ? env.ADMIN_WORKER.fetch(url, options) : fetch(url, options);
+}
+
+// Aviso push a Tita/Robin vía cacusa-admin (mismo patrón que lovers-webhook-worker.js).
+// Best-effort: nunca rompe el webhook si falla.
+async function notifyAdminPush(title, body, env) {
+  if (!env.ORDER_INGEST_KEY) return;
+  try {
+    const r = await adminFetch(env, '/push/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ title, body, url: 'https://admin.cacusabytaitus.com/', tag: 'cacusa-order', urgency: 'high' }),
+    });
+    if (!r.ok) console.error('push/notify falló:', r.status);
+  } catch (e) {
+    console.error('push/notify error:', e.message);
+  }
 }
 
 // ── Catalog fetch & price validation ─────────────────────────────────────────
@@ -524,10 +543,12 @@ async function redeemGiftCardViaAdmin(code, amountCents, env) {
 // Auditoría de integridad (19 sep, F05): antes, si un reintento tardío de Square
 // llegaba después de que `pending_order:<referenceId>` ya hubiera expirado, no había
 // forma de distinguir "esto ya se procesó hace rato" de "esto se perdió de verdad".
-// Este marcador aparte (TTL más largo, y ahora más corto que PENDING_TTL_SECONDS de
-// arriba — antes era al revés, ver S05 arriba) resuelve esa ambigüedad: si no está
-// `pending_order` pero SÍ está `sqproc`, ya se procesó, nada que hacer.
-const SQPROC_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 días
+// Este marcador aparte resuelve esa ambigüedad: si no está `pending_order` pero SÍ está
+// `sqproc`, ya se procesó, nada que hacer.
+// 12 oct: 400 días (antes 7, más corto que pending_order). Square vuelve a mandar
+// payment.updated cuando hay un reembolso, aunque sea semanas después: sin el marcador,
+// ese aviso de un pago ya procesado respondía 500 y Square lo reintentaba.
+const SQPROC_TTL_SECONDS = 400 * 24 * 60 * 60;
 
 // ── Webhook: Square confirma que el pago se completó ─────────────────────────
 async function handleWebhook(request, env) {
@@ -583,6 +604,12 @@ async function handleWebhook(request, env) {
       console.warn('payment.updated sin reference_id recuperable, order_id:', payment.order_id);
       return new Response('OK', { status: 200 });
     }
+    // Auditoría (12 oct): este webhook recibe TODOS los pagos de la cuenta. Los links de
+    // la tienda usan un reference_id propio (32 hex, ver handleCreatePaymentLink); los
+    // demás (facturas de Cacusa Lovers con reference_id 'lovers', ventas del POS, links
+    // hechos a mano en Square) no son pedidos de este Worker — antes caían en "pedido
+    // pendiente perdido" y respondían 500, así que Square reintentaba cada uno.
+    if (!/^[0-9a-f]{32}$/.test(referenceId)) return new Response('OK', { status: 200 });
 
     const kvKey = `pending_order:${referenceId}`;
     const raw = await env.CACUSA_KV.get(kvKey);
@@ -627,6 +654,14 @@ async function handleWebhook(request, env) {
         referenceId, expectedCents, paidCents, paidCurrency,
         expectedLocation: env.SQUARE_LOCATION_ID, orderLocationId,
       });
+      // 12 oct: antes quedaba solo en los logs — un pago real cobrado y sin pedido en el
+      // panel pasaba desapercibido. Aviso una sola vez por pago (marcador en KV).
+      const avisoKey = `sqmismatch:${referenceId}`;
+      if (!(await env.CACUSA_KV.get(avisoKey))) {
+        await env.CACUSA_KV.put(avisoKey, '1', { expirationTtl: 30 * 24 * 60 * 60 });
+        await notifyAdminPush('CACUSA · Pago con tarjeta sin registrar',
+          `⚠ Square cobró $${((Number(paidCents) || 0) / 100).toFixed(2)} pero no coincide con el pedido esperado ($${(expectedCents / 100).toFixed(2)}) — revisalo en Square y cárgalo a mano`, env);
+      }
       return new Response('OK', { status: 200 });
     }
 
@@ -989,7 +1024,7 @@ async function handleCreatePaymentLink(body, env, allowed) {
   const payload = {
     idempotency_key: referenceId,
     checkout_options: {
-      redirect_url: REDIRECT_URL,
+      redirect_url: customer?.idioma === 'en' ? REDIRECT_URL_EN : REDIRECT_URL,
       ask_for_shipping_address: false,
       accepted_payment_methods: {
         apple_pay: true,

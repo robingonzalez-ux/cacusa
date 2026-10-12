@@ -1056,6 +1056,10 @@ async function handleOrder(body, env, origin, ctx, request) {
       if (!coupon || !(await couponIsValid(coupon, cliente.email, cliente.telefono, env))) coupon = null;
       // Mismo tope mensual de referidos que /coupon/validate.
       if (coupon && coupon.kind === 'referral' && await referralMonthlyCapReached(env, coupon.code)) coupon = null;
+      // Auditoría (12 oct): si el cupón no valida, no queda anotado en el pedido — antes
+      // quedaba igual, y un pedido falso con el código de un cupón ajeno alcanzaba para
+      // gastarle usos vía /coupon/burn (que solo exige cuponAplicado === code).
+      if (!coupon) order.cuponAplicado = undefined;
     }
     let discount = 0;
     if (coupon) {
@@ -3088,7 +3092,8 @@ async function checkAbandonedCarts(env, { leads: preloaded, refreshCache = true 
     await env.CACUSA_KV.put(leadKey(lead.email), JSON.stringify(lead));
     const latestOrderTime = latestOrderByEmail.get(lead.email);
     if (latestOrderTime != null && latestOrderTime >= new Date(lead.date).getTime()) continue; // compró después — no es abandono real
-    const itemNames = (lead.cart || []).map(i => i.name).filter(Boolean).slice(0, 3).join(', ');
+    // Texto que viene del navegador: mismo saneo que los demás avisos (sin URLs ni saltos).
+    const itemNames = (lead.cart || []).map(i => sanitizePushText(i.name)).filter(Boolean).slice(0, 3).join(', ');
     const totalTxt = typeof lead.total === 'number' ? ` · $${lead.total.toFixed(2)}` : '';
     await sendWebPushAll(env, {
       title: 'CACUSA · Carrito abandonado',
@@ -3908,6 +3913,50 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
   return await r.json();
 }
 
+// ── Dirección para USPS (12 oct, auditoría) ────────────────────────────────────
+// La Labels API pide el estado en 2 letras ("FL"). El formulario de Cacusa Lovers lo
+// guarda con el nombre completo ("Florida") — y de ahí sale la dirección de las cajas
+// del lote —, así que se normaliza acá: nombres en inglés o español, con o sin acentos,
+// o el código. Lo que no se reconozca se rechaza con un mensaje claro en vez de gastar
+// una llamada (de 50 al día) en un 400 de USPS.
+const US_STATE_CODES = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA', colorado: 'CO',
+  connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA', hawaii: 'HI', hawai: 'HI',
+  idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA', kansas: 'KS', kentucky: 'KY',
+  louisiana: 'LA', luisiana: 'LA', maine: 'ME', maryland: 'MD', massachusetts: 'MA',
+  michigan: 'MI', minnesota: 'MN', mississippi: 'MS', misisipi: 'MS', missouri: 'MO', misuri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', newhampshire: 'NH', nuevohampshire: 'NH',
+  newjersey: 'NJ', nuevajersey: 'NJ', newmexico: 'NM', nuevomexico: 'NM', newyork: 'NY',
+  nuevayork: 'NY', northcarolina: 'NC', carolinadelnorte: 'NC', northdakota: 'ND',
+  dakotadelnorte: 'ND', ohio: 'OH', oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA',
+  pensilvania: 'PA', rhodeisland: 'RI', southcarolina: 'SC', carolinadelsur: 'SC',
+  southdakota: 'SD', dakotadelsur: 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT',
+  virginia: 'VA', washington: 'WA', westvirginia: 'WV', virginiaoccidental: 'WV', wisconsin: 'WI',
+  wyoming: 'WY', districtofcolumbia: 'DC', distritodecolumbia: 'DC', washingtondc: 'DC',
+  puertorico: 'PR', guam: 'GU', virginislands: 'VI', islasvirgenes: 'VI', americansamoa: 'AS',
+};
+const US_STATE_SET = new Set(Object.values(US_STATE_CODES));
+function usStateCode(v) {
+  const raw = String(v || '').trim();
+  if (/^[A-Za-z]{2}$/.test(raw)) return US_STATE_SET.has(raw.toUpperCase()) ? raw.toUpperCase() : '';
+  const k = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+  return US_STATE_CODES[k] || '';
+}
+// País de un pedido: `pais`, o lo que va después de la última coma de `ciudad` — la
+// tienda mandaba el país pegado a la ciudad en Zelle/WhatsApp ("Miami, US") y sin `pais`,
+// así que esos pedidos nunca podían generar guía.
+const US_COUNTRY_VALUES = ['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES', 'EEUU', 'EE.UU.', 'EE UU', 'EE. UU.'];
+// (Desde el 12 oct la tienda manda también `pais`, pero sigue pegándolo a la ciudad para
+// que se lea igual en el panel: si coincide, se quita de la ciudad que va a USPS.)
+function orderCountryParts(cliente) {
+  const pais = String((cliente && cliente.pais) || '').trim().toUpperCase();
+  const ciudad = String((cliente && cliente.ciudad) || '').trim();
+  const m = ciudad.match(/^(.*?),\s*([^,]+)$/);
+  const sufijo = m ? m[2].trim().toUpperCase() : '';
+  if (pais) return { pais, ciudad: m && sufijo === pais ? m[1].trim() : ciudad };
+  return m ? { pais: sufijo, ciudad: m[1].trim() } : { pais: '', ciudad };
+}
+
 // Genera la guía para UN pedido ya existente — nunca confía en una dirección que
 // mande el body, siempre la del pedido guardado (mismo criterio de todo el repo:
 // nunca confiar en el cliente para datos que ya están verificados server-side).
@@ -3921,13 +3970,32 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
   if (!order) return err('Pedido no encontrado', 404, origin);
 
   const cliente = order.cliente || {};
-  const paisUpper = (cliente.pais || '').toUpperCase();
-  if (!['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES'].includes(paisUpper)) {
+  const { pais: paisUpper, ciudad: ciudadEnvio } = orderCountryParts(cliente);
+  if (!US_COUNTRY_VALUES.includes(paisUpper)) {
     return err('Esta guía es solo para pedidos a Estados Unidos — para Ecuador seguí usando Servientrega a mano.', 400, origin);
   }
-  if (!cliente.direccion || !cliente.ciudad || !cliente.estado || !cliente.zip) {
+  if (!cliente.direccion || !ciudadEnvio || !cliente.estado || !cliente.zip) {
     return err('Al pedido le falta dirección/ciudad/estado/ZIP completos — completalo antes de generar la guía.', 400, origin);
   }
+  const stateCode = usStateCode(cliente.estado);
+  if (!stateCode) {
+    return err(`El estado "${String(cliente.estado).slice(0, 40)}" no se reconoce como un estado de EE.UU. — corregilo con "✎ Editar dirección" (ej. FL o Florida).`, 400, origin);
+  }
+  const zip5 = String(cliente.zip).trim().split('-')[0];
+  if (!/^\d{5}$/.test(zip5)) {
+    return err(`El ZIP "${String(cliente.zip).slice(0, 20)}" no es válido (5 dígitos) — corregilo con "✎ Editar dirección".`, 400, origin);
+  }
+  // Pedidos de la tienda (Zelle/WhatsApp) guardan nombre y apellido juntos en `nombre`.
+  let firstName = String(cliente.nombre || '').trim();
+  let lastName = String(cliente.apellido || '').trim();
+  if (!lastName && firstName.includes(' ')) {
+    const i = firstName.lastIndexOf(' ');
+    lastName = firstName.slice(i + 1);
+    firstName = firstName.slice(0, i);
+  }
+  // Teléfono: 10 dígitos de EE.UU., o no se manda (un formato raro no debe tumbar la guía).
+  const telDigits = String(cliente.telefono || '').replace(/\D/g, '');
+  const phone10 = telDigits.length === 10 ? telDigits : (telDigits.length === 11 && telDigits[0] === '1' ? telDigits.slice(1) : '');
 
   // Peso y las 3 dimensiones son obligatorios (decisión de negocio, 21 sep) — antes
   // caían en silencio al default del catálogo si venían vacíos; ahora el panel los
@@ -3959,14 +4027,14 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
       // Reimpresión con idempotency key propia (si no USPS devolvería la guía vieja).
       orderId: isReprint && order.tracking ? `${order.id}-r${(Number(order.labelReprints) || 0) + 1}` : order.id,
       toAddress: {
-        firstName: cliente.nombre,
-        lastName: cliente.apellido,
+        firstName,
+        lastName: lastName || undefined,
         streetAddress: cliente.direccion,
         secondaryAddress: cliente.apto || undefined,
-        city: cliente.ciudad,
-        state: cliente.estado,
-        ZIPCode: String(cliente.zip).split('-')[0],
-        phone: cliente.telefono || undefined,
+        city: ciudadEnvio,
+        state: stateCode,
+        ZIPCode: zip5,
+        phone: phone10 || undefined,
       },
     }));
     const wasReprint = isReprint && !!order.tracking;
@@ -4137,6 +4205,11 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
       nombre: body.nombre, apellido: body.apellido, telefono: body.telefono,
       direccion: body.direccion, apto: body.apto, ciudad: body.ciudad,
       estado: body.estado, zip: body.zip, pais: body.pais,
+      // 12 oct: con el email, al generar la guía USPS le llega a la suscriptora el correo
+      // con su número de seguimiento (sendShippingConfirmationEmail), en su idioma. Esta
+      // ruta no manda el correo de "pedido confirmado" (no hay compra que confirmar).
+      email: isValidEmail(body.email) ? String(body.email).trim().toLowerCase() : '',
+      idioma: body.idioma === 'en' ? 'en' : 'es',
     },
     productos: [],
     pago: 'Lovers',
@@ -4298,8 +4371,10 @@ const WA_USERS   = ['robin.gonzalez', 'tita.jaramillo'];
 // comprometido (DNS colgante, XSS), una ceremonia corrida desde ahí pasaba
 // igual. Hallazgo del 19 sep (auditoría propia, A07-A19).
 // El rpId sigue siendo el dominio registrable: las passkeys existentes sirven desde el subdominio.
-// El origen de la tienda queda solo durante la transición.
-const WA_ORIGINS = ['https://admin.cacusabytaitus.com', 'https://cacusabytaitus.com'];
+// Auditoría (12 oct): la transición terminó (el panel vive en su subdominio desde el 26
+// sep y la ruta vieja de la tienda solo redirige) — se quita el origen de la tienda, que
+// carga scripts de terceros (GTM) y no tiene por qué poder iniciar sesión en el panel.
+const WA_ORIGINS = ['https://admin.cacusabytaitus.com'];
 
 // Auditoría (20 sep, F20): las 4 rutas de WebAuthn no tenían ningún tope de intentos
 // por IP más allá del TTL de 300s del challenge — a diferencia de /login (loginrl:) y
