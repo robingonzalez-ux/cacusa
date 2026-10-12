@@ -306,12 +306,23 @@ function dedupeConflict(a, b) {
 // busca primero por los IDs de Square ya guardados (square_subscription_id, después
 // square_customer_id) y recién si no aparecen se usa el email. Una lectura de toda
 // cacusa_lovers por evento — la lista es chica (decenas) y se hace igual en otras rutas.
-async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, customerId }) {
-  if (subscriptionId || customerId) {
+// 12 oct: si el email de Square tampoco coincide con ninguna ficha, se busca además por
+// teléfono (últimos 7 dígitos) + primer nombre del cliente de Square — solo si hay UNA
+// ficha no cancelada que coincida (2 personas de la misma familia pueden compartir
+// teléfono: en ese caso no se adivina). Así una renovación con otro correo ya no crea
+// una ficha duplicada (caso real: Lilia Alvarez).
+const primerNombre = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().split(/\s+/)[0] || '';
+async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, customerId, phone, nombre }) {
+  let all = null;
+  const loadAll = async () => {
+    if (all) return all;
     const r = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
     if (!r.ok) throw new Error(`Firebase GET falló (${r.status}) para cacusa_lovers`);
-    const all = (await r.json()) || {};
-    const entries = Object.entries(all).filter(([, v]) => v && typeof v === 'object');
+    all = (await r.json()) || {};
+    return all;
+  };
+  if (subscriptionId || customerId) {
+    const entries = Object.entries(await loadAll()).filter(([, v]) => v && typeof v === 'object');
     // Si varias coinciden (duplicados viejos), se prefiere la más antigua: es la original.
     const oldest = list => list.sort((a, b) => String(a[1].fecha || '').localeCompare(String(b[1].fecha || '')))[0];
     if (subscriptionId) {
@@ -325,7 +336,17 @@ async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, custome
   }
   if (!email) return { key: null, existing: null };
   const key = subscriberKey(email);
-  return { key, existing: await getSubscriberByKey(key, dbUrl, fbAuth) };
+  const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+  const tel = String(phone || '').replace(/\D/g, '').slice(-7);
+  const nom = primerNombre(nombre);
+  if (!existing && tel.length === 7 && nom) {
+    const m = Object.entries(await loadAll()).filter(([k, v]) => v && typeof v === 'object' && validId(k, true)
+      && v.estado_pago !== 'cancelado'
+      && String(v.telefono || '').replace(/\D/g, '').slice(-7) === tel
+      && primerNombre(v.nombre) === nom);
+    if (m.length === 1) return { key: m[0][0], existing: m[0][1] };
+  }
+  return { key, existing };
 }
 
 // ── Lee un registro por su key determinística — lookup directo por ID, no una
@@ -867,6 +888,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
     };
     const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
       email, subscriptionId: invoice.subscription_id, customerId,
+      phone: customer?.phone_number, nombre: customer?.given_name,
     });
     // Correo de bienvenida/confirmación de suscripción (22 sep) — se calcula ANTES
     // de que updateSubscriber() escriba 'activo' más abajo, así que captura el
@@ -1277,6 +1299,135 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
   return out;
 }
 
+// ── Fichas duplicadas (11 oct; automático desde el 12 oct) ─────────────────────
+// Agrupa por square_subscription_id, square_customer_id y nombre completo (este último
+// solo si no hay datos que digan que son personas distintas — dedupeConflict).
+// En cada grupo se conserva la ficha del FORMULARIO (la que tiene teléfono: dirección e
+// idioma reales; si hay varias, la más antigua) y se le copia lo de la ficha "viva" —
+// la del pago más reciente, que es la que recibe los avisos de Square: estado, ids de
+// Square, último pago, factura y modo de cobro —, las cajas pagadas (`lotes`) de todas y
+// los datos de dirección que le falten. Las demás se borran.
+//  - soloNombre: el grupo se armó solo por el nombre → se revisa a mano en el panel.
+//  - auto: comparten un id de Square y no hay 2 suscripciones de Square distintas
+//    (podría ser alguien que paga 2 suscripciones de regalo) → la tarea diaria lo junta
+//    sola. Bug real (12 oct): el arreglo del 11 oct solo evitaba duplicados NUEVOS; los
+//    que ya existían (Lilia Alvarez) seguían ahí — una ficha "Sin pagar" y la otra con el
+//    pago — y el lote podía crearle 2 cajas, una por ficha.
+function planLoversDedupe(all) {
+  const parent = {};
+  const find = k => { while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; } return k; };
+  const keys = Object.keys(all).filter(k => all[k] && typeof all[k] === 'object' && validId(k, true));
+  keys.forEach(k => { parent[k] = k; });
+  const byId = {};
+  for (const k of keys) {
+    const fullName = [all[k].nombre, all[k].apellido].every(x => String(x || '').trim())
+      ? 'n:' + [all[k].nombre, all[k].apellido].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+      : '';
+    for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, fullName]) {
+      if (!id) continue;
+      if (!byId[id]) { byId[id] = k; continue; }
+      if (id.startsWith('n:') && dedupeConflict(all[k], all[byId[id]])) continue;
+      parent[find(k)] = find(byId[id]);
+    }
+  }
+  const groups = {};
+  keys.forEach(k => { (groups[find(k)] = groups[find(k)] || []).push(k); });
+  const plan = [];
+  for (const g of Object.values(groups)) {
+    if (g.length < 2) continue;
+    const tel = k => String(all[k].telefono || '').replace(/\D/g, '').length >= 7 ? 0 : 1;
+    g.sort((a, c) => tel(a) - tel(c) || String(all[a].fecha || '9999').localeCompare(String(all[c].fecha || '9999')));
+    const ids = new Set();
+    const subs = new Set();
+    let compartenId = false;
+    for (const k2 of g) {
+      if (all[k2].square_subscription_id) subs.add(all[k2].square_subscription_id);
+      for (const id of [all[k2].square_subscription_id && 's:' + all[k2].square_subscription_id, all[k2].square_customer_id && 'c:' + all[k2].square_customer_id]) {
+        if (!id) continue;
+        if (ids.has(id)) compartenId = true;
+        ids.add(id);
+      }
+    }
+    const keep = g[0];
+    const rest = g.slice(1);
+    const recs = g.map(k => all[k]);
+    const maxOf = f => recs.map(x => x[f] || '').sort().pop() || '';
+    // Ficha viva: la del pago más reciente (empate: la que no es la conservada).
+    const vivo = recs.filter(x => ISO_DATE_RE.test(x.ultimo_pago || ''))
+      .sort((a, c) => a.ultimo_pago.localeCompare(c.ultimo_pago) || (a === all[keep] ? -1 : 1)).pop() || null;
+    const merged = {};
+    if (maxOf('ultimo_pago')) merged.ultimo_pago = maxOf('ultimo_pago');
+    if (maxOf('vence')) merged.vence = maxOf('vence');
+    if (vivo && vivo.square_invoice_id) merged.square_invoice_id = vivo.square_invoice_id;
+    // La suscripción de Square de la ficha viva (antes se dejaba la de la conservada: si
+    // eran distintas, los cobros siguientes se ignoraban como "de otra suscripción").
+    const subId = (vivo && vivo.square_subscription_id) || all[keep].square_subscription_id || recs.map(x => x.square_subscription_id).find(Boolean);
+    if (subId) merged.square_subscription_id = subId;
+    const custId = (vivo && vivo.square_customer_id) || all[keep].square_customer_id || recs.map(x => x.square_customer_id).find(Boolean);
+    if (custId) merged.square_customer_id = custId;
+    if (vivo && vivo !== all[keep]) {
+      if (vivo.estado_pago) merged.estado_pago = vivo.estado_pago;
+      for (const f of ['modo_cobro', 'metodo_pago', 'plan', 'monto', 'factura_actual', 'factura_actual_id', 'factura_actual_ciclo']) {
+        if (vivo[f]) merged[f] = vivo[f];
+      }
+    } else if (!vivo && recs.some(x => x.estado_pago === 'activo')) {
+      merged.estado_pago = 'activo';
+    }
+    // Cajas pagadas (`lotes`) de todas las fichas del grupo (12 oct): si 2 pagos
+    // distintos cayeron en el mismo mes, el segundo pasa al mes siguiente libre.
+    const lotesUnion = {};
+    for (const x of recs) {
+      if (!x.lotes || typeof x.lotes !== 'object') continue;
+      for (const [k, v] of Object.entries(x.lotes).sort()) {
+        if (!/^\d{4}-\d{2}$/.test(k) || !v) continue;
+        let m = k;
+        for (let guard = 0; lotesUnion[m] && lotesUnion[m] !== v && guard < 60; guard++) m = ymAdd(m, 1);
+        lotesUnion[m] = v;
+      }
+    }
+    if (Object.keys(lotesUnion).length) merged.lotes = lotesUnion;
+    for (const f of ['direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'telefono', 'nombre', 'apellido', 'idioma']) {
+      if (!all[keep][f]) { const v = rest.map(k => all[k][f]).find(Boolean); if (v) merged[f] = v; }
+    }
+    // El patrón exacto del bug de renovación (12 oct): mismo nombre completo, 2 fichas,
+    // una del formulario (con teléfono, sin ningún id de Square: sus pagos nunca la
+    // encontraron) y otra que creó Square al cobrar con otro correo (con ids de Square,
+    // sin teléfono — esa ruta nunca lo guarda). Para que fueran 2 personas distintas,
+    // otra con el mismo nombre y apellido tendría que haber pagado sin llenar el
+    // formulario: no pasa en la práctica. Se junta solo, igual que si compartieran un id.
+    const tieneIds = x => !!(x.square_subscription_id || x.square_customer_id);
+    const tieneTel = x => String(x.telefono || '').replace(/\D/g, '').length >= 7;
+    const patronRenovacion = !compartenId && g.length === 2 && recs.filter(x => tieneTel(x) && !tieneIds(x)).length === 1
+      && recs.filter(x => tieneIds(x) && !tieneTel(x)).length === 1;
+    plan.push({
+      conservar: { id: keep, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
+      borrar: rest.map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
+      actualizar: merged,
+      soloNombre: !compartenId && !patronRenovacion,
+      auto: (compartenId && subs.size <= 1) || patronRenovacion,
+    });
+  }
+  return plan;
+}
+// Aplica un plan de planLoversDedupe(). Con `all`, refleja el resultado en memoria (la
+// tarea diaria sigue con los datos ya juntados, sin volver a leer Firebase).
+async function applyLoversDedupe(plan, dbUrl, fbAuth, all = null, reserve = 0) {
+  const hechos = [];
+  for (const p of plan) {
+    if (!cronBudget(1 + p.borrar.length, reserve)) break;
+    const ok = await updateSubscriber(p.conservar.id, null, p.actualizar, dbUrl, fbAuth);
+    if (!ok) return { hechos, error: `No se pudo actualizar ${p.conservar.id}` };
+    if (all) all[p.conservar.id] = { ...all[p.conservar.id], ...p.actualizar };
+    for (const d of p.borrar) {
+      const rd = await fetch(`${dbUrl}/cacusa_lovers/${d.id}.json?auth=${fbAuth}`, { method: 'DELETE' });
+      if (!rd.ok) return { hechos, error: `No se pudo borrar ${d.id}` };
+      if (all) delete all[d.id];
+    }
+    hechos.push(p);
+  }
+  return { hechos };
+}
+
 // ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
 // Valida el mismo token HMAC-SHA256 firmado que emite el login de cacusa-admin, usando el
 // secret compartido SESSION_SECRET. Este worker nunca EMITE tokens (no hay login acá), solo
@@ -1380,6 +1531,22 @@ export default {
 async function runDailyLovers(env) {
   let all;
   try { all = await loadAllLovers(env); } catch (e) { console.error('cron Firebase:', e.message); return; }
+  // Duplicados seguros (mismo id de Square) se juntan solos ANTES de cobrar, sincronizar
+  // y armar el lote — si no, la misma persona podía recibir 2 cajas o un aviso de "sin
+  // pagar" en la ficha que no recibe los pagos. Los que coinciden solo por nombre quedan
+  // para revisar a mano (Herramientas avanzadas → Revisar duplicados).
+  try {
+    const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+    const auto = planLoversDedupe(all).filter(p => p.auto);
+    if (auto.length) {
+      const res = await applyLoversDedupe(auto, dbUrl, env.FB_DB_SECRET, all, 35);
+      if (res.error) console.error('dedupe automático:', res.error);
+      if (res.hechos.length) {
+        const nombres = res.hechos.slice(0, 3).map(p => p.conservar.nombre || p.conservar.email).join(', ') + (res.hechos.length > 3 ? '…' : '');
+        await notifyAdminPush('CACUSA · Lovers', `🔗 Se juntaron ${res.hechos.length} ficha(s) duplicada(s): ${nombres}`, env);
+      }
+    }
+  } catch (e) { console.error('dedupe automático:', e.message); }
   const dia0 = Number(todayIso().slice(8, 10));
   const armaLote = dia0 > LOVERS_CUTOFF_DAY;
   await runLoversBilling(env, { all, reserve: armaLote ? 30 : 15 }).catch(e => console.error('runLoversBilling:', e.message));
@@ -1750,12 +1917,10 @@ async function handleRequest(request, env) {
         return adminJson({ ok: true }, 200);
       }
 
-      // POST /admin/lovers-dedupe — junta suscriptoras duplicadas (11 oct, ver
-      // resolveSubscriber). Agrupa por square_subscription_id y por square_customer_id;
-      // en cada grupo conserva la MÁS ANTIGUA (fecha) con su dirección/notas/idioma, le
-      // copia lo más reciente de las demás (ultimo_pago, vence, square_invoice_id, ids
-      // de Square, y 'activo' si alguna lo está) y borra las demás. Por defecto es una
-      // vista previa (dryRun) que no toca nada; solo borra con {dryRun:false}.
+      // POST /admin/lovers-dedupe — junta suscriptoras duplicadas (ver planLoversDedupe).
+      // Por defecto es una vista previa (dryRun) que no toca nada; solo borra con
+      // {dryRun:false}. Los grupos seguros (mismo id de Square) ya se juntan solos en la
+      // tarea diaria; acá quedan sobre todo los que coinciden solo por nombre.
       if (url.pathname === '/admin/lovers-dedupe') {
         if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
         const b = (await request.json().catch(() => null)) || {};
@@ -1763,91 +1928,11 @@ async function handleRequest(request, env) {
         const rAll = await fetch(`${dbUrl}/cacusa_lovers.json?auth=${fbAuth}`);
         if (!rAll.ok) return adminJson({ error: 'No se pudo leer cacusa_lovers' }, 502);
         const all = (await rAll.json()) || {};
-        // Unión de grupos por cualquiera de los 2 ids (union-find chico).
-        const parent = {};
-        const find = k => { while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; } return k; };
-        const keys = Object.keys(all).filter(k => all[k] && typeof all[k] === 'object' && validId(k, true));
-        keys.forEach(k => { parent[k] = k; });
-        const byId = {};
-        for (const k of keys) {
-          // También por nombre completo: el registro ORIGINAL (formulario) muchas veces
-          // no tiene ningún id de Square — justamente porque el email no coincidió y el
-          // id quedó guardado solo en el duplicado. Por eso la vista previa es obligatoria.
-          const fullName = [all[k].nombre, all[k].apellido].every(x => String(x || '').trim())
-            ? 'n:' + [all[k].nombre, all[k].apellido].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
-            : '';
-          for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, fullName]) {
-            if (!id) continue;
-            if (!byId[id]) { byId[id] = k; continue; }
-            // Por nombre solo se une si no hay datos que digan que son personas distintas
-            // (revisión 11 oct): suscripciones de Square distintas o teléfonos distintos.
-            if (id.startsWith('n:') && dedupeConflict(all[k], all[byId[id]])) continue;
-            parent[find(k)] = find(byId[id]);
-          }
-        }
-        const groups = {};
-        keys.forEach(k => { (groups[find(k)] = groups[find(k)] || []).push(k); });
-        const plan = [];
-        for (const g of Object.values(groups)) {
-          if (g.length < 2) continue;
-          g.sort((a, c) => String(all[a].fecha || '9999').localeCompare(String(all[c].fecha || '9999')));
-          // ¿Comparten algún id de Square? Si no, el grupo se armó solo por el nombre.
-          const ids = new Set();
-          let compartenId = false;
-          for (const k2 of g) {
-            for (const id of [all[k2].square_subscription_id && 's:' + all[k2].square_subscription_id, all[k2].square_customer_id && 'c:' + all[k2].square_customer_id]) {
-              if (!id) continue;
-              if (ids.has(id)) compartenId = true;
-              ids.add(id);
-            }
-          }
-          const keep = g[0];
-          const rest = g.slice(1);
-          const recs = g.map(k => all[k]);
-          const maxOf = f => recs.map(x => x[f] || '').sort().pop() || '';
-          const newestBy = (f, src) => { const x = recs.filter(y => y[src]).sort((a, c) => String(a[src]).localeCompare(String(c[src]))).pop(); return x ? x[f] || '' : ''; };
-          const merged = {};
-          if (maxOf('ultimo_pago')) merged.ultimo_pago = maxOf('ultimo_pago');
-          if (maxOf('vence')) merged.vence = maxOf('vence');
-          const inv = newestBy('square_invoice_id', 'ultimo_pago'); if (inv) merged.square_invoice_id = inv;
-          const subId = all[keep].square_subscription_id || newestBy('square_subscription_id', 'ultimo_pago'); if (subId) merged.square_subscription_id = subId;
-          const custId = all[keep].square_customer_id || newestBy('square_customer_id', 'ultimo_pago'); if (custId) merged.square_customer_id = custId;
-          if (recs.some(x => x.estado_pago === 'activo')) merged.estado_pago = 'activo';
-          // Cajas pagadas (`lotes`) de todas las fichas del grupo (12 oct): si 2 pagos
-          // distintos cayeron en el mismo mes, el segundo pasa al mes siguiente libre.
-          const lotesUnion = {};
-          for (const x of recs) {
-            if (!x.lotes || typeof x.lotes !== 'object') continue;
-            for (const [k, v] of Object.entries(x.lotes).sort()) {
-              if (!/^\d{4}-\d{2}$/.test(k) || !v) continue;
-              let m = k;
-              for (let guard = 0; lotesUnion[m] && lotesUnion[m] !== v && guard < 60; guard++) m = ymAdd(m, 1);
-              lotesUnion[m] = v;
-            }
-          }
-          if (Object.keys(lotesUnion).length) merged.lotes = lotesUnion;
-          for (const f of ['direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'telefono', 'nombre', 'apellido']) {
-            if (!all[keep][f]) { const v = rest.map(k => all[k][f]).find(Boolean); if (v) merged[f] = v; }
-          }
-          plan.push({
-            conservar: { id: keep, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
-            borrar: rest.map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
-            actualizar: merged,
-            soloNombre: !compartenId,
-          });
-        }
+        const plan = planLoversDedupe(all);
         if (dryRun) return adminJson({ dryRun: true, grupos: plan }, 200);
-        const hechos = [];
-        for (const p of plan) {
-          const ok = await updateSubscriber(p.conservar.id, null, p.actualizar, dbUrl, fbAuth);
-          if (!ok) return adminJson({ error: `No se pudo actualizar ${p.conservar.id}`, hechos }, 502);
-          for (const d of p.borrar) {
-            const rd = await fetch(`${dbUrl}/cacusa_lovers/${d.id}.json?auth=${fbAuth}`, { method: 'DELETE' });
-            if (!rd.ok) return adminJson({ error: `No se pudo borrar ${d.id}`, hechos }, 502);
-          }
-          hechos.push(p.conservar.id);
-        }
-        return adminJson({ ok: true, fusionadas: hechos.length, grupos: plan }, 200);
+        const res = await applyLoversDedupe(plan, dbUrl, fbAuth);
+        if (res.error) return adminJson({ error: res.error, hechos: res.hechos }, 502);
+        return adminJson({ ok: true, fusionadas: res.hechos.length, grupos: plan }, 200);
       }
 
       // POST /admin/lovers-batch — lote mensual de envíos ({month:'YYYY-MM', dryRun}).
@@ -2273,7 +2358,9 @@ async function handleRequest(request, env) {
           const addr = customer?.address || {};
           // Detect annual: monthly price ~$19.99 = ~2000 cents; annual ~$219.89 = ~21989 cents
           const isAnnual = (sub.price_money?.amount || 0) > 5000;
-          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId: sub.id, customerId });
+          const { key, existing } = await resolveSubscriber(dbUrl, fbAuth, {
+            email, subscriptionId: sub.id, customerId, phone: customer?.phone_number, nombre: customer?.given_name,
+          });
           const nombreCompleto = [customer?.given_name, customer?.family_name].filter(Boolean).join(' ') || email;
           // A04 (auditoría externa, 19 sep): Square reintenta un webhook si no recibió un
           // 200 rápido, o si esta misma función devolvió 500 antes por una falla transitoria
