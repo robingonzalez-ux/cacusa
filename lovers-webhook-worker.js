@@ -839,6 +839,9 @@ async function handleLoversInvoicePaid(invoice, meta, env, dbUrl, fbAuth) {
     square_invoice_id: invoice.id || '',
     square_customer_id: customerId,
     modo_cobro: 'factura',
+    // Pagó una factura de Square: deja de ser manual (ej. una que pagó un link suelto y se
+    // volvió a inscribir por la página) — si no, recibiría además los recordatorios manuales.
+    metodo_pago: 'square',
     plan,
     monto: LOVERS_MONTO_TXT[periodo],
     vence,
@@ -968,6 +971,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
         ultimo_pago: paidDateOf(invoice),
         square_invoice_id: invoice?.id || '',
         square_subscription_id: invoiceSubId,
+        metodo_pago: 'square',
         ...(customerId ? { square_customer_id: customerId } : {}),
       }, dbUrl, fbAuth);
       if (dbOk) {
@@ -1097,7 +1101,9 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
   if (!fbAuth || !env.SQUARE_ACCESS_TOKEN) { out.errores.push('Faltan FB_DB_SECRET o SQUARE_ACCESS_TOKEN'); return out; }
   let all = preloaded;
   if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
-  let entries = Object.entries(all).filter(([k, s]) => s && typeof s === 'object' && s.estado_pago !== 'cancelado' && s.metodo_pago !== 'manual' && validId(k, true));
+  // Manuales: no (se pagan fuera de Square), salvo las que pagaron con un link de Square
+  // (pago_link_id) — si pagan otro link, se registra y se extiende su vigencia solo.
+  let entries = Object.entries(all).filter(([k, s]) => s && typeof s === 'object' && s.estado_pago !== 'cancelado' && (s.metodo_pago !== 'manual' || s.pago_link_id) && validId(k, true));
   let reparar = null; // keys de la reparación única, si está pendiente
   const fallidas = new Set();
   if (cron) {
@@ -1229,8 +1235,10 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
           out.pagosLink.push({ id: key, nombre, orden: orden.id, fecha: fechaLink, monto: cents / 100 });
           if (!dryRun) {
             // ¿El link dejó una suscripción de Square? Entonces Square cobra solo los meses
-            // siguientes. Si no (pago único), pasa a cobro por factura: el sistema le manda
-            // la del ciclo siguiente 3 días antes de `vence`, como a todas las altas nuevas.
+            // siguientes. Si no (pago único), queda como MANUAL con vigencia = pago + periodo
+            // (decisión de la usuaria, 12 oct, caso [clienta]): no se le cobra nada solo; le
+            // llega el recordatorio 7 días antes, al vencer se pausan sus beneficios y se
+            // avisa a Tita/Robin para que la contacten y se vuelva a inscribir.
             let subId = s.square_subscription_id || '';
             if (!subId) {
               const sd = await squareApi(env, '/subscriptions/search', 'POST', { query: { filter: { customer_ids: [customerId] } }, limit: 10 });
@@ -1244,14 +1252,18 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
               ...(lotes ? { lotes } : {}),
               ...(subId
                 ? { square_subscription_id: subId }
-                : { modo_cobro: 'factura', metodo_pago: 'square', vence: addPeriodIso(fechaLink, periodo), plan: planNombre(periodo), monto: LOVERS_MONTO_TXT[periodo] }),
+                : (() => {
+                  const venceLink = addPeriodIso(fechaLink, periodo);
+                  const venceAntes = ISO_DATE_RE.test(s.vence || '') ? s.vence : '';
+                  return { metodo_pago: 'manual', vence: venceAntes > venceLink ? venceAntes : venceLink, plan: planNombre(periodo), monto: LOVERS_MONTO_TXT[periodo] };
+                })()),
             };
             if (!(await updateSubscriber(key, 'activo', campos, dbUrl, fbAuth))) throw new Error('No se pudo registrar el pago por link');
             Object.assign(s, campos, { estado_pago: 'activo' });
             out.registrados++;
             if (!eraActiva) await notifyExclusiveCoupon('activate', s.email, s.idioma || s.pais, env);
             await notifyAdminPush('CACUSA · Pago confirmado - Lovers',
-              `💳 ${nombre} pagó con un link de Square (${fechaLink}) — registrado${subId ? '' : '; los próximos meses se le cobran por factura'}`, env);
+              `💳 ${nombre} pagó con un link de Square (${fechaLink}) — registrado${subId ? '' : `; vigente hasta el ${campos.vence}, no se le cobra solo`}`, env);
           }
         }
       }
@@ -1699,6 +1711,20 @@ async function runDailyLovers(env) {
       await notifyAdminPush('CACUSA · Lovers', `🔗 Se juntaron ${hechos.length} ficha(s) duplicada(s): ${nombres}`, env);
     }
   } catch (e) { console.error('dedupe automático:', e.message); }
+  // 12 oct: el Worker anterior (290f445) pasaba a cobro por factura a quien pagó con un
+  // link de Square; la usuaria decidió que quede manual (vigencia = el mes pagado, sin
+  // cobro automático). Se revierte antes de facturar — nunca si ya pagó o se le mandó una
+  // factura de Lovers.
+  try {
+    const dbUrlR = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+    for (const [k, x] of Object.entries(all)) {
+      if (!x || x.modo_cobro !== 'factura' || !x.pago_link_id || x.square_invoice_id || x.factura_actual_id || !validId(k, true)) continue;
+      if (!cronBudget(1, 35)) break;
+      if (await updateSubscriber(k, null, { modo_cobro: null, metodo_pago: 'manual' }, dbUrlR, env.FB_DB_SECRET)) {
+        delete x.modo_cobro; x.metodo_pago = 'manual';
+      }
+    }
+  } catch (e) { console.error('revertir link→factura:', e.message); }
   const dia0 = Number(todayIso().slice(8, 10));
   const armaLote = dia0 > LOVERS_CUTOFF_DAY;
   await runLoversBilling(env, { all, reserve: armaLote ? 30 : 15 }).catch(e => console.error('runLoversBilling:', e.message));
