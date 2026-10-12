@@ -337,6 +337,19 @@ async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, custome
   if (!email) return { key: null, existing: null };
   const key = subscriberKey(email);
   const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
+  // Fichas de antes del 12 sep: el formulario las guardaba con un identificador ALEATORIO
+  // de Firebase, no en la llave del correo — buscarlas solo por la llave no las encuentra
+  // y el pago creaba otra ficha (caso real: Lilia Fernanda Álvarez, mismo correo en las
+  // 2). Se busca también por el email guardado en cada ficha.
+  if (!existing) {
+    const mismoCorreo = Object.entries(await loadAll()).filter(([k, v]) => v && typeof v === 'object' && validId(k, true)
+      && subscriberKey(v.email) === key);
+    if (mismoCorreo.length) {
+      const rank = v => (v.estado_pago === 'cancelado' ? 2 : 0) + (String(v.telefono || '').replace(/\D/g, '').length >= 7 ? 0 : 1);
+      mismoCorreo.sort((a, b) => rank(a[1]) - rank(b[1]) || String(a[1].fecha || '').localeCompare(String(b[1].fecha || '')));
+      return { key: mismoCorreo[0][0], existing: mismoCorreo[0][1] };
+    }
+  }
   const tel = String(phone || '').replace(/\D/g, '').slice(-7);
   const nom = primerNombre(nombre);
   if (!existing && tel.length === 7 && nom) {
@@ -1323,7 +1336,10 @@ function planLoversDedupe(all) {
     const fullName = [all[k].nombre, all[k].apellido].every(x => String(x || '').trim())
       ? 'n:' + [all[k].nombre, all[k].apellido].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
       : '';
-    for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, fullName]) {
+    // 'e:' mismo correo guardado = misma persona (fichas de antes del 12 sep con llave
+    // aleatoria + la que creó un pago en la llave del correo — caso Lilia).
+    const correo = all[k].email ? 'e:' + subscriberKey(all[k].email) : '';
+    for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, correo, fullName]) {
       if (!id) continue;
       if (!byId[id]) { byId[id] = k; continue; }
       if (id.startsWith('n:') && dedupeConflict(all[k], all[byId[id]])) continue;
@@ -1339,8 +1355,15 @@ function planLoversDedupe(all) {
     g.sort((a, c) => tel(a) - tel(c) || String(all[a].fecha || '9999').localeCompare(String(all[c].fecha || '9999')));
     const ids = new Set();
     const subs = new Set();
+    const correos = new Set();
     let compartenId = false;
+    let mismoCorreo = false;
     for (const k2 of g) {
+      if (all[k2].email) {
+        const ck = subscriberKey(all[k2].email);
+        if (correos.has(ck)) mismoCorreo = true;
+        correos.add(ck);
+      }
       if (all[k2].square_subscription_id) subs.add(all[k2].square_subscription_id);
       for (const id of [all[k2].square_subscription_id && 's:' + all[k2].square_subscription_id, all[k2].square_customer_id && 'c:' + all[k2].square_customer_id]) {
         if (!id) continue;
@@ -1348,7 +1371,12 @@ function planLoversDedupe(all) {
         ids.add(id);
       }
     }
+    // keep = la ficha de la que salen los datos personales (formulario). target = la llave
+    // que queda: la del correo si está en el grupo (donde la buscan todas las rutas), si
+    // no la misma keep.
     const keep = g[0];
+    const canonica = all[keep].email ? subscriberKey(all[keep].email) : '';
+    const target = canonica && g.includes(canonica) ? canonica : keep;
     const rest = g.slice(1);
     const recs = g.map(k => all[k]);
     const maxOf = f => recs.map(x => x[f] || '').sort().pop() || '';
@@ -1399,26 +1427,46 @@ function planLoversDedupe(all) {
     const tieneTel = x => String(x.telefono || '').replace(/\D/g, '').length >= 7;
     const patronRenovacion = !compartenId && g.length === 2 && recs.filter(x => tieneTel(x) && !tieneIds(x)).length === 1
       && recs.filter(x => tieneIds(x) && !tieneTel(x)).length === 1;
+    // Si la llave que queda no es la del formulario, se le escribe la ficha completa del
+    // formulario con lo de arriba encima (sus datos personales pisan los que trajo Square).
+    const actualizar = target === keep ? merged : (() => {
+      const base = {};
+      for (const [f, v] of Object.entries(all[keep])) if (v !== undefined && v !== null && f !== 'lotes') base[f] = v;
+      return { ...base, ...merged };
+    })();
     plan.push({
-      conservar: { id: keep, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
-      borrar: rest.map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
-      actualizar: merged,
-      soloNombre: !compartenId && !patronRenovacion,
-      auto: (compartenId && subs.size <= 1) || patronRenovacion,
+      conservar: { id: target, nombre: [all[keep].nombre, all[keep].apellido].filter(Boolean).join(' '), email: all[keep].email || '', fecha: all[keep].fecha || '' },
+      borrar: g.filter(k => k !== target).map(k => ({ id: k, nombre: [all[k].nombre, all[k].apellido].filter(Boolean).join(' '), email: all[k].email || '', fecha: all[k].fecha || '', estado_pago: all[k].estado_pago || '' })),
+      actualizar,
+      soloNombre: !compartenId && !mismoCorreo && !patronRenovacion,
+      auto: ((compartenId || mismoCorreo) && subs.size <= 1) || patronRenovacion,
     });
   }
   return plan;
 }
+// Al borrar o mover una ficha: si su llave ya tenía la caja del mes en curso, el marcador
+// pasa a la llave que queda — si no, el lote le crearía una segunda caja con la llave nueva.
+async function moverMarcadoresLote(env, deKey, aKey) {
+  if (!env.CACUSA_KV || deKey === aKey) return;
+  const mes = todayIso().slice(0, 7);
+  const v = await env.CACUSA_KV.get(`loverslote:${mes}:${deKey}`);
+  if (v && !(await env.CACUSA_KV.get(`loverslote:${mes}:${aKey}`))) {
+    await env.CACUSA_KV.put(`loverslote:${mes}:${aKey}`, v, { expirationTtl: 400 * 24 * 3600 });
+  }
+}
 // Aplica un plan de planLoversDedupe(). Con `all`, refleja el resultado en memoria (la
 // tarea diaria sigue con los datos ya juntados, sin volver a leer Firebase).
-async function applyLoversDedupe(plan, dbUrl, fbAuth, all = null, reserve = 0) {
+async function applyLoversDedupe(env, plan, all = null, reserve = 0) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const fbAuth = env.FB_DB_SECRET;
   const hechos = [];
   for (const p of plan) {
     if (!cronBudget(1 + p.borrar.length, reserve)) break;
     const ok = await updateSubscriber(p.conservar.id, null, p.actualizar, dbUrl, fbAuth);
     if (!ok) return { hechos, error: `No se pudo actualizar ${p.conservar.id}` };
-    if (all) all[p.conservar.id] = { ...all[p.conservar.id], ...p.actualizar };
+    if (all) all[p.conservar.id] = { ...(all[p.conservar.id] || {}), ...p.actualizar };
     for (const d of p.borrar) {
+      await moverMarcadoresLote(env, d.id, p.conservar.id);
       const rd = await fetch(`${dbUrl}/cacusa_lovers/${d.id}.json?auth=${fbAuth}`, { method: 'DELETE' });
       if (!rd.ok) return { hechos, error: `No se pudo borrar ${d.id}` };
       if (all) delete all[d.id];
@@ -1426,6 +1474,31 @@ async function applyLoversDedupe(plan, dbUrl, fbAuth, all = null, reserve = 0) {
     hechos.push(p);
   }
   return { hechos };
+}
+// Fichas sueltas guardadas con identificador aleatorio (altas de antes del 12 sep): se
+// mudan a la llave de su correo, donde las buscan el formulario, las facturas y los pagos.
+// Sin esto, su próxima renovación podía crear un duplicado (caso Lilia). Hasta `max` por día.
+async function moverFichasALlaveDeCorreo(env, all, { max = 5, reserve = 0 } = {}) {
+  const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
+  const fbAuth = env.FB_DB_SECRET;
+  const movidas = [];
+  for (const [k, v] of Object.entries(all)) {
+    if (movidas.length >= max) break;
+    if (!v || typeof v !== 'object' || !v.email || !validId(k, true)) continue;
+    const destino = subscriberKey(v.email);
+    if (destino === k || !validId(destino, true) || all[destino]) continue;
+    if (!cronBudget(2, reserve)) break;
+    const datos = {};
+    for (const [f, x] of Object.entries(v)) if (x !== undefined && x !== null) datos[f] = x;
+    if (!(await updateSubscriber(destino, null, datos, dbUrl, fbAuth))) { console.error('mover ficha: no se pudo escribir', destino); break; }
+    await moverMarcadoresLote(env, k, destino);
+    const rd = await fetch(`${dbUrl}/cacusa_lovers/${k}.json?auth=${fbAuth}`, { method: 'DELETE' });
+    if (!rd.ok) { console.error('mover ficha: no se pudo borrar', k); break; }
+    all[destino] = v;
+    delete all[k];
+    movidas.push([v.nombre, v.apellido].filter(Boolean).join(' ') || v.email);
+  }
+  return movidas;
 }
 
 // ── Sesión (duplicado de admin-worker.js — no hay módulo compartido entre Workers) ──
@@ -1536,15 +1609,18 @@ async function runDailyLovers(env) {
   // pagar" en la ficha que no recibe los pagos. Los que coinciden solo por nombre quedan
   // para revisar a mano (Herramientas avanzadas → Revisar duplicados).
   try {
-    const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
     const auto = planLoversDedupe(all).filter(p => p.auto);
+    let hechos = [];
     if (auto.length) {
-      const res = await applyLoversDedupe(auto, dbUrl, env.FB_DB_SECRET, all, 35);
+      const res = await applyLoversDedupe(env, auto, all, 35);
       if (res.error) console.error('dedupe automático:', res.error);
-      if (res.hechos.length) {
-        const nombres = res.hechos.slice(0, 3).map(p => p.conservar.nombre || p.conservar.email).join(', ') + (res.hechos.length > 3 ? '…' : '');
-        await notifyAdminPush('CACUSA · Lovers', `🔗 Se juntaron ${res.hechos.length} ficha(s) duplicada(s): ${nombres}`, env);
-      }
+      hechos = res.hechos;
+    }
+    const movidas = await moverFichasALlaveDeCorreo(env, all, { max: 5, reserve: 35 });
+    if (movidas.length) console.log('fichas movidas a la llave de su correo:', movidas.join(', '));
+    if (hechos.length) {
+      const nombres = hechos.slice(0, 3).map(p => p.conservar.nombre || p.conservar.email).join(', ') + (hechos.length > 3 ? '…' : '');
+      await notifyAdminPush('CACUSA · Lovers', `🔗 Se juntaron ${hechos.length} ficha(s) duplicada(s): ${nombres}`, env);
     }
   } catch (e) { console.error('dedupe automático:', e.message); }
   const dia0 = Number(todayIso().slice(8, 10));
@@ -1930,7 +2006,7 @@ async function handleRequest(request, env) {
         const all = (await rAll.json()) || {};
         const plan = planLoversDedupe(all);
         if (dryRun) return adminJson({ dryRun: true, grupos: plan }, 200);
-        const res = await applyLoversDedupe(plan, dbUrl, fbAuth);
+        const res = await applyLoversDedupe(env, plan);
         if (res.error) return adminJson({ error: res.error, hechos: res.hechos }, 502);
         return adminJson({ ok: true, fusionadas: res.hechos.length, grupos: plan }, 200);
       }
@@ -2105,13 +2181,19 @@ async function handleRequest(request, env) {
               if (fields[k] !== '' && !validId(fields[k])) return adminJson({ error: `Id inválido en ${k}` }, 400);
             }
           }
+          // 12 oct: si la ficha ya no existe (se juntó con un duplicado o se mudó a la llave
+          // de su correo mientras el panel estaba abierto), 404 — antes Firebase creaba una
+          // ficha fantasma en la llave vieja con solo los campos editados.
+          let actual;
+          try {
+            actual = await getSubscriberByKey(id, dbUrl, fbAuth);
+          } catch (e) {
+            return adminJson({ error: 'No se pudo leer la suscriptora antes de actualizar', detail: e.message }, 502);
+          }
+          if (!actual) return adminJson({ error: 'Esta suscriptora se actualizó (se juntó con su duplicado o cambió de lugar). Recarga el panel e inténtalo de nuevo.' }, 404);
           // El email es la llave de la ficha (subscriberKey): no se cambia acá. El panel lo
           // manda siempre; si viene igual se ignora, si viene distinto se avisa.
           if (fields.email !== undefined) {
-            let actual;
-            try { actual = await getSubscriberByKey(id, dbUrl, fbAuth); }
-            catch (e) { return adminJson({ error: 'No se pudo leer la suscriptora', detail: e.message }, 502); }
-            if (!actual) return adminJson({ error: 'No existe esa suscriptora' }, 404);
             if (fields.email.trim().toLowerCase() !== String(actual.email || '').trim().toLowerCase()) {
               return adminJson({ error: 'El correo no se puede cambiar desde acá (identifica la ficha). Si está mal, crea la suscriptora de nuevo con el correo correcto y elimina esta.' }, 400);
             }
@@ -2128,11 +2210,7 @@ async function handleRequest(request, env) {
           // más abajo, así que se envuelve acá para no dejar una excepción sin atrapar.
           let existing = null;
           if (['cancelado', 'vencido', 'activo', 'pausado', 'pago_fallido', 'pendiente'].includes(fields.estado_pago)) {
-            try {
-              existing = await getSubscriberByKey(id, dbUrl, fbAuth);
-            } catch (e) {
-              return adminJson({ error: 'No se pudo leer la suscriptora antes de actualizar', detail: e.message }, 502);
-            }
+            existing = actual;
           }
           // Pausa (11 oct, revisado): para manuales, Square y factura. La clienta conserva
           // sus beneficios hasta el último día ya pagado (`vence`); el cron los apaga al
