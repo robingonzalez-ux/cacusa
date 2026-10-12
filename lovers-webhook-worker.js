@@ -1350,6 +1350,7 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
   if (!/^\d{4}-\d{2}$/.test(month || '')) { out.errores.push('Mes inválido'); return out; }
   if (!fbAuth) { out.errores.push('Falta FB_DB_SECRET'); return out; }
   const { desde, corte, envio } = loteFechas(month);
+  const reconciliar = []; // suscriptoras del lote para cacusa-admin (adoptar/completar/dedupe)
   let all = preloaded;
   if (!all) { try { all = await loadAllLovers(env); } catch (e) { out.errores.push(e.message); return out; } }
   for (const [key, s] of Object.entries(all)) {
@@ -1402,10 +1403,18 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
     }
     if (!motivo) { out.fueraDelLote.push({ id: key, nombre, plan: periodo, motivo: fuera }); continue; }
     const item = { id: key, nombre, plan: periodo, motivo, ciudad: s.ciudad || '', pais: s.pais || '' };
-    // Transición: pedidos ya creados por pago (antes del lote) para este mismo ciclo.
-    if (!lotes && motivo === 'mensual' && s.square_invoice_id && env.CACUSA_KV && await env.CACUSA_KV.get(`lovershipinvoice:${s.square_invoice_id}`)) {
-      out.yaConPedido.push(item); continue;
-    }
+    // Pedidos del sistema anterior (uno por pago, ya sin uso): antes se saltaba a quien tenía
+    // uno, y quedaba SOLO ese — muchas veces sin dirección (nacieron de una ficha duplicada
+    // creada con datos de Square) —, o se duplicaba (las anuales). Ahora cacusa-admin lo
+    // ADOPTA o lo completa con la dirección de la ficha (invoiceIds + reconcile-orders).
+    const invoiceIds = [...new Set([s.square_invoice_id, ...Object.values(lotes || {})].filter(v => typeof v === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(v)))].slice(0, 6);
+    const fichaCliente = {
+      nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
+      direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
+      estado: s.estado, zip: s.zip, pais: s.pais,
+      email: s.email || '', idioma: idiomaDe(s),
+    };
+    reconciliar.push({ key, plan: s.plan || planNombre(periodo), invoiceIds, cliente: fichaCliente });
     if (!s.direccion) { out.sinDireccion.push(item); continue; }
     out.incluidas.push(item);
     if (!dryRun) {
@@ -1419,12 +1428,33 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
         direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
         estado: s.estado, zip: s.zip, pais: s.pais,
         email: s.email || '', idioma: idiomaDe(s),
+        invoiceIds,
         // Un solo refresco de la lista de pedidos al final (ver abajo), no uno por caja.
         noRefresh: true,
       }, s.plan || planNombre(periodo), '', env, `${month}:${key}`);
       if (!res) { out.errores.push(`${nombre}: no se pudo crear el pedido`); continue; }
+      if (res.yaTrabajado) out.yaConPedido.push(item);
       if (!res.alreadyExisted) out.creados++;
     }
+  }
+  // Una sola llamada a cacusa-admin: completa los pedidos del lote con la dirección de la
+  // ficha, adopta los viejos y quita los duplicados que nadie tocó (ver
+  // handleLoversReconcileOrders en admin-worker.js). En la vista previa solo informa.
+  if (reconciliar.length && env.ORDER_INGEST_KEY && cronBudget(1)) {
+    try {
+      const r = await adminFetch(env, '/internal/lovers/reconcile-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+        body: JSON.stringify({ month, dryRun, subs: reconciliar }),
+      });
+      if (r.ok) {
+        const d = await r.json().catch(() => null);
+        if (d) out.reparacion = { adoptados: d.adoptados || [], completados: d.completados || [], borrados: d.borrados || [], sinResolver: d.sinResolver || [], sinDireccion: d.sinDireccion || [] };
+      } else {
+        console.error('reconcile-orders respondió', r.status);
+        out.errores.push(`No se pudo revisar los pedidos viejos de Lovers (${r.status})`);
+      }
+    } catch (e) { console.error('reconcile-orders error:', e.message); }
   }
   // Las cajas se crearon con noRefresh (KV acepta 1 escritura por segundo a la misma llave:
   // 20 refrescos seguidos de la lista de pedidos fallaban y la lista quedaba sin las
@@ -1804,8 +1834,11 @@ async function runDailyLovers(env) {
     const sinDir = b ? b.sinDireccion.map(x => x.id).sort().join('|') : '';
     const avisoKey = `loversloteaviso:${mes}`;
     const avisarSinDir = !!sinDir && !!env.CACUSA_KV && (await env.CACUSA_KV.get(avisoKey)) !== sinDir;
-    if (b && (b.creados > 0 || avisarSinDir)) {
+    const rep2 = b && b.reparacion ? b.reparacion : null;
+    const reparados = rep2 ? rep2.adoptados.length + rep2.completados.length + rep2.borrados.length : 0;
+    if (b && (b.creados > 0 || avisarSinDir || reparados > 0)) {
       const partes = [];
+      if (reparados > 0) partes.push(`🔧 Pedidos Lovers: ${rep2.adoptados.length + rep2.completados.length} completado(s), ${rep2.borrados.length} duplicado(s) quitado(s)`);
       if (b.creados > 0) partes.push(`📦 ${b.creados} caja(s) ${dia === LOVERS_CUTOFF_DAY + 1 ? 'en el lote del mes' : 'se sumaron al lote'} — salen del 15 al 21${b.pendientes ? ` · faltan ${b.pendientes}, se crean mañana` : ''}`);
       if (avisarSinDir) {
         const nombres = b.sinDireccion.slice(0, 3).map(x => x.nombre).join(', ') + (b.sinDireccion.length > 3 ? '…' : '');

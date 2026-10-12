@@ -309,6 +309,10 @@ export default {
       // los pedidos del lote llegan con noRefresh para no escribir orders_cache 20 veces
       // seguidas (KV acepta 1 escritura por segundo a la misma llave; las demás fallan y
       // la lista podía quedar sin las últimas cajas).
+      if (path.endsWith('/internal/lovers/reconcile-orders')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        return await handleLoversReconcileOrders(body, env, allowOrigin, ctx);
+      }
       if (path.endsWith('/internal/orders/refresh')) {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
@@ -4133,6 +4137,97 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
   }
 }
 
+// ── Pedidos de Cacusa Lovers: adoptar/completar los del sistema anterior (12 oct) ─────
+// Hasta el 11 oct el pedido de envío nacía al llegar CADA pago. Si el sistema no
+// encontraba la ficha (bug de los duplicados), creaba una ficha nueva con los datos de
+// Square y generaba el pedido con eso: sin dirección ni teléfono ("." bajo el nombre). Esos
+// pedidos viejos quedaban sin completar y el lote, al verlos, no creaba el suyo (o, en las
+// anuales, creaba uno aparte = duplicado). Acá se adoptan: el pedido viejo pasa a ser el
+// del ciclo, con la dirección de la ficha. Siempre por ids (lovershipinvoice:<factura> →
+// pedido, loverslote:<mes>:<llave> → pedido), nunca adivinando por nombre.
+const LOVERS_PLACEHOLDER_RE = /pendiente de elegir piezas del ciclo/i;
+const LOVERS_FILL_FIELDS = ['nombre', 'apellido', 'telefono', 'direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'email'];
+// Los pedidos viejos del ciclo `lote` (YYYY-MM) son los creados desde el día 11 del mes
+// anterior (corte del lote) en adelante: así el pedido de septiembre de una anual (su primera
+// caja) nunca se confunde con el de octubre.
+function loversCicloDesde(lote) {
+  const [y, m] = lote.split('-').map(Number);
+  const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+  return `${py}-${String(pm).padStart(2, '0')}-11`;
+}
+function loversLoteNota(lote, plan) {
+  return `Lote Lovers ${lote} — ${plan || 'Cacusa Lovers'} · sale la 3ra semana (15–21) · elegir 2 piezas`;
+}
+// Pedido del sistema anterior: de Lovers, sin lote y con la nota de marcador.
+function isLegacyLoversOrder(o) {
+  return !!o && o.pago === 'Lovers' && !o.lote && LOVERS_PLACEHOLDER_RE.test(String(o.notas || ''));
+}
+// Aún sin trabajar: nuevo, sin guía ni tracking y sin piezas elegidas.
+function isUntouchedLoversOrder(o) {
+  return !!o && (o.estado || 'Nuevo') === 'Nuevo' && !o.tracking && !o.labelStored && !o.labelBase64
+    && !(Array.isArray(o.productos) && o.productos.length);
+}
+// Se puede borrar sin perder nada: marcador sin tocar y que nadie editó a mano.
+function isDisposableLegacyOrder(o) {
+  return isLegacyLoversOrder(o) && isUntouchedLoversOrder(o) && !o.updatedBy;
+}
+// Completa los datos del cliente desde la ficha. overwrite=true (marcador que nadie tocó)
+// pone los de la ficha; si no, solo rellena lo VACÍO — nunca pisa lo que alguien editó.
+function mergeFichaIntoOrder(o, c, { overwrite = false } = {}) {
+  let changed = false;
+  o.cliente = o.cliente || {};
+  for (const f of LOVERS_FILL_FIELDS) {
+    const v = String((c && c[f]) || '').trim();
+    if (!v) continue;
+    if (overwrite ? o.cliente[f] !== v : !String(o.cliente[f] || '').trim()) { o.cliente[f] = v; changed = true; }
+  }
+  if (c && c.idioma && (overwrite || changed) && o.cliente.idioma !== (c.idioma === 'en' ? 'en' : 'es')) {
+    o.cliente.idioma = c.idioma === 'en' ? 'en' : 'es'; changed = true;
+  }
+  return changed;
+}
+function cleanFichaCliente(c) {
+  const str = (v, max) => typeof v === 'string' ? v.trim().slice(0, max) : '';
+  c = c || {};
+  return {
+    nombre: str(c.nombre, 100), apellido: str(c.apellido, 100), telefono: str(c.telefono, 30),
+    direccion: str(c.direccion, 200), apto: str(c.apto, 40), ciudad: str(c.ciudad, 100),
+    estado: str(c.estado, 50), zip: str(c.zip, 20), pais: str(c.pais, 40),
+    email: isValidEmail(c.email) ? String(c.email).trim().toLowerCase() : '',
+    idioma: c.idioma === 'en' ? 'en' : (c.idioma === 'es' ? 'es' : ''),
+  };
+}
+async function kvOrderIdFrom(env, key) {
+  const v = await env.CACUSA_KV.get(key);
+  const n = Number(v);
+  return v && Number.isFinite(n) && n > 0 ? n : null;
+}
+// Pedidos viejos (sistema anterior) de una suscriptora, por los ids de sus facturas.
+async function legacyOrdersByInvoices(env, invoiceIds, lote) {
+  const desde = lote ? loversCicloDesde(lote) : '';
+  const out = [];
+  const seen = new Set();
+  for (const inv of (Array.isArray(invoiceIds) ? invoiceIds : []).slice(0, 6)) {
+    const id = String(inv || '').slice(0, 100);
+    if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) continue;
+    const orderId = await kvOrderIdFrom(env, 'lovershipinvoice:' + id);
+    if (!orderId || seen.has(orderId)) continue;
+    seen.add(orderId);
+    const o = await orderGet(env, orderId);
+    if (isLegacyLoversOrder(o) && (!desde || String(o.fecha || '').slice(0, 10) >= desde)) out.push(o);
+  }
+  return out;
+}
+// Convierte un pedido viejo en el del ciclo: completo, con su lote y su marca.
+async function adoptLegacyLoversOrder(env, o, { lote, loteKey, plan, cliente }) {
+  mergeFichaIntoOrder(o, cliente, { overwrite: !o.updatedBy });
+  o.lote = lote;
+  o.notas = loversLoteNota(lote, plan);
+  o.updatedAt = new Date().toISOString();
+  await env.CACUSA_KV.put(orderKey(o.id), JSON.stringify(o));
+  await env.CACUSA_KV.put('loverslote:' + loteKey, String(o.id), { expirationTtl: 400 * 24 * 3600 });
+}
+
 // ── Cacusa Lovers — "pedido de envío" del ciclo (nuevo, 20 sep) ─────────────────
 // Antes de esto, invoice.payment_made (lovers-webhook-worker.js) solo actualizaba
 // el estado de la suscriptora en Firebase — nunca quedaba ningún registro de "qué
@@ -4176,6 +4271,31 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
     return ok({ ok: true, orderId: Number(already), alreadyExisted: true }, origin);
   }
 
+  // Antes de crear una caja nueva: si la suscriptora ya tiene el pedido del sistema anterior
+  // para este ciclo (por el id de su factura), se ADOPTA en vez de duplicar — también en las
+  // anuales, que antes recibían uno nuevo además del viejo.
+  if (loteKey && Array.isArray(body.invoiceIds) && body.invoiceIds.length) {
+    const viejos = await legacyOrdersByInvoices(env, body.invoiceIds, lote);
+    const candidatos = viejos.filter(o => isUntouchedLoversOrder(o));
+    if (candidatos.length) {
+      const viejo = candidatos[0];
+      await adoptLegacyLoversOrder(env, viejo, {
+        lote, loteKey, plan: body.plan,
+        cliente: cleanFichaCliente({ ...body, email: body.email, idioma: body.idioma }),
+      });
+      if (claim.claimed) await orderIdemFinalize(env, dedupeKey, viejo.id).catch(() => {});
+      if (ctx && body.noRefresh !== true) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+      return ok({ ok: true, orderId: viejo.id, alreadyExisted: false, adopted: true }, origin);
+    }
+    if (viejos.length) {
+      // Ya la están trabajando (Confirmado, con guía o con piezas): ESE es el pedido del
+      // ciclo. No se crea otro (sería enviarle la caja dos veces); queda la marca.
+      await env.CACUSA_KV.put(dedupeKey, String(viejos[0].id), { expirationTtl: 400 * 24 * 3600 });
+      if (claim.claimed) await orderIdemFinalize(env, dedupeKey, viejos[0].id).catch(() => {});
+      return ok({ ok: true, orderId: viejos[0].id, alreadyExisted: true, yaTrabajado: true }, origin);
+    }
+  }
+
   const newOrder = buildOrderCore({
     cliente: {
       nombre: body.nombre, apellido: body.apellido, telefono: body.telefono,
@@ -4208,6 +4328,80 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
   // noRefresh: el lote pide un solo refresco al final (/internal/orders/refresh).
   if (ctx && body.noRefresh !== true) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   return ok({ ok: true, orderId: newOrder.id, alreadyExisted: false }, origin);
+}
+
+// POST /internal/lovers/reconcile-orders — deja UN pedido completo por suscriptora del lote:
+// adopta el pedido viejo si es el único, quita el viejo si ya hay uno del lote, y completa
+// los campos vacíos desde la ficha. dryRun solo informa. Ver el comentario de arriba.
+async function handleLoversReconcileOrders(body, env, origin, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const month = /^\d{4}-\d{2}$/.test(String(body.month || '')) ? String(body.month) : '';
+  if (!month) return err('Mes inválido', 400, origin);
+  const dryRun = body.dryRun !== false;
+  const subs = (Array.isArray(body.subs) ? body.subs : []).slice(0, 60);
+  const out = { month, dryRun, adoptados: [], completados: [], borrados: [], sinResolver: [], sinDireccion: [] };
+  let cambios = 0;
+  for (const sub of subs) {
+    const key = String((sub && sub.key) || '');
+    if (!/^[A-Za-z0-9_@,+-]{1,128}$/.test(key)) continue;
+    const cliente = cleanFichaCliente(sub.cliente);
+    const nombre = [cliente.nombre, cliente.apellido].filter(Boolean).join(' ') || key;
+    const loteKey = `${month}:${key}`;
+    const loteId = await kvOrderIdFrom(env, 'loverslote:' + loteKey);
+    const loteOrder = loteId ? await orderGet(env, loteId) : null;
+    const legacy = (await legacyOrdersByInvoices(env, sub.invoiceIds, month)).filter(o => !loteOrder || o.id !== loteOrder.id);
+    if (!loteOrder && !legacy.length) continue;
+    if (!cliente.direccion && !(loteOrder && loteOrder.cliente && loteOrder.cliente.direccion)) {
+      if (legacy.length || loteOrder) out.sinDireccion.push({ id: key, nombre });
+      continue;
+    }
+    let ciclo = loteOrder;
+    if (!ciclo) {
+      // Solo está el viejo: se adopta el primero que no se haya trabajado.
+      const adoptable = legacy.find(o => isUntouchedLoversOrder(o));
+      if (adoptable) {
+        out.adoptados.push({ id: key, nombre, orden: adoptable.id });
+        if (!dryRun) {
+          await adoptLegacyLoversOrder(env, adoptable, { lote: month, loteKey, plan: sub.plan, cliente });
+          cambios++;
+        }
+        ciclo = adoptable;
+        legacy.splice(legacy.indexOf(adoptable), 1);
+      }
+    } else {
+      // Pedido del lote existente: se le rellenan los campos vacíos desde la ficha
+      // (solo lo vacío, nunca pisa lo editado a mano — vale aunque ya lo estén trabajando).
+      const copia = JSON.parse(JSON.stringify(ciclo));
+      if (mergeFichaIntoOrder(copia, cliente, { overwrite: false })) {
+        out.completados.push({ id: key, nombre, orden: ciclo.id });
+        if (!dryRun) {
+          copia.updatedAt = new Date().toISOString();
+          await env.CACUSA_KV.put(orderKey(copia.id), JSON.stringify(copia));
+          cambios++;
+        }
+      }
+    }
+    // Los demás pedidos viejos del mismo ciclo son duplicados: se quitan los que nadie tocó.
+    if (ciclo) {
+      for (const v of legacy) {
+        if (isDisposableLegacyOrder(v)) {
+          out.borrados.push({ id: key, nombre, orden: v.id });
+          if (!dryRun) {
+            await env.CACUSA_KV.delete(orderKey(v.id));
+            if (v.labelStored) await env.CACUSA_KV.delete(labelKey(v.id)).catch(() => {});
+            cambios++;
+          }
+        } else {
+          out.sinResolver.push({ id: key, nombre, orden: v.id });
+        }
+      }
+    }
+  }
+  if (!dryRun && cambios > 0) {
+    if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+    else await refreshOrdersCache(env).catch(() => {});
+  }
+  return ok({ ok: true, ...out }, origin);
 }
 
 // ── Token (HMAC-SHA256) ────────────────────────────────────────────────────────
