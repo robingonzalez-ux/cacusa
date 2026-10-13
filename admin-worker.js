@@ -50,6 +50,10 @@
  *   USPS_MANIFEST_MID     (secret)  MID de manifiesto — en el caso simple, igual a USPS_MID.
  *   USPS_EPS_ACCOUNT      (secret)  Número de cuenta Enterprise Payment System (EPS) — dato
  *                                   real de cuenta, nunca hardcodeado en este archivo público.
+ *   MKT_POSTAL_ADDRESS    (text)    Dirección postal del negocio (calle o PO Box, ciudad,
+ *                                   estado, ZIP) que va al pie de los correos de marketing —
+ *                                   la exige la ley CAN-SPAM de EE.UU. Sin ella el panel no deja
+ *                                   crear campañas reales (sí vista previa y prueba).
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -62,8 +66,12 @@
  * 1. https://console.cloud.google.com → crear proyecto (ej. "cacusa-mailer").
  * 2. APIs & Services → Library → buscar "Gmail API" → Enable.
  * 3. APIs & Services → OAuth consent screen → External → nombre de la app, tu email
- *    de contacto → en "Test users" agregar facturacioncacusa@gmail.com (mientras la
- *    app esté en modo "Testing" no hace falta verificación de Google).
+ *    de contacto. IMPORTANTE (13 oct): después pasar la app a "In production"
+ *    (Google Auth Platform → Público → Publicar app). En modo "Testing" Google vence el
+ *    refresh token a los 7 días y TODOS los correos fallan con invalid_grant (pasó en
+ *    oct). Para publicar pide página principal + política de privacidad
+ *    (cacusabytaitus.com/privacidad.html) + dominio autorizado, y NO subir logo (con
+ *    logo exige verificación). Sin logo no hace falta verificar: solo la usa esta cuenta.
  * 4. APIs & Services → Credentials → Create Credentials → OAuth client ID → tipo
  *    "Web application" → en "Authorized redirect URIs" agregar
  *    https://developers.google.com/oauthplayground → Create. Copiar el Client ID y
@@ -76,8 +84,9 @@
  *    con facturacioncacusa@gmail.com (Google va a avisar que la app no está
  *    verificada — "Advanced" → "Go to [app] (unsafe)", es tu propia app, es seguro).
  * 7. "Exchange authorization code for tokens" → copiar el "Refresh token" (=
- *    GMAIL_REFRESH_TOKEN). Este token no expira solo (a diferencia del access token,
- *    que dura 1h y este Worker renueva automáticamente en cada envío).
+ *    GMAIL_REFRESH_TOKEN). Con la app "In production" este token no expira solo (en
+ *    "Testing" vence a los 7 días). El access token dura 1h y este Worker lo renueva
+ *    solo en cada envío — no se guarda en ningún lado.
  * 8. Pegar los 3 valores en Cloudflare → cacusa-admin → Settings → Variables and
  *    secrets, tipo "Secret".
  * ──────────────────────────────────────────────────────────────────────────────────
@@ -110,9 +119,17 @@ export default {
     const allowOrigin = (ORIGIN_ALLOWLIST.includes(origin) || origin === POS_ORIGIN) ? origin : (env.ALLOWED_ORIGIN || ORIGIN_ALLOWLIST[0]);
 
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(allowOrigin) });
-    if (request.method !== 'POST') return err('Method not allowed', 405, allowOrigin);
 
     const path = new URL(request.url).pathname.replace(/\/+$/, '');
+    // Link de baja del marketing (pie del correo y List-Unsubscribe one-click): GET y POST,
+    // sin JSON ni sesión — por eso va antes del chequeo de método y del parseo del body.
+    if (path.endsWith('/m/baja') && (request.method === 'GET' || request.method === 'POST')) {
+      try { return await handleMktUnsub(request, env); }
+      catch (e) { console.error('m/baja:', e.message); return new Response('Error', { status: 500 }); }
+    }
+    if (request.method !== 'POST') return err('Method not allowed', 405, allowOrigin);
+    // Base de los links de baja: el mismo Worker que atiende esta request.
+    const selfBase = new URL(request.url).origin;
     // Auditoría (20 sep, F20): ninguna ruta pública tenía límite de tamaño de body —
     // cualquiera podía mandar un POST arbitrariamente grande. 2MB deja margen de sobra
     // sobre el payload real más grande de este Worker (guardar el catálogo completo
@@ -409,6 +426,12 @@ export default {
       if (path.endsWith('/lead/list'))         return await handleLeadList(env, allowOrigin);
       if (path.endsWith('/lead/delete'))       return await handleLeadDelete(body, env, allowOrigin);
       if (path.endsWith('/lead/send-welcome')) return await handleLeadSendWelcome(body, env, allowOrigin);
+      if (path.endsWith('/marketing/audience'))   return await handleMktAudience(body, env, allowOrigin);
+      if (path.endsWith('/marketing/preview'))    return await handleMktPreview(body, env, allowOrigin, selfBase);
+      if (path.endsWith('/marketing/test'))       return await handleMktTest(body, env, allowOrigin, selfBase);
+      if (path.endsWith('/marketing/campaign'))   return await handleMktCampaignCreate(body, env, allowOrigin, session);
+      if (path.endsWith('/marketing/send-batch')) return await handleMktSendBatch(body, env, allowOrigin, selfBase);
+      if (path.endsWith('/marketing/campaigns'))  return await handleMktCampaigns(env, allowOrigin);
       if (path.endsWith('/lovers/exclusive-coupon/bulk')) return await handleLoversExclusiveBulk(body, env, allowOrigin);
       if (path.endsWith('/tiktok/export-status'))  return await handleTiktokExportStatus(env, allowOrigin);
       if (path.endsWith('/tiktok/trigger-export')) return await handleTiktokTriggerExport(env, allowOrigin);
@@ -2069,8 +2092,8 @@ function esc(v) {
 // los 3 correos transaccionales nuevos (confirmación de pedido, envío/tracking,
 // suscripción) que necesitan contenido de forma libre (tabla de productos, caja de
 // tracking, lista de beneficios) en vez de un cupón.
-function emailShellGeneric({ lang, preheader, eyebrow, title, bodyHtml, ctaText, ctaUrl }) {
-  const waMsg = lang === 'en' ? encodeURIComponent('Hi! I have a question about my CACUSA by Taitus order.') : encodeURIComponent('Hola, tengo una consulta sobre mi pedido de CACUSA by Taitus.');
+function emailShellGeneric({ lang, preheader, eyebrow, title, bodyHtml, ctaText, ctaUrl, footerExtraHtml = '', waText = '' }) {
+  const waMsg = encodeURIComponent(waText || (lang === 'en' ? 'Hi! I have a question about my CACUSA by Taitus order.' : 'Hola, tengo una consulta sobre mi pedido de CACUSA by Taitus.'));
   const footerText = lang === 'en'
     ? `Questions? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Chat with us on WhatsApp</a>`
     : `¿Dudas? <a href="https://wa.me/17867375336?text=${waMsg}" style="color:#C0336E;font-weight:600;text-decoration:none">Escríbenos por WhatsApp</a>`;
@@ -2098,7 +2121,7 @@ ${bodyHtml}
 ${ctaHtml}
 </td></tr>
 <tr><td style="background:#FEF0E4;padding:16px 24px;text-align:center;">
-<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${footerText}</div>
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#96486F;">${footerText}</div>${footerExtraHtml}
 </td></tr>
 </table>
 </td></tr>
@@ -3550,7 +3573,7 @@ async function gmailAccessToken(env) {
   return d.access_token;
 }
 
-async function sendGmail(env, { to, subject, html }) {
+async function sendGmail(env, { to, subject, html, accessToken: token, headers }) {
   if (!env.GMAIL_REFRESH_TOKEN) throw new Error('GMAIL_REFRESH_TOKEN no configurado');
   // Última barrera antes de armar el MIME: `to` se concatena crudo en la cabecera To:.
   // Se valida acá además de en cada punto de entrada porque este es el cuello de
@@ -3558,12 +3581,20 @@ async function sendGmail(env, { to, subject, html }) {
   // dirección desde Firebase (el cupón exclusivo), que la escribe el formulario
   // público de suscripción. Cualquier ruta de envío nueva queda cubierta sola.
   if (!isValidEmail(to)) throw new Error('Destinatario inválido');
-  const accessToken = await gmailAccessToken(env);
+  // token: el que ya pidió quien llama (las tandas de marketing piden 1 solo por tanda).
+  const accessToken = token || await gmailAccessToken(env);
+  // Cabeceras extra (hoy solo List-Unsubscribe/-Post del marketing): nombre y valor
+  // validados — nada que traiga \r o \n llega al MIME.
+  let extra = '';
+  for (const [k, v] of Object.entries(headers || {})) {
+    if (/^[A-Za-z][A-Za-z-]{0,40}$/.test(k) && typeof v === 'string' && v && !/[\r\n]/.test(v)) extra += `${k}: ${v.slice(0, 900)}\r\n`;
+  }
   const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
   const mime =
     `From: CACUSA by Taitus <facturacioncacusa@gmail.com>\r\n` +
     `To: ${to}\r\n` +
     `Subject: ${subjectEncoded}\r\n` +
+    extra +
     `MIME-Version: 1.0\r\n` +
     `Content-Type: text/html; charset=UTF-8\r\n\r\n` +
     html;
@@ -4427,6 +4458,405 @@ async function handleLoversReconcileOrders(body, env, origin, ctx) {
     else await refreshOrdersCache(env).catch(() => {});
   }
   return ok({ ok: true, ...out }, origin);
+}
+
+// ── Marketing por correo (13 oct) ──────────────────────────────────────────────────
+// Campañas desde la pestaña "✉ Marketing" del panel a: registros del popup del 10%
+// (lead:*, sin los de carrito abandonado) y suscriptoras de Cacusa Lovers (Firebase, vía
+// cacusa-lovers-webhook /internal/lovers/marketing-list). Sale por el MISMO Gmail de los
+// correos de pedidos, así que:
+//  - tandas de MKT_BATCH (plan Free: ~50 subpeticiones por invocación) que el panel pide
+//    una tras otra (/marketing/send-batch); el progreso queda en mktcamp:<id> y se puede
+//    retomar con el panel cerrado y vuelto a abrir;
+//  - tope diario MKT_DAILY_CAP (Gmail permite ~500/día; el resto queda para los correos de
+//    pedidos, que nunca deben quedarse sin cupo);
+//  - cada tanda se reclama en la DO OrderIdempotency (mktbatch:<id>:<desde>) antes de
+//    mandar: dos pestañas abiertas (o una lectura vieja de KV) nunca mandan la misma tanda
+//    dos veces.
+// Cada correo lleva link de baja firmado (HMAC, /m/baja, también como List-Unsubscribe
+// one-click) y la dirección postal del negocio (MKT_POSTAL_ADDRESS, exigida por CAN-SPAM;
+// variable de Cloudflare, nunca escrita en este archivo público). Sin esa variable no se
+// puede crear una campaña real (sí la vista previa y la prueba).
+const MKT_BATCH = 20;
+const MKT_DAILY_CAP = 400;
+const MKT_MAX_RECIPIENTS = 1500;
+const MKT_SITE = 'https://cacusabytaitus.com';
+const MKT_ERRORES_MAX = 50;
+
+function escAttr(v) { return esc(v).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+// Solo https, sin usuario/clave embebidos. Vacío si no sirve.
+function mktUrl(v) {
+  const raw = String(v || '').trim();
+  if (!raw) return '';
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'https:' && !u.username && !u.password ? u.toString() : '';
+  } catch { return ''; }
+}
+function mktCleanVersion(c) {
+  const s = (v, n) => typeof v === 'string' ? v.replace(/\r\n?/g, '\n').trim().slice(0, n) : '';
+  c = c && typeof c === 'object' ? c : {};
+  const out = {
+    subject: s(c.subject, 150).replace(/\s*\n\s*/g, ' '),
+    preheader: s(c.preheader, 200).replace(/\s*\n\s*/g, ' '),
+    title: s(c.title, 150),
+    body: s(c.body, 5000),
+    imageUrl: mktUrl(c.imageUrl),
+    ctaText: s(c.ctaText, 60).replace(/\s*\n\s*/g, ' '),
+    ctaUrl: mktUrl(c.ctaUrl),
+  };
+  if (!out.ctaUrl || !out.ctaText) { out.ctaUrl = ''; out.ctaText = ''; }
+  return out;
+}
+// Valida lo que manda el panel. errores: lista en español para mostrar tal cual.
+function mktCleanContent(body) {
+  const errores = [];
+  const check = (raw, v, sufijo) => {
+    raw = raw && typeof raw === 'object' ? raw : {};
+    if (!v.subject) errores.push('Falta el asunto' + sufijo);
+    if (!v.title && !v.body) errores.push('Falta el título o el texto' + sufijo);
+    if (String(raw.imageUrl || '').trim() && !v.imageUrl) errores.push('La imagen debe ser un link que empiece con https://' + sufijo);
+    if (String(raw.ctaText || '').trim() && !v.ctaUrl) errores.push('El link del botón debe empezar con https://' + sufijo);
+  };
+  const es = mktCleanVersion(body.es);
+  check(body.es, es, '');
+  let en = null;
+  if (body.en && typeof body.en === 'object') { en = mktCleanVersion(body.en); check(body.en, en, ' (inglés)'); }
+  const productIds = [...new Set((Array.isArray(body.productIds) ? body.productIds : [])
+    .map(x => String(x)).filter(id => /^[A-Za-z0-9_-]{1,40}$/.test(id)))].slice(0, 4);
+  return { es, en, productIds, errores };
+}
+
+// Misma lógica de slug que _slugify/_productParam (ui_kits/store/app.js) y
+// slugify/product_param (generate_product_schema.py) — deben coincidir siempre.
+function mktSlugify(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+}
+function mktProductParam(p, lang) {
+  const name = String(((lang === 'en' && p.name_en) ? p.name_en : p.name) || '').replace(/\s+/g, ' ').trim();
+  const slug = mktSlugify(name);
+  return (slug ? slug + '-' : '') + p.id;
+}
+// Las tarjetas de producto se arman en el servidor desde data/products.json (nunca con
+// links/fotos que mande el panel): nombre, precio, foto y link a la página del producto.
+async function mktResolveProducts(env, ids) {
+  if (!ids || !ids.length) return [];
+  const f = await ghGetContent(PRODUCTS_PATH, env);
+  let data = null;
+  try { data = f ? JSON.parse(f.text) : null; } catch (_) { data = null; }
+  const byId = new Map(((data && data.products) || []).map(p => [String(p.id), p]));
+  return ids.map(id => byId.get(String(id))).filter(Boolean).map(p => {
+    const imgs = (Array.isArray(p.images) ? p.images : []).concat(p.imageUrl ? [p.imageUrl] : []);
+    const image = imgs.map(x => mktUrl(typeof x === 'string' ? x : (x && x.url))).find(Boolean) || '';
+    const price = Number(p.price);
+    return {
+      id: String(p.id),
+      name: String(p.name || '').slice(0, 120),
+      name_en: String(p.name_en || '').slice(0, 120),
+      price: Number.isFinite(price) && price > 0 ? price : null,
+      image,
+      urlEs: `${MKT_SITE}/ui_kits/store/producto/${encodeURIComponent(mktProductParam(p, 'es'))}/`,
+      urlEn: `${MKT_SITE}/en/ui_kits/store/producto/${encodeURIComponent(mktProductParam(p, 'en'))}/`,
+    };
+  });
+}
+
+function mktParagraphs(text) {
+  return String(text || '').split(/\n{2,}/).map(t => t.trim()).filter(Boolean)
+    .map(t => `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#6B3A55;text-align:left;">${esc(t).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+function mktProductsHtml(products, lang) {
+  if (!products || !products.length) return '';
+  const cell = p => {
+    const url = escAttr(lang === 'en' ? p.urlEn : p.urlEs);
+    const name = esc(lang === 'en' && p.name_en ? p.name_en : p.name);
+    const img = p.image ? `<a href="${url}"><img src="${escAttr(p.image)}" alt="${escAttr(lang === 'en' && p.name_en ? p.name_en : p.name)}" width="190" style="display:block;width:100%;max-width:190px;height:auto;border-radius:12px;margin:0 auto 8px;border:0;"></a>` : '';
+    const price = p.price != null ? `<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#C0336E;">$${esc(p.price % 1 ? p.price.toFixed(2) : String(p.price))}</div>` : '';
+    return `<td width="50%" valign="top" style="padding:8px;text-align:center;">${img}<a href="${url}" style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B2A5A;text-decoration:none;font-weight:600;">${name}</a>${price}</td>`;
+  };
+  let rows = '';
+  for (let i = 0; i < products.length; i += 2) {
+    rows += `<tr>${cell(products[i])}${products[i + 1] ? cell(products[i + 1]) : '<td width="50%"></td>'}</tr>`;
+  }
+  const head = lang === 'en' ? 'You might love' : 'Te pueden encantar';
+  return `<div style="font-family:Georgia,'Bodoni Moda',serif;font-size:16px;font-weight:700;color:#8B2A5A;margin:10px 0 4px;">${head}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 6px;">${rows}</table>`;
+}
+async function mktUnsubToken(email, env) { return hmac('mktbaja:' + email, env.SESSION_SECRET); }
+async function mktUnsubUrl(email, env, base) {
+  return `${base}/m/baja?e=${encodeURIComponent(email)}&t=${await mktUnsubToken(email, env)}`;
+}
+// v: versión ya limpia (mktCleanVersion). Todo texto pasa por esc()/escAttr().
+function marketingEmailHtml(v, products, lang, { unsubUrl, postal }) {
+  const en = lang === 'en';
+  const image = v.imageUrl ? `<img src="${escAttr(v.imageUrl)}" alt="" width="420" style="display:block;width:100%;max-width:420px;height:auto;border-radius:12px;margin:0 auto 18px;border:0;">` : '';
+  const legal = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#A07090;margin-top:12px;">${en
+    ? 'You are receiving this email because you signed up at cacusabytaitus.com.'
+    : 'Recibes este correo porque te registraste en cacusabytaitus.com.'}<br><a href="${escAttr(unsubUrl)}" style="color:#C0336E;">${en ? 'Unsubscribe' : 'Darme de baja'}</a> · <a href="${MKT_SITE}/privacidad.html" style="color:#C0336E;">${en ? 'Privacy policy' : 'Política de privacidad'}</a>${postal ? `<br>CACUSA by Taitus · ${esc(postal)}` : ''}</div>`;
+  return emailShellGeneric({
+    lang,
+    preheader: esc(v.preheader),
+    eyebrow: en ? 'CACUSA news' : 'Novedades CACUSA',
+    title: esc(v.title),
+    bodyHtml: image + mktParagraphs(v.body) + mktProductsHtml(products, lang),
+    ctaText: esc(v.ctaText),
+    ctaUrl: v.ctaUrl ? escAttr(v.ctaUrl) : '',
+    footerExtraHtml: legal,
+    waText: en ? 'Hi! I have a question about CACUSA by Taitus.' : 'Hola, tengo una consulta sobre CACUSA by Taitus.',
+  });
+}
+// Idioma de cada persona: la versión EN si existe; si no, TODO en español (texto y pie) —
+// nunca un correo con el texto en español y los botones/pie en inglés.
+function mktVersionFor(content, lang) {
+  return lang === 'en' && content.en ? { v: content.en, lang: 'en' } : { v: content.es, lang: 'es' };
+}
+
+// Audiencia: sel = { leads: bool, lovers: ['activas','pausadas','canceladas'] }.
+// Devuelve destinatarios únicos por email, sin las que se dieron de baja.
+function mktLoversGrupo(estado) {
+  if (estado === 'activo') return 'activas';
+  if (estado === 'cancelado' || estado === 'pendiente') return 'canceladas';
+  return 'pausadas'; // pausado, vencido, pago_fallido
+}
+async function mktAudience(env, sel) {
+  sel = sel && typeof sel === 'object' ? sel : {};
+  const grupos = new Set((Array.isArray(sel.lovers) ? sel.lovers : []).filter(g => ['activas', 'pausadas', 'canceladas'].includes(g)));
+  const byEmail = new Map();
+  const conteo = { landing: 0, lovers: 0, enAmbas: 0, bajas: 0 };
+  if (sel.leads === true) {
+    for (const l of await listAllLeads(env)) {
+      if (!l || l.source === 'cart_checkout_start') continue;
+      const e = String(l.email || '').trim().toLowerCase();
+      if (!isValidEmail(e) || byEmail.has(e)) continue;
+      byEmail.set(e, { e, l: l.lang === 'en' ? 'en' : 'es' });
+      conteo.landing++;
+    }
+  }
+  if (grupos.size) {
+    if (!env.ORDER_INGEST_KEY) throw new Error('Falta ORDER_INGEST_KEY para leer las suscriptoras de Lovers');
+    const r = await loversFetch(env, '/internal/lovers/marketing-list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: '{}',
+    });
+    if (!r.ok) throw new Error(`No se pudo leer las suscriptoras de Lovers (${r.status})`);
+    const d = await r.json();
+    for (const s of (Array.isArray(d.subs) ? d.subs : [])) {
+      if (!s || !grupos.has(mktLoversGrupo(s.estado))) continue;
+      const e = String(s.email || '').trim().toLowerCase();
+      if (!isValidEmail(e)) continue;
+      const prev = byEmail.get(e);
+      // El idioma de la ficha de Lovers es más confiable que el del popup.
+      if (prev) { prev.l = s.idioma === 'en' ? 'en' : 'es'; conteo.enAmbas++; continue; }
+      byEmail.set(e, { e, l: s.idioma === 'en' ? 'en' : 'es' });
+      conteo.lovers++;
+    }
+  }
+  const all = [...byEmail.values()];
+  const bajas = await kvGetMany(env, all.map(x => 'mktunsub:' + x.e));
+  const recipients = all.filter(x => !bajas.get('mktunsub:' + x.e));
+  conteo.bajas = all.length - recipients.length;
+  return { recipients, conteo };
+}
+
+function mktDayKey() { return 'mktsent:' + new Date().toISOString().slice(0, 10); }
+async function mktSentToday(env) { return Number(await env.CACUSA_KV.get(mktDayKey())) || 0; }
+async function mktAddSent(env, n) {
+  if (n <= 0) return;
+  await env.CACUSA_KV.put(mktDayKey(), String((await mktSentToday(env)) + n), { expirationTtl: 3 * 24 * 3600 });
+}
+function mktSummary(c) {
+  return {
+    id: c.id, createdAt: c.createdAt, createdBy: c.createdBy, updatedAt: c.updatedAt || c.createdAt,
+    subject: c.content && c.content.es ? c.content.es.subject : '',
+    total: (c.recipients || []).length, next: c.next || 0, sent: c.sent || 0, skipped: c.skipped || 0,
+    done: !!c.done, errores: (c.errores || []).length, audiencia: c.audiencia || null,
+  };
+}
+
+async function handleMktAudience(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  let aud;
+  try { aud = await mktAudience(env, body.audiencia); } catch (e) { return err(e.message, 502, origin); }
+  const { recipients, conteo } = aud;
+  return ok({
+    ok: true, total: recipients.length, conteo,
+    enviadosHoy: await mktSentToday(env), topeDiario: MKT_DAILY_CAP,
+    direccionPostal: !!String(env.MKT_POSTAL_ADDRESS || '').trim(),
+  }, origin);
+}
+async function handleMktPreview(body, env, origin, base) {
+  const c = mktCleanContent(body);
+  const products = await mktResolveProducts(env, c.productIds);
+  const lang = body.lang === 'en' ? 'en' : 'es';
+  const { v, lang: l } = mktVersionFor(c, lang);
+  const html = marketingEmailHtml(v, products, l, {
+    unsubUrl: `${base}/m/baja?e=ejemplo%40correo.com&t=vista-previa`,
+    postal: String(env.MKT_POSTAL_ADDRESS || '').trim() || (l === 'en' ? '[business mailing address]' : '[dirección postal del negocio]'),
+  });
+  return ok({ ok: true, html, subject: v.subject, errores: c.errores, productos: products.length }, origin);
+}
+async function handleMktTest(body, env, origin, base) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const to = String(body.to || '').trim().toLowerCase().slice(0, 100);
+  if (!isValidEmail(to)) return err('Escribe un correo válido para la prueba', 400, origin);
+  const c = mktCleanContent(body);
+  if (c.errores.length) return err(c.errores.join(' · '), 400, origin);
+  if ((await mktSentToday(env)) >= MKT_DAILY_CAP) return err('Se llegó al tope de correos de marketing de hoy. Prueba mañana.', 429, origin);
+  const products = await mktResolveProducts(env, c.productIds);
+  const { v, lang } = mktVersionFor(c, body.lang === 'en' ? 'en' : 'es');
+  const unsubUrl = await mktUnsubUrl(to, env, base);
+  try {
+    await sendGmail(env, {
+      to, subject: '[PRUEBA] ' + v.subject,
+      html: marketingEmailHtml(v, products, lang, { unsubUrl, postal: String(env.MKT_POSTAL_ADDRESS || '').trim() }),
+      headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+    });
+  } catch (e) {
+    return err('No se pudo enviar la prueba: ' + String(e && e.message || e).slice(0, 200), 502, origin);
+  }
+  await mktAddSent(env, 1);
+  return ok({ ok: true }, origin);
+}
+async function handleMktCampaignCreate(body, env, origin, session) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  if (!String(env.MKT_POSTAL_ADDRESS || '').trim()) {
+    return err('Falta la dirección postal del negocio (variable MKT_POSTAL_ADDRESS en Cloudflare → cacusa-admin). La ley de EE.UU. la exige en los correos de promoción.', 400, origin);
+  }
+  const c = mktCleanContent(body);
+  if (c.errores.length) return err(c.errores.join(' · '), 400, origin);
+  let aud;
+  try { aud = await mktAudience(env, body.audiencia); } catch (e) { return err(e.message, 502, origin); }
+  const { recipients, conteo } = aud;
+  if (!recipients.length) return err('No hay nadie a quien mandarle con esa selección', 400, origin);
+  if (recipients.length > MKT_MAX_RECIPIENTS) return err(`Son ${recipients.length} personas; el máximo por campaña es ${MKT_MAX_RECIPIENTS}`, 400, origin);
+  const products = await mktResolveProducts(env, c.productIds);
+  const id = Date.now().toString(36) + b64url(crypto.getRandomValues(new Uint8Array(4)));
+  const camp = {
+    id, createdAt: new Date().toISOString(), createdBy: session.user,
+    content: { es: c.es, en: c.en }, products,
+    audiencia: { leads: body.audiencia && body.audiencia.leads === true, lovers: (body.audiencia && Array.isArray(body.audiencia.lovers)) ? body.audiencia.lovers.slice(0, 3) : [], conteo },
+    recipients, next: 0, sent: 0, skipped: 0, errores: [], done: false,
+  };
+  await env.CACUSA_KV.put('mktcamp:' + id, JSON.stringify(camp));
+  return ok({ ok: true, campaign: mktSummary(camp) }, origin);
+}
+async function handleMktSendBatch(body, env, origin, base) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = String(body.id || '');
+  if (!/^[A-Za-z0-9_-]{4,40}$/.test(id)) return err('Campaña inválida', 400, origin);
+  const key = 'mktcamp:' + id;
+  const raw = await env.CACUSA_KV.get(key);
+  if (!raw) return err('Campaña no encontrada', 404, origin);
+  const camp = JSON.parse(raw);
+  const total = camp.recipients.length;
+  if (camp.done || camp.next >= total) return ok({ ok: true, campaign: mktSummary(camp) }, origin);
+  const postal = String(env.MKT_POSTAL_ADDRESS || '').trim();
+  if (!postal) return err('Falta MKT_POSTAL_ADDRESS en Cloudflare → cacusa-admin', 400, origin);
+
+  const desde = camp.next;
+  const claimKey = `mktbatch:${id}:${desde}`;
+  const claim = await orderIdemClaim(env, claimKey);
+  // Otra pestaña ya está mandando (o ya mandó) esta tanda: no se repite. El panel espera y
+  // vuelve a pedir; para entonces mktcamp:<id> ya tiene el progreso nuevo.
+  if (!claim.claimed) return ok({ ok: true, ocupado: true, campaign: mktSummary(camp) }, origin);
+
+  let advanced = false;
+  try {
+    const usados = await mktSentToday(env);
+    const cupo = MKT_DAILY_CAP - usados;
+    if (cupo <= 0) return ok({ ok: true, topeDiario: true, campaign: mktSummary(camp) }, origin);
+    const lote = camp.recipients.slice(desde, desde + Math.min(MKT_BATCH, cupo));
+    // Alguien pudo darse de baja con la campaña ya en curso: se revisa justo antes de mandar.
+    const bajas = await kvGetMany(env, lote.map(x => 'mktunsub:' + x.e));
+    let accessToken;
+    try { accessToken = await gmailAccessToken(env); }
+    catch (e) { return err('No se pudo conectar con Gmail: ' + String(e && e.message || e).slice(0, 200), 502, origin); }
+    let enviados = 0, i = 0, frenar = '';
+    for (; i < lote.length; i++) {
+      const r = lote[i];
+      if (bajas.get('mktunsub:' + r.e)) { camp.skipped = (camp.skipped || 0) + 1; continue; }
+      const { v, lang } = mktVersionFor(camp.content, r.l);
+      const unsubUrl = await mktUnsubUrl(r.e, env, base);
+      try {
+        await sendGmail(env, {
+          to: r.e, subject: v.subject, accessToken,
+          html: marketingEmailHtml(v, camp.products || [], lang, { unsubUrl, postal }),
+          headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+        });
+        enviados++;
+      } catch (e) {
+        const msg = String(e && e.message || e).slice(0, 200);
+        // Límite de Gmail o credenciales caídas: se frena la tanda SIN avanzar a esta
+        // persona, para reintentarla después. Cualquier otro error (dirección rechazada,
+        // etc.) se anota y se sigue con la siguiente.
+        if (/\((429|401|403)\)|token refresh/i.test(msg)) { frenar = msg; break; }
+        if ((camp.errores || []).length < MKT_ERRORES_MAX) (camp.errores = camp.errores || []).push({ e: r.e, msg });
+      }
+    }
+    camp.next = desde + i;
+    camp.sent = (camp.sent || 0) + enviados;
+    camp.done = camp.next >= total;
+    camp.updatedAt = new Date().toISOString();
+    advanced = camp.next > desde;
+    if (advanced) await env.CACUSA_KV.put(key, JSON.stringify(camp));
+    await mktAddSent(env, enviados);
+    return ok({ ok: true, enviadosLote: enviados, frenado: frenar || undefined, topeDiario: usados + enviados >= MKT_DAILY_CAP, campaign: mktSummary(camp) }, origin);
+  } finally {
+    // Avanzó: la tanda queda marcada como hecha (la próxima arranca en otro índice). No
+    // avanzó (tope, Gmail caído o error): se libera para poder reintentarla.
+    if (advanced) await orderIdemFinalize(env, claimKey, camp.next).catch(() => {});
+    else await orderIdemRelease(env, claimKey).catch(() => {});
+  }
+}
+async function handleMktCampaigns(env, origin) {
+  if (!env.CACUSA_KV) return ok({ campaigns: [] }, origin);
+  const list = (await kvGetAllJson(env, 'mktcamp:')).map(mktSummary)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 30);
+  return ok({ ok: true, campaigns: list, enviadosHoy: await mktSentToday(env), topeDiario: MKT_DAILY_CAP }, origin);
+}
+
+// GET/POST /m/baja?e=<email>&t=<hmac> — pública, sin sesión (es el link del pie del correo).
+// GET muestra un botón (los antivirus de correo abren los links solos: un GET nunca da de
+// baja). POST da de baja: lo manda ese botón o Gmail ("List-Unsubscribe-Post" one-click).
+// Solo escribe si la persona no estaba ya de baja (no se pueden gastar escrituras de KV
+// repitiendo el mismo link).
+async function handleMktUnsub(request, env) {
+  const url = new URL(request.url);
+  const email = String(url.searchParams.get('e') || '').trim().toLowerCase().slice(0, 100);
+  const t = String(url.searchParams.get('t') || '').slice(0, 200);
+  const valido = isValidEmail(email) && !!env.SESSION_SECRET && safeEqual(t, await mktUnsubToken(email, env));
+  const page = (status, titulo, texto, form = '') => new Response(`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>CACUSA by Taitus</title></head>
+<body style="margin:0;background:#FEF8FF;font-family:Arial,Helvetica,sans-serif;color:#8B2A5A;">
+<main style="max-width:440px;margin:60px auto;padding:32px 26px;background:#fff;border-radius:18px;border:1px solid #F3E4EE;text-align:center;">
+<div style="font-family:Georgia,serif;font-size:24px;font-weight:700;letter-spacing:.12em;">CACUSA</div>
+<div style="font-family:Georgia,serif;font-style:italic;font-size:13px;color:#96486F;margin-bottom:22px;">by Taitus</div>
+<h1 style="font-family:Georgia,serif;font-size:20px;margin:0 0 12px;">${titulo}</h1>
+<p style="font-size:14px;line-height:1.6;color:#96486F;margin:0;">${texto}</p>${form}
+<p style="margin:26px 0 0;"><a href="${MKT_SITE}" style="color:#C0336E;font-size:13px;">cacusabytaitus.com</a></p>
+</main></body></html>`, {
+    status,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+      'Referrer-Policy': 'no-referrer',
+    },
+  });
+  if (!valido || !env.CACUSA_KV) {
+    return page(400, 'Link no válido · Invalid link', 'Este link de baja no es válido. Escríbenos por WhatsApp y te damos de baja a mano.<br>This unsubscribe link is not valid. Message us on WhatsApp and we will remove you.');
+  }
+  const k = 'mktunsub:' + email;
+  const ya = await env.CACUSA_KV.get(k);
+  if (request.method === 'POST') {
+    if (!ya) await env.CACUSA_KV.put(k, new Date().toISOString());
+    return page(200, 'Listo · Done', `${esc(email)} ya no recibirá correos de promociones. Los correos de tus pedidos siguen llegando normal.<br><br>${esc(email)} will no longer receive promotional emails. Order emails will still arrive as usual.`);
+  }
+  if (ya) return page(200, 'Ya estás de baja · Already unsubscribed', `${esc(email)} ya no recibe correos de promociones.<br>${esc(email)} no longer receives promotional emails.`);
+  return page(200, '¿Darte de baja? · Unsubscribe?',
+    `Dejarás de recibir correos de promociones en <strong>${esc(email)}</strong>.<br>You will stop receiving promotional emails at <strong>${esc(email)}</strong>.`,
+    `<form method="POST" action="${escAttr(url.pathname + url.search)}" style="margin-top:22px;"><button type="submit" style="background:#C0336E;color:#fff;border:0;border-radius:999px;padding:13px 28px;font-size:14px;font-weight:700;cursor:pointer;">Darme de baja · Unsubscribe</button></form>`);
 }
 
 // ── Token (HMAC-SHA256) ────────────────────────────────────────────────────────

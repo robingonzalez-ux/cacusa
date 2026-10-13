@@ -38,6 +38,9 @@
  *   subscription.updated            → si status=CANCELED, marca "cancelado"
  *
  * Rutas:
+ *   POST   /internal/lovers/marketing-list → Worker-a-Worker (X-Order-Ingest-Key): email,
+ *                                          idioma y estado de cada suscriptora, para la
+ *                                          pestaña Marketing de cacusa-admin
  *   GET    /internal/lovers/active      → Worker-a-Worker (X-Order-Ingest-Key), usado por
  *                                          cacusa-admin para saber si un teléfono es de una
  *                                          suscriptora activa antes de emitir un código de
@@ -1904,6 +1907,22 @@ async function handleRequest(request, env) {
       // email/idioma solo para cacusa-admin (manda el código de envío por correo).
       if (!match) return adminJson({ active: false }, 200);
       return adminJson({ active: true, email: String(match.email || ''), idioma: match.idioma === 'en' ? 'en' : 'es' }, 200);
+    }
+
+    // ── POST /internal/lovers/marketing-list — Worker-a-Worker (ORDER_INGEST_KEY), para la
+    // pestaña "✉ Marketing" de cacusa-admin (13 oct). Solo lo mínimo para mandar un correo:
+    // email, idioma y estado (para filtrar activas/pausadas/canceladas) — sin dirección,
+    // teléfono ni datos de pago. Las bajas de promociones las guarda cacusa-admin en su KV.
+    if (url.pathname === '/internal/lovers/marketing-list') {
+      if (request.method !== 'POST') return adminJson({ error: 'Method not allowed' }, 405);
+      if (!isInternalIngest(request, env)) return adminJson({ error: 'Unauthorized' }, 401);
+      if (!fbAuth) return adminJson({ error: 'FB_DB_SECRET no está configurado en el worker' }, 500);
+      let all;
+      try { all = await loadAllLovers(env); } catch (e) { return adminJson({ error: e.message }, 502); }
+      const subs = Object.values(all || {})
+        .filter(x => x && typeof x === 'object' && typeof x.email === 'string' && x.email.includes('@'))
+        .map(x => ({ email: x.email.trim().toLowerCase().slice(0, 100), idioma: idiomaDe(x), estado: String(x.estado_pago || '') }));
+      return adminJson({ subs }, 200);
     }
 
     // ── POST /internal/lovers/claim-pending — Worker-a-Worker, autenticado con

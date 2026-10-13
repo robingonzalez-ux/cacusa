@@ -80,7 +80,8 @@
  *
  * 4. Restaurar KV — por cada key en backup.kv.orders / .giftcards / .coupons /
  *    .webauthnCredentials / .leads / .loversShipIndex / .couponUsage / .uspsLabels /
- *    .loversLote / .loversShipInvoice / .loversInvoices (valores planos, misma condición):
+ *    .loversLote / .loversShipInvoice / .loversInvoices / .mktUnsub / .mktCampaigns
+ *    (valores planos, misma condición):
  *       env.CACUSA_KV.put(key, typeof value === 'string' ? value : JSON.stringify(value))
  *    (la key ya viene completa, ej. "order:1042" o "lead:cliente@correo.com" — poner
  *    tal cual). OJO (F19, 20 sep): loversShipIndex guarda un STRING plano (el código
@@ -233,8 +234,12 @@ async function getKvValue(env, key) {
 // mensual), `lovershipinvoice:` (pedidos de envío creados por pago, antes del lote) y
 // `loversinv:` (factura del ciclo ya creada). Sin ellos, después de una restauración la
 // tarea diaria volvería a crear cajas/facturas ya hechas — duplicados reales.
+//
+// 13 oct: marketing por correo — `mktunsub:` (quién se dio de baja; perderlo volvería a
+// mandarles promociones a personas que pidieron no recibirlas) y `mktcamp:` (campañas con
+// su progreso; sin él una campaña a medias se reenviaría desde el principio).
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, surcharges, markets] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
@@ -246,10 +251,12 @@ async function exportKv(env) {
     listKvPrefix(env, 'loverslote:'),
     listKvPrefix(env, 'lovershipinvoice:'),
     listKvPrefix(env, 'loversinv:'),
+    listKvPrefix(env, 'mktunsub:'),
+    listKvPrefix(env, 'mktcamp:', 10),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, surcharges, markets };
 }
 
 function backupKey(iso, trigger) {
