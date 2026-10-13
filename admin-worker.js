@@ -4214,7 +4214,9 @@ async function legacyOrdersByInvoices(env, invoiceIds, lote) {
   const seen = new Set();
   for (const inv of (Array.isArray(invoiceIds) ? invoiceIds : []).slice(0, 6)) {
     const id = String(inv || '').slice(0, 100);
-    if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) continue;
+    // Los ids de factura de Square traen dos puntos ("inv:0-ChC…"): sin ':' acá se
+    // descartaban todos y nunca se encontraba el pedido viejo (13 oct, duplicados reales).
+    if (!/^[A-Za-z0-9:_-]{1,100}$/.test(id)) continue;
     const orderId = await kvOrderIdFrom(env, 'lovershipinvoice:' + id);
     if (!orderId || seen.has(orderId)) continue;
     seen.add(orderId);

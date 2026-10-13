@@ -1407,7 +1407,8 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
     // uno, y quedaba SOLO ese — muchas veces sin dirección (nacieron de una ficha duplicada
     // creada con datos de Square) —, o se duplicaba (las anuales). Ahora cacusa-admin lo
     // ADOPTA o lo completa con la dirección de la ficha (invoiceIds + reconcile-orders).
-    const invoiceIds = [...new Set([s.square_invoice_id, ...Object.values(lotes || {})].filter(v => typeof v === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(v)))].slice(0, 6);
+    // Con ':' — los ids de factura de Square son "inv:0-ChC…" (sin él se filtraban todos).
+    const invoiceIds = [...new Set([s.square_invoice_id, ...Object.values(lotes || {})].filter(v => typeof v === 'string' && /^[A-Za-z0-9:_-]{1,100}$/.test(v)))].slice(0, 6);
     const fichaCliente = {
       nombre: s.nombre, apellido: s.apellido, telefono: s.telefono,
       direccion: s.direccion, apto: s.apto, ciudad: s.ciudad,
