@@ -411,6 +411,7 @@ export default {
       if (path.endsWith('/order/manual'))   return await handleOrderManual(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/usps-label')) return await handleUspsLabel(body, env, allowOrigin, session, ctx);
+      if (path.endsWith('/usps/rate-check')) return await handleUspsRateCheck(body, env, allowOrigin);
       if (path.endsWith('/order/label'))    return await handleOrderLabelGet(body, env, allowOrigin);
       if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -4020,7 +4021,60 @@ function uspsLabelCost(label) {
     .filter(x => x.name || x.price != null);
   if (postage == null && !extras.length) return null;
   const total = Math.round(((postage || 0) + extras.reduce((a, x) => a + (x.price || 0), 0)) * 100) / 100;
-  return { postage, extras, total, zone: label && label.zone ? String(label.zone).slice(0, 4) : '' };
+  return { postage, extras, total, zone: label && label.zone ? String(label.zone).slice(0, 4) : '', sku: label && label.SKU ? String(label.SKU).slice(0, 40) : '' };
+}
+
+// POST /usps/rate-check — cotiza en PRODUCCIÓN, sin comprar ni cobrar, cuánto costaría la guía de
+// un pedido: precio COMERCIAL para nuestra cuenta EPS y RETAIL para comparar (16 oct: en TEM la
+// guía salía $8.41 y Click-N-Ship cotizaba $5.65 comercial para el mismo envío). Usa la API de
+// Precios (Domestic Prices v3, cuerpo igual al ejemplo oficial de USPS/api-examples): no toca
+// Payments ni Labels. Pide un OAuth de producción sin caché y no toca el caché de TEM.
+// Gasta ~3 llamadas (1 OAuth + 2 precios).
+async function handleUspsRateCheck(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) return err('Faltan las credenciales de USPS', 500, origin);
+  const order = body.orderId != null ? await orderGet(env, body.orderId) : null;
+  if (!order) return err('Pedido no encontrado', 404, origin);
+  const cliente = order.cliente || {};
+  const { pais: paisUpper } = orderCountryParts(cliente);
+  if (!US_COUNTRY_VALUES.includes(paisUpper)) return err('La cotización de USPS es solo para pedidos a Estados Unidos.', 400, origin);
+  const destZip = String(cliente.zip || '').trim().split('-')[0];
+  if (!/^\d{5}$/.test(destZip)) return err('Al pedido le falta un ZIP válido (5 dígitos).', 400, origin);
+  let fromZip = '';
+  try { fromZip = String(JSON.parse(env.USPS_FROM_ADDRESS || '{}').ZIPCode || '').trim().split('-')[0]; } catch (_) {}
+  if (!/^\d{5}$/.test(fromZip)) return err('USPS_FROM_ADDRESS no tiene un ZIP válido.', 500, origin);
+  const weightOz = Number(body.weightOz), lengthIn = Number(body.lengthIn), widthIn = Number(body.widthIn), heightIn = Number(body.heightIn);
+  if (!(weightOz > 0 && lengthIn > 0 && widthIn > 0 && heightIn > 0)) return err('Peso y las 3 dimensiones son obligatorios.', 400, origin);
+
+  const base = 'https://apis.usps.com';
+  const tr = await fetch(`${base}/oauth2/v3/token`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
+  });
+  if (!tr.ok) return err(`USPS OAuth (producción) falló (${tr.status}): ${(await tr.text()).slice(0, 500)}`, 502, origin);
+  const token = (await tr.json()).access_token;
+  const ingredients = {
+    originZIPCode: fromZip, destinationZIPCode: destZip,
+    weight: Math.round((weightOz / 16) * 10000) / 10000, length: lengthIn, width: widthIn, height: heightIn,
+    mailClass: 'USPS_GROUND_ADVANTAGE', processingCategory: 'MACHINABLE',
+    destinationEntryFacilityType: 'NONE', rateIndicator: 'SP',
+    mailingDate: new Date().toISOString().slice(0, 10),
+  };
+  const quote = async (extra) => {
+    const r = await fetch(`${base}/prices/v3/base-rates/search`, {
+      method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...ingredients, ...extra }),
+    });
+    const text = await r.text();
+    if (!r.ok) return { error: `(${r.status}) ${text.slice(0, 800)}` };
+    let d = {}; try { d = JSON.parse(text); } catch (_) {}
+    const rate = (Array.isArray(d.rates) && d.rates[0]) || {};
+    const price = Number(d.totalBasePrice ?? rate.price);
+    return { price: Number.isFinite(price) ? price : null, zone: rate.zone || '', sku: rate.SKU || '', description: rate.description || '', priceType: rate.priceType || '' };
+  };
+  const commercial = await quote({ priceType: 'COMMERCIAL', accountType: 'EPS', accountNumber: env.USPS_EPS_ACCOUNT || undefined });
+  const retail = await quote({ priceType: 'RETAIL' });
+  return ok({ ok: true, commercial, retail, ingredients }, origin);
 }
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
