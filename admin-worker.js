@@ -4010,6 +4010,18 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
   if (!r.ok) throw uspsError(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 1500)}`, r.status);
   return await r.json();
 }
+// Desglose del costo que devuelve Labels v3: postage (franqueo), extraServices [{name, price}],
+// zone. Total = franqueo + extras. null si USPS no mandó precios.
+function uspsLabelCost(label) {
+  const num = v => { const n = Number(v); return Number.isFinite(n) ? Math.round(n * 100) / 100 : null; };
+  const postage = num(label && label.postage);
+  const extras = (Array.isArray(label && label.extraServices) ? label.extraServices : [])
+    .map(x => ({ name: String((x && x.name) || '').slice(0, 80), price: num(x && x.price) }))
+    .filter(x => x.name || x.price != null);
+  if (postage == null && !extras.length) return null;
+  const total = Math.round(((postage || 0) + extras.reduce((a, x) => a + (x.price || 0), 0)) * 100) / 100;
+  return { postage, extras, total, zone: label && label.zone ? String(label.zone).slice(0, 4) : '' };
+}
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
   const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cacusa-usps-label:' + String(orderId))));
@@ -4147,8 +4159,11 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     // que no existe. Antes se guardaba en el pedido y se le mandaba a la clienta el correo de
     // "tu pedido fue enviado" con ese número (pasó con Rosa Zarama). Ahora solo se devuelve
     // el PDF para revisarlo: no toca el pedido, no cuenta para la recolección, no manda correo.
+    // Desglose de lo que cobra USPS (16 oct): franqueo, cada servicio extra con su precio y la
+    // zona — para comparar con Click-N-Ship y ver si el seguro se cobra aparte.
+    const costo = uspsLabelCost(label);
     if (env.USPS_ENV !== 'prod') {
-      return ok({ ok: true, test: true, tracking: label.trackingNumber || '', labelBase64: label.labelImage || '', labelFormat: 'PDF' }, origin);
+      return ok({ ok: true, test: true, tracking: label.trackingNumber || '', labelBase64: label.labelImage || '', labelFormat: 'PDF', costo }, origin);
     }
     const wasReprint = isReprint && !!order.tracking;
     const prevTracking = order.tracking || '';
@@ -4166,11 +4181,12 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     order.labelGeneratedAt = new Date().toISOString();
     order.labelWeightOz = weightOz;
     order.labelEnv = 'prod';
+    if (costo) order.labelCost = costo;
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
     // En reimpresión solo se avisa a la clienta si cambió el número de guía.
     if (ctx && (!wasReprint || order.tracking !== prevTracking)) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
-    return ok({ ok: true, tracking: order.tracking, labelBase64, labelFormat: order.labelFormat, labelStored: true }, origin);
+    return ok({ ok: true, tracking: order.tracking, labelBase64, labelFormat: order.labelFormat, labelStored: true, costo }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
     return err('No se pudo generar la guía: ' + e.message, 502, origin);
