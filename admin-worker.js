@@ -3841,6 +3841,29 @@ async function uspsOAuthToken(env) {
 //   - El rol LABEL_OWNER exige CRID+MID+manifestMID; el rol PAYER exige
 //     CRID+accountType('EPS')+accountNumber — sin estos datos reales de la cuenta
 //     USPS devuelve 400. No se pueden inventar, son específicos de cada cuenta.
+// Resumen SEGURO de lo que el OAuth token (JWT) dice de la cuenta: solo CRID, cuentas de
+// pago, roles y scopes, comparado con lo que mandamos. Nunca devuelve el token ni sus
+// firmas. Si el token no es un JWT o no trae esos campos, lo dice en vez de fallar.
+function uspsTokenClaimsSummary(oauthToken, env) {
+  try {
+    const part = String(oauthToken || '').split('.')[1];
+    if (!part) return ' | Token de USPS: no es un JWT legible.';
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), c => c.charCodeAt(0))));
+    const list = v => Array.isArray(v) ? v.map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || x.CRID || x.crid || JSON.stringify(x)) : x).join(',') : (v == null ? '—' : String(v));
+    const pick = (...k) => { for (const x of k) if (claims[x] != null && claims[x] !== '') return claims[x]; return null; };
+    const parts = [
+      `crid=${list(pick('crid', 'CRID', 'crids'))}`,
+      `cuentas_de_pago=${list(pick('payment_accounts', 'paymentAccounts', 'accounts'))}`,
+      `roles=${list(pick('roles'))}`,
+      `scope=${String(pick('scope', 'scopes') || '—').slice(0, 120)}`,
+      `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${env.USPS_ENV === 'prod' ? 'prod' : 'tem'}`,
+    ];
+    return ` | Datos del token de USPS: ${parts.join(' ; ')}`.slice(0, 600);
+  } catch (e) {
+    return ' | Token de USPS: no se pudo leer.';
+  }
+}
 async function uspsPaymentToken(env, oauthToken) {
   const required = ['USPS_CRID', 'USPS_MID', 'USPS_MANIFEST_MID', 'USPS_EPS_ACCOUNT'];
   const missing = required.filter((k) => !env[k]);
@@ -3857,7 +3880,15 @@ async function uspsPaymentToken(env, oauthToken) {
       ],
     }),
   });
-  if (!r.ok) throw uspsError(`USPS payment authorization falló (${r.status}): ${(await r.text()).slice(0, 200)}`, r.status);
+  if (!r.ok) {
+    const body = (await r.text()).slice(0, 200);
+    // 403 = USPS no autoriza esa combinación CRID/MID/EPS para ESTAS credenciales. El OAuth
+    // token es un JWT que trae a qué CRID y a qué cuentas de pago da acceso USPS: mostrarlo
+    // (solo esos datos, jamás el token) deja ver de inmediato si el problema es lo que pedimos
+    // o lo que USPS tiene registrado (13-16 oct: 403 repetido aun con CRID/MID/EPS correctos).
+    const info = r.status === 403 ? uspsTokenClaimsSummary(oauthToken, env) : '';
+    throw uspsError(`USPS payment authorization falló (${r.status}): ${body}${info}`, r.status);
+  }
   const d = await r.json();
   if (cacheKey && d.paymentAuthorizationToken) {
     await env.CACUSA_KV.put(cacheKey, d.paymentAuthorizationToken, { expirationTtl: 27000 });
