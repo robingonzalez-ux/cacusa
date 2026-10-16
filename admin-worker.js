@@ -3963,12 +3963,23 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
     headers: {
       Authorization: `Bearer ${oauthToken}`,
       'X-Payment-Authorization-Token': paymentToken,
-      'X-Idempotency-Key': String(orderId),
+      // 16 oct: USPS exige un UUID (antes iba el número de pedido → 400 "not a valid UUID").
+      // Sale del pedido, siempre el mismo: un reintento del mismo pedido no compra otra guía.
+      'X-Idempotency-Key': await uspsIdempotencyUuid(orderId),
       Accept: 'application/vnd.usps.labels+json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      imageInfo: { imageType: 'PDF', labelType: 'SHIPPING_LABEL_101' },
+      // 16 oct: mismo bloque que el ejemplo oficial de USPS (USPS/api-examples, README,
+      // "Domestic Label Request"); 'SHIPPING_LABEL_101' no es un labelType válido → 400.
+      imageInfo: {
+        imageType: 'PDF',
+        labelType: '4X6LABEL',
+        receiptOption: 'NONE',
+        suppressPostage: false,
+        suppressMailDate: false,
+        returnLabel: false,
+      },
       toAddress,
       fromAddress,
       packageDescription: {
@@ -3982,13 +3993,23 @@ async function uspsCreateLabel(env, { oauthToken, paymentToken, toAddress, weigh
         processingCategory: 'MACHINABLE',
         rateIndicator: 'SP',
         mailingDate: new Date().toISOString().slice(0, 10),
+        destinationEntryFacilityType: 'NONE',
         extraServices: [USPS_INSURANCE_EXTRA_SERVICE],
         packageOptions: { packageValue: USPS_INSURANCE_VALUE_USD },
       },
     }),
   });
-  if (!r.ok) throw uspsError(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 300)}`, r.status);
+  // 1500: los 400 de validación de USPS listan cada campo con problema; 300 cortaba el motivo.
+  if (!r.ok) throw uspsError(`USPS label falló (${r.status}): ${(await r.text()).slice(0, 1500)}`, r.status);
   return await r.json();
+}
+// UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
+async function uspsIdempotencyUuid(orderId) {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cacusa-usps-label:' + String(orderId))));
+  h[6] = (h[6] & 0x0f) | 0x40;
+  h[8] = (h[8] & 0x3f) | 0x80;
+  const x = [...h.slice(0, 16)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20, 32)}`;
 }
 
 // ── Dirección para USPS (12 oct, auditoría) ────────────────────────────────────
