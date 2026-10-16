@@ -4072,7 +4072,11 @@ async function handleUspsRateCheck(body, env, origin) {
     const price = Number(d.totalBasePrice ?? rate.price);
     return { price: Number.isFinite(price) ? price : null, zone: rate.zone || '', sku: rate.SKU || '', description: rate.description || '', priceType: rate.priceType || '' };
   };
-  const commercial = await quote({ priceType: 'COMMERCIAL', accountType: 'EPS', accountNumber: env.USPS_EPS_ACCOUNT || undefined });
+  // Sin accountType/accountNumber: con ellos la API lo toma como búsqueda de precio de
+  // CONTRATO (tarifas negociadas) y responde 403 "requested contract information is not
+  // authorized" si la cuenta no tiene contrato (16 oct). Sin ellos devuelve el precio
+  // comercial publicado, el mismo de Click-N-Ship.
+  const commercial = await quote({ priceType: 'COMMERCIAL' });
   const retail = await quote({ priceType: 'RETAIL' });
   return ok({ ok: true, commercial, retail, ingredients }, origin);
 }
