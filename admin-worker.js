@@ -4072,13 +4072,30 @@ async function handleUspsRateCheck(body, env, origin) {
     const price = Number(d.totalBasePrice ?? rate.price);
     return { price: Number.isFinite(price) ? price : null, zone: rate.zone || '', sku: rate.SKU || '', description: rate.description || '', priceType: rate.priceType || '' };
   };
-  // Sin accountType/accountNumber: con ellos la API lo toma como búsqueda de precio de
-  // CONTRATO (tarifas negociadas) y responde 403 "requested contract information is not
-  // authorized" si la cuenta no tiene contrato (16 oct). Sin ellos devuelve el precio
-  // comercial publicado, el mismo de Click-N-Ship.
-  const commercial = await quote({ priceType: 'COMMERCIAL' });
+  // Comercial (16 oct): con nuestra EPS dio 403 "requested contract information is not
+  // authorized"; se prueba primero sin datos de cuenta (precio comercial publicado) y, si
+  // también falla, con cada cuenta de pago que traiga el token de producción. Cada intento
+  // queda listado con su etiqueta, para ver exactamente qué acepta USPS.
+  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod');
+  let claimAccounts = [];
+  try {
+    const part = String(token || '').split('.')[1] || '';
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    const c = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), ch => ch.charCodeAt(0))));
+    claimAccounts = (Array.isArray(c.payment_accounts) ? c.payment_accounts : [])
+      .map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || '') : x)
+      .map(x => String(x || '').replace(/\D/g, '')).filter(Boolean).slice(0, 2);
+  } catch (_) {}
+  const intentos = [];
+  let commercial = await quote({ priceType: 'COMMERCIAL' });
+  intentos.push({ como: 'comercial sin cuenta', ...commercial });
+  for (const acct of claimAccounts) {
+    if (commercial.price != null) break;
+    commercial = await quote({ priceType: 'COMMERCIAL', accountType: 'EPS', accountNumber: acct });
+    intentos.push({ como: `comercial con EPS ${acct}`, ...commercial });
+  }
   const retail = await quote({ priceType: 'RETAIL' });
-  return ok({ ok: true, commercial, retail, ingredients }, origin);
+  return ok({ ok: true, version: 'rate-check-3', commercial, retail, intentos, claims, ingredients }, origin);
 }
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
