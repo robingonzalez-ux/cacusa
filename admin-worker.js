@@ -1332,6 +1332,13 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
     }
     if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
   }
+  // Borrar el tracking a mano borra también la guía guardada: si no, quedaba el PDF viejo
+  // (ej. la guía de prueba de Rosa Zarama, 16 oct) y contaba para la recolección del día.
+  if ('tracking' in patch && !String(order.tracking || '').trim() && (order.labelStored || order.labelGeneratedAt)) {
+    await env.CACUSA_KV.delete(labelKey(id)).catch(() => {});
+    delete order.labelStored; delete order.labelFormat; delete order.labelGeneratedAt;
+    delete order.labelWeightOz; delete order.labelEnv; delete order.labelBase64;
+  }
   order.updatedAt = new Date().toISOString();
   order.updatedBy = session.user;
 
@@ -4136,6 +4143,13 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
         phone: phone10 || undefined,
       },
     }));
+    // 16 oct: en TEM (pruebas) USPS devuelve una guía "SAMPLE - DO NOT MAIL" con un tracking
+    // que no existe. Antes se guardaba en el pedido y se le mandaba a la clienta el correo de
+    // "tu pedido fue enviado" con ese número (pasó con Rosa Zarama). Ahora solo se devuelve
+    // el PDF para revisarlo: no toca el pedido, no cuenta para la recolección, no manda correo.
+    if (env.USPS_ENV !== 'prod') {
+      return ok({ ok: true, test: true, tracking: label.trackingNumber || '', labelBase64: label.labelImage || '', labelFormat: 'PDF' }, origin);
+    }
     const wasReprint = isReprint && !!order.tracking;
     const prevTracking = order.tracking || '';
     order.tracking = label.trackingNumber || '';
@@ -4151,6 +4165,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     // HOY y cuánto pesan en total, sin tener que adivinar ni volver a leer nada más.
     order.labelGeneratedAt = new Date().toISOString();
     order.labelWeightOz = weightOz;
+    order.labelEnv = 'prod';
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
     // En reimpresión solo se avisa a la clienta si cambió el número de guía.
