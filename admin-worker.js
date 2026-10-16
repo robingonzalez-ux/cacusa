@@ -3794,10 +3794,23 @@ async function uspsClearTokens(env) {
 }
 // Corre fn(oauthToken, paymentToken) con tokens del caché; si USPS responde 401 (token
 // revocado antes de tiempo), limpia el caché y reintenta UNA vez con tokens nuevos.
+// 16 oct: lo mismo si la autorización de pago da 403 con un OAuth token del caché — los
+// "claims" del token (CRID, cuentas de pago) se fijan al emitirlo; después de "Refresh
+// Claims" en el Customer Onboarding Portal, un token guardado (hasta 8 h) seguiría sin
+// ellos. Con un token recién pedido no se reintenta (un 403 ahí es real).
 async function uspsWithTokens(env, needPayment, fn) {
   for (let attempt = 0; attempt < 2; attempt++) {
+    const cached = attempt === 0 && env.CACUSA_KV ? !!(await env.CACUSA_KV.get(await uspsTokenKey(env, 'oauth'))) : false;
     const oauthToken = await uspsOAuthToken(env);
-    const paymentToken = needPayment ? await uspsPaymentToken(env, oauthToken) : null;
+    let paymentToken = null;
+    if (needPayment) {
+      try {
+        paymentToken = await uspsPaymentToken(env, oauthToken);
+      } catch (e) {
+        if (attempt === 0 && cached && e && e.status === 403) { await uspsClearTokens(env); continue; }
+        throw e;
+      }
+    }
     try {
       return await fn(oauthToken, paymentToken);
     } catch (e) {
