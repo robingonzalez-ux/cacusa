@@ -412,6 +412,7 @@ export default {
       if (path.endsWith('/order/update'))   return await handleOrderUpdate(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/order/usps-label')) return await handleUspsLabel(body, env, allowOrigin, session, ctx);
       if (path.endsWith('/usps/rate-check')) return await handleUspsRateCheck(body, env, allowOrigin);
+      if (path.endsWith('/usps/prod-payment-check')) return await handleUspsProdPaymentCheck(env, allowOrigin);
       if (path.endsWith('/order/label'))    return await handleOrderLabelGet(body, env, allowOrigin);
       if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -4022,6 +4023,37 @@ function uspsLabelCost(label) {
   if (postage == null && !extras.length) return null;
   const total = Math.round(((postage || 0) + extras.reduce((a, x) => a + (x.price || 0), 0)) * 100) / 100;
   return { postage, extras, total, zone: label && label.zone ? String(label.zone).slice(0, 4) : '', sku: label && label.SKU ? String(label.SKU).slice(0, 40) : '' };
+}
+
+// POST /usps/prod-payment-check — prueba GRATIS si producción está lista para comprar guías
+// (16 oct): pide un OAuth de producción y una autorización de pago de producción, SIN crear
+// ninguna guía. La autorización no cobra nada; lo que cobra es crear la guía (/labels), que acá
+// nunca se llama. No usa ni escribe el caché de tokens. Devuelve si pasó y, si no, el error
+// completo y lo que trae el token de producción (CRID, cuentas de pago), sin el token.
+async function handleUspsProdPaymentCheck(env, origin) {
+  const required = ['USPS_CONSUMER_KEY', 'USPS_CONSUMER_SECRET', 'USPS_CRID', 'USPS_MID', 'USPS_EPS_ACCOUNT'];
+  const missing = required.filter(k => !env[k]);
+  if (missing.length) return err(`Faltan variables de USPS: ${missing.join(', ')}`, 500, origin);
+  const base = 'https://apis.usps.com';
+  const tr = await fetch(`${base}/oauth2/v3/token`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
+  });
+  if (!tr.ok) return ok({ ok: false, paso: 'oauth', error: `(${tr.status}) ${(await tr.text()).slice(0, 800)}` }, origin);
+  const token = (await tr.json()).access_token;
+  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod');
+  const pr = await fetch(`${base}/payments/v3/payment-authorization`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ roles: [
+      { roleName: 'LABEL_OWNER', CRID: env.USPS_CRID, MID: env.USPS_MID, manifestMID: env.USPS_MANIFEST_MID || env.USPS_MID },
+      { roleName: 'PAYER', CRID: env.USPS_CRID, accountType: 'EPS', accountNumber: env.USPS_EPS_ACCOUNT },
+    ] }),
+  });
+  const text = await pr.text();
+  if (!pr.ok) return ok({ ok: false, paso: 'pago', status: pr.status, error: text.slice(0, 1000), claims }, origin);
+  let autorizado = false;
+  try { autorizado = !!JSON.parse(text).paymentAuthorizationToken; } catch (_) {}
+  return ok({ ok: autorizado, paso: 'pago', claims, eps: env.USPS_EPS_ACCOUNT }, origin);
 }
 
 // POST /usps/rate-check — cotiza en PRODUCCIÓN, sin comprar ni cobrar, cuánto costaría la guía de
