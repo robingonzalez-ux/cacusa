@@ -3844,10 +3844,10 @@ async function uspsOAuthToken(env) {
 // Resumen SEGURO de lo que el OAuth token (JWT) dice de la cuenta: solo CRID, cuentas de
 // pago, roles y scopes, comparado con lo que mandamos. Nunca devuelve el token ni sus
 // firmas. Si el token no es un JWT o no trae esos campos, lo dice en vez de fallar.
-function uspsTokenClaimsSummary(oauthToken, env) {
+function uspsTokenClaimsSummary(oauthToken, env, etiqueta = 'Datos del token de USPS', envLabel) {
   try {
     const part = String(oauthToken || '').split('.')[1];
-    if (!part) return ' | Token de USPS: no es un JWT legible.';
+    if (!part) return ` | ${etiqueta}: el token no es un JWT legible.`;
     const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
     const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), c => c.charCodeAt(0))));
     const list = v => Array.isArray(v) ? v.map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || x.CRID || x.crid || JSON.stringify(x)) : x).join(',') : (v == null ? '—' : String(v));
@@ -3860,11 +3860,13 @@ function uspsTokenClaimsSummary(oauthToken, env) {
       // Solo los NOMBRES de los campos del token (sin valores), para ver si trae el CRID o las
       // cuentas de pago bajo otro nombre que los que buscamos arriba.
       `campos=${Object.keys(claims).slice(0, 30).join(',')}`,
-      `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${env.USPS_ENV === 'prod' ? 'prod' : 'tem'}`,
+      `empresa=${list(pick('company_name'))}`,
+      `mail_owners=${list(pick('mail_owners'))}`,
+      `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${envLabel || (env.USPS_ENV === 'prod' ? 'prod' : 'tem')}`,
     ];
-    return ` | Datos del token de USPS: ${parts.join(' ; ')}`.slice(0, 1200);
+    return ` | ${etiqueta}: ${parts.join(' ; ')}`.slice(0, 1400);
   } catch (e) {
-    return ' | Token de USPS: no se pudo leer.';
+    return ` | ${etiqueta}: no se pudo leer el token.`;
   }
 }
 async function uspsPaymentToken(env, oauthToken) {
@@ -3889,7 +3891,25 @@ async function uspsPaymentToken(env, oauthToken) {
     // token es un JWT que trae a qué CRID y a qué cuentas de pago da acceso USPS: mostrarlo
     // (solo esos datos, jamás el token) deja ver de inmediato si el problema es lo que pedimos
     // o lo que USPS tiene registrado (13-16 oct: 403 repetido aun con CRID/MID/EPS correctos).
-    const info = r.status === 403 ? uspsTokenClaimsSummary(oauthToken, env) : '';
+    let info = r.status === 403 ? uspsTokenClaimsSummary(oauthToken, env) : '';
+    // Diagnóstico temporal (16 oct): desde TEM, pide TAMBIÉN un OAuth token de producción y
+    // muestra qué CRID/cuentas de pago trae. Solo es un OAuth (client_credentials): no autoriza
+    // pagos ni compra guías, no se guarda en caché ni se usa para nada más. Quitar cuando
+    // USPS resuelva el 403.
+    if (r.status === 403 && env.USPS_ENV !== 'prod') {
+      try {
+        const pr = await fetch('https://apis.usps.com/oauth2/v3/token', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
+        });
+        if (pr.ok) {
+          const pd = await pr.json();
+          info += uspsTokenClaimsSummary(pd.access_token, env, 'PRODUCCIÓN (solo lectura del token)', 'prod');
+        } else {
+          info += ` | PRODUCCIÓN: el servidor de USPS respondió ${pr.status} al pedir un token con estas credenciales.`;
+        }
+      } catch (e) { info += ' | PRODUCCIÓN: no se pudo consultar.'; }
+    }
     throw uspsError(`USPS payment authorization falló (${r.status}): ${body}${info}`, r.status);
   }
   const d = await r.json();
