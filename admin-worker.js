@@ -3856,10 +3856,13 @@ function uspsTokenClaimsSummary(oauthToken, env) {
       `crid=${list(pick('crid', 'CRID', 'crids'))}`,
       `cuentas_de_pago=${list(pick('payment_accounts', 'paymentAccounts', 'accounts'))}`,
       `roles=${list(pick('roles'))}`,
-      `scope=${String(pick('scope', 'scopes') || '—').slice(0, 120)}`,
+      `scope=${String(pick('scope', 'scopes') || '—').slice(0, 400)}`,
+      // Solo los NOMBRES de los campos del token (sin valores), para ver si trae el CRID o las
+      // cuentas de pago bajo otro nombre que los que buscamos arriba.
+      `campos=${Object.keys(claims).slice(0, 30).join(',')}`,
       `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${env.USPS_ENV === 'prod' ? 'prod' : 'tem'}`,
     ];
-    return ` | Datos del token de USPS: ${parts.join(' ; ')}`.slice(0, 600);
+    return ` | Datos del token de USPS: ${parts.join(' ; ')}`.slice(0, 1200);
   } catch (e) {
     return ' | Token de USPS: no se pudo leer.';
   }
