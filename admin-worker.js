@@ -1309,6 +1309,19 @@ async function handleOrderManual(body, env, origin, session, ctx) {
 // giftcard de un pedido ya cerrado.
 const ORDER_PATCH_FIELDS = new Set(['estado', 'tracking', 'carrier']);
 const ORDER_CLIENTE_PATCH_FIELDS = ['nombre', 'apellido', 'email', 'telefono', 'direccion', 'apto', 'ciudad', 'estado', 'zip', 'pais', 'notas'];
+// Correo de envío cuando el tracking se pega a mano (guía comprada en Click-N-Ship): estado
+// "Enviado", tracking presente, transportista USPS (o vacío con un número con formato USPS:
+// 20–22 dígitos que empiezan con 9), email válido y que ese número no se haya avisado ya.
+const USPS_TRACKING_RE = /^9\d{19,21}$/;
+function shouldSendManualShipEmail(order) {
+  const tracking = String((order && order.tracking) || '').replace(/\s+/g, '');
+  if (!tracking || order.estado !== 'Enviado') return false;
+  const carrier = String(order.carrier || '').trim().toUpperCase();
+  if (!(carrier === 'USPS' || (!carrier && USPS_TRACKING_RE.test(tracking)))) return false;
+  if (!isValidEmail((order.cliente && order.cliente.email) || '')) return false;
+  return String(order.shipEmailSentFor || '').replace(/\s+/g, '') !== tracking;
+}
+
 async function handleOrderUpdate(body, env, origin, session, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const id = body.id;
@@ -1341,11 +1354,17 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
     delete order.labelStored; delete order.labelFormat; delete order.labelGeneratedAt;
     delete order.labelWeightOz; delete order.labelEnv; delete order.labelBase64;
   }
+  // 18 oct: las guías se compran en Click-N-Ship y el tracking se pega a mano. Al quedar el
+  // pedido "Enviado" con un tracking de USPS, la clienta recibe el mismo correo de envío que
+  // con las guías de la API — una sola vez por número (shipEmailSentFor).
+  const sendShipEmail = shouldSendManualShipEmail(order);
+  if (sendShipEmail) order.shipEmailSentFor = String(order.tracking).trim();
   order.updatedAt = new Date().toISOString();
   order.updatedBy = session.user;
 
   await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  if (sendShipEmail && ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de envío (tracking manual) falló:', e.message)));
   return ok({ ok: true, order }, origin);
 }
 
@@ -3635,7 +3654,8 @@ async function sendShippingConfirmationEmail(order, env) {
   const email = (order.cliente && order.cliente.email) || '';
   if (!isValidEmail(email) || !order.tracking) return;
   const lang = (order.cliente && order.cliente.idioma) === 'en' ? 'en' : 'es';
-  const trackingUrl = `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(order.tracking)}`;
+  // Sin espacios: Click-N-Ship muestra el número en bloques ("9234 6900 …") y se pega así.
+  const trackingUrl = `https://tools.usps.com/go/TrackConfirmAction?tLabels=${encodeURIComponent(String(order.tracking).replace(/\s+/g, ''))}`;
   try {
     await sendGmail(env, { to: email, ...shippingConfirmationEmailContent(order, trackingUrl, lang) });
   } catch (e) {
@@ -4289,10 +4309,13 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     order.labelWeightOz = weightOz;
     order.labelEnv = 'prod';
     if (costo) order.labelCost = costo;
+    // En reimpresión solo se avisa a la clienta si cambió el número de guía. shipEmailSentFor:
+    // al pasar después el pedido a "Enviado" no se le vuelve a mandar (ver handleOrderUpdate).
+    const avisar = !!ctx && (!wasReprint || order.tracking !== prevTracking);
+    if (avisar) order.shipEmailSentFor = order.tracking;
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
-    // En reimpresión solo se avisa a la clienta si cambió el número de guía.
-    if (ctx && (!wasReprint || order.tracking !== prevTracking)) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
+    if (avisar) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
     return ok({ ok: true, tracking: order.tracking, labelBase64, labelFormat: order.labelFormat, labelStored: true, costo }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
@@ -4358,9 +4381,19 @@ async function uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, 
 // cartero pasa una vez por la dirección y se lleva TODO lo que esté listo ese día), así
 // que la idempotencia es por FECHA, no por pedido: apretar el botón 2 veces el mismo
 // día devuelve la misma confirmación en vez de pedir 2 recolecciones reales.
+// Fecha YYYY-MM-DD en hora del Este (donde está el remitente): en UTC, desde las 8 p.m. ET ya
+// era "mañana" y el botón buscaba las guías de otro día (18 oct).
+function easternDate(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
 async function handleUspsSchedulePickup(body, env, origin, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
-  const today = new Date().toISOString().slice(0, 10);
+  // En modo de pruebas las guías del panel no se guardan y la API de pruebas no pide una
+  // recolección real: mientras se compren en Click-N-Ship, la recolección se pide allá.
+  if (env.USPS_ENV !== 'prod') {
+    return err('Las guías se están comprando en Click-N-Ship: programa la recolección allá (o en usps.com → Schedule a Pickup).', 400, origin);
+  }
+  const today = easternDate();
   const kvKey = `uspspickup:${today}`;
   const existingRaw = await env.CACUSA_KV.get(kvKey);
   if (existingRaw) {
@@ -4370,7 +4403,11 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
   }
 
   const orders = await listAllOrders(env);
-  const todays = orders.filter(o => o.carrier === 'USPS' && String(o.labelGeneratedAt || '').slice(0, 10) === today);
+  const todays = orders.filter(o => {
+    if (o.carrier !== 'USPS' || !o.labelGeneratedAt) return false;
+    const d = new Date(o.labelGeneratedAt);
+    return !Number.isNaN(d.getTime()) && easternDate(d) === today;
+  });
   if (!todays.length) {
     return err('No se generó ninguna guía USPS hoy — no hay nada que recoger.', 400, origin);
   }
