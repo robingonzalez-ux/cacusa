@@ -369,6 +369,10 @@ nueva, los 47 escenarios de prueba locales): ver el repo privado.
   productos/imágenes mientras tanto (pasa seguido). Si hay commits nuevos
   y no tocan los mismos archivos, rebase/merge antes de pushear.
 - Nunca commitear a `main` los 4 archivos de Workers — van a `workers-src`.
+- **Nunca datos de clientas reales en este repo** (ninguna rama) ni en
+  `cacusa-admin`: ni nombres, correos, teléfonos o direcciones en código,
+  comentarios o mensajes de commit. Un caso real se describe genérico
+  ("caso real, 12 oct", "una suscriptora"); el detalle va al repo privado.
 - Verificación antes de pushear HTML/JS: extraer los `<script>` no-JSON y
   correr `node --check`; para el admin panel (JSX vía Babel Standalone)
   usar un proyecto scratch con `@babel/core` + `@babel/preset-react`.
