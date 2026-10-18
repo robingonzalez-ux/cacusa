@@ -280,7 +280,7 @@ async function verifySignature(request, body, sigKey) {
 // esos 4 caminos corren cerca uno del otro (típico — Square puede mandar
 // subscription.created e invoice.payment_made casi al mismo tiempo), ambos
 // pueden creer "no existe" y crear su propio registro — resultado: 2 o 3 copias
-// de la misma suscriptora, como pasó con [clienta] el 10 de septiembre.
+// de la misma suscriptora, como pasó con una suscriptora el 10 de septiembre.
 //
 // La key ahora se calcula siempre igual, directo del email, en los 4 caminos —
 // así todos apuntan al MISMO nodo de Firebase sin necesidad de preguntar nada
@@ -313,7 +313,7 @@ function dedupeConflict(a, b) {
 // teléfono (últimos 7 dígitos) + primer nombre del cliente de Square — solo si hay UNA
 // ficha no cancelada que coincida (2 personas de la misma familia pueden compartir
 // teléfono: en ese caso no se adivina). Así una renovación con otro correo ya no crea
-// una ficha duplicada (caso real: [clienta]).
+// una ficha duplicada (caso real, oct).
 const primerNombre = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().split(/\s+/)[0] || '';
 async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, customerId, phone, nombre }) {
   let all = null;
@@ -342,7 +342,7 @@ async function resolveSubscriber(dbUrl, fbAuth, { email, subscriptionId, custome
   const existing = await getSubscriberByKey(key, dbUrl, fbAuth);
   // Fichas de antes del 12 sep: el formulario las guardaba con un identificador ALEATORIO
   // de Firebase, no en la llave del correo — buscarlas solo por la llave no las encuentra
-  // y el pago creaba otra ficha (caso real: [clienta], mismo correo en las
+  // y el pago creaba otra ficha (caso real de una suscriptora, mismo correo en las
   // 2). Se busca también por el email guardado en cada ficha.
   if (!existing) {
     const mismoCorreo = Object.entries(await loadAll()).filter(([k, v]) => v && typeof v === 'object' && validId(k, true)
@@ -468,7 +468,7 @@ function addPeriodIso(iso, periodo) {
   return new Date(Date.UTC(y, m, Math.min(day, last))).toISOString().slice(0, 10);
 }
 function planPeriodo(plan) { return /anual|annual/i.test(String(plan || '')) ? 'anual' : 'mensual'; }
-// ¿Una suscripción 'activo' tiene el pago al día? (12 oct, caso [clienta]: "Activa" en el
+// ¿Una suscripción 'activo' tiene el pago al día? (caso real del 12 oct: "Activa" en el
 // panel sin ningún pago registrado — el estado guardado no lo decía). Misma regla que el
 // panel (pagoAlDia en cacusa-admin). No cambia el estado: lo marca para revisar.
 //  - manual: hasta `vence`;  - factura: hasta `vence` + 7 días de gracia;
@@ -758,7 +758,7 @@ async function runLoversBilling(env, { all: preloaded, reserve = 0 } = {}) {
 // Fecha REAL del pago (11 oct): el webhook llega el mismo día del cobro, pero un pago
 // recuperado por la sincronización con Square se procesa días después — antes se
 // anotaba la fecha del registro como ultimo_pago y eso sacaba a la clienta del lote
-// que le tocaba (caso real: [clienta], anual pagada el 6 sep, registrada el 11 oct).
+// que le tocaba (caso real: anual pagada el 6 sep, registrada el 11 oct).
 // La sincronización pasa la fecha de cobro en invoice._paid_date.
 function paidDateOf(invoice) {
   const d = invoice && invoice._paid_date;
@@ -1056,7 +1056,7 @@ async function processPaidInvoice(invoice, env, dbUrl, fbAuth) {
 // El sistema se enteraba de un pago SOLO por el webhook invoice.payment_made. Si el
 // aviso no llegaba, fallaba o caía en una ficha duplicada (bug del email, mismo día),
 // el pago se perdía en silencio: la suscriptora quedaba sin "Último pago" y sin pedido
-// del mes (caso real: [clienta], renovación de octubre). Esto le pregunta directo a Square
+// del mes (caso real: renovación de octubre). Esto le pregunta directo a Square
 // por las facturas de cada suscriptora y procesa las PAGADAS que nunca se registraron,
 // con el mismo processPaidInvoice() del webhook (pedido idempotente por factura:
 // lovershipinvoice:<id>). Corre en el cron diario y a mano desde el panel (vista previa
@@ -1090,7 +1090,7 @@ function syncDue(s, today) {
 // Reparación única (11 oct): los pagos recuperados con "Sincronizar" ANTES del arreglo de
 // paidDateOf quedaron con ultimo_pago = día del registro (2026-10-11). syncDue no vuelve a
 // mirar un pago "reciente", así que la tarea diaria nunca corregía esa fecha y el lote de
-// octubre las dejaba fuera (caso real: [clienta], [clienta] — Pedidos sin sus cajas). Se
+// octubre las dejaba fuera (caso real: 2 suscriptoras sin sus cajas en Pedidos). Se
 // revisan primero en la fila de la tarea diaria; cuando todas pasaron sin error se marca
 // en KV y no se repite. Solo cambia la fecha si Square dice que ESA factura se cobró antes.
 const LOVERS_FECHA_MALA = '2026-10-11';
@@ -1138,7 +1138,7 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
   // Pagos de la ventana (una sola lista por corrida, hasta 2 páginas de 100 por ubicación):
   // un pago por link queda ligado al CLIENTE (Payment.customer_id / buyer_email_address),
   // pero su orden muchas veces no — por eso buscar la orden por cliente no la encontraba
-  // (caso [clienta]: Square la muestra en el filtro "Customer", orders/search no).
+  // (caso real: Square la muestra en el filtro "Customer", orders/search no).
   let pagosCache = null;
   const pagosDeLaVentana = async () => {
     if (pagosCache) return pagosCache;
@@ -1231,7 +1231,7 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
           out.pagosFallidos.push(item);
         }
       }
-      // Pagos por LINK de Square (12 oct, caso real: [clienta], "Activa" sin fecha de
+      // Pagos por LINK de Square (12 oct, caso real: una suscriptora "Activa" sin fecha de
       // pago). El link de respaldo de la página de Lovers — y cualquier link armado a mano —
       // cobra con una orden de Checkout, no con una factura: el aviso invoice.payment_made
       // nunca llega y esta sincronización solo buscaba facturas, así que el pago quedaba sin
@@ -1282,7 +1282,7 @@ async function reconcileLoversWithSquare(env, { dryRun = true, all: preloaded, c
           if (!dryRun) {
             // ¿El link dejó una suscripción de Square? Entonces Square cobra solo los meses
             // siguientes. Si no (pago único), queda como MANUAL con vigencia = pago + periodo
-            // (decisión de la usuaria, 12 oct, caso [clienta]): no se le cobra nada solo; le
+            // (decisión de la usuaria, 12 oct): no se le cobra nada solo; le
             // llega el recordatorio 7 días antes, al vencer se pausan sus beneficios y se
             // avisa a Tita/Robin para que la contacten y se vuelva a inscribir.
             let subId = s.square_subscription_id || '';
@@ -1489,7 +1489,7 @@ async function buildLoversBatch(env, { month, dryRun = true, all: preloaded, max
 //  - auto: comparten un id de Square y no hay 2 suscripciones de Square distintas
 //    (podría ser alguien que paga 2 suscripciones de regalo) → la tarea diaria lo junta
 //    sola. Bug real (12 oct): el arreglo del 11 oct solo evitaba duplicados NUEVOS; los
-//    que ya existían ([clienta]) seguían ahí — una ficha "Sin pagar" y la otra con el
+//    que ya existían (caso real) seguían ahí — una ficha "Sin pagar" y la otra con el
 //    pago — y el lote podía crearle 2 cajas, una por ficha.
 function planLoversDedupe(all) {
   const parent = {};
@@ -1502,7 +1502,7 @@ function planLoversDedupe(all) {
       ? 'n:' + [all[k].nombre, all[k].apellido].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
       : '';
     // 'e:' mismo correo guardado = misma persona (fichas de antes del 12 sep con llave
-    // aleatoria + la que creó un pago en la llave del correo — caso [clienta]).
+    // aleatoria + la que creó un pago en la llave del correo — caso real).
     const correo = all[k].email ? 'e:' + subscriberKey(all[k].email) : '';
     for (const id of [all[k].square_subscription_id && 's:' + all[k].square_subscription_id, all[k].square_customer_id && 'c:' + all[k].square_customer_id, correo, fullName]) {
       if (!id) continue;
@@ -1642,7 +1642,7 @@ async function applyLoversDedupe(env, plan, all = null, reserve = 0) {
 }
 // Fichas sueltas guardadas con identificador aleatorio (altas de antes del 12 sep): se
 // mudan a la llave de su correo, donde las buscan el formulario, las facturas y los pagos.
-// Sin esto, su próxima renovación podía crear un duplicado (caso [clienta]). Hasta `max` por día.
+// Sin esto, su próxima renovación podía crear un duplicado (caso real). Hasta `max` por día.
 async function moverFichasALlaveDeCorreo(env, all, { max = 5, reserve = 0 } = {}) {
   const dbUrl = env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com';
   const fbAuth = env.FB_DB_SECRET;

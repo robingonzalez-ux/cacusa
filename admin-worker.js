@@ -1348,7 +1348,7 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
     if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
   }
   // Borrar el tracking a mano borra también la guía guardada: si no, quedaba el PDF viejo
-  // (ej. la guía de prueba de [clienta], 16 oct) y contaba para la recolección del día.
+  // (ej. una guía de prueba del 16 oct) y contaba para la recolección del día.
   if ('tracking' in patch && !String(order.tracking || '').trim() && (order.labelStored || order.labelGeneratedAt)) {
     await env.CACUSA_KV.delete(labelKey(id)).catch(() => {});
     delete order.labelStored; delete order.labelFormat; delete order.labelGeneratedAt;
@@ -4284,7 +4284,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     }));
     // 16 oct: en TEM (pruebas) USPS devuelve una guía "SAMPLE - DO NOT MAIL" con un tracking
     // que no existe. Antes se guardaba en el pedido y se le mandaba a la clienta el correo de
-    // "tu pedido fue enviado" con ese número (pasó con [clienta]). Ahora solo se devuelve
+    // "tu pedido fue enviado" con ese número (pasó en un pedido real). Ahora solo se devuelve
     // el PDF para revisarlo: no toca el pedido, no cuenta para la recolección, no manda correo.
     // Desglose de lo que cobra USPS (16 oct): franqueo, cada servicio extra con su precio y la
     // zona — para comparar con Click-N-Ship y ver si el seguro se cobra aparte.
