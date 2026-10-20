@@ -41,6 +41,9 @@
  *   USPS_ENV              (text)    'tem' (pruebas, default) o 'prod' (real, cobra franqueo
  *                                   real de la cuenta EPS) — cambiar a 'prod' solo después de
  *                                   probar el flujo completo contra 'tem'.
+ *   USPS_TEM_LABELS       (text)    opcional. 'on' = permite guías de PRUEBA con USPS_ENV='tem'.
+ *                                   Apagado por default (20 oct): usar apis-tem borra los claims
+ *                                   del token de producción hasta el próximo Refresh Claims.
  *   USPS_CRID             (secret)  Customer Registration Identifier — dato real de la cuenta,
  *                                   visible en gateway.usps.com (Business Customer Gateway).
  *                                   Lo pide la Payments API para autorizar el franqueo.
@@ -4272,6 +4275,14 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
   const isReprint = body.reprint === true;
   if (order.tracking && !isReprint) {
     return err('Este pedido ya tiene guía/tracking. Para generar otra, confirmá la reimpresión.', 409, origin);
+  }
+  // 20 oct (probado 3 veces): usar el servidor de PRUEBAS de USPS (apis-tem) con las mismas
+  // credenciales borra los datos de la cuenta (CRID, cuentas de pago) del token de PRODUCCIÓN
+  // hasta el próximo "Refresh Claims" en el Customer Onboarding Portal. Producción ya funciona,
+  // así que las guías de prueba quedan apagadas: no se llama a apis-tem. Para una prueba
+  // puntual a propósito: variable USPS_TEM_LABELS = 'on' (y después Refresh Claims).
+  if (env.USPS_ENV !== 'prod' && env.USPS_TEM_LABELS !== 'on') {
+    return err('Guías de prueba desactivadas: usar el modo de prueba de USPS borra los permisos de producción (hay que hacer Refresh Claims después). Para revisar costos usa "Cotizar precio real"; para confirmar producción, "Probar producción". Las guías reales siguen por Click-N-Ship.', 409, origin);
   }
 
   try {
