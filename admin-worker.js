@@ -3826,39 +3826,60 @@ async function uspsClearTokens(env) {
   await env.CACUSA_KV.delete(await uspsTokenKey(env, 'oauth'));
   await env.CACUSA_KV.delete(await uspsTokenKey(env, 'pay'));
 }
-// Corre fn(oauthToken, paymentToken) con tokens del caché; si USPS responde 401 (token
+// Corre fn(oauthToken, paymentToken) con el token guardado; si USPS responde 401 (token
 // revocado antes de tiempo), limpia el caché y reintenta UNA vez con tokens nuevos.
-// 16 oct: lo mismo si la autorización de pago da 403 con un OAuth token del caché — los
-// "claims" del token (CRID, cuentas de pago) se fijan al emitirlo; después de "Refresh
-// Claims" en el Customer Onboarding Portal, un token guardado (hasta 8 h) seguiría sin
-// ellos. Con un token recién pedido no se reintenta (un 403 ahí es real).
+// 20 oct: un 403 ya no borra el token guardado — solo se guardan tokens que traen la cuenta
+// (ver uspsGetOAuth), así que un 403 con uno guardado es por otra cosa y se muestra tal cual
+// (antes se borraba y se pedía otro, que podía venir vacío y dejar el panel sin cuenta).
 async function uspsWithTokens(env, needPayment, fn) {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const cached = attempt === 0 && env.CACUSA_KV ? !!(await env.CACUSA_KV.get(await uspsTokenKey(env, 'oauth'))) : false;
-    const oauthToken = await uspsOAuthToken(env);
-    let paymentToken = null;
-    if (needPayment) {
-      try {
-        paymentToken = await uspsPaymentToken(env, oauthToken);
-      } catch (e) {
-        if (attempt === 0 && cached && e && e.status === 403) { await uspsClearTokens(env); continue; }
-        throw e;
-      }
-    }
+    const tok = await uspsGetOAuth(env);
     try {
-      return await fn(oauthToken, paymentToken);
+      const paymentToken = needPayment ? await uspsPaymentToken(env, tok.token) : null;
+      return await fn(tok.token, paymentToken);
     } catch (e) {
-      if (attempt === 0 && e && e.status === 401) { await uspsClearTokens(env); continue; }
+      if (attempt === 0 && tok.cached && e && e.status === 401) { await uspsClearTokens(env); continue; }
       throw e;
     }
   }
 }
 function uspsError(msg, status) { const e = new Error(msg); e.status = status; return e; }
 
-async function uspsOAuthToken(env) {
+// Claims del OAuth token (JWT, parte del medio). null si no se puede leer.
+function uspsTokenClaims(token) {
+  try {
+    const part = String(token || '').split('.')[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), c => c.charCodeAt(0))));
+  } catch (_) { return null; }
+}
+function uspsTokenHasAccount(token) {
+  const c = uspsTokenClaims(token);
+  return !!(c && String(c.crid || c.CRID || '').trim());
+}
+// UN solo token de producción para todo (cotizar, probar, guía, recolección) — 20 oct.
+// USPS pidió no regenerar el token en cada llamada, y los datos de la cuenta (CRID, cuentas de
+// pago) quedan fijos dentro del token al emitirlo: uno emitido después de "Refresh Claims" los
+// conserva hasta vencer (~8 h) aunque USPS los pierda después (pasaba a los pocos minutos).
+// - Solo se GUARDA un token que trae la cuenta; uno vacío se usa en esa llamada y no se guarda,
+//   así después de un Refresh Claims la próxima consulta toma uno bueno.
+// - Un token bueno guardado nunca se reemplaza por uno vacío: se usa hasta que vence.
+// Devuelve { token, at, exp, cached, hasAccount } (at/exp en ms).
+async function uspsGetOAuth(env) {
   if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) throw new Error('USPS_CONSUMER_KEY/USPS_CONSUMER_SECRET no configurados');
   const cacheKey = env.CACUSA_KV ? await uspsTokenKey(env, 'oauth') : null;
-  if (cacheKey) { const c = await env.CACUSA_KV.get(cacheKey); if (c) return c; }
+  if (cacheKey) {
+    const raw = await env.CACUSA_KV.get(cacheKey);
+    if (raw) {
+      let c = null;
+      try { c = JSON.parse(raw); } catch (_) {}
+      if (c && c.t && uspsTokenHasAccount(c.t) && (!c.exp || c.exp > Date.now() + 60000)) {
+        return { token: c.t, at: c.at || null, exp: c.exp || null, cached: true, hasAccount: true };
+      }
+      await uspsClearTokens(env); // formato viejo o sin cuenta: no sirve
+    }
+  }
   const r = await fetch(`${uspsBaseUrl(env)}/oauth2/v3/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3868,13 +3889,26 @@ async function uspsOAuthToken(env) {
       client_secret: env.USPS_CONSUMER_SECRET,
     }),
   });
-  if (!r.ok) throw new Error(`USPS OAuth falló (${r.status}): ${(await r.text()).slice(0, 200)}`);
+  if (!r.ok) throw uspsError(`USPS OAuth falló (${r.status}): ${(await r.text()).slice(0, 200)}`, r.status);
   const d = await r.json();
-  if (cacheKey && d.access_token) {
-    const ttl = Math.max(60, Math.min(Number(d.expires_in) || 28800, 28800) - 600);
-    await env.CACUSA_KV.put(cacheKey, d.access_token, { expirationTtl: ttl });
+  const token = d.access_token;
+  const at = Date.now();
+  const claims = uspsTokenClaims(token);
+  const lifeSec = Math.min(Number(d.expires_in) || 28800, 28800);
+  const exp = claims && Number(claims.exp) ? Number(claims.exp) * 1000 : at + lifeSec * 1000;
+  const hasAccount = uspsTokenHasAccount(token);
+  if (cacheKey && token && hasAccount) {
+    const ttl = Math.max(60, Math.floor((exp - at) / 1000) - 600);
+    await env.CACUSA_KV.put(cacheKey, JSON.stringify({ t: token, at, exp }), { expirationTtl: ttl });
+    await env.CACUSA_KV.delete(await uspsTokenKey(env, 'pay')); // el payment token va con el OAuth nuevo
   }
-  return d.access_token;
+  return { token, at, exp, cached: false, hasAccount };
+}
+// Línea legible del token en uso, para el panel (horas en hora del Este).
+function uspsTokenLine(tok) {
+  const hhmm = ms => ms ? new Intl.DateTimeFormat('es-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ms)) : '—';
+  return ` | Token en uso: obtenido ${hhmm(tok.at)} (hora del Este, ${tok.cached ? 'guardado' : 'recién pedido'}), trae tu cuenta: ${tok.hasAccount ? 'sí' : 'no'}, vence ${hhmm(tok.exp)}` +
+    (tok.hasAccount ? '' : '. No se guarda: haz Refresh Claims en cop.usps.com y vuelve a cotizar.');
 }
 // El Payment Authorization Token (Payments API, POST /payment-authorization) es
 // distinto del OAuth token — autoriza cargar el franqueo real a la cuenta EPS.
@@ -4037,20 +4071,18 @@ function uspsLabelCost(label) {
 // POST /usps/prod-payment-check — prueba GRATIS si producción está lista para comprar guías
 // (16 oct): pide un OAuth de producción y una autorización de pago de producción, SIN crear
 // ninguna guía. La autorización no cobra nada; lo que cobra es crear la guía (/labels), que acá
-// nunca se llama. No usa ni escribe el caché de tokens. Devuelve si pasó y, si no, el error
-// completo y lo que trae el token de producción (CRID, cuentas de pago), sin el token.
+// nunca se llama. Usa el token guardado (uspsGetOAuth, 20 oct). Devuelve si pasó y, si no, el
+// error completo y lo que trae el token de producción (CRID, cuentas de pago), sin el token.
 async function handleUspsProdPaymentCheck(env, origin) {
   const required = ['USPS_CONSUMER_KEY', 'USPS_CONSUMER_SECRET', 'USPS_CRID', 'USPS_MID', 'USPS_EPS_ACCOUNT'];
   const missing = required.filter(k => !env[k]);
   if (missing.length) return err(`Faltan variables de USPS: ${missing.join(', ')}`, 500, origin);
   const base = 'https://apis.usps.com';
-  const tr = await fetch(`${base}/oauth2/v3/token`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
-  });
-  if (!tr.ok) return ok({ ok: false, paso: 'oauth', error: `(${tr.status}) ${(await tr.text()).slice(0, 800)}` }, origin);
-  const token = (await tr.json()).access_token;
-  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod');
+  let tok;
+  try { tok = await uspsGetOAuth(env); }
+  catch (e) { return ok({ ok: false, paso: 'oauth', error: String(e.message || e).slice(0, 800) }, origin); }
+  const token = tok.token;
+  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod') + uspsTokenLine(tok);
   const pr = await fetch(`${base}/payments/v3/payment-authorization`, {
     method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ roles: [
@@ -4069,8 +4101,8 @@ async function handleUspsProdPaymentCheck(env, origin) {
 // un pedido: precio COMERCIAL para nuestra cuenta EPS y RETAIL para comparar (16 oct: en TEM la
 // guía salía $8.41 y Click-N-Ship cotizaba $5.65 comercial para el mismo envío). Usa la API de
 // Precios (Domestic Prices v3, cuerpo igual al ejemplo oficial de USPS/api-examples): no toca
-// Payments ni Labels. Pide un OAuth de producción sin caché.
-// Gasta 4-5 llamadas (1 OAuth + publicado + 1-2 con cuenta + retail).
+// Payments ni Labels. Usa el token guardado (uspsGetOAuth, 20 oct).
+// Gasta 3-4 llamadas de precios (+1 OAuth solo si no hay token guardado).
 async function handleUspsRateCheck(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) return err('Faltan las credenciales de USPS', 500, origin);
@@ -4088,12 +4120,10 @@ async function handleUspsRateCheck(body, env, origin) {
   if (!(weightOz > 0 && lengthIn > 0 && widthIn > 0 && heightIn > 0)) return err('Peso y las 3 dimensiones son obligatorios.', 400, origin);
 
   const base = 'https://apis.usps.com';
-  const tr = await fetch(`${base}/oauth2/v3/token`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
-  });
-  if (!tr.ok) return err(`USPS OAuth (producción) falló (${tr.status}): ${(await tr.text()).slice(0, 500)}`, 502, origin);
-  const token = (await tr.json()).access_token;
+  let tok;
+  try { tok = await uspsGetOAuth(env); }
+  catch (e) { return err(`USPS OAuth (producción): ${String(e.message || e).slice(0, 500)}`, 502, origin); }
+  const token = tok.token;
   const ingredients = {
     originZIPCode: fromZip, destinationZIPCode: destZip,
     weight: Math.round((weightOz / 16) * 10000) / 10000, length: lengthIn, width: widthIn, height: heightIn,
@@ -4119,7 +4149,7 @@ async function handleUspsRateCheck(body, env, origin) {
   // not authorized" — el token de producción venía sin claims; 20 oct ya los trae. Antes el
   // intento con cuenta solo se hacía si el publicado fallaba, así que nunca se veía el precio
   // de la cuenta. Cada intento queda listado con su etiqueta.
-  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod');
+  const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod') + uspsTokenLine(tok);
   let claimAccounts = [];
   try {
     const part = String(token || '').split('.')[1] || '';
@@ -4142,7 +4172,7 @@ async function handleUspsRateCheck(body, env, origin) {
   // `commercial` se mantiene para paneles viejos: el de la cuenta si USPS lo dio, si no el publicado.
   const commercial = commercialAccount && commercialAccount.price != null ? commercialAccount : commercialPublished;
   const retail = await quote({ priceType: 'RETAIL' });
-  return ok({ ok: true, version: 'rate-check-4', commercial, commercialPublished, commercialAccount, retail, intentos, claims, ingredients }, origin);
+  return ok({ ok: true, version: 'rate-check-5', commercial, commercialPublished, commercialAccount, retail, intentos, claims, ingredients }, origin);
 }
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
