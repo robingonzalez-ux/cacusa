@@ -3892,7 +3892,9 @@ function uspsTokenClaimsSummary(oauthToken, env, etiqueta = 'Datos del token de 
     if (!part) return ` | ${etiqueta}: el token no es un JWT legible.`;
     const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
     const claims = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), c => c.charCodeAt(0))));
-    const list = v => Array.isArray(v) ? v.map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || x.CRID || x.crid || JSON.stringify(x)) : x).join(',') : (v == null ? '—' : String(v));
+    // 20 oct: en producción `payment_accounts` llega como objeto (no lista) — antes salía
+    // "[object Object]". Los objetos se muestran como JSON corto (solo números de cuenta).
+    const list = v => Array.isArray(v) ? v.map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || x.CRID || x.crid || JSON.stringify(x)) : x).join(',') : (v == null ? '—' : (typeof v === 'object' ? JSON.stringify(v).slice(0, 200) : String(v)));
     const pick = (...k) => { for (const x of k) if (claims[x] != null && claims[x] !== '') return claims[x]; return null; };
     const parts = [
       `crid=${list(pick('crid', 'CRID', 'crids'))}`,
@@ -4081,7 +4083,7 @@ async function handleUspsProdPaymentCheck(env, origin) {
 // guía salía $8.41 y Click-N-Ship cotizaba $5.65 comercial para el mismo envío). Usa la API de
 // Precios (Domestic Prices v3, cuerpo igual al ejemplo oficial de USPS/api-examples): no toca
 // Payments ni Labels. Pide un OAuth de producción sin caché y no toca el caché de TEM.
-// Gasta ~3 llamadas (1 OAuth + 2 precios).
+// Gasta 4-5 llamadas (1 OAuth + publicado + 1-2 con cuenta + retail).
 async function handleUspsRateCheck(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) return err('Faltan las credenciales de USPS', 500, origin);
@@ -4124,30 +4126,36 @@ async function handleUspsRateCheck(body, env, origin) {
     const price = Number(d.totalBasePrice ?? rate.price);
     return { price: Number.isFinite(price) ? price : null, zone: rate.zone || '', sku: rate.SKU || '', description: rate.description || '', priceType: rate.priceType || '' };
   };
-  // Comercial (16 oct): con nuestra EPS dio 403 "requested contract information is not
-  // authorized"; se prueba primero sin datos de cuenta (precio comercial publicado) y, si
-  // también falla, con cada cuenta de pago que traiga el token de producción. Cada intento
-  // queda listado con su etiqueta, para ver exactamente qué acepta USPS.
+  // Comercial: primero el precio comercial PUBLICADO (sin datos de cuenta) y después SIEMPRE
+  // con nuestra EPS, para ver si USPS le aplica a la cuenta un precio propio (ej. el Business
+  // Rate Card de Click-N-Ship). 16 oct: con la EPS daba 403 "requested contract information is
+  // not authorized" — el token de producción venía sin claims; 20 oct ya los trae. Antes el
+  // intento con cuenta solo se hacía si el publicado fallaba, así que nunca se veía el precio
+  // de la cuenta. Cada intento queda listado con su etiqueta.
   const claims = uspsTokenClaimsSummary(token, env, 'Token de producción', 'prod');
   let claimAccounts = [];
   try {
     const part = String(token || '').split('.')[1] || '';
     const b64 = part.replace(/-/g, '+').replace(/_/g, '/');
     const c = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(b64 + '='.repeat((4 - b64.length % 4) % 4)), ch => ch.charCodeAt(0))));
-    claimAccounts = (Array.isArray(c.payment_accounts) ? c.payment_accounts : [])
-      .map(x => (x && typeof x === 'object') ? (x.accountNumber || x.account || '') : x)
-      .map(x => String(x || '').replace(/\D/g, '')).filter(Boolean).slice(0, 2);
+    // Lista u objeto: se toman los números de cuenta (10 dígitos) que aparezcan.
+    claimAccounts = [...new Set((JSON.stringify(c.payment_accounts || '').match(/\d{10}/g) || []))];
   } catch (_) {}
+  const accounts = [...new Set([String(env.USPS_EPS_ACCOUNT || '').replace(/\D/g, ''), ...claimAccounts].filter(Boolean))].slice(0, 2);
   const intentos = [];
-  let commercial = await quote({ priceType: 'COMMERCIAL' });
-  intentos.push({ como: 'comercial sin cuenta', ...commercial });
-  for (const acct of claimAccounts) {
-    if (commercial.price != null) break;
-    commercial = await quote({ priceType: 'COMMERCIAL', accountType: 'EPS', accountNumber: acct });
-    intentos.push({ como: `comercial con EPS ${acct}`, ...commercial });
+  const commercialPublished = await quote({ priceType: 'COMMERCIAL' });
+  intentos.push({ como: 'comercial publicado, sin cuenta', ...commercialPublished });
+  let commercialAccount = null;
+  for (const acct of accounts) {
+    const q = await quote({ priceType: 'COMMERCIAL', accountType: 'EPS', accountNumber: acct });
+    intentos.push({ como: `comercial con tu cuenta EPS ${acct}`, ...q });
+    commercialAccount = { ...q, account: acct };
+    if (q.price != null) break;
   }
+  // `commercial` se mantiene para paneles viejos: el de la cuenta si USPS lo dio, si no el publicado.
+  const commercial = commercialAccount && commercialAccount.price != null ? commercialAccount : commercialPublished;
   const retail = await quote({ priceType: 'RETAIL' });
-  return ok({ ok: true, version: 'rate-check-3', commercial, retail, intentos, claims, ingredients }, origin);
+  return ok({ ok: true, version: 'rate-check-4', commercial, commercialPublished, commercialAccount, retail, intentos, claims, ingredients }, origin);
 }
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
