@@ -38,12 +38,12 @@
  *                                   "secondaryAddress":"...","city":"...","state":"...",
  *                                   "ZIPCode":"...","phone":"..."} — NUNCA hardcodear una
  *                                   dirección real en este archivo (público, ver CLAUDE.md).
- *   USPS_ENV              (text)    'tem' (pruebas, default) o 'prod' (real, cobra franqueo
- *                                   real de la cuenta EPS) — cambiar a 'prod' solo después de
- *                                   probar el flujo completo contra 'tem'.
- *   USPS_TEM_LABELS       (text)    opcional. 'on' = permite guías de PRUEBA con USPS_ENV='tem'.
- *                                   Apagado por default (20 oct): usar apis-tem borra los claims
- *                                   del token de producción hasta el próximo Refresh Claims.
+ *   USPS_ENV              (text)    'prod' = el panel puede comprar guías reales por la API
+ *                                   (cobra franqueo de la cuenta EPS). Cualquier otro valor (o
+ *                                   vacío) = compra de guías y recolección APAGADAS. Desde el 20
+ *                                   oct no existe modo de pruebas: el Worker nunca llama a
+ *                                   apis-tem (decisión de la usuaria; las guías van por
+ *                                   Click-N-Ship y el panel solo cotiza).
  *   USPS_CRID             (secret)  Customer Registration Identifier — dato real de la cuenta,
  *                                   visible en gateway.usps.com (Business Customer Gateway).
  *                                   Lo pide la Payments API para autorizar el franqueo.
@@ -3787,8 +3787,8 @@ async function sendLoversPausedEmail(body, env) {
 // ── USPS API (guías de envío) — nuevo, 20 sep ───────────────────────────────────
 // Plataforma nueva de USPS (developers.usps.com) — la vieja Web Tools API se dio
 // de baja el 25 ene 2026, así que esto se integra directo contra la nueva. OAuth2
-// client_credentials, ambiente elegido por env.USPS_ENV ('tem' = pruebas, 'prod' =
-// real, default 'tem' para no arriesgar franqueo real hasta confirmar el flujo).
+// client_credentials, siempre contra producción (apis.usps.com). Comprar guías exige además
+// USPS_ENV = 'prod' (ver handleUspsLabel).
 // Generar una guía real además exige: (a) que la cuenta de USPS tenga aprobación
 // para la Labels API específicamente y (b) una Enterprise Payment Account (EPS)
 // activa que pague el franqueo — ninguna de las 2 es algo que este código pueda
@@ -3806,8 +3806,10 @@ async function sendLoversPausedEmail(body, env) {
 //     JSON (trackingNumber + labelImage en base64, ambos top-level) en vez del
 //     multipart/form-data que devuelve por defecto la API — mucho más simple de
 //     manejar en un Worker.
-function uspsBaseUrl(env) {
-  return env.USPS_ENV === 'prod' ? 'https://apis.usps.com' : 'https://apis-tem.usps.com';
+// 20 oct: solo producción. El servidor de pruebas de USPS (apis-tem) se quitó por completo
+// para que ningún módulo de prueba comparta credenciales/tokens con producción.
+function uspsBaseUrl() {
+  return 'https://apis.usps.com';
 }
 // Caché de tokens (10 oct): USPS aprobó Shipping Suite 0 con un límite de 50 llamadas
 // por día y pide expresamente NO regenerar el OAuth token ni el payment token en cada
@@ -3817,7 +3819,7 @@ function uspsBaseUrl(env) {
 async function uspsTokenKey(env, kind) {
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(env.USPS_CONSUMER_KEY || '')));
   const hex = [...new Uint8Array(h)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join('');
-  return `uspstok:${kind}:${env.USPS_ENV === 'prod' ? 'prod' : 'tem'}:${hex}`;
+  return `uspstok:${kind}:prod:${hex}`;
 }
 async function uspsClearTokens(env) {
   if (!env.CACUSA_KV) return;
@@ -3909,7 +3911,7 @@ function uspsTokenClaimsSummary(oauthToken, env, etiqueta = 'Datos del token de 
       `campos=${Object.keys(claims).slice(0, 30).join(',')}`,
       `empresa=${list(pick('company_name'))}`,
       `mail_owners=${list(pick('mail_owners'))}`,
-      `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${envLabel || (env.USPS_ENV === 'prod' ? 'prod' : 'tem')}`,
+      `pedimos: crid=${env.USPS_CRID} eps=${env.USPS_EPS_ACCOUNT} env=${envLabel || 'prod'}`,
     ];
     return ` | ${etiqueta}: ${parts.join(' ; ')}`.slice(0, 1400);
   } catch (e) {
@@ -3938,25 +3940,7 @@ async function uspsPaymentToken(env, oauthToken) {
     // token es un JWT que trae a qué CRID y a qué cuentas de pago da acceso USPS: mostrarlo
     // (solo esos datos, jamás el token) deja ver de inmediato si el problema es lo que pedimos
     // o lo que USPS tiene registrado (13-16 oct: 403 repetido aun con CRID/MID/EPS correctos).
-    let info = r.status === 403 ? uspsTokenClaimsSummary(oauthToken, env) : '';
-    // Diagnóstico temporal (16 oct): desde TEM, pide TAMBIÉN un OAuth token de producción y
-    // muestra qué CRID/cuentas de pago trae. Solo es un OAuth (client_credentials): no autoriza
-    // pagos ni compra guías, no se guarda en caché ni se usa para nada más. Quitar cuando
-    // USPS resuelva el 403.
-    if (r.status === 403 && env.USPS_ENV !== 'prod') {
-      try {
-        const pr = await fetch('https://apis.usps.com/oauth2/v3/token', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ grant_type: 'client_credentials', client_id: env.USPS_CONSUMER_KEY, client_secret: env.USPS_CONSUMER_SECRET }),
-        });
-        if (pr.ok) {
-          const pd = await pr.json();
-          info += uspsTokenClaimsSummary(pd.access_token, env, 'PRODUCCIÓN (solo lectura del token)', 'prod');
-        } else {
-          info += ` | PRODUCCIÓN: el servidor de USPS respondió ${pr.status} al pedir un token con estas credenciales.`;
-        }
-      } catch (e) { info += ' | PRODUCCIÓN: no se pudo consultar.'; }
-    }
+    const info = r.status === 403 ? uspsTokenClaimsSummary(oauthToken, env) : '';
     throw uspsError(`USPS payment authorization falló (${r.status}): ${body}${info}`, r.status);
   }
   const d = await r.json();
@@ -4085,7 +4069,7 @@ async function handleUspsProdPaymentCheck(env, origin) {
 // un pedido: precio COMERCIAL para nuestra cuenta EPS y RETAIL para comparar (16 oct: en TEM la
 // guía salía $8.41 y Click-N-Ship cotizaba $5.65 comercial para el mismo envío). Usa la API de
 // Precios (Domestic Prices v3, cuerpo igual al ejemplo oficial de USPS/api-examples): no toca
-// Payments ni Labels. Pide un OAuth de producción sin caché y no toca el caché de TEM.
+// Payments ni Labels. Pide un OAuth de producción sin caché.
 // Gasta 4-5 llamadas (1 OAuth + publicado + 1-2 con cuenta + retail).
 async function handleUspsRateCheck(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
@@ -4276,13 +4260,10 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
   if (order.tracking && !isReprint) {
     return err('Este pedido ya tiene guía/tracking. Para generar otra, confirmá la reimpresión.', 409, origin);
   }
-  // 20 oct (probado 3 veces): usar el servidor de PRUEBAS de USPS (apis-tem) con las mismas
-  // credenciales borra los datos de la cuenta (CRID, cuentas de pago) del token de PRODUCCIÓN
-  // hasta el próximo "Refresh Claims" en el Customer Onboarding Portal. Producción ya funciona,
-  // así que las guías de prueba quedan apagadas: no se llama a apis-tem. Para una prueba
-  // puntual a propósito: variable USPS_TEM_LABELS = 'on' (y después Refresh Claims).
-  if (env.USPS_ENV !== 'prod' && env.USPS_TEM_LABELS !== 'on') {
-    return err('Guías de prueba desactivadas: usar el modo de prueba de USPS borra los permisos de producción (hay que hacer Refresh Claims después). Para revisar costos usa "Cotizar precio real"; para confirmar producción, "Probar producción". Las guías reales siguen por Click-N-Ship.', 409, origin);
+  // 20 oct: el panel solo cotiza; las guías reales se compran en Click-N-Ship. Comprar por la
+  // API exige USPS_ENV = 'prod' a propósito (cobra franqueo real). No hay modo de pruebas.
+  if (env.USPS_ENV !== 'prod') {
+    return err('La compra de guías desde el panel está desactivada: las guías se compran en Click-N-Ship. Usa "Cotizar precio" para comparar.', 409, origin);
   }
 
   try {
@@ -4301,16 +4282,9 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
         phone: phone10 || undefined,
       },
     }));
-    // 16 oct: en TEM (pruebas) USPS devuelve una guía "SAMPLE - DO NOT MAIL" con un tracking
-    // que no existe. Antes se guardaba en el pedido y se le mandaba a la clienta el correo de
-    // "tu pedido fue enviado" con ese número (pasó en un pedido real). Ahora solo se devuelve
-    // el PDF para revisarlo: no toca el pedido, no cuenta para la recolección, no manda correo.
     // Desglose de lo que cobra USPS (16 oct): franqueo, cada servicio extra con su precio y la
     // zona — para comparar con Click-N-Ship y ver si el seguro se cobra aparte.
     const costo = uspsLabelCost(label);
-    if (env.USPS_ENV !== 'prod') {
-      return ok({ ok: true, test: true, tracking: label.trackingNumber || '', labelBase64: label.labelImage || '', labelFormat: 'PDF', costo }, origin);
-    }
     const wasReprint = isReprint && !!order.tracking;
     const prevTracking = order.tracking || '';
     order.tracking = label.trackingNumber || '';
