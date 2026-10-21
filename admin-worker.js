@@ -4461,8 +4461,9 @@ function easternDate(d = new Date()) {
 // 21 oct (pickup-2): funciona con las guías de Click-N-Ship. Cuenta los pedidos no cancelados
 // que hoy (hora del Este) quedaron con un tracking de USPS — pegado a mano (uspsTrackingAt) o
 // de una guía de la API (labelGeneratedAt). Pedir recolección es gratis: ya no depende de
-// USPS_ENV. `preview: true` devuelve el conteo sin llamar a USPS; `packageCount` (1-50)
-// permite corregir la cantidad (paquetes que no están en el panel).
+// USPS_ENV. `preview: true` devuelve el conteo sin llamar a USPS. pickup-3 (21 oct): solo
+// cuenta pedidos del panel (tienda web + manuales, incluidas cajas de Lovers); no se acepta una
+// cantidad escrita a mano (decisión de la usuaria).
 async function handleUspsSchedulePickup(body, env, origin, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const today = easternDate();
@@ -4483,19 +4484,12 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
     return ok({ ok: true, preview: true, date: today, detected, clientas }, origin);
   }
 
-  let packageCount = detected;
-  if (body.packageCount != null) {
-    const n = Math.floor(Number(body.packageCount));
-    if (!(n >= 1 && n <= 50)) return err('La cantidad de paquetes debe estar entre 1 y 50.', 400, origin);
-    packageCount = n;
-  }
+  const packageCount = detected;
   if (!packageCount) {
-    return err('No hay paquetes de USPS de hoy en el panel (pega el tracking en los pedidos, o indica la cantidad).', 400, origin);
+    return err('No hay pedidos de hoy con tracking de USPS en el panel (pega el tracking en los pedidos primero).', 400, origin);
   }
-  const knownOz = todays.reduce((sum, o) => sum + (Number(o.labelWeightOz) || 4), 0);
-  const extra = Math.max(0, packageCount - detected);
   // Libras enteras (el ejemplo oficial de USPS usa enteros), mínimo 1.
-  const estimatedWeight = Math.max(1, Math.ceil((knownOz + extra * 4) / 16));
+  const estimatedWeight = Math.max(1, Math.ceil(todays.reduce((sum, o) => sum + (Number(o.labelWeightOz) || 4), 0) / 16));
 
   if (!env.USPS_FROM_ADDRESS) return err('USPS_FROM_ADDRESS no configurado', 500, origin);
   let fromAddress;
@@ -4507,7 +4501,7 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
       uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today }), 'recolección');
     const result = { confirmationNumber: pickup.confirmationNumber, pickupDate: pickup.pickupDate || today, packageCount };
     await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 });
-    return ok({ ok: true, alreadyRequested: false, version: 'pickup-2', ...result }, origin);
+    return ok({ ok: true, alreadyRequested: false, version: 'pickup-3', ...result }, origin);
   } catch (e) {
     console.error('USPS schedule pickup falló:', e.message);
     return err('No se pudo pedir la recolección: ' + e.message, 502, origin);
