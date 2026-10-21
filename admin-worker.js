@@ -3831,17 +3831,43 @@ async function uspsClearTokens(env) {
 // 20 oct: un 403 ya no borra el token guardado — solo se guardan tokens que traen la cuenta
 // (ver uspsGetOAuth), así que un 403 con uno guardado es por otra cosa y se muestra tal cual
 // (antes se borraba y se pedía otro, que podía venir vacío y dejar el panel sin cuenta).
-async function uspsWithTokens(env, needPayment, fn) {
+async function uspsWithTokens(env, needPayment, fn, accion = 'guía') {
   for (let attempt = 0; attempt < 2; attempt++) {
     const tok = await uspsGetOAuth(env);
     try {
       const paymentToken = needPayment ? await uspsPaymentToken(env, tok.token) : null;
-      return await fn(tok.token, paymentToken);
+      const out = await fn(tok.token, paymentToken);
+      await uspsLog(env, accion, tok, 'ok');
+      return out;
     } catch (e) {
+      await uspsLog(env, accion, tok, (e && e.status) ? String(e.status) : 'error');
       if (attempt === 0 && tok.cached && e && e.status === 401) { await uspsClearTokens(env); continue; }
       throw e;
     }
   }
+}
+// Registro de uso de tokens (21 oct, diagnóstico para USPS): los últimos 20 eventos con hora,
+// acción, si el token fue recién pedido o reusado, si traía la cuenta y qué respondió USPS.
+// Nunca guarda tokens ni secretos. 1 lectura + 1 escritura de KV por acción.
+const USPS_LOG_KEY = 'uspslog:v1';
+async function uspsLog(env, accion, tok, resultado) {
+  if (!env.CACUSA_KV) return;
+  try {
+    let list = [];
+    try { list = JSON.parse(await env.CACUSA_KV.get(USPS_LOG_KEY) || '[]'); } catch (_) {}
+    if (!Array.isArray(list)) list = [];
+    list.push({ t: Date.now(), a: String(accion).slice(0, 20), n: tok && !tok.cached ? 1 : 0, c: tok && tok.hasAccount ? 1 : 0, r: String(resultado).slice(0, 12) });
+    await env.CACUSA_KV.put(USPS_LOG_KEY, JSON.stringify(list.slice(-20)));
+  } catch (_) {}
+}
+async function uspsLogText(env) {
+  if (!env.CACUSA_KV) return '';
+  let list = [];
+  try { list = JSON.parse(await env.CACUSA_KV.get(USPS_LOG_KEY) || '[]'); } catch (_) {}
+  if (!Array.isArray(list) || !list.length) return '';
+  const fmt = ms => new Intl.DateTimeFormat('es-US', { timeZone: 'America/New_York', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(ms));
+  return ' | Registro (hora del Este, lo más nuevo primero): ' + list.slice().reverse().slice(0, 10)
+    .map(x => `${fmt(x.t)} ${x.a}: token ${x.n ? 'nuevo' : 'guardado'} ${x.c ? 'con cuenta' : 'SIN cuenta'} → ${x.r}`).join('; ');
 }
 function uspsError(msg, status) { const e = new Error(msg); e.status = status; return e; }
 
@@ -4091,6 +4117,7 @@ async function handleUspsProdPaymentCheck(env, origin) {
     ] }),
   });
   const text = await pr.text();
+  await uspsLog(env, 'prueba', tok, pr.ok ? 'ok' : String(pr.status));
   if (!pr.ok) return ok({ ok: false, paso: 'pago', status: pr.status, error: text.slice(0, 1000), claims }, origin);
   let autorizado = false;
   try { autorizado = !!JSON.parse(text).paymentAuthorizationToken; } catch (_) {}
@@ -4172,7 +4199,11 @@ async function handleUspsRateCheck(body, env, origin) {
   // `commercial` se mantiene para paneles viejos: el de la cuenta si USPS lo dio, si no el publicado.
   const commercial = commercialAccount && commercialAccount.price != null ? commercialAccount : commercialPublished;
   const retail = await quote({ priceType: 'RETAIL' });
-  return ok({ ok: true, version: 'rate-check-5', commercial, commercialPublished, commercialAccount, retail, intentos, claims, ingredients }, origin);
+  // Resultado de la consulta CON la cuenta (es la que usa los datos del token).
+  const acctRes = commercialAccount ? (commercialAccount.price != null ? 'ok' : ((String(commercialAccount.error || '').match(/^\((\d+)\)/) || [])[1] || 'error')) : 'sin cuenta';
+  await uspsLog(env, 'cotizar', tok, acctRes);
+  const claimsConRegistro = claims + await uspsLogText(env);
+  return ok({ ok: true, version: 'rate-check-6', commercial, commercialPublished, commercialAccount, retail, intentos, claims: claimsConRegistro, ingredients }, origin);
 }
 // UUID determinístico (formato v4) a partir del pedido: mismo pedido → misma clave.
 async function uspsIdempotencyUuid(orderId) {
@@ -4444,7 +4475,7 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
 
   try {
     const pickup = await uspsWithTokens(env, false, (oauthToken) =>
-      uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today }));
+      uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today }), 'recolección');
     const result = { confirmationNumber: pickup.confirmationNumber, pickupDate: pickup.pickupDate, packageCount };
     await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 });
     return ok({ ok: true, alreadyRequested: false, ...result }, origin);
