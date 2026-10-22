@@ -1371,10 +1371,19 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   // 21 oct: cuándo quedó el pedido con un tracking de USPS (pegado a mano desde Click-N-Ship o
   // de una guía de la API) — así "Pedir recolección de hoy" cuenta también los paquetes de
   // Click-N-Ship. Se marca una vez por número; si se borra o deja de ser USPS, se quita.
+  // 22 oct (auditoría): solo cuando ESTE cambio toca tracking o transportista. Antes, editar cualquier
+  // pedido viejo (sin uspsTrackingFor) lo marcaba "de hoy": entraba en la recolección y se le
+  // registraban avisos de USPS a un paquete ya entregado.
+  const trackingTouched = 'tracking' in patch || 'carrier' in patch;
+  let uspsTrackingNew = false;
   if (orderHasUspsTracking(order)) {
     const tn = String(order.tracking).replace(/\s+/g, '');
-    if (order.uspsTrackingFor !== tn) { order.uspsTrackingFor = tn; order.uspsTrackingAt = new Date().toISOString(); }
-  } else {
+    if (order.uspsTrackingFor !== tn) {
+      order.uspsTrackingFor = tn;
+      if (trackingTouched) { order.uspsTrackingAt = new Date().toISOString(); uspsTrackingNew = true; }
+      else if (!order.uspsNotify) order.uspsNotify = { for: tn, status: 'omitido', at: new Date().toISOString(), msg: 'tracking anterior al 21 oct', tries: 0 };
+    }
+  } else if (trackingTouched) {
     delete order.uspsTrackingFor; delete order.uspsTrackingAt;
   }
   // 18 oct: las guías se compran en Click-N-Ship y el tracking se pega a mano. Al quedar el
@@ -1388,7 +1397,7 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   if (sendShipEmail && ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de envío (tracking manual) falló:', e.message)));
-  if (ctx && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id).catch(e => console.error('avisos USPS falló:', e.message)));
+  if (ctx && uspsTrackingNew && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id, { auto: true }).catch(e => console.error('avisos USPS falló:', e.message)));
   return ok({ ok: true, order }, origin);
 }
 
@@ -4393,7 +4402,7 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
     if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
     if (avisar) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de tracking falló:', e.message)));
-    if (ctx && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id).catch(e => console.error('avisos USPS falló:', e.message)));
+    if (ctx && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id, { auto: true }).catch(e => console.error('avisos USPS falló:', e.message)));
     return ok({ ok: true, tracking: order.tracking, labelBase64, labelFormat: order.labelFormat, labelStored: true, costo }, origin);
   } catch (e) {
     console.error('USPS label falló:', e.message);
@@ -4472,6 +4481,17 @@ function uspsNotifyDue(order) {
   if (!n || n.for !== tn) return true;
   return n.status === 'pendiente' && (Number(n.tries) || 0) < 5;
 }
+// Cuota (22 oct, auditoría): la cuenta de USPS tiene un tope diario de llamadas (Shipping Suite 0 =
+// 50/día) y cada registro de avisos gasta 2. Los automáticos se cortan a USPS_NOTIFY_AUTO_MAX por día
+// (hora del Este) para dejar margen a guías, recolección y cotizaciones; el botón manual no se corta.
+const USPS_NOTIFY_AUTO_MAX = 12;
+async function uspsNotifyBudgetTake(env) {
+  const key = `uspsnotifyday:${easternDate()}`;
+  const n = Number(await env.CACUSA_KV.get(key)) || 0;
+  if (n >= USPS_NOTIFY_AUTO_MAX) return false;
+  await env.CACUSA_KV.put(key, String(n + 1), { expirationTtl: 172800 });
+  return true;
+}
 // POST /tracking/v3r2/tracking con un número → el detalle de ese paquete (o 404 si USPS aún no lo tiene).
 async function uspsTrackingLookup(oauthToken, tn) {
   const tr = await fetch('https://apis.usps.com/tracking/v3r2/tracking', {
@@ -4505,11 +4525,23 @@ async function uspsNotifyRequest(env, oauthToken, { tn, email, firstName, lastNa
 }
 // Registra los avisos de UN pedido (relee el pedido para no pisar otros cambios) y guarda el
 // resultado en order.uspsNotify = { for, status: 'activo'|'pendiente'|'error', at, msg, tries }.
-async function registerUspsNotifications(env, orderId) {
+async function registerUspsNotifications(env, orderId, { auto = false } = {}) {
   if (!env.CACUSA_KV) return null;
   const order = await orderGet(env, orderId);
   if (!uspsNotifyDue(order)) return order && order.uspsNotify || null;
   const tn = String(order.tracking).replace(/\s+/g, '');
+  // Evita 2 registros simultáneos del mismo número (2 guardados seguidos del panel).
+  const claimKey = `uspsnotifyclaim:${tn}`;
+  if (await env.CACUSA_KV.get(claimKey)) return order.uspsNotify || null;
+  await env.CACUSA_KV.put(claimKey, '1', { expirationTtl: 120 });
+  if (auto && !(await uspsNotifyBudgetTake(env))) {
+    const fresh0 = await orderGet(env, orderId);
+    if (fresh0 && String(fresh0.tracking || '').replace(/\s+/g, '') === tn) {
+      fresh0.uspsNotify = { for: tn, status: 'pendiente', at: new Date().toISOString(), msg: 'tope diario de avisos automáticos (cuota de USPS) — usar "Activar ahora"', tries: 0 };
+      await env.CACUSA_KV.put(orderKey(orderId), JSON.stringify(fresh0));
+    }
+    return null;
+  }
   const c = order.cliente || {};
   let firstName = String(c.nombre || '').trim(), lastName = String(c.apellido || '').trim();
   if (!lastName && firstName.includes(' ')) { const i = firstName.lastIndexOf(' '); lastName = firstName.slice(i + 1); firstName = firstName.slice(0, i); }
@@ -4540,8 +4572,12 @@ async function handleUspsNotifyRetry(body, env, origin, ctx) {
   if (!order) return err('Pedido no encontrado', 404, origin);
   if (!orderHasUspsTracking(order)) return err('El pedido no tiene tracking de USPS.', 400, origin);
   if (!isValidEmail((order.cliente && order.cliente.email) || '')) return err('El pedido no tiene un correo válido de la clienta.', 400, origin);
-  if (order.uspsNotify && order.uspsNotify.status === 'error') { order.uspsNotify.status = 'pendiente'; order.uspsNotify.tries = 0; await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order)); }
-  if (order.uspsNotify && order.uspsNotify.status === 'pendiente') { order.uspsNotify.tries = 0; await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order)); }
+  const tn = String(order.tracking).replace(/\s+/g, '');
+  if (order.uspsNotify && order.uspsNotify.for === tn && ['error', 'pendiente', 'omitido'].includes(order.uspsNotify.status)) {
+    order.uspsNotify.status = 'pendiente'; order.uspsNotify.tries = 0;
+    await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
+  }
+  await env.CACUSA_KV.delete(`uspsnotifyclaim:${tn}`);
   const r = await registerUspsNotifications(env, id);
   return ok({ ok: !!r && r.status === 'activo', uspsNotify: r }, origin);
 }
@@ -4607,9 +4643,6 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
     return ok({ ok: true, preview: true, date: today, detected, clientas }, origin);
   }
 
-  // De paso, reintenta los avisos de USPS que quedaron pendientes en los pedidos de hoy
-  // (USPS a veces todavía no conoce un número recién creado).
-  if (ctx) for (const o of todays) if (uspsNotifyDue(o)) ctx.waitUntil(registerUspsNotifications(env, o.id).catch(() => {}));
   const packageCount = detected;
   if (!packageCount) {
     return err('No hay pedidos de hoy con tracking de USPS en el panel (pega el tracking en los pedidos primero).', 400, origin);
@@ -4622,13 +4655,20 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
   try { fromAddress = JSON.parse(env.USPS_FROM_ADDRESS); }
   catch { return err('USPS_FROM_ADDRESS no es JSON válido', 500, origin); }
 
+  // Candado corto: 2 toques casi simultáneos no piden 2 recolecciones reales.
+  const lockKey = `uspspickuplock:${today}`;
+  if (await env.CACUSA_KV.get(lockKey)) return err('La recolección de hoy se está pidiendo en este momento. Espera unos segundos y vuelve a tocar.', 409, origin);
+  await env.CACUSA_KV.put(lockKey, '1', { expirationTtl: 120 });
   try {
     const pickup = await uspsWithTokens(env, false, (oauthToken) =>
       uspsSchedulePickup(env, oauthToken, { fromAddress, packageCount, estimatedWeight, pickupDate: today }), 'recolección');
     const result = { confirmationNumber: pickup.confirmationNumber, pickupDate: pickup.pickupDate || today, packageCount };
-    await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 });
+    // Si USPS ya confirmó, no se devuelve error aunque falle guardar la confirmación.
+    try { await env.CACUSA_KV.put(kvKey, JSON.stringify(result), { expirationTtl: 172800 }); } catch (e) { console.error('no se guardó la confirmación de recolección:', e.message); }
+    await env.CACUSA_KV.delete(lockKey).catch(() => {});
     return ok({ ok: true, alreadyRequested: false, version: 'pickup-3', ...result }, origin);
   } catch (e) {
+    await env.CACUSA_KV.delete(lockKey).catch(() => {});
     console.error('USPS schedule pickup falló:', e.message);
     return err('No se pudo pedir la recolección: ' + e.message, 502, origin);
   }
