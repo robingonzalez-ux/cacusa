@@ -285,7 +285,13 @@ function normalizeProd(p) {
 }
 
 // ─── ESTADO ─────────────────────────────────────────────────
-let cart = JSON.parse(localStorage.getItem('cacusa-cart') || '[]');
+// 22 oct (auditoría): si el navegador bloquea el almacenamiento (Safari/Chrome con cookies bloqueadas),
+// acceder a localStorage lanza un error y la tienda no cargaba. Se usa una copia en memoria.
+const __LS = (() => {
+  try { const k = '__cacusa_t'; window.localStorage.setItem(k, '1'); window.localStorage.removeItem(k); return window.localStorage; }
+  catch (_) { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: k => { m.delete(k); } }; }
+})();
+let cart = (() => { try { const c = JSON.parse(__LS.getItem('cacusa-cart') || '[]'); return Array.isArray(c) ? c : []; } catch (_) { return []; } })();
 let currentProduct = null, qty = 1, activeFilter = 'all', searchTerm = '';
 // Mientras esta bandera sea false y no haya búsqueda activa, la primera pantalla muestra
 // las categorías en vez de los 74 productos juntos — se "apaga" en cuanto la clienta elige
@@ -475,7 +481,7 @@ function reconcileCartPrices() {
     }
     return true;
   });
-  if (changed || cart.length !== JSON.parse(localStorage.getItem('cacusa-cart') || '[]').length) saveCart();
+  if (changed || cart.length !== JSON.parse(__LS.getItem('cacusa-cart') || '[]').length) saveCart();
 }
 
 // ─── APLICAR CONFIG DINÁMICA ────────────────────────────────
@@ -719,7 +725,7 @@ function renderProducts() {
   });
   if (filtered.length === 0) {
     const msg = searchTerm
-      ? 'No hay productos que coincidan con "' + esc(searchTerm) + '".'
+      ? (__LANG === 'en' ? 'No products match "' : 'No hay productos que coincidan con "') + esc(searchTerm) + '".'
       : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">' + msg + '</div>';
     return;
@@ -828,8 +834,8 @@ document.getElementById('searchClear').addEventListener('click', () => {
 
 // ─── WISHLIST ────────────────────────────────────────────────
 // ─── WISHLIST ────────────────────────────────────────────────
-let _wish = new Set(JSON.parse(localStorage.getItem('cacusa-wish') || '[]').map(Number));
-function _saveWish() { localStorage.setItem('cacusa-wish', JSON.stringify([..._wish])); }
+let _wish = new Set(JSON.parse(__LS.getItem('cacusa-wish') || '[]').map(Number));
+function _saveWish() { __LS.setItem('cacusa-wish', JSON.stringify([..._wish])); }
 function _updateWishCount() {
   const n = _wish.size;
   const el = document.getElementById('wishCount');
@@ -1071,7 +1077,7 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
 // usa para saber a quién avisarle si el carrito termina vacío sin haber comprado.
 let _abandonLeadEmail = null;
 function saveCart() {
-  localStorage.setItem('cacusa-cart', JSON.stringify(cart));
+  __LS.setItem('cacusa-cart', JSON.stringify(cart));
   // El carrito quedó en cero sin pasar por un pedido (esos casos limpian el lead solos,
   // del lado del servidor, al crear el pedido) — avisar para que deje de figurar como
   // "carrito abandonado" en el panel. Best-effort, no bloquea nada si falla.
@@ -1129,7 +1135,7 @@ function updateCartUI() {
         <div class="ci-body">
           <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
           ${item.personalization ? `<div class="ci-custom">"${esc(item.personalization)}"</div>` : ''}
-          <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return localStorage.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
+          <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return __LS.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
           <div class="ci-foot">
             <span class="ci-price">$${(item.price * (item.qty || 1)).toFixed(2)}</span>
             <div class="ci-qty">
@@ -1143,7 +1149,7 @@ function updateCartUI() {
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
     const free = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
-    const _cL = localStorage.getItem('cacusa-lang') || 'es';
+    const _cL = __LS.getItem('cacusa-lang') || 'es';
     document.getElementById('cartShipping').textContent = free
       ? t('store.shippingFree', '¡Envío gratis desbloqueado!')
       : (_cL === 'en'
@@ -1549,6 +1555,9 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     zelleCpDiscount > 0 ? `CP:${_cpCode}(-$${zelleCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const zelleEmailVal = (document.getElementById('coEmail').value || '').trim();
+  // 22 oct (auditoría): la ventana de WhatsApp se abre ANTES de esperar al servidor — Safari/iPhone
+  // bloquea las que se abren después de un await y la clienta se quedaba sin el mensaje (ni el Zelle).
+  const _waWin = window.open('', '_blank');
   const result = await submitOrder({
     numero:    _currentOrderNum,
     cliente:   { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (paisVal ? ', ' + paisVal : ''), direccion, apto, estado: estadoVal, zip: zipVal, pais: paisVal, email: zelleEmailVal, idioma: __LANG },
@@ -1564,11 +1573,12 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     cuponAplicado: _cpCode || undefined
   });
   if (!result.ok) {
+    if (_waWin) { try { _waWin.close(); } catch (_) {} }
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal, result.id);
-  window.open(buildWhatsAppUrl(), '_blank');
+  _openWa(_waWin, buildWhatsAppUrl());
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
@@ -1656,9 +1666,9 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     // El pedido ya no se arma ni se guarda acá — cacusa-square lo registra del lado del
     // servidor (con los mismos datos que ya le mandamos en este POST) recién cuando su
     // webhook confirma que Square procesó el pago de verdad.
-    _gcCode=null; _gcBalance=0; _gcApplied=0;
-    _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
-    cart = []; saveCart(); updateCartUI();
+    // 22 oct (auditoría): el carrito ya NO se vacía antes de pagar — si la tarjeta se rechaza o la
+    // clienta vuelve atrás desde Square, lo encuentra igual. Se vacía al volver con ?paid=1.
+    try { sessionStorage.setItem('cacusa_order_pending', '1'); } catch (_) {}
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
@@ -1679,10 +1689,18 @@ function generateOrderNum() {
 let _currentOrderNum = '';
 
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
-function buildWhatsAppUrl() {
+// Lleva la ventana abierta de antemano al chat de WhatsApp; si el navegador no dejó abrirla,
+// abre WhatsApp en esta misma pestaña (lo importante es que la clienta reciba el mensaje).
+function _openWa(win, url) {
+  if (win && !win.closed) { try { win.opener = null; } catch (_) {} win.location.href = url; }
+  else window.location.href = url;
+}
+function buildWhatsAppUrl(opts = {}) {
   const _waEN    = __LANG === 'en';
   const _waMat   = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
-  const payMethod = (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
+  // opts.method: "coordinar por WhatsApp" pasa 'whatsapp' para que el mensaje cuadre con el pedido
+  // guardado (precio con tarjeta, pago a coordinar) aunque la clienta haya marcado Zelle (22 oct).
+  const payMethod = opts.method || (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
   const isZelle  = payMethod === 'zelle';
   const nombre   = document.getElementById('coNombre').value.trim();
   const apellido = document.getElementById('coApellido').value.trim();
@@ -1832,6 +1850,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     _markCoFieldError([!nombre && 'coNombre', !tel && 'coTel'].filter(Boolean), errorEl, t('store.coError1', 'Por favor ingresa tu nombre y teléfono WhatsApp.'));
     return;
   }
+  if (!isValidPhone(tel)) {
+    _markCoFieldError('coTel', errorEl, t('store.coError3', 'Por favor ingresa un número de teléfono válido.'));
+    return;
+  }
   errorEl.textContent = '';
 
   // Registrar pedido en el admin
@@ -1875,6 +1897,9 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     waCpDiscount > 0 ? `CP:${_cpCode}(-$${waCpDiscount})` : ''
   ].filter(Boolean).join(' | ');
   const emailVal = (document.getElementById('coEmail').value || '').trim();
+  // 22 oct (auditoría): la ventana de WhatsApp se abre ANTES de esperar al servidor — Safari/iPhone
+  // bloquea las que se abren después de un await y la clienta se quedaba sin el mensaje (ni el Zelle).
+  const _waWin = window.open('', '_blank');
   const result = await submitOrder({
     numero:  _currentOrderNum,
     cliente: { nombre: (nombre + ' ' + apellido).trim(), telefono: tel, ciudad: ciudad + (pais ? ', ' + pais : ''), direccion, apto, estado: waEstadoV, zip: waZipV, pais: pais || '', email: emailVal, idioma: __LANG },
@@ -1890,11 +1915,12 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     cuponAplicado: _cpCode || undefined
   });
   if (!result.ok) {
+    if (_waWin) { try { _waWin.close(); } catch (_) {} }
     errorEl.textContent = t('store.coErrorOrderFailed', 'No pudimos guardar tu pedido — revisa tu conexión e intenta de nuevo.');
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, emailVal, result.id);
-  window.open(buildWhatsAppUrl(), '_blank');
+  _openWa(_waWin, buildWhatsAppUrl({ method: 'whatsapp' }));
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
@@ -1914,7 +1940,7 @@ document.getElementById('successBack').addEventListener('click', () => {
 });
 
 // ─── LANG ───────────────────────────────────────────────────
-window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.reload(); };
+window.cacusaLang = l => { __LS.setItem('cacusa-lang', l); location.reload(); };
 
 // ─── INIT ───────────────────────────────────────────────────
 updateCartUI();
@@ -1927,7 +1953,8 @@ refreshCursorTargets();
 // Square — este código solo limpia el estado local y saluda a la clienta.
 if (new URLSearchParams(window.location.search).get('paid') === '1') {
   history.replaceState({}, '', window.location.pathname);
-  sessionStorage.removeItem('cacusa_order_pending');
+  try { sessionStorage.removeItem('cacusa_order_pending'); } catch (_) {}
+  cart = []; saveCart(); updateCartUI();
   showSuccess();
 }
 
@@ -2412,7 +2439,7 @@ async function submitReview() {
     showToast(__LANG==='en'?'Please fill all fields and pick a rating ★':'Completa nombre, comentario y calificación ★'); return;
   }
   // Anti-spam básico: 1 reseña cada 30s desde este navegador (Firebase es abierto; esto frena envíos accidentales/repetidos)
-  const _lastRev = parseInt(localStorage.getItem('cacusa-last-review') || '0', 10);
+  const _lastRev = parseInt(__LS.getItem('cacusa-last-review') || '0', 10);
   if (Date.now() - _lastRev < 30000) {
     showToast(__LANG==='en'?'Please wait a moment before submitting again.':'Espera un momento antes de enviar otra reseña.'); return;
   }
@@ -2427,7 +2454,7 @@ async function submitReview() {
       body: JSON.stringify({ name, rating, comment, approved: false, date: new Date().toISOString().slice(0,10) })
     });
     if (!res.ok) throw new Error();
-    localStorage.setItem('cacusa-last-review', String(Date.now()));
+    __LS.setItem('cacusa-last-review', String(Date.now()));
     document.getElementById('revName').value = '';
     document.getElementById('revComment').value = '';
     setRevRating(5);
@@ -2499,7 +2526,7 @@ async function applyCoupon() {
     const disc = _cpIsFreeShip() ? (__LANG==='en' ? 'FREE SHIPPING' : 'ENVÍO GRATIS')
       : _cpType==='percent' ? `${_cpAmount}% OFF` : `$${_cpAmount.toFixed(2)} OFF`;
     msgEl.className='gc-msg ok';
-    msgEl.textContent=(__LANG==='en' ? `✓ Applied: ${disc}` : `✓ Aplicado: ${disc} — confirma el uso desde el admin después de recibir el pago`);
+    msgEl.textContent=(__LANG==='en' ? `✓ Applied: ${disc}` : `✓ Aplicado: ${disc}`);
   } catch(_) {
     msgEl.className='gc-msg err';
     msgEl.textContent=(__LANG==='en'?'Could not verify coupon.':'No se pudo verificar el cupón.');
@@ -2610,8 +2637,8 @@ let _vigReleaseTrap = null;
   // hubiera registrado en el home. Ahora comparten la misma llave (cacusa-vig); la
   // migración hereda el estado de cualquiera de las 2 llaves viejas para que nadie que
   // ya haya interactuado (acá o en el home) vuelva a ver el popup una vez más.
-  if (!localStorage.getItem('cacusa-vig') && (localStorage.getItem('cacusa-vig2') || localStorage.getItem('cacusa-vig-store'))) {
-    localStorage.setItem('cacusa-vig', '1');
+  if (!__LS.getItem('cacusa-vig') && (__LS.getItem('cacusa-vig2') || __LS.getItem('cacusa-vig-store'))) {
+    __LS.setItem('cacusa-vig', '1');
   }
   function openVig() {
     vig.classList.add('show');
@@ -2619,10 +2646,10 @@ let _vigReleaseTrap = null;
   }
   function closeVig() {
     vig.classList.remove('show');
-    localStorage.setItem('cacusa-vig', '1');
+    __LS.setItem('cacusa-vig', '1');
     if (_vigReleaseTrap) { _vigReleaseTrap(); _vigReleaseTrap = null; }
   }
-  if (!localStorage.getItem('cacusa-vig')) setTimeout(openVig, 3500);
+  if (!__LS.getItem('cacusa-vig')) setTimeout(openVig, 3500);
   [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', closeVig));
   const vigBtn = document.getElementById('vigBtn');
   if (vigBtn) vigBtn.addEventListener('click', async () => {
