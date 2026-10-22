@@ -419,6 +419,7 @@ export default {
       if (path.endsWith('/order/label'))    return await handleOrderLabelGet(body, env, allowOrigin);
       if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/order/usps-notify')) return await handleUspsNotifyRetry(body, env, allowOrigin, ctx);
+      if (path.endsWith('/order/usps-status')) return await handleUspsStatus(body, env, allowOrigin);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -4469,9 +4470,9 @@ function uspsNotifyDue(order) {
   if (!n || n.for !== tn) return true;
   return n.status === 'pendiente' && (Number(n.tries) || 0) < 5;
 }
-async function uspsNotifyRequest(env, oauthToken, { tn, email, firstName, lastName }) {
-  const base = 'https://apis.usps.com/tracking/v3r2';
-  const tr = await fetch(`${base}/tracking`, {
+// POST /tracking/v3r2/tracking con un número → el detalle de ese paquete (o 404 si USPS aún no lo tiene).
+async function uspsTrackingLookup(oauthToken, tn) {
+  const tr = await fetch('https://apis.usps.com/tracking/v3r2/tracking', {
     method: 'POST',
     headers: { Authorization: `Bearer ${oauthToken}`, 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify([{ trackingNumber: tn }]),
@@ -4482,6 +4483,11 @@ async function uspsNotifyRequest(env, oauthToken, { tn, email, firstName, lastNa
   if (!Array.isArray(list)) list = [list];
   const item = list.find(x => x && x.uniqueTrackingID && (!x.statusCode || String(x.statusCode) === '200'));
   if (!item) throw uspsError(`USPS todavía no tiene ese número (${ttext.slice(0, 200)})`, 404);
+  return item;
+}
+async function uspsNotifyRequest(env, oauthToken, { tn, email, firstName, lastName }) {
+  const base = 'https://apis.usps.com/tracking/v3r2';
+  const item = await uspsTrackingLookup(oauthToken, tn);
   const body = { uniqueTrackingID: item.uniqueTrackingID, notifyEventTypes: USPS_NOTIFY_EVENTS,
     recipients: [{ email, ...(firstName ? { firstName: firstName.slice(0, 50) } : {}), ...(lastName ? { lastName: lastName.slice(0, 50) } : {}) }] };
   if (item.mailingDate) body.mailingDate = item.mailingDate;
@@ -4536,6 +4542,32 @@ async function handleUspsNotifyRetry(body, env, origin, ctx) {
   if (order.uspsNotify && order.uspsNotify.status === 'pendiente') { order.uspsNotify.tries = 0; await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order)); }
   const r = await registerUspsNotifications(env, id);
   return ok({ ok: !!r && r.status === 'activo', uspsNotify: r }, origin);
+}
+
+// POST /order/usps-status (22 oct) — estado actual del paquete en USPS para el mensaje de WhatsApp
+// del panel ("Notificar"): categoría, resumen, fecha estimada de entrega y último evento. Solo
+// lectura; 1 llamada a Tracking 3.2 con el token guardado.
+async function handleUspsStatus(body, env, origin) {
+  const id = body.orderId;
+  if (id == null) return err('Falta orderId', 400, origin);
+  const order = await orderGet(env, id);
+  if (!order) return err('Pedido no encontrado', 404, origin);
+  if (!orderHasUspsTracking(order)) return err('El pedido no tiene tracking de USPS.', 400, origin);
+  const tn = String(order.tracking).replace(/\s+/g, '');
+  try {
+    const item = await uspsWithTokens(env, false, (oauthToken) => uspsTrackingLookup(oauthToken, tn), 'estado USPS');
+    const dde = item.deliveryDateExpectation || {};
+    const ev = Array.isArray(item.trackingEvents) && item.trackingEvents[0] || null;
+    return ok({ ok: true, tracking: tn,
+      status: String(item.status || '').slice(0, 200),
+      statusCategory: String(item.statusCategory || '').slice(0, 80),
+      statusSummary: String(item.statusSummary || '').slice(0, 400),
+      expectedDeliveryDate: dde.expectedDeliveryDate || dde.predictedDeliveryDate || '',
+      lastEvent: ev ? { type: String(ev.eventType || '').slice(0, 120), city: ev.eventCity || '', state: ev.eventState || '', at: ev.eventTimestamp || ev.GMTTimestamp || '' } : null,
+    }, origin);
+  } catch (e) {
+    return ok({ ok: false, tracking: tn, notFound: !!(e && e.status === 404), error: String(e.message || e).slice(0, 300) }, origin);
+  }
 }
 
 // Botón "Pedir recolección de hoy" del panel — no está atado a un pedido puntual (el
