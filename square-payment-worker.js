@@ -370,6 +370,24 @@ async function gcCommit(env, code, orderRef, amountCents) {
     throw new Error(`gcCommit falló (${r.status}): ${d.error || 'sin detalle'}`);
   }
 }
+// 22 oct (auditoría): si la reserva ya no existe (venció a las 2 h — el link de Square no vence —
+// o se liberó), el commit da 409 y antes el webhook respondía 500 para siempre con el pedido ya
+// creado. Ahora se vuelve a reservar con la MISMA referencia y se confirma lo que alcance; si el
+// saldo ya no alcanza (se gastó en otra compra), se avisa a Tita/Robin y no se bloquea el webhook.
+async function gcCommitOrRecover(env, pending, referenceId) {
+  const gc = pending.giftCard;
+  try { await gcCommit(env, gc.code, gc.reservationRef, gc.amountCents); return; }
+  catch (e) { if (!/\(409\)/.test(String(e && e.message))) throw e; }
+  const again = await gcReserve(env, gc.code, gc.amountCents, gc.reservationRef);
+  const got = Math.round((Number(again && again.applied) || 0) * 100);
+  if (got > 0) await gcCommit(env, gc.code, gc.reservationRef, got);
+  const faltante = gc.amountCents - got;
+  if (faltante > 0) {
+    pending.gcFaltanteCents = faltante;
+    await notifyAdminPush('CACUSA · Tarjeta de regalo sin descontar',
+      `⚠ Pedido pagado con tarjeta de regalo ${gc.code}: faltó descontar $${(faltante / 100).toFixed(2)} (el saldo ya no alcanzaba). Revisa el pedido ${pending.adminOrderId || referenceId}.`, env).catch(() => {});
+  }
+}
 async function gcRelease(env, code, orderRef) {
   const stub = giftCardLedgerStub(env, code);
   if (!stub) return; // camino viejo: nunca se reservó nada que liberar
@@ -579,7 +597,10 @@ async function handleWebhook(request, env) {
     // de inmediato cualquier reserva de gift card en vez de esperar a que la alarm() de
     // la DO la libere sola a las 2h (esa alarm sigue siendo la red de seguridad si esto
     // mismo falla — ver catch abajo).
-    if (payment.status === 'FAILED' || payment.status === 'CANCELED') {
+    // 22 oct (auditoría): solo CANCELED. Un FAILED es un intento rechazado (tarjeta declinada) y
+    // la clienta puede reintentar en el MISMO link: liberar ahí dejaba el saldo libre y el pago
+    // posterior terminaba en un commit imposible (409) → webhook en 500 para siempre.
+    if (payment.status === 'CANCELED') {
       try {
         const squareOrder = await fetchSquareOrder(payment.order_id, env.SQUARE_ACCESS_TOKEN);
         const referenceId = squareOrder?.reference_id;
@@ -678,7 +699,11 @@ async function handleWebhook(request, env) {
       await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
     }
     if (pending.coupon) await burnCouponViaAdmin(pending.coupon.code, pending.coupon.phone, pending.coupon.email, env, pending.adminOrderId);
-    if (pending.giftCard) await gcCommit(env, pending.giftCard.code, pending.giftCard.reservationRef, pending.giftCard.amountCents);
+    if (pending.giftCard && !pending.gcSettled) {
+      await gcCommitOrRecover(env, pending, referenceId);
+      pending.gcSettled = true;
+      await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
+    }
 
     pending.processed = true;
     await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
