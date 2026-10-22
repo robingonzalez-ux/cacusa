@@ -2311,6 +2311,11 @@ async function handleRequest(request, env) {
           if (previa && previa.estado_pago !== 'cancelado') {
             return adminJson({ error: `Ya existe una suscriptora con ese correo (${previa.estado_pago || 'sin estado'}). Edítala en vez de crear otra.` }, 409);
           }
+          // 22 oct (auditoría): el PATCH de Firebase MEZCLA con la ficha cancelada. Si venía de cobro
+          // por factura, quedaban modo_cobro/factura_actual* y el cron le seguía mandando facturas de
+          // Square a una suscriptora manual. null en un PATCH de Firebase borra el campo.
+          if (previa) Object.assign(record, { modo_cobro: null, factura_actual: null, factura_actual_id: null,
+            factura_actual_ciclo: null, beneficios_off: null, pago_link_id: null, fecha_cancelacion: null });
           const ok = await updateSubscriber(key, null, record, dbUrl, fbAuth);
           if (!ok) return adminJson({ error: 'No se pudo crear la suscriptora' }, 502);
           await notifyExclusiveCoupon('activate', email, record.pais, env);
