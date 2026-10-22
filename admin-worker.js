@@ -1355,6 +1355,8 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
       for (const ck of ORDER_CLIENTE_PATCH_FIELDS) {
         if (ck in v) order.cliente[ck] = String(v[ck] ?? '').slice(0, 500);
       }
+      // 22 oct: idioma de la clienta (para WhatsApp/correos) — solo 'es' o 'en', elegido en el panel.
+      if ('idioma' in v && (v.idioma === 'es' || v.idioma === 'en')) order.cliente.idioma = v.idioma;
       continue;
     }
     if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
