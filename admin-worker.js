@@ -42,7 +42,7 @@
  *                                   (cobra franqueo de la cuenta EPS). Cualquier otro valor (o
  *                                   vacío) = compra de guías y recolección APAGADAS. Desde el 20
  *                                   oct no existe modo de pruebas: el Worker nunca llama a
- *                                   apis-tem (decisión de la usuaria; las guías van por
+ *                                   apis-tem (decisión del usuario; las guías van por
  *                                   Click-N-Ship y el panel solo cotiza).
  *   USPS_CRID             (secret)  Customer Registration Identifier — dato real de la cuenta,
  *                                   visible en gateway.usps.com (Business Customer Gateway).
@@ -420,6 +420,7 @@ export default {
       if (path.endsWith('/usps/schedule-pickup')) return await handleUspsSchedulePickup(body, env, allowOrigin, ctx);
       if (path.endsWith('/order/usps-notify')) return await handleUspsNotifyRetry(body, env, allowOrigin, ctx);
       if (path.endsWith('/order/usps-status')) return await handleUspsStatus(body, env, allowOrigin);
+      if (path.endsWith('/order/cns-export')) return await handleCnsExport(body, env, allowOrigin);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -4317,16 +4318,9 @@ async function handleUspsLabel(body, env, origin, session, ctx) {
     return err(`El ZIP "${String(cliente.zip).slice(0, 20)}" no es válido (5 dígitos) — corregilo con "✎ Editar dirección".`, 400, origin);
   }
   // Pedidos de la tienda (Zelle/WhatsApp) guardan nombre y apellido juntos en `nombre`.
-  let firstName = String(cliente.nombre || '').trim();
-  let lastName = String(cliente.apellido || '').trim();
-  if (!lastName && firstName.includes(' ')) {
-    const i = firstName.lastIndexOf(' ');
-    lastName = firstName.slice(i + 1);
-    firstName = firstName.slice(0, i);
-  }
+  const { firstName, lastName } = orderRecipientName(cliente);
   // Teléfono: 10 dígitos de EE.UU., o no se manda (un formato raro no debe tumbar la guía).
-  const telDigits = String(cliente.telefono || '').replace(/\D/g, '');
-  const phone10 = telDigits.length === 10 ? telDigits : (telDigits.length === 11 && telDigits[0] === '1' ? telDigits.slice(1) : '');
+  const phone10 = phone10Of(cliente.telefono);
 
   // Peso y las 3 dimensiones son obligatorios (decisión de negocio, 21 sep) — antes
   // caían en silencio al default del catálogo si venían vacíos; ahora el panel los
@@ -4622,7 +4616,7 @@ function easternDate(d = new Date()) {
 // de una guía de la API (labelGeneratedAt). Pedir recolección es gratis: ya no depende de
 // USPS_ENV. `preview: true` devuelve el conteo sin llamar a USPS. pickup-3 (21 oct): solo
 // cuenta pedidos del panel (tienda web + manuales, incluidas cajas de Lovers); no se acepta una
-// cantidad escrita a mano (decisión de la usuaria).
+// cantidad escrita a mano (decisión del usuario).
 async function handleUspsSchedulePickup(body, env, origin, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const today = easternDate();
@@ -4672,6 +4666,150 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
     console.error('USPS schedule pickup falló:', e.message);
     return err('No se pudo pedir la recolección: ' + e.message, 502, origin);
   }
+}
+
+// ── Exportar envíos para Click-N-Ship (26 oct) ───────────────────────────────────────
+// Si la API sale más cara que Click-N-Ship, el panel baja un CSV con el formato EXACTO de la
+// plantilla "Import Batch of Labels" (Label_Template.csv, guía CNS v2 oct 2026) y Robin lo sube
+// ahí: Click-N-Ship crea las guías en lote a su precio. Reference ID = id del pedido (es lo que
+// se usa después para pegar el tracking de vuelta), Reference ID 2 = número visible. El
+// remitente sale de USPS_FROM_ADDRESS (secreto): el panel no lo puede leer.
+const CNS_HEADER = ['Reference ID', 'Reference ID 2', 'Shipping Date', 'Item Description', 'Item Quantity', 'Item Weight (lb)', 'Item Weight (oz)', 'Item Value', 'HS Tariff #', 'Country of Origin', 'Sender First Name', 'Sender Middle Initial', 'Sender Last Name', 'Sender Company/Org Name', 'Sender Address Line 1', 'Sender Address Line 2', 'Sender Address Line 3', 'Sender Address Town/City', 'Sender State', 'Sender Country', 'Sender ZIP Code', 'Sender Urbanization Code', 'Ship From Another ZIP Code', 'Sender Email', 'Sender Cell Phone', 'Recipient Country', 'Recipient First Name', 'Recipient Middle Initial', 'Recipient Last Name', 'Recipient Company/Org Name', 'Recipient Address Line 1', 'Recipient Address Line 2', 'Recipient Address Line 3', 'Recipient Address Town/City', 'Recipient Province', 'Recipient State', 'Recipient ZIP Code', 'Recipient Urbanization Code', 'Recipient Phone', 'Recipient Email', 'Service Type', 'Package Type', 'Package Weight (lb)', 'Package Weight (oz)', 'Length', 'Width', 'Height', 'Girth', 'Insured Value', 'Contents', 'Contents Description', 'Package Comments', 'Customs Form Reference #', 'License #', 'Certificate #', 'Invoice #', 'Customs Form Reference # Type', 'HAZMAT Type', 'Live Animals and Perishable Goods Indicator'];
+// Un campo de CSV: sin saltos de línea, sin =/+/@ al inicio (Excel lo tomaría como fórmula),
+// entre comillas si lleva coma o comillas.
+function cnsCell(v) {
+  let s = String(v == null ? '' : v).replace(/[\r\n\t]+/g, ' ').trim().replace(/^[=+@]+/, '');
+  return /[",]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+// Nombre y apellido (los pedidos de la tienda los guardan juntos en `nombre`).
+function orderRecipientName(cliente) {
+  let firstName = String((cliente && cliente.nombre) || '').trim();
+  let lastName = String((cliente && cliente.apellido) || '').trim();
+  if (!lastName && firstName.includes(' ')) {
+    const i = firstName.lastIndexOf(' ');
+    lastName = firstName.slice(i + 1);
+    firstName = firstName.slice(0, i);
+  }
+  return { firstName, lastName };
+}
+// Teléfono de EE.UU. de 10 dígitos (sin el 1). Un celular de Ecuador (09…) no pasa: los
+// números de EE.UU. nunca empiezan con 0 ni 1.
+function phone10Of(v) {
+  const d = String(v || '').replace(/\D/g, '');
+  const n = d.length === 11 && d[0] === '1' ? d.slice(1) : d;
+  return /^[2-9]\d{9}$/.test(n) ? n : '';
+}
+// Pedidos que todavía necesitan guía: a EE.UU., no cancelados ni enviados, sin tracking ni
+// guía de la API. `issues` = lo que Click-N-Ship rechazaría (o una caja de Lovers sin piezas).
+function cnsCandidates(orders) {
+  const out = [];
+  for (const o of orders) {
+    if (!o || ['Cancelado', 'Enviado', 'Entregado'].includes(o.estado)) continue;
+    if (String(o.tracking || '').trim() || o.labelGeneratedAt || o.labelStored || o.labelBase64) continue;
+    const cliente = o.cliente || {};
+    const { pais, ciudad } = orderCountryParts(cliente);
+    if (!US_COUNTRY_VALUES.includes(pais)) continue;
+    const { firstName, lastName } = orderRecipientName(cliente);
+    const state = usStateCode(cliente.estado);
+    const zip = String(cliente.zip || '').trim();
+    const issues = [];
+    if (!firstName || !lastName) issues.push('falta nombre y apellido');
+    if (!String(cliente.direccion || '').trim()) issues.push('falta dirección');
+    if (!ciudad) issues.push('falta ciudad');
+    if (!state) issues.push('estado no reconocido');
+    if (!/^\d{5}(-\d{4})?$/.test(zip)) issues.push('ZIP no válido');
+    if (!(Array.isArray(o.productos) && o.productos.length)) issues.push('sin piezas cargadas');
+    out.push({ o, cliente, ciudad, state, zip, firstName, lastName, issues });
+  }
+  return out;
+}
+async function handleCnsExport(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const cands = cnsCandidates(await listAllOrders(env));
+  if (body.preview === true) {
+    return ok({ ok: true, preview: true, orders: cands.map(c => ({
+      id: c.o.id, numero: c.o.numero || '', cliente: [c.firstName, c.lastName].filter(Boolean).join(' ') || `#${c.o.id}`,
+      ciudad: c.ciudad, estado: c.state || String(c.cliente.estado || ''), issues: c.issues,
+    })) }, origin);
+  }
+
+  const ids = new Set((Array.isArray(body.ids) ? body.ids : []).map(String));
+  if (!ids.size) return err('Elige al menos un pedido.', 400, origin);
+  if (ids.size > 1000) return err('Click-N-Ship acepta hasta 1000 envíos por archivo.', 400, origin);
+  const weightOz = Number(body.weightOz), lengthIn = Number(body.lengthIn), widthIn = Number(body.widthIn), heightIn = Number(body.heightIn);
+  if (!(weightOz > 0 && weightOz <= 1120 && lengthIn > 0 && widthIn > 0 && heightIn > 0)) {
+    return err('Faltan el peso (oz) y las 3 medidas del paquete (pulgadas).', 400, origin);
+  }
+  const insured = Number(body.insuredValue);
+  const insuredValue = insured > 0 ? Math.min(5000, Math.round(insured)) : '';
+
+  if (!env.USPS_FROM_ADDRESS) return err('USPS_FROM_ADDRESS no configurado', 500, origin);
+  let from;
+  try { from = JSON.parse(env.USPS_FROM_ADDRESS); }
+  catch { return err('USPS_FROM_ADDRESS no es JSON válido', 500, origin); }
+  const fromPhone = phone10Of(from.phone);
+  if (!from.firstName || !from.lastName || !from.streetAddress || !from.city || !from.state || !from.ZIPCode || !fromPhone) {
+    return err('USPS_FROM_ADDRESS está incompleto (nombre, apellido, dirección, ciudad, estado, ZIP y teléfono de 10 dígitos).', 500, origin);
+  }
+
+  const chosen = cands.filter(c => ids.has(String(c.o.id)));
+  const bad = chosen.filter(c => c.issues.some(i => i !== 'sin piezas cargadas'));
+  if (bad.length) {
+    return err('Corrige antes estos pedidos: ' + bad.map(c => `#${c.o.numero || c.o.id} (${c.issues.join(', ')})`).join('; '), 400, origin);
+  }
+  if (!chosen.length) return err('Ninguno de esos pedidos sigue pendiente de guía.', 400, origin);
+
+  // Fecha de envío = hoy en hora del Este (Click-N-Ship acepta hasta 7 días adelante).
+  const [y, m, d] = easternDate().split('-');
+  const shipDate = `${m}/${d}/${y}`;
+  const lb = Math.floor(weightOz / 16);
+  const oz = Math.round((weightOz - lb * 16) * 10) / 10;
+  const fromZip = String(from.ZIPCode).trim();
+  const rows = chosen.map(c => {
+    const email = String(c.cliente.email || '').trim();
+    const r = {
+      'Reference ID': String(c.o.id).slice(0, 30),
+      'Reference ID 2': String(c.o.numero || '').slice(0, 30),
+      'Shipping Date': shipDate,
+      'Item Description': 'Jewelry',
+      'Item Quantity': 1,
+      'Item Weight (lb)': lb,
+      'Item Weight (oz)': oz,
+      'Country of Origin': 'US',
+      'Sender First Name': from.firstName,
+      'Sender Last Name': from.lastName,
+      'Sender Company/Org Name': String(from.firm || 'CACUSA BY TAITUS LLC').slice(0, 50),
+      'Sender Address Line 1': from.streetAddress,
+      'Sender Address Line 2': from.secondaryAddress || '',
+      'Sender Address Town/City': from.city,
+      'Sender State': String(from.state).trim().toUpperCase(),
+      'Sender Country': 'US',
+      'Sender ZIP Code': fromZip,
+      'Sender Email': from.email || 'facturacioncacusa@gmail.com',
+      'Sender Cell Phone': fromPhone,
+      'Recipient Country': 'US',
+      'Recipient First Name': c.firstName,
+      'Recipient Last Name': c.lastName,
+      'Recipient Address Line 1': c.cliente.direccion,
+      'Recipient Address Line 2': c.cliente.apto || '',
+      'Recipient Address Town/City': c.ciudad,
+      'Recipient State': c.state,
+      'Recipient ZIP Code': c.zip,
+      'Recipient Phone': phone10Of(c.cliente.telefono),
+      'Recipient Email': isValidEmail(email) ? email : '',
+      'Service Type': 'USPS Ground Advantage',
+      'Package Type': 'Choose Your Own Box',
+      'Package Weight (lb)': lb,
+      'Package Weight (oz)': oz,
+      'Length': lengthIn,
+      'Width': widthIn,
+      'Height': heightIn,
+      'Insured Value': insuredValue,
+    };
+    return CNS_HEADER.map(h => cnsCell(r[h])).join(',');
+  });
+  const csv = CNS_HEADER.join(',') + '\r\n' + rows.join('\r\n') + '\r\n';
+  return ok({ ok: true, count: rows.length, filename: `click-n-ship-${easternDate()}.csv`, csv }, origin);
 }
 
 // ── Pedidos de Cacusa Lovers: adoptar/completar los del sistema anterior (12 oct) ─────
@@ -4945,7 +5083,7 @@ async function handleLoversReconcileOrders(body, env, origin, ctx) {
   }
   // Pedidos viejos TOTALMENTE vacíos que no se pudieron ligar a nadie (sin dirección, teléfono ni
   // correo; sin tocar y sin editar) — no se pueden enviar. Se listan y solo se borran si la
-  // usuaria lo pide (limpiar:true), nunca solos. Se protegen los de suscriptoras a las que solo
+  // usuario lo pide (limpiar:true), nunca solos. Se protegen los de suscriptoras a las que solo
   // les falta la dirección (su pedido sirve de recordatorio hasta que la completen).
   if (body.vacios === true) {
     const vacio = o => isDisposableLegacyOrder(o) && !protegidos.has(o.id)
