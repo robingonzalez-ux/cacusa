@@ -12,6 +12,10 @@ catálogo, no versionamiento del sitio.
 Para el historial detallado de cualquier cambio, ver el repo privado o el
 historial de git de este repositorio (`git log`).
 
+## 2026-11-14 — Sudoku
+
+- Juego de Sudoku en `/sudoku/`: seis niveles de dificultad (Principiante a Maestro), tableros nuevos en cada partida, reto del día, notas, ayudas que explican el paso, combos y récords en el navegador. Página aparte de la tienda, con `noindex`.
+
 ## 2026-09-27 — SEO y presencia online
 
 - Bing recibe las URLs del sitemap por IndexNow automáticamente.
