@@ -53,12 +53,6 @@ necesita tocarse si cambia algo de la arquitectura general descrita abajo.
   Babel Standalone en el navegador (sin build), login con sesión firmada.
   Cambios al panel se hacen en ese repo; `ui_kits/admin/` en este repo solo
   redirige al dominio nuevo (y su `sw.js` se desregistra solo).
-- **Sudoku** (`sudoku/index.html` → `cacusabytaitus.com/sudoku/`, 14 nov):
-  juego independiente de la tienda, un solo archivo HTML/CSS/JS sin
-  dependencias (genera tableros con solución única y los califica por
-  técnica lógica en 6 niveles). `noindex`, fuera del sitemap y de
-  `llms.txt` a propósito — no es contenido de la marca. Ningún workflow
-  lo toca; se edita a mano.
 
 ## Cloudflare Workers — código fuente fuera de `main`
 
