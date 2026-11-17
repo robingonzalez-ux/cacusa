@@ -1024,12 +1024,14 @@ function trapFocus(modalEl, onClose) {
     const items = getFocusable();
     if (!items.length) return;
     const first = items[0], last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    // Si el foco quedó fuera del overlay (p. ej. no se pudo enfocar al abrir), el primer Tab lo trae adentro
+    if (!modalEl.contains(document.activeElement)){ e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   }
   document.addEventListener('keydown', onKeydown);
-  const items = getFocusable();
-  if (items.length) items[0].focus();
+  // Diferido: el overlay recién pasa a visible en este ciclo y un elemento oculto no acepta foco
+  setTimeout(() => { const items = getFocusable(); if (items.length && !modalEl.contains(document.activeElement)) items[0].focus(); }, 0);
   return function release(){
     document.removeEventListener('keydown', onKeydown);
     if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
@@ -1045,7 +1047,7 @@ function openModal(id) {
   document.getElementById('modalCat').textContent = t('cat.' + (p.cat||'').toLowerCase(), p.cat || '');
   document.getElementById('modalName').textContent = __LANG === 'en' && p.name_en ? p.name_en : p.name;
   const _mLang = __LANG === 'en';
-  const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
+  const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
   const _origPrice = (p.isPromo && p.originalPrice) ? (+p.originalPrice).toFixed(2) : (p.oldPrice || null);
   document.getElementById('modalPrice').textContent = '$' + (+p.price).toFixed(2) + (_origPrice ? (_mLang ? ' — was $' : ' — antes $') + _origPrice : '');
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
@@ -1115,6 +1117,7 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   const material = currentProduct.material || '';
   const existingLine = cart.find(it => !it.isCombo && it.id === currentProduct.id && (it.personalization || '') === personText && (it.material || '') === material);
   if (existingLine) {
+    if ((existingLine.qty || 1) + qty > MAX_QTY) showToast(__LANG === 'en' ? 'Max ' + MAX_QTY + ' per item' : 'Máximo ' + MAX_QTY + ' unidades por pieza', 3500);
     existingLine.qty = Math.min(MAX_QTY, (existingLine.qty || 1) + qty);
   } else {
     cart.push({ ...currentProduct, personalization: personText, material, cartId: Date.now(), qty });
@@ -1190,7 +1193,7 @@ function updateCartUI() {
         <div class="ci-body">
           <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
           ${item.personalization ? `<div class="ci-custom">"${esc(item.personalization)}"</div>` : ''}
-          ${item.material ? `<div class="ci-mat">${esc((()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material;return __LANG==='en'?(_cEN[_m]||_m):_m;})())}</div>` : ''}
+          ${item.material ? `<div class="ci-mat">${esc((()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};const _m=item.material;return __LANG==='en'?(_cEN[_m]||_m):_m;})())}</div>` : ''}
           <div class="ci-foot">
             <span class="ci-price">$${(item.price * (item.qty || 1)).toFixed(2)}</span>
             <div class="ci-qty">
@@ -1203,15 +1206,21 @@ function updateCartUI() {
         </div>
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
-    // Barra de progreso hacia el envío gratis (umbral de config.shipping.freeThreshold)
-    const free = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
-    const remaining = Math.max(0, SHIPPING.freeThreshold - total);
+    // Barra de progreso hacia el envío gratis (umbral de config.shipping.freeThreshold).
+    // Zelle/transferencia decide el envío gratis con el subtotal sin recargo de tarjeta
+    // (basePrice) — solo se promete "envío gratis" sin matices si llega con los 2 subtotales.
+    const baseTotal = cart.reduce((s, i) => s + (i.hasSurcharge && i.basePrice != null ? i.basePrice : i.price) * (i.qty || 1), 0);
+    const free = _cpIsFreeShip() || baseTotal >= SHIPPING.freeThreshold;
+    const freeCard = free || total >= SHIPPING.freeThreshold;
+    const remaining = Math.max(0, SHIPPING.freeThreshold - baseTotal);
     document.getElementById('cartShipping').textContent = free
       ? (__LANG === 'en' ? '✓ You have free shipping' : '✓ Tienes envío gratis')
-      : _freeShipMissingText(remaining);
+      : freeCard
+        ? (__LANG === 'en' ? '✓ Free shipping when paying by card' : '✓ Envío gratis pagando con tarjeta')
+        : _freeShipMissingText(remaining);
     const fill = document.getElementById('cartShipFill');
-    if (fill) fill.style.width = (free || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, total / SHIPPING.freeThreshold * 100)) + '%';
-    if (!free) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
+    if (fill) fill.style.width = (freeCard || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, baseTotal / SHIPPING.freeThreshold * 100)) + '%';
+    if (!freeCard) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
     footEl.style.display = 'block';
   }
 }
@@ -1802,7 +1811,7 @@ function _openWa(win, url) {
 }
 function buildWhatsAppUrl(opts = {}) {
   const _waEN    = __LANG === 'en';
-  const _waMat   = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};
+  const _waMat   = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
   // opts.method: "coordinar por WhatsApp" pasa 'whatsapp' para que el mensaje cuadre con el pedido
   // guardado (precio con tarjeta, pago a coordinar) aunque la clienta haya marcado Zelle (22 oct).
   const payMethod = opts.method || (document.querySelector('.pay-method-opt.selected') || {}).dataset?.method || 'square';
@@ -2053,7 +2062,7 @@ function showSuccess(info) {
     if (typeof info.total === 'number' && isFinite(info.total)) h += '<p>Total: <strong>$' + info.total.toFixed(2) + '</strong></p>';
     h += '<p>' + (en ? 'Personalized pieces are handmade in 5 to 10 business days, plus shipping time.' : 'Las piezas personalizadas se elaboran a mano en 5 a 10 días hábiles, más el tiempo de envío.') + '</p>';
     if (info.hasEmail) h += '<p>✓ ' + (en ? 'We sent the confirmation to your email.' : 'Te enviamos la confirmación a tu email.') + '</p>';
-    if (info.method === 'zelle' && info.orderNum) {
+    if (info.method === 'zelle' && info.orderNum && info.total > 0) {
       const waText = (en ? 'Hi! Here is the payment screenshot for my order #' : '¡Hola! Te envío la captura del pago de mi pedido #') + info.orderNum;
       h += '<ol class="success-steps">' +
         '<li>' + (en ? 'Pay' : 'Paga') + (typeof info.total === 'number' ? ' $' + info.total.toFixed(2) : '') + (en ? ' by Zelle to facturacioncacusa@gmail.com or by bank transfer.' : ' por Zelle a facturacioncacusa@gmail.com o por transferencia.') + '</li>' +
@@ -2495,7 +2504,7 @@ function _injectProductSchema(p) {
 function _clearProductSchema() {
   const el = document.getElementById('ld-product'); if (el) el.remove();
   document.title = 'Tienda de joyería personalizada | CACUSA by Taitus';
-  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y baño de oro 18k. Personalización disponible. Envíos a Ecuador y USA.');
+  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en baño de oro 18k, acero inoxidable y gold filled. Personalización disponible. Envíos a Ecuador y USA.');
   _setCanonical(_SEO_BASE);
   _setHreflang(_STORE_BASE_ES, _STORE_BASE_EN);
   { const h1el = document.querySelector('.store-hero-h'); if (h1el) h1el.textContent = TEXTS.heroTitle; }

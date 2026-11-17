@@ -343,7 +343,7 @@
         },
         {
           "q": "¿Cómo cancelo mi suscripción?",
-          "a": "No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan: recibes la caja de ese período."
+          "a": "Desde octubre de 2026 no hay cobros automáticos: si no quieres seguir, no pagues la próxima factura o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan. Si te suscribiste antes con cobro automático de tarjeta, cancela desde el enlace \"Manage subscription\" de Square o escríbenos."
         },
         {
           "q": "¿Qué pasa si una pieza llega dañada?",
@@ -461,7 +461,7 @@
         },
         {
           "q": "How do I cancel my subscription?",
-          "a": "There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box."
+          "a": "Since October 2026 there are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded. If you subscribed earlier with automatic card billing, cancel from Square's \"Manage subscription\" link or message us."
         },
         {
           "q": "What if a piece arrives damaged?",

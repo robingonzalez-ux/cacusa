@@ -128,7 +128,7 @@ nav.scrolled .nav-links a:hover{color:var(--pink)}
 nav.scrolled .nav-lovers{color:var(--ink)!important;background:var(--pink-pale);border-color:var(--pink)}
 .nav-lovers:hover{background:rgba(255,255,255,.75)!important;color:var(--ink)!important}
 nav.scrolled .nav-lovers:hover{background:var(--pink)!important;color:white!important}
-.nav-cta{display:inline-block;text-decoration:none;background:white;color:var(--ink);font-family:var(--fu);font-weight:600;font-size:12px;letter-spacing:.06em;border:none;border-radius:999px;padding:10px 22px;cursor:pointer;transition:all .25s;box-shadow:0 2px 16px rgba(255,255,255,.3)}
+.nav-cta{display:inline-block;text-align:center;text-decoration:none;background:white;color:var(--ink);font-family:var(--fu);font-weight:600;font-size:12px;letter-spacing:.06em;border:none;border-radius:999px;padding:10px 22px;cursor:pointer;transition:all .25s;box-shadow:0 2px 16px rgba(255,255,255,.3)}
 nav.scrolled .nav-cta{background:var(--pink-deep);color:white;box-shadow:0 2px 16px rgba(238,111,168,.35)}
 .nav-cta:hover{transform:scale(1.04)}
 #navMenuBtn{display:none}
@@ -336,7 +336,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 
 /* ── VIGNETTE ──────────────────────────────────────── */
 #vignette{position:fixed;inset:0;z-index:8000;display:flex;align-items:center;justify-content:center;background:rgba(139,42,90,.25);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s}
-#vignette.show{opacity:1;visibility:visible}
+#vignette.show{opacity:1;visibility:visible;transition:opacity .5s,visibility 0s}
 .vig-box{background:white;border-radius:28px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;max-width:680px;width:90%;box-shadow:0 32px 80px rgba(238,111,168,.3);transform:scale(.9) translateY(20px);transition:transform .5s cubic-bezier(.34,1.56,.64,1)}
 #vignette.show .vig-box{transform:scale(1) translateY(0)}
 .vig-visual{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 28px;position:relative}
@@ -370,7 +370,7 @@ html,body{overflow-x:hidden}
   /* NAV — oculta el menú, muestra hamburguesa */
   nav{padding:0 18px;height:60px}
   .nav-links{display:none}
-  .nav-cta{padding:9px 18px;font-size:12px}
+  .nav-cta{padding:8px 14px;font-size:12px;white-space:nowrap}
   .nav-logo .w{font-size:19px}
   .nav-logo .s{font-size:13px}
 
@@ -1492,12 +1492,12 @@ function _vigTrapFocus(modalEl, onClose) {
     const items = getFocusable();
     if (!items.length) return;
     const first = items[0], last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    if (!modalEl.contains(document.activeElement)){ e.preventDefault(); (e.shiftKey ? last : first).focus(); }
+    else if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   }
   document.addEventListener('keydown', onKeydown);
-  const items = getFocusable();
-  if (items.length) items[0].focus();
+  setTimeout(() => { const items = getFocusable(); if (items.length && !modalEl.contains(document.activeElement)) items[0].focus(); }, 0);
   return function release(){
     document.removeEventListener('keydown', onKeydown);
     if (_prevFocused && _prevFocused.focus) _prevFocused.focus();

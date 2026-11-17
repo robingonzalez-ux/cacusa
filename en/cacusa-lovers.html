@@ -217,7 +217,7 @@ section{padding:96px 0}
 .faq-icon{font-size:18px;color:var(--ink);transition:transform .3s;flex-shrink:0}
 .faq-item.open .faq-icon{transform:rotate(45deg)}
 .faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .3s}
-.faq-item.open .faq-a{max-height:200px;padding:0 24px 20px}
+.faq-item.open .faq-a{max-height:400px;padding:0 24px 20px}
 .faq-a p{font-family:var(--fe);font-size:15px;font-style:italic;color:var(--ink-muted);line-height:1.7}
 
 /* ── CONDITIONS ── */
@@ -315,6 +315,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 @keyframes ssIn{from{transform:scale(0) rotate(-15deg)}to{transform:scale(1) rotate(0)}}
 
 /* ── RESPONSIVE ── */
+@media(max-width:600px){#lHeroTrust{max-width:calc(100% - 120px);margin-inline:auto}}
 @media(max-width:768px){
   nav{padding:0 20px}
   .nav-links{display:none}
@@ -654,7 +655,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planMonthlyAmount">19</span>
             <span class="plan-cents" id="planMonthlyCents">.99</span>
           </div>
-          <div class="plan-subtitle">per month <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planMonthlyPerPiece">≈ $9.99 per piece</span></div>
+          <div class="plan-subtitle">per month <span style="font-family:var(--fu);font-style:normal;font-size:13px;display:block;margin-top:2px" id="planMonthlyPerPiece">≈ $9.99 per piece</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesMonthly">
@@ -679,7 +680,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planAnnualAmount">219</span>
             <span class="plan-cents" id="planAnnualCents">.89</span>
           </div>
-          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span><span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 per piece</span></div>
+          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span><span style="font-family:var(--fu);font-style:normal;font-size:13px;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 per piece</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesAnnual">
@@ -794,7 +795,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       </div>
       <div class="faq-item reveal" data-delay="4">
         <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA5"><span>How do I cancel my subscription?</span><span class="faq-icon">+</span></button>
-        <div class="faq-a" id="faqA5"><p>There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box.</p></div>
+        <div class="faq-a" id="faqA5"><p>Since October 2026 there are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded. If you subscribed earlier with automatic card billing, cancel from Square's &quot;Manage subscription&quot; link or message us.</p></div>
       </div>
       <div class="faq-item reveal" data-delay="4">
         <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA6"><span>What if a piece arrives damaged?</span><span class="faq-icon">+</span></button>
@@ -809,7 +810,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 {"@type":"Question","name":"Can I choose the jewelry I receive?","acceptedAnswer":{"@type":"Answer","text":"No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."}},
 {"@type":"Question","name":"Do you ship throughout Ecuador and the USA?","acceptedAnswer":{"@type":"Answer","text":"Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost."}},
 {"@type":"Question","name":"How does the monthly payment work?","acceptedAnswer":{"@type":"Answer","text":"Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."}},
-{"@type":"Question","name":"How do I cancel my subscription?","acceptedAnswer":{"@type":"Answer","text":"There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box."}},
+{"@type":"Question","name":"How do I cancel my subscription?","acceptedAnswer":{"@type":"Answer","text":"Since October 2026 there are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded. If you subscribed earlier with automatic card billing, cancel from Square's \"Manage subscription\" link or message us."}},
 {"@type":"Question","name":"What if a piece arrives damaged?","acceptedAnswer":{"@type":"Answer","text":"If a piece arrives with a manufacturing defect, message us on WhatsApp with photos within 48 hours of delivery and we'll replace it at no cost. Outside of that case there are no exchanges or returns."}}
 ]}
 </script>
