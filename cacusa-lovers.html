@@ -101,11 +101,18 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;d
 .scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);animation:sLine 2s ease infinite}
 @keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 
-/* ── REVEAL ── */
-.reveal{opacity:0;transform:translateY(32px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
-.reveal-left{opacity:0;transform:translateX(-32px);transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
-.reveal-scale{opacity:0;transform:scale(.94);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
-.reveal.visible,.reveal-left.visible,.reveal-scale.visible{opacity:1;transform:none}
+/* ── REVEAL ── solo arrancan ocultos con html.rv (lo pone el script del head): sin JS todo queda visible */
+.reveal,.reveal-left{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out)}
+.reveal-scale{transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+html.rv .reveal{opacity:0;transform:translateY(32px)}
+html.rv .reveal-left{opacity:0;transform:translateX(-32px)}
+html.rv .reveal-scale{opacity:0;transform:scale(.94)}
+html.rv .reveal.visible,html.rv .reveal-left.visible,html.rv .reveal-scale.visible{opacity:1;transform:none}
+/* Entrada de secciones (sectionRise): bloques SIN animación propia suben 32px y aparecen una vez.
+   html.sr lo agrega el JS solo en escritorio y sin prefers-reduced-motion. */
+html.sr .sr-rise{opacity:0;transform:translateY(32px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+html.sr .sr-rise.sr-in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){html.sr .sr-rise{opacity:1;transform:none;transition:none}}
 [data-delay="1"]{transition-delay:.1s}[data-delay="2"]{transition-delay:.2s}[data-delay="3"]{transition-delay:.3s}[data-delay="4"]{transition-delay:.4s}
 
 /* ── SECTIONS ── */
@@ -366,6 +373,7 @@ main#main:focus{outline:none}
   .reveal,.reveal-left,.reveal-scale{opacity:1!important;transform:none!important}
 }
 </style>
+<script>if('IntersectionObserver' in window)document.documentElement.classList.add('rv');</script>
 </head>
 <body>
 <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -1713,6 +1721,39 @@ function toggleFaq(el){
   btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
   if (close) close.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
+})();
+</script>
+<script>
+// ── ENTRADA DE SECCIONES ─────────────────────────────────────
+// Los bloques de cada sección que NO tienen animación propia (.reveal*) suben 32px y aparecen una
+// sola vez al entrar en pantalla (solo transform/opacity, --ease-out, 700ms). Sin JS, con
+// prefers-reduced-motion o en móvil (donde esta página ya muestra todo sin animar) quedan visibles:
+// el estado oculto depende de html.sr.
+(function sectionRise(){
+  if (!('IntersectionObserver' in window) || !window.matchMedia) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.matchMedia('(max-width: 768px)').matches) return;
+  const OWN = '.reveal,.reveal-left,.reveal-right,.reveal-scale';
+  const SKIP = /^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE|CANVAS|BR)$/;
+  const inlineMotion = el => /(^|;)\s*(transition|transform|translate|opacity)\s*:/i.test(el.getAttribute('style') || '');
+  const targets = [];
+  const collect = el => {
+    if (SKIP.test(el.tagName) || el.matches(OWN) || inlineMotion(el)) return;
+    const pos = getComputedStyle(el).position;
+    if (pos === 'absolute' || pos === 'fixed') return;
+    if (el.querySelector(OWN)) { Array.from(el.children).forEach(collect); return; }
+    targets.push(el);
+  };
+  document.querySelectorAll('main > section:not(#hero)').forEach(sec => Array.from(sec.children).forEach(collect));
+  if (!targets.length) return;
+  document.documentElement.classList.add('sr');
+  const io = new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    io.unobserve(e.target);
+    e.target.classList.add('sr-in');
+    // Terminada la entrada se quitan las clases para no pisar transiciones propias del bloque.
+    setTimeout(() => e.target.classList.remove('sr-rise', 'sr-in'), 900);
+  }), { rootMargin: '0px 0px -8% 0px', threshold: 0 });
+  targets.forEach(el => { el.classList.add('sr-rise'); io.observe(el); });
 })();
 </script>
 </body>
