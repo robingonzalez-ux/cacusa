@@ -652,8 +652,6 @@ function applyTexts() {
   set('.store-hero-label', TEXTS.heroLabel);
   set('.store-hero-h', TEXTS.heroTitle);
   set('.store-hero-s', TEXTS.heroSubtitle);
-  const ig = document.getElementById('igHandle');
-  if (ig && TEXTS.instagram) ig.textContent = TEXTS.instagram;
   const perksEl = document.querySelector('.modal-perks');
   if (perksEl && Array.isArray(TEXTS.perks)) {
     perksEl.innerHTML = TEXTS.perks.map(p =>
@@ -944,6 +942,12 @@ function _waLink(text) {
   const num = String(WHATSAPP_NUMBER || '17867375336').replace(/\D/g, '');
   return 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
 }
+// Hasta n productos destacados en stock: Bestseller primero, después Nuevo, después el resto
+// (orden del catálogo). Lo usan la búsqueda sin resultados y el carrito vacío.
+function _featuredProducts(n) {
+  const rank = p => _isBestseller(p) ? 0 : ((p.tag || '').toLowerCase() === 'nuevo' || (p.tag || '').toLowerCase() === 'new') ? 1 : 2;
+  return PRODUCTS.filter(p => p.available !== false).sort((a, b) => rank(a) - rank(b)).slice(0, n);
+}
 // Sin resultados: mensaje, botón que limpia búsqueda y categoría, link a WhatsApp con lo
 // que se buscó, y hasta 4 productos sugeridos (bestseller y nuevos primero, en stock).
 function _emptyStateHtml() {
@@ -956,8 +960,7 @@ function _emptyStateHtml() {
   const waText = searchTerm
     ? (en ? 'Hi! I am looking for: ' : '¡Hola! Estoy buscando: ') + searchTerm
     : (en ? 'Hi! I have a question about a product' : '¡Hola! Tengo una consulta sobre un producto');
-  const rank = p => _isBestseller(p) ? 0 : ((p.tag || '').toLowerCase() === 'nuevo' || (p.tag || '').toLowerCase() === 'new') ? 1 : 2;
-  const sugg = PRODUCTS.filter(p => p.available !== false).sort((a, b) => rank(a) - rank(b)).slice(0, 4);
+  const sugg = _featuredProducts(4);
   return '<div class="empty-state">' +
       '<p class="empty-msg" role="status" aria-live="polite">' + msg + '</p>' +
       '<button type="button" class="empty-all" onclick="_clearAllFilters()">' + (en ? 'View full catalog' : 'Ver todo el catálogo') + '</button>' +
@@ -1023,7 +1026,7 @@ function renderCombos() {
       ? `<img class="combo-img" src="${esc(c.imageUrl)}" alt="${esc(c.name)}">`
       : `<div class="combo-img-ph">◇</div>`;
     return `
-      <div class="combo-card" onclick="addComboToCart(${c.id})">
+      <div class="combo-card" onclick="addComboToCart(${c.id}, this)">
         ${imgEl}
         <div class="combo-body">
           <div class="combo-name">${esc(c.name)}</div>
@@ -1038,9 +1041,14 @@ function renderCombos() {
   }).join('');
 }
 
-function addComboToCart(id) {
+// UX tanda 2: antes el combo entraba al carrito sin ninguna señal visible. Ahora da el mismo
+// feedback que "Añadir al carrito" del modal: el botón pasa a "✓ Añadido" y a los 800 ms se
+// abre el carrito.
+function addComboToCart(id, cardEl) {
   const combo = COMBOS.find(c => c.id === id);
   if (!combo) return;
+  const btn = cardEl && cardEl.querySelector('.combo-add');
+  if (btn && btn.classList.contains('added')) return; // doble toque mientras se confirma
   cart.push({
     id: combo.id,
     name: combo.name,
@@ -1053,6 +1061,13 @@ function addComboToCart(id) {
     cartId: Date.now()
   });
   saveCart(); updateCartUI();
+  if (btn) {
+    const prev = btn.textContent;
+    btn.textContent = __LANG === 'en' ? '✓ Added' : '✓ Añadido';
+    btn.classList.add('added');
+    setTimeout(() => { btn.textContent = prev; btn.classList.remove('added'); }, 1600);
+  }
+  setTimeout(openCart, 800);
 }
 
 // ─── FILTERS (los botones se generan en renderFilters) ──────
@@ -1235,9 +1250,10 @@ function trapFocus(modalEl, onClose) {
 }
 let _modalReleaseTrap = null, _cartReleaseTrap = null, _checkoutReleaseTrap = null;
 
-function openModal(id) {
+function openModal(id, _fromHistory) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
+  const _alreadyOpen = document.getElementById('modal-overlay').classList.contains('open');
   currentProduct = p; qty = 1;
   initGallery(p);
   document.getElementById('modalCat').textContent = t('cat.' + (p.cat||'').toLowerCase(), p.cat || '');
@@ -1246,6 +1262,8 @@ function openModal(id) {
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
   const _origPrice = (p.isPromo && p.originalPrice) ? (+p.originalPrice).toFixed(2) : (p.oldPrice || null);
   document.getElementById('modalPrice').textContent = '$' + (+p.price).toFixed(2) + (_origPrice ? (_mLang ? ' — was $' : ' — antes $') + _origPrice : '');
+  const _barPrice = document.getElementById('modalBarPrice');
+  if (_barPrice) _barPrice.textContent = '$' + (+p.price).toFixed(2);
   _renderModalXmas(p);
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
@@ -1267,7 +1285,11 @@ function openModal(id) {
   addBtn.className = 'modal-add';
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
-  _modalReleaseTrap = trapFocus(document.getElementById('modal-overlay'), closeModal);
+  // Otro producto desde "relacionados" con el modal ya abierto: arriba de todo (en el
+  // celular el modal es pantalla completa) y sin apilar una segunda trampa de foco.
+  const _box = document.querySelector('#modal-overlay .modal-box');
+  if (_box) _box.scrollTop = 0;
+  if (!_alreadyOpen || !_modalReleaseTrap) _modalReleaseTrap = trapFocus(document.getElementById('modal-overlay'), closeModal);
   if (p.hasSurcharge) {
     showToast(__LANG === 'en'
       ? 'This product has <strong>4% off</strong> when paying by Zelle or bank transfer'
@@ -1276,30 +1298,64 @@ function openModal(id) {
   _syncModalWish();
   loadProductReviews(p.id);
   setRevRating(5);
-  // Auditoría SEO externa (20 sep): si ya estamos en la página física de ESTE
-  // MISMO producto (/producto/<slug>/), la URL ya es la correcta — agregar acá
-  // ?p=... solo la ensuciaba con un parámetro redundante que ya no cumple
-  // ninguna función (el canonical ya apunta a la URL limpia de todos modos).
-  // Si se abre un producto DISTINTO (ej. desde "relacionados") sí hace falta
-  // seguir agregando ?p= — si no, la URL visible quedaría apuntando al
-  // producto viejo mientras se ve el modal de otro.
-  if (String(window.__CACUSA_STATIC_PRODUCT_ID) !== String(p.id)) { const _u = new URL(window.location.href); _u.searchParams.set('p', _productParam(p)); history.pushState({productId: p.id}, '', _u.toString()); }
+  _modalHistoryOpen(p, _fromHistory === true);
   _injectProductSchema(p);
   _renderRelatedProducts(p);
+}
+// UX tanda 2 (B1): abrir el modal deja una entrada propia en el historial ({modal: id}),
+// así el botón Atrás del navegador/celular lo cierra en vez de sacar a la clienta de la
+// tienda. _modalPushed = esa entrada la apilamos nosotros en esta visita: solo entonces
+// cerrar con ✕/Escape/fondo hace history.back() (si no, se limpia ?p= con replaceState),
+// para no navegar 2 veces ni dejar entradas basura hacia adelante.
+// Auditoría SEO externa (20 sep), se mantiene: en la página física de ESTE MISMO producto
+// (/producto/<slug>/) la URL ya es la correcta y no se le agrega ?p= redundante; un
+// producto DISTINTO (ej. desde "relacionados") sí lleva ?p= para que la URL visible
+// coincida con el modal que se ve.
+let _modalPushed = false, _modalBackPending = false;
+function _modalHistoryOpen(p, fromHistory) {
+  const u = new URL(window.location.href);
+  if (String(window.__CACUSA_STATIC_PRODUCT_ID) === String(p.id)) u.searchParams.delete('p');
+  else u.searchParams.set('p', _productParam(p));
+  const st = { modal: p.id };
+  // Adelante del navegador hacia una entrada de modal: ya existe, no se apila otra.
+  if (fromHistory) { _modalPushed = true; return; }
+  // Cambio de producto con el modal abierto: se reemplaza la entrada, así Atrás cierra el modal.
+  if (_modalPushed && history.state && history.state.modal != null) { history.replaceState(st, '', u.toString()); return; }
+  // Entrada base sin ?p=: un link directo (?p=) queda como "listado + modal encima" y
+  // Atrás cierra el modal dejando a la clienta en la tienda. Recargar sigue abriendo el
+  // producto porque la URL visible del modal conserva ?p=.
+  const base = new URL(window.location.href); base.searchParams.delete('p');
+  if (base.toString() !== window.location.href) history.replaceState({}, '', base.toString());
+  history.pushState(st, '', u.toString());
+  _modalPushed = true;
 }
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 });
-function closeModal() {
+// _fromPop === true solo cuando lo llama el popstate (Atrás ya sacó nuestra entrada);
+// como listener de clic recibe un Event, que nunca es === true.
+function closeModal(_fromPop) {
+  const fromPop = _fromPop === true;
   const _wasOpen = document.getElementById('modal-overlay').classList.contains('open');
+  if (!_wasOpen && !fromPop) return; // ya cerrado (p. ej. Escape + trampa de foco a la vez)
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (_modalReleaseTrap) { _modalReleaseTrap(); _modalReleaseTrap = null; }
-  const _u = new URL(window.location.href); _u.searchParams.delete('p'); history.pushState({}, '', _u.toString());
-  _updateListingSeo();
   dismissToast();
   if (_wasOpen && typeof window._vigProductViewed === 'function') window._vigProductViewed();
+  if (fromPop) { _modalPushed = false; return; }
+  if (_modalPushed && history.state && history.state.modal != null) {
+    // Sacamos nuestra propia entrada; el popstate que llega después actualiza el SEO del listado.
+    _modalPushed = false;
+    _modalBackPending = true;
+    history.back();
+    return;
+  }
+  _modalPushed = false;
+  const _u = new URL(window.location.href);
+  if (_u.searchParams.has('p')) { _u.searchParams.delete('p'); history.replaceState({}, '', _u.toString()); }
+  _updateListingSeo();
 }
 
 // Tope de 10 unidades por línea (selector del modal y +/− del carrito)
@@ -1381,7 +1437,9 @@ function updateCartUI() {
   const itemsEl = document.getElementById('cartItems');
   const footEl = document.getElementById('cartFoot');
   if (count === 0) {
-    itemsEl.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon">✦</span><div class="cart-empty-text">' + t('store.cartEmpty', 'Tu carrito está vacío') + '</div></div>';
+    itemsEl.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon" aria-hidden="true">✦</span><div class="cart-empty-text">' + t('store.cartEmpty', 'Tu carrito está vacío') + '</div>' +
+      '<button type="button" class="cart-empty-cta" onclick="_cartExploreStore()">' + (__LANG === 'en' ? 'Explore the store' : 'Explorar la tienda') + '</button></div>' +
+      _cartEmptySuggestHtml();
     footEl.style.display = 'none';
   } else {
     itemsEl.innerHTML = cart.map((item, i) => `
@@ -1451,6 +1509,27 @@ function _cartSuggestHtml(remaining) {
       const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
       return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
     }).join('') + '</div></div>';
+}
+// Carrito vacío: hasta 4 productos (Bestseller, después Nuevo, en stock) como tarjetitas
+// que abren el producto — mismo marcado y navegación que las sugerencias de envío gratis.
+function _cartEmptySuggestHtml() {
+  const list = _featuredProducts(4);
+  if (!list.length) return '';
+  return '<div class="cart-suggest cart-suggest--empty"><div class="cs-title">' + (__LANG === 'en' ? 'You might like' : 'Quizás te guste') + '</div><div class="cs-list">' +
+    list.map(p => {
+      const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+    }).join('') + '</div></div>';
+}
+// "Explorar la tienda": cierra el carrito y baja hasta los filtros del catálogo.
+function _cartExploreStore() {
+  closeCart();
+  const target = document.querySelector('.filters') || document.getElementById('prodGrid');
+  if (!target) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const navEl = document.querySelector('nav');
+  const y = target.getBoundingClientRect().top + window.scrollY - (navEl ? navEl.offsetHeight : 0);
+  window.scrollTo({ top: Math.max(0, y), behavior: reduce ? 'auto' : 'smooth' });
 }
 function _cartSuggestNav(e, id) {
   if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return true;
@@ -1592,10 +1671,31 @@ document.getElementById('checkoutBtn').addEventListener('click', () => { closeCa
 document.getElementById('checkoutBack').addEventListener('click', () => { closeCheckout(); openCart(); });
 
 // ─── CHECKOUT ───────────────────────────────────────────────
+// "¿Tienes un código?": cupón y tarjeta de regalo plegados por defecto (menos ruido para
+// quien no tiene código); se abren solos si ya hay un código aplicado o escrito.
+function _setCoCodesOpen(open) {
+  const btn = document.getElementById('coCodesToggle'), panel = document.getElementById('coCodesPanel');
+  if (!btn || !panel) return;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  panel.hidden = !open;
+}
+(function () {
+  const btn = document.getElementById('coCodesToggle');
+  if (btn) btn.addEventListener('click', () => {
+    const panel = document.getElementById('coCodesPanel');
+    const open = !!(panel && panel.hidden);
+    _setCoCodesOpen(open);
+    if (open) { const first = document.getElementById('gcCodeInput'); if (first) first.focus(); }
+  });
+})();
 function openCheckout() {
   document.getElementById('checkout-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   coGoStep1();
+  const _typed = (document.getElementById('gcCodeInput').value || '').trim() || (document.getElementById('cpCodeInput').value || '').trim();
+  _setCoCodesOpen(!!(_gcCode || _cpCode || _typed));
+  const helpWa = document.getElementById('coHelpWa');
+  if (helpWa) helpWa.href = _waLink(__LANG === 'en' ? 'Hi! I need help with my order' : '¡Hola! Necesito ayuda con mi pedido');
   renderCheckoutSummary();
   _checkoutReleaseTrap = trapFocus(document.getElementById('checkout-overlay'), closeCheckout);
 }
@@ -1607,6 +1707,7 @@ function closeCheckout() {
   if (errorEl) errorEl.textContent = '';
   const errorEl1 = document.getElementById('coErrorStep1');
   if (errorEl1) errorEl1.textContent = '';
+  _clearCoInlineErrs();
   if (_checkoutReleaseTrap) { _checkoutReleaseTrap(); _checkoutReleaseTrap = null; }
 }
 document.getElementById('checkout-overlay').addEventListener('click', e => {
@@ -1760,6 +1861,7 @@ function isValidPhone(tel) {
 // Resalta el/los campo(s) inválidos del checkout con borde rojo y foco, además del mensaje de error genérico
 function _markCoFieldError(ids, errorEl, msg) {
   document.querySelectorAll('.co-input').forEach(el => { el.style.borderColor = ''; el.removeAttribute('aria-invalid'); });
+  _clearCoInlineErrs();
   let first = null;
   (Array.isArray(ids) ? ids : [ids]).forEach(id => {
     const el = document.getElementById(id);
@@ -1769,7 +1871,28 @@ function _markCoFieldError(ids, errorEl, msg) {
   if (errorEl) errorEl.textContent = msg;
 }
 
+// Error en línea debajo de un campo (#<id>Err, enlazado con aria-describedby en el HTML).
+function _setCoInlineErr(id, msg) { const el = document.getElementById(id + 'Err'); if (el) el.textContent = msg; }
+function _clearCoInlineErrs() { document.querySelectorAll('.co-field-err').forEach(el => { el.textContent = ''; }); }
+// Al corregir un campo marcado, se le quita el borde rojo y su error en línea.
+['coDireccion', 'coCiudad'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    if (!el.value.trim()) return;
+    el.style.borderColor = ''; el.removeAttribute('aria-invalid'); _setCoInlineErr(id, '');
+  });
+});
+
 // ─── CHECKOUT EN 2 PASOS ─────────────────────────────────────
+function _coMarkStep(n) {
+  [1, 2].forEach(i => {
+    const d = document.getElementById('coDot' + i);
+    if (!d) return;
+    d.classList.toggle('act', i === n);
+    d.classList.toggle('done', i < n);
+    if (i === n) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
+  });
+}
 function coGoStep2() {
   const errorEl = document.getElementById('coErrorStep1');
   const nombre  = document.getElementById('coNombre').value.trim();
@@ -1783,6 +1906,22 @@ function coGoStep2() {
     _markCoFieldError('coTel', errorEl, t('store.coError3', 'Por favor ingresa un número de teléfono válido.'));
     return;
   }
+  // UX tanda 2: dirección y ciudad obligatorias para todos los países (sin ellas no hay a dónde enviar).
+  const _missingAddr = [
+    !document.getElementById('coDireccion').value.trim() && 'coDireccion',
+    !document.getElementById('coCiudad').value.trim() && 'coCiudad'
+  ].filter(Boolean);
+  if (_missingAddr.length) {
+    const _en = __LANG === 'en';
+    _markCoFieldError(_missingAddr, errorEl, _missingAddr.length === 2
+      ? (_en ? 'Please enter your address and city.' : 'Por favor ingresa tu dirección y ciudad.')
+      : _missingAddr[0] === 'coDireccion'
+        ? (_en ? 'Please enter your address.' : 'Por favor ingresa tu dirección.')
+        : (_en ? 'Please enter your city.' : 'Por favor ingresa tu ciudad.'));
+    if (_missingAddr.includes('coDireccion')) _setCoInlineErr('coDireccion', _en ? 'Enter your street address so we can ship your order.' : 'Escribe tu dirección para poder enviarte el pedido.');
+    if (_missingAddr.includes('coCiudad')) _setCoInlineErr('coCiudad', _en ? 'Enter your city.' : 'Escribe tu ciudad.');
+    return;
+  }
   if (pais === 'US') {
     const estado = document.getElementById('coEstado').value;
     const zip     = document.getElementById('coZip').value.trim();
@@ -1790,16 +1929,15 @@ function coGoStep2() {
     if (!/^\d{5}$/.test(zip)) { _markCoFieldError('coZip', errorEl, t('store.coErrorZip', 'Por favor ingresa un código postal válido (5 dígitos).')); return; }
   }
   errorEl.textContent = '';
+  _clearCoInlineErrs();
   document.getElementById('coStep1').classList.remove('active');
   document.getElementById('coStep2').classList.add('active');
-  document.getElementById('coDot1').classList.remove('act');
-  document.getElementById('coDot2').classList.add('act');
+  _coMarkStep(2);
 }
 function coGoStep1() {
   document.getElementById('coStep2').classList.remove('active');
   document.getElementById('coStep1').classList.add('active');
-  document.getElementById('coDot2').classList.remove('act');
-  document.getElementById('coDot1').classList.add('act');
+  _coMarkStep(1);
 }
 document.getElementById('coNextBtn').addEventListener('click', coGoStep2);
 document.getElementById('coBackStepBtn').addEventListener('click', coGoStep1);
@@ -2609,10 +2747,22 @@ function _updateListingSeo() {
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   if (match) _updateCategorySeo(match); else _clearProductSchema();
 }
-// Atrás/adelante del navegador entre categorías (no toca el modal de producto —
-// abrir/cerrarlo con popstate es un caso aparte que ya se maneja distinto).
-window.addEventListener('popstate', () => {
-  if (document.getElementById('modal-overlay').classList.contains('open')) return;
+// Atrás/adelante del navegador: cierra el modal de producto si está abierto (B1, UX tanda 2),
+// lo reabre si se vuelve hacia adelante a una entrada de modal, y si no sincroniza la
+// categoría con la URL.
+window.addEventListener('popstate', e => {
+  // history.back() lanzado por closeModal(): el modal ya está cerrado, solo falta el SEO del listado.
+  if (_modalBackPending) { _modalBackPending = false; _updateListingSeo(); return; }
+  if (document.getElementById('modal-overlay').classList.contains('open')) {
+    closeModal(true);
+    _updateListingSeo();
+    return;
+  }
+  const _st = e.state || {};
+  if (_st.modal != null) {
+    const _mp = PRODUCTS.find(x => String(x.id) === String(_st.modal));
+    if (_mp) { openModal(_mp.id, true); return; }
+  }
   const catParam = new URLSearchParams(window.location.search).get('cat');
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   activeFilter = match || 'all';
