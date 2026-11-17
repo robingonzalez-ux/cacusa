@@ -98,16 +98,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>try{document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';}catch(_){document.documentElement.className='lang-es';}</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=c4abd090d9">
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=68d6918da8">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-product">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/"},{"@type":"ListItem","position":2,"name":"Tienda","item":"https://cacusabytaitus.com/ui_kits/store/"},{"@type":"ListItem","position":3,"name":"Cadenas","item":"https://cacusabytaitus.com/ui_kits/store/categoria/cadenas/"},{"@type":"ListItem","position":4,"name":"Cadena Golden Silk","item":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-golden-silk-1788923140476/"}]},{"@type":"Product","name":"Cadena Golden Silk","description":"El básico dorado que hace que todo se vea más elegante.\n\nGolden Silk es una cadena de acabado liso y luminoso que abraza delicadamente el cuello y captura la luz con cada movimiento. Su diseño plano crea ese efecto dorado sofisticado que luce increíble tanto por sí solo como combinado con otras cadenas.\n\nEs una de esas joyas que puedes llevar todos los días: con una camiseta básica, un vestido o para completar un look de noche. Minimalista, versátil y atemporal.\n\nDetalles: acero inoxidable 316L · acabado dorado · cadena plana · 45 cm + 5 cm de extensión · largo ajustable.","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-golden-silk-1788923140476/","sku":"1788923140476","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"offers":{"@type":"Offer","priceCurrency":"USD","price":"35","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-golden-silk-1788923140476/","shippingDetails":[{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"EC"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":2,"unitCode":"DAY"}}},{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":2,"maxValue":5,"unitCode":"DAY"}}}],"hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy","applicableCountry":["EC","US"],"returnPolicyCategory":"https://schema.org/MerchantReturnFiniteReturnWindow","merchantReturnDays":2,"returnMethod":"https://schema.org/ReturnByMail","returnFees":"https://schema.org/FreeReturn","refundType":"https://schema.org/ExchangeRefund","merchantReturnLink":"https://cacusabytaitus.com/devoluciones.html"}},"image":["https://cacusabytaitus.com/ui_kits/store/images/1788923130922_cacusa_cadena_seda_modelo_jpg.webp"],"material":"Acero inoxidable"}]}</script>
 <!-- STATIC_PRODUCT_SCHEMA:END -->
 </head>
 <body>
+<a class="skip-link" href="#main"><span class="t-es">Saltar al contenido</span><span class="t-en">Skip to content</span></a>
 
-<div id="cursor"></div>
-<div id="cursor-ring"></div>
 
 <!-- WHATSAPP FLOTANTE -->
 <a id="waFloat" class="wa-float" href="https://wa.me/17867375336?text=Hola%2C%20tengo%20una%20consulta%20sobre%20un%20producto" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
@@ -125,7 +124,7 @@
     <span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span>
   </a>
   <a class="nav-lovers-link" href="../../../../cacusa-lovers.html">Cacusa Lovers ♡</a>
-  <div class="lang-sw"><button id="lEs" class="on" onclick="localStorage.setItem('cacusa-lang','es');window.location.href='../.././'">ES</button><button id="lEn" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='/en/ui_kits/store/'">EN</button></div>
+  <div class="lang-sw"><button id="lEs" class="on" onclick="_goLang('es')">ES</button><button id="lEn" onclick="_goLang('en')">EN</button></div>
   <div class="nav-right">
     <button class="install-btn" id="installBtn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -156,11 +155,13 @@
     <a href="../../../../guias.html" class="drawer-link"><span class="t-es">Guías</span><span class="t-en">Guides</span></a>
   </nav>
   <div class="drawer-lang">
-    <button class="drawer-lang-btn" onclick="window.location.href='../.././'">ES</button>
+    <button class="drawer-lang-btn" onclick="_goLang('es')">ES</button>
     <span style="opacity:.5">/</span>
-    <button class="drawer-lang-btn" onclick="window.location.href='/en/ui_kits/store/'">EN</button>
+    <button class="drawer-lang-btn" onclick="_goLang('en')">EN</button>
   </div>
 </div>
+
+<main id="main" tabindex="-1">
 
 <!-- HERO -->
 <div class="store-hero">
@@ -189,6 +190,7 @@
     <option value="price-asc">Precio: menor a mayor</option>
     <option value="price-desc">Precio: mayor a menor</option>
     <option value="new">Más nuevos</option>
+    <option value="bestseller">Más vendidos</option>
   </select>
 </div>
 
@@ -304,6 +306,8 @@
     </div>
   </details>
 </section>
+
+</main>
 
 <footer class="store-footer">
   <div class="f-w">CACUSA</div>
@@ -451,7 +455,10 @@
       <span>Subtotal</span>
       <strong id="cartTotal">$0</strong>
     </div>
-    <div class="cart-shipping" id="cartShipping"></div>
+    <div class="cart-ship-progress">
+      <div class="cart-shipping" id="cartShipping" role="status" aria-live="polite"></div>
+      <div class="csp-track" aria-hidden="true"><div class="csp-fill" id="cartShipFill"></div></div>
+    </div>
     <button class="checkout-btn" id="checkoutBtn">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
       <span class="t-es">Finalizar pedido</span><span class="t-en">Checkout</span>
@@ -616,6 +623,7 @@
         <div class="co-totals">
           <div class="co-line"><span>Subtotal</span><strong id="coSubtotal">$0</strong></div>
           <div class="co-line"><span><span class="t-es">Envío</span><span class="t-en">Shipping</span></span><strong id="coEnvio"><span class="t-es">Por calcular</span><span class="t-en">To be calculated</span></strong></div>
+          <div class="co-ship-hint" id="coShipHint" role="status" aria-live="polite"></div>
           <div class="co-line" id="coTaxLine" style="display:none"><span id="coTaxLabel"><span class="t-es">Impuesto</span><span class="t-en">Tax</span></span><strong id="coImpuesto">$0</strong></div>
           <div class="co-discount-line" id="coZelleRow" style="display:none"><span><span class="t-es">Descuento Zelle (4%)</span><span class="t-en">Zelle Discount (4%)</span></span><strong id="coZelleAmt">-$0.00</strong></div>
           <div class="co-gc-line" id="coGcRow" style="display:none"><span><span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span> <small id="coGcCode" style="opacity:.65;font-weight:400"></small></span><strong>-$<span id="coGcAmt">0.00</span></strong></div>
@@ -626,7 +634,7 @@
           <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px;letter-spacing:.1em"><span class="t-es">¿NECESITAS AYUDA?</span><span class="t-en">NEED HELP?</span></div>
           <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)" id="igHandle">@cacusabytaitus</strong></div>
         </div>
-        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:none;margin-top:16px;text-decoration:underline" id="checkoutBack"><span class="t-es">← Volver al carrito</span><span class="t-en">← Back to cart</span></button>
+        <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:pointer;margin-top:16px;text-decoration:underline" id="checkoutBack"><span class="t-es">← Volver al carrito</span><span class="t-en">← Back to cart</span></button>
       </div>
     </div>
     <div class="checkout-mobile-total">
@@ -637,10 +645,11 @@
 </div>
 
 <!-- SUCCESS -->
-<div id="success-overlay">
-  <div class="success-icon">&#x1F338;</div>
-  <div class="success-h"><span class="t-es">¡Pedido enviado!</span><span class="t-en">Order sent!</span></div>
+<div id="success-overlay" role="dialog" aria-modal="true" aria-labelledby="successH">
+  <div class="success-icon" aria-hidden="true">♡</div>
+  <div class="success-h" id="successH"><span class="t-es">¡Pedido enviado!</span><span class="t-en">Order sent!</span></div>
   <div class="success-s">by Taitus</div>
+  <div class="success-details" id="successDetails" role="status" aria-live="polite"></div>
   <p class="success-p"><span class="t-es">Nos pondremos en contacto contigo por WhatsApp para confirmar tu pedido. ¡Gracias por elegirnos!</span><span class="t-en">We will contact you via WhatsApp to confirm your order. Thank you for choosing us!</span></p>
   <p class="success-p" style="margin-top:-8px;font-size:12.5px">
     <span class="t-es">¿Sabías que puedes recibir joyas nuevas cada mes? Descubre <a href="../../../../cacusa-lovers.html" style="color:white;text-decoration:underline">Cacusa Lovers ♡</a></span>
@@ -661,12 +670,12 @@
     <div class="vig-body">
       <div class="vig-label"><span class="t-es">Oferta exclusiva</span><span class="t-en">Exclusive offer</span></div>
       <div class="vig-title"><span class="t-es">Tu primera joya te espera</span><span class="t-en">Your first piece awaits</span></div>
-      <div class="vig-desc"><span class="t-es">Suscríbete y recibe 10% de descuento en tu primera compra. Solo por tiempo limitado.</span><span class="t-en">Subscribe and get 10% off your first purchase. Limited time only.</span></div>
+      <div class="vig-desc"><span class="t-es">Suscríbete y recibe 10% de descuento en tu primera compra.</span><span class="t-en">Subscribe and get 10% off your first purchase.</span></div>
       <input class="vig-email" id="vigEmail" type="email" placeholder="tu@email.com" aria-label="Email">
       <button class="vig-btn" id="vigBtn"><span class="t-es">Quiero mi descuento →</span><span class="t-en">I want my discount →</span></button>
       <div class="vig-msg" id="vigMsg" role="status" aria-live="polite" hidden></div>
-      <div class="vig-skip" id="vigSkip"><span class="t-es">No gracias, prefiero pagar precio completo</span><span class="t-en">No thanks, I'll pay full price</span></div>
-      <div class="vig-fine"><span class="t-es">Válido solo para compras en CACUSA by Taitus. No aplica en productos de Cacusa Gold.</span><span class="t-en">Valid only for purchases at CACUSA by Taitus. Does not apply to Cacusa Gold products.</span></div>
+      <button type="button" class="vig-skip" id="vigSkip"><span class="t-es">Ahora no</span><span class="t-en">Not now</span></button>
+      <div class="vig-fine"><span class="t-es">Válido solo para compras en CACUSA by Taitus. No aplica en productos de Cacusa Gold, que es una marca distinta.</span><span class="t-en">Valid only for purchases at CACUSA by Taitus. Does not apply to products from Cacusa Gold, a separate brand.</span></div>
     </div>
   </div>
 </div>
@@ -691,6 +700,6 @@
   </div>
 </div>
 
-<script src="/ui_kits/store/app.js?v=524ba89a19"></script>
+<script src="/ui_kits/store/app.js?v=9072bf0e8b"></script>
 </body>
 </html>
