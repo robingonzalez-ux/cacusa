@@ -37,8 +37,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .nav-lovers-link:hover{background:var(--pink);color:white}
 #navMenuBtn{display:none}
 #navDrawer{display:none}
-.cart-btn{position:relative;background:var(--pink);color:white;border:none;border-radius:999px;padding:9px 20px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.05em;cursor:none;display:flex;align-items:center;gap:8px;transition:all .25s;box-shadow:0 2px 12px rgba(238,111,168,.35)}
-.cart-btn:hover{background:var(--pink-deep);transform:scale(1.03)}
+.cart-btn{position:relative;background:var(--pink-deep);color:white;border:none;border-radius:999px;padding:9px 20px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.05em;cursor:none;display:flex;align-items:center;gap:8px;transition:all .25s;box-shadow:0 2px 12px rgba(238,111,168,.35)}
+.cart-btn:hover{background:var(--ink);transform:scale(1.03)}
 .install-btn{display:none;align-items:center;gap:6px;background:none;border:1.5px solid var(--pink);color:var(--ink);border-radius:999px;padding:8px 16px;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.04em;cursor:none;transition:all .25s}
 .install-btn:hover{background:var(--pink-pale)}
 .cart-count{background:white;color:var(--ink);width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
@@ -570,4 +570,42 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 @media(max-width:768px){
   .static-pdp,.static-cat{padding:20px 16px 0}
   .static-pdp-grid{grid-template-columns:1fr;gap:18px;padding:16px}
+}
+
+/* UX tanda 1: foco visible en todo control interactivo (teclado), sin tocar el
+   aspecto con mouse/touch. Rosa profundo = contraste suficiente sobre blanco/perla. */
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,
+textarea:focus-visible,summary:focus-visible,[role="button"]:focus-visible,
+[tabindex]:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px}
+
+/* Áreas táctiles mínimas (44px) en móvil/táctil: corazón de favoritos (área ampliada
+   con pseudo-elemento, sin agrandar el círculo visible), botón de la tarjeta y chips. */
+@media(max-width:600px),(hover:none){
+  .pcard-wish::before{content:'';position:absolute;inset:-7px;border-radius:50%}
+  .pcard-add,.filter-btn{min-height:44px}
+}
+
+/* Móvil: grilla de 2 columnas y chips de categoría en una sola fila deslizable */
+@media(max-width:600px){
+  .filters{padding:14px 16px;gap:10px}
+  .filter-label{display:none}
+  #filterBtns{display:flex!important;flex:0 0 100%;min-width:0;max-width:100%;flex-wrap:nowrap;gap:8px;
+    overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;scroll-padding:0 4px;scrollbar-width:none;padding:2px 2px 4px}
+  #filterBtns::-webkit-scrollbar{display:none}
+  .filter-btn{flex:0 0 auto;white-space:nowrap;scroll-snap-align:start;padding:8px 16px;font-size:13px}
+  .search-wrap{flex:1 1 0;min-width:0;max-width:none;margin-left:0}
+  .sort-select{flex:0 1 auto;min-width:0;max-width:46%;margin-left:0;min-height:44px}
+  .search-input{min-height:44px}
+  .store-body{padding:20px 12px}
+  .prod-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .pcard{border-radius:16px}
+  .pcard-img{height:auto;aspect-ratio:1/1}
+  .pcard-body{padding:12px}
+  .pcard-cat{font-size:10px;letter-spacing:.12em}
+  .pcard-name{font-size:15px;overflow-wrap:anywhere}
+  .pcard-desc{font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .pcard-foot{flex-wrap:wrap;gap:8px;margin-top:10px}
+  .price-now{font-size:15px}
+  .pcard-add{width:100%;font-size:12px;padding:8px 12px}
 }
