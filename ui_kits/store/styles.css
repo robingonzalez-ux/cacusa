@@ -646,3 +646,6 @@ main#main:focus{outline:none}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
   .reveal{opacity:1!important;transform:none!important}
 }
+
+/* Título del hero de la tienda: en el celular "NUESTRA TIENDA" se salía por los bordes */
+@media (max-width:600px){.store-hero-h{font-size:clamp(26px,8vw,36px);letter-spacing:.04em;padding:0 16px}.store-hero-value{padding:0 16px}}
