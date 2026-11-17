@@ -85,7 +85,7 @@ SEO_BLOCK_RE = re.compile(r"<!-- GUIDE_SEO:START[^>]*-->.*?<!-- GUIDE_SEO:END --
 META_DESC_EN = {
     "guias.html": "CACUSA by Taitus guides — ring and chain sizing, gift ideas, jewelry care, birthstone meanings and how to combine your pieces.",
     "guia-tallas.html": "CACUSA by Taitus size guide — how to measure your ring size at home, a ring size conversion chart, and a necklace and chain length guide.",
-    "guia-regalos.html": "CACUSA by Taitus gift guide — which jewelry to give for Valentine's Day, birthdays, anniversaries or Mother's Day, with ideas by occasion and personalization options.",
+    "guia-regalos.html": "CACUSA by Taitus gift guide — which jewelry to give for Christmas, Valentine's Day, birthdays, anniversaries or Mother's Day, with order-by dates so it arrives on time, ideas by occasion and personalization options.",
     "cuidados.html": "How to care for your CACUSA by Taitus jewelry — tips to clean, store and preserve 925 sterling silver, 18k gold-plated and stainless steel pieces for longer.",
     "significado-piedras.html": "Birthstone meanings by month — the history, color and traditional meaning of each birthstone, from January to December.",
     "como-combinar-joyas.html": "How to combine your jewelry — mixing metals, stacking rings and layering necklaces without overdoing it. A practical styling guide.",
@@ -460,7 +460,9 @@ class LinkMapper:
                 if not p:
                     raise GenError(f"{fname}: link a producto inexistente ({href})")
                 return product_page_url(p, "en", "/en/ui_kits/store/")[len(BASE_URL):]
-            return "/en/ui_kits/store/" + rest
+            # Conserva el query de los filtros de la tienda (?precio=0-30, ?regalo=1…):
+            # la tienda EN los lee igual que la ES.
+            return "/en/ui_kits/store/" + rest + ("?" + query if query else "")
         return "/" + path
 
 
