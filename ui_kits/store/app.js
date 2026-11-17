@@ -82,7 +82,7 @@ const __EN_T = {
 };
 // Aplicar textos EN que CSS no puede manejar (select options, placeholders de inputs)
 if (__LANG === 'en') {
-  const _sortOpts = {default:'Sort: Featured','price-asc':'Price: low to high','price-desc':'Price: high to low',new:'Newest'};
+  const _sortOpts = {default:'Sort: Featured','price-asc':'Price: low to high','price-desc':'Price: high to low',new:'Newest',bestseller:'Best sellers'};
   document.querySelectorAll('#sortSelect option').forEach(o => { if (_sortOpts[o.value]) o.textContent = _sortOpts[o.value]; });
   const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coTel:'(555) 123-4567',coNotas:'Color, size, special detail…'};
   Object.entries(_phs).forEach(([id,ph]) => { const el = document.getElementById(id); if (el) el.placeholder = ph; });
@@ -557,28 +557,10 @@ function renderFilters() {
 function renderMaterials() {} // material fijo por producto, no seleccionable
 
 // ─── CURSOR ─────────────────────────────────────────────────
-const cur = document.getElementById('cursor');
-const ring = document.getElementById('cursor-ring');
-let mx = 0, my = 0, rx = 0, ry = 0;
-document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  cur.style.left = (mx - 5) + 'px';
-  cur.style.top = (my - 5) + 'px';
-});
-(function animRing() {
-  rx += (mx - rx - 16) * .14;
-  ry += (my - ry - 16) * .14;
-  ring.style.left = rx + 'px';
-  ring.style.top = ry + 'px';
-  requestAnimationFrame(animRing);
-})();
-
-function refreshCursorTargets() {
-  document.querySelectorAll('button,a,.pcard,.filter-btn').forEach(el => {
-    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-grow'));
-    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-grow'));
-  });
-}
+// El cursor personalizado (punto + anillo que seguía al mouse) se quitó: se usa el cursor
+// normal del sistema en todo el sitio. Se deja esta función vacía por si alguna página
+// estática generada antes de este cambio todavía la llama.
+function refreshCursorTargets() {}
 
 // ─── IMAGE HELPERS ───────────────────────────────────────────
 // Escapa texto/atributos antes de interpolar en innerHTML (evita romper el HTML y self-XSS)
@@ -689,7 +671,6 @@ function renderCategoryPicker() {
   }).join('');
   grid.innerHTML = tiles +
     `<div class="cat-picker-viewall-wrap"><span class="cat-picker-viewall" role="button" tabindex="0" onclick="selectCategory('all')" onkeydown="activateOnKey(event,()=>selectCategory('all'))">${t('store.viewAllCatalog', 'Ver todo el catálogo →')}</span></div>`;
-  refreshCursorTargets();
   // Carrusel con crossfade — mismo patrón que el slideshow del hero del landing
   // (2 capas superpuestas, opacidad cruzada), un pequeño desfase por tarjeta para
   // que no cambien todas a la vez.
@@ -739,22 +720,71 @@ function renderProducts() {
     );
   }
   const sort = document.getElementById('sortSelect').value;
+  const _soldOutLast = (a, b) => (a.available === false ? 1 : 0) - (b.available === false ? 1 : 0);
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
   else if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
+  // "Más nuevos": products.json no trae fecha de alta, pero el id de cada producto es el
+  // Date.now() del momento en que se creó desde el panel admin (el único más viejo es el
+  // id 1) — ordenar por id descendente es ordenar por fecha de alta real.
+  else if (sort === 'new') filtered = [...filtered].sort((a, b) => _soldOutLast(a, b) || (Number(b.id) - Number(a.id)));
+  // "Más vendidos": no hay conteo de ventas en el catálogo; la única señal real es la
+  // etiqueta "Bestseller" que pone el negocio desde el panel. Esos van primero y el resto
+  // conserva el orden destacado de siempre.
+  else if (sort === 'bestseller') filtered = [...filtered].sort((a, b) => _soldOutLast(a, b) || (_isBestseller(b) - _isBestseller(a)));
   else filtered = [...filtered].sort((a, b) => {
     const sa = a.available === false ? 2 : (a.badge === 'badge-sale' || a.badge === 'badge-promo' || a.isPromo) ? 0 : 1;
     const sb = b.available === false ? 2 : (b.badge === 'badge-sale' || b.badge === 'badge-promo' || b.isPromo) ? 0 : 1;
     return sa - sb;
   });
   if (filtered.length === 0) {
-    const msg = searchTerm
-      ? (__LANG === 'en' ? 'No products match "' : 'No hay productos que coincidan con "') + esc(searchTerm) + '".'
-      : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;font-family:var(--fe);font-size:18px;font-style:italic;color:var(--ink-muted)">' + msg + '</div>';
+    grid.innerHTML = _emptyStateHtml();
     return;
   }
-  grid.innerHTML = filtered.map((p, i) => `
-    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="animation-delay:${i * 0.06}s" data-id="${p.id}">
+  grid.innerHTML = filtered.map(_pcardHtml).join('');
+}
+function _isBestseller(p) { const tg = (p.tag || '').toLowerCase(); return (tg === 'bestseller' || tg === 'best seller') ? 1 : 0; }
+// Porcentaje de descuento real: precio anterior (oldPrice del catálogo, o el precio base
+// cuando hay una promo activa) contra el precio que se cobra hoy. 0 si no hay descuento.
+function _discountPct(p) {
+  const old = (p.isPromo && p.originalPrice) ? +p.originalPrice : +p.oldPrice;
+  const now = +p.price;
+  if (!old || !now || old <= now) return 0;
+  return Math.round((old - now) / old * 100);
+}
+// Link de WhatsApp con el número real del catálogo (mismo default que el botón flotante)
+function _waLink(text) {
+  const num = String(WHATSAPP_NUMBER || '17867375336').replace(/\D/g, '');
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
+}
+// Sin resultados: mensaje, botón que limpia búsqueda y categoría, link a WhatsApp con lo
+// que se buscó, y hasta 4 productos sugeridos (bestseller y nuevos primero, en stock).
+function _emptyStateHtml() {
+  const en = __LANG === 'en';
+  const msg = searchTerm
+    ? (en ? 'No products match "' : 'No hay productos que coincidan con "') + esc(searchTerm) + '".'
+    : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
+  const waText = searchTerm
+    ? (en ? 'Hi! I am looking for: ' : '¡Hola! Estoy buscando: ') + searchTerm
+    : (en ? 'Hi! I have a question about a product' : '¡Hola! Tengo una consulta sobre un producto');
+  const rank = p => _isBestseller(p) ? 0 : ((p.tag || '').toLowerCase() === 'nuevo' || (p.tag || '').toLowerCase() === 'new') ? 1 : 2;
+  const sugg = PRODUCTS.filter(p => p.available !== false).sort((a, b) => rank(a) - rank(b)).slice(0, 4);
+  return '<div class="empty-state">' +
+      '<p class="empty-msg" role="status" aria-live="polite">' + msg + '</p>' +
+      '<button type="button" class="empty-all" onclick="_clearAllFilters()">' + (en ? 'View full catalog' : 'Ver todo el catálogo') + '</button>' +
+      '<a class="empty-wa" href="' + esc(_waLink(waText)) + '" target="_blank" rel="noopener">' + (en ? 'Looking for something special? Message us on WhatsApp' : '¿Buscas algo en especial? Escríbenos por WhatsApp') + '</a>' +
+      (sugg.length ? '<div class="empty-sugg-title">' + (en ? 'You might like' : 'Quizás te guste') + '</div>' : '') +
+    '</div>' + sugg.map(_pcardHtml).join('');
+}
+function _clearAllFilters() {
+  searchTerm = '';
+  const si = document.getElementById('searchInput'); if (si) si.value = '';
+  const sc = document.getElementById('searchClear'); if (sc) sc.style.display = 'none';
+  selectCategory('all');
+}
+function _pcardHtml(p, i) {
+  const _off = _discountPct(p);
+  return `
+    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="animation-delay:${(i || 0) * 0.06}s" data-id="${p.id}">
       ${p.available === false ? `<div class="pcard-badge badge-soldout">${__LANG === 'en' ? 'Sold out' : 'Agotado'}</div>` : (p.badge ? `<div class="pcard-badge ${p.badge}">${esc(tagLabel(p.tag))}</div>` : '')}
       <button class="pcard-wish${_wish.has(p.id)?' liked':''}" aria-label="Guardar en lista de deseos" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style="${_wish.has(p.id)?'fill:var(--pink)':''}"/></svg>
@@ -773,13 +803,13 @@ function renderProducts() {
           <div class="pcard-price">
             <span class="price-now">$${(+p.price).toFixed(2)}</span>
             ${p.isPromo && p.originalPrice ? `<span class="price-old">$${(+p.originalPrice).toFixed(2)}</span>` : (p.oldPrice ? `<span class="price-old">$${p.oldPrice}</span>` : '')}
+            ${_off > 0 ? `<span class="price-off">-${_off}%</span>` : ''}
           </div>
           <button class="pcard-add" onclick="openModal(${p.id})">${t('store.viewBtn', '+ Ver')}</button>
         </div>
       </div>
     </div>
-  `).join('');
-  refreshCursorTargets();
+  `;
 }
 
 // ─── COMBOS ─────────────────────────────────────────────────
@@ -1063,16 +1093,20 @@ document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-overlay')) closeModal();
 });
 function closeModal() {
+  const _wasOpen = document.getElementById('modal-overlay').classList.contains('open');
   document.getElementById('modal-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (_modalReleaseTrap) { _modalReleaseTrap(); _modalReleaseTrap = null; }
   const _u = new URL(window.location.href); _u.searchParams.delete('p'); history.pushState({}, '', _u.toString());
   _updateListingSeo();
   dismissToast();
+  if (_wasOpen && typeof window._vigProductViewed === 'function') window._vigProductViewed();
 }
 
+// Tope de 10 unidades por línea (selector del modal y +/− del carrito)
+const MAX_QTY = 10;
 document.getElementById('qtyMinus').addEventListener('click', () => { if (qty > 1) { qty--; document.getElementById('qtyNum').textContent = qty; } });
-document.getElementById('qtyPlus').addEventListener('click', () => { qty++; document.getElementById('qtyNum').textContent = qty; });
+document.getElementById('qtyPlus').addEventListener('click', () => { if (qty < MAX_QTY) { qty++; document.getElementById('qtyNum').textContent = qty; } });
 
 document.getElementById('modalAddBtn').addEventListener('click', () => {
   if (!currentProduct || currentProduct.available === false) return;
@@ -1081,7 +1115,7 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   const material = currentProduct.material || '';
   const existingLine = cart.find(it => !it.isCombo && it.id === currentProduct.id && (it.personalization || '') === personText && (it.material || '') === material);
   if (existingLine) {
-    existingLine.qty = (existingLine.qty || 1) + qty;
+    existingLine.qty = Math.min(MAX_QTY, (existingLine.qty || 1) + qty);
   } else {
     cart.push({ ...currentProduct, personalization: personText, material, cartId: Date.now(), qty });
   }
@@ -1156,28 +1190,68 @@ function updateCartUI() {
         <div class="ci-body">
           <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
           ${item.personalization ? `<div class="ci-custom">"${esc(item.personalization)}"</div>` : ''}
-          <div class="ci-mat">${(()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material||'Plata 925';return __LS.getItem('cacusa-lang')==='en'?(_cEN[_m]||_m):_m;})()}</div>
+          ${item.material ? `<div class="ci-mat">${esc((()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'Silver 925','Gold filled':'Gold filled'};const _m=item.material;return __LANG==='en'?(_cEN[_m]||_m):_m;})())}</div>` : ''}
           <div class="ci-foot">
             <span class="ci-price">$${(item.price * (item.qty || 1)).toFixed(2)}</span>
             <div class="ci-qty">
               <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, -1)" aria-label="Restar cantidad">−</button>
               <span class="ci-qty-num">${item.qty || 1}</span>
-              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="Sumar cantidad">+</button>
+              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="Sumar cantidad"${(item.qty || 1) >= MAX_QTY ? ' disabled' : ''}>+</button>
             </div>
             <button class="ci-remove" onclick="removeItem(${item.cartId})" aria-label="Quitar del carrito">✕</button>
           </div>
         </div>
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
+    // Barra de progreso hacia el envío gratis (umbral de config.shipping.freeThreshold)
     const free = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
-    const _cL = __LS.getItem('cacusa-lang') || 'es';
+    const remaining = Math.max(0, SHIPPING.freeThreshold - total);
     document.getElementById('cartShipping').textContent = free
-      ? t('store.shippingFree', '¡Envío gratis desbloqueado!')
-      : (_cL === 'en'
-          ? 'Add $' + (SHIPPING.freeThreshold - total).toFixed(2) + ' more for free shipping'
-          : 'Agrega $' + (SHIPPING.freeThreshold - total).toFixed(2) + ' más para envío gratis');
+      ? (__LANG === 'en' ? '✓ You have free shipping' : '✓ Tienes envío gratis')
+      : _freeShipMissingText(remaining);
+    const fill = document.getElementById('cartShipFill');
+    if (fill) fill.style.width = (free || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, total / SHIPPING.freeThreshold * 100)) + '%';
+    if (!free) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
     footEl.style.display = 'block';
   }
+}
+function _freeShipMissingText(remaining) {
+  return __LANG === 'en'
+    ? 'You are $' + remaining.toFixed(2) + ' away from free shipping'
+    : 'Te faltan $' + remaining.toFixed(2) + ' para el envío gratis';
+}
+// Sugerencias del carrito: 2–3 productos en stock de categorías que no están en el
+// carrito, empezando por los más baratos que por sí solos alcanzan el envío gratis (si no
+// alcanzan, los que más se acercan). Solo abren el producto — nunca se agregan solos.
+function _cartSuggestions(remaining) {
+  const inCart = new Set(cart.map(i => String(i.id)));
+  const cats = new Set(cart.map(i => i.cat).filter(Boolean));
+  const pool = PRODUCTS.filter(p => p.available !== false && +p.price > 0 && !inCart.has(String(p.id)) && !cats.has(p.cat));
+  const reach = pool.filter(p => p.price >= remaining).sort((a, b) => a.price - b.price);
+  const below = pool.filter(p => p.price < remaining).sort((a, b) => b.price - a.price);
+  const out = [], usedCats = new Set();
+  for (const p of [...reach, ...below]) {
+    if (usedCats.has(p.cat)) continue;
+    usedCats.add(p.cat); out.push(p);
+    if (out.length === 3) break;
+  }
+  return out.length >= 2 ? out : [];
+}
+function _cartSuggestHtml(remaining) {
+  const list = _cartSuggestions(remaining);
+  if (!list.length) return '';
+  return '<div class="cart-suggest"><div class="cs-title">' + (__LANG === 'en' ? 'Complete your free shipping with' : 'Completa tu envío gratis con') + '</div><div class="cs-list">' +
+    list.map(p => {
+      const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+    }).join('') + '</div></div>';
+}
+function _cartSuggestNav(e, id) {
+  if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return true;
+  e.preventDefault();
+  closeCart();
+  openModal(id);
+  return false;
 }
 function removeItem(cartId) { cart = cart.filter(i => i.cartId !== cartId); saveCart(); updateCartUI(); }
 function changeQty(cartId, delta) {
@@ -1185,6 +1259,7 @@ function changeQty(cartId, delta) {
   if (!item) return;
   const next = (item.qty || 1) + delta;
   if (next <= 0) { removeItem(cartId); return; }
+  if (next > MAX_QTY) return;
   item.qty = next;
   saveCart(); updateCartUI();
 }
@@ -1392,6 +1467,8 @@ function renderCheckoutSummary() {
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
   document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
+  const shipHint = document.getElementById('coShipHint');
+  if (shipHint) shipHint.textContent = free ? '' : _freeShipMissingText(Math.max(0, SHIPPING.freeThreshold - adjustedSubtotal));
   const taxLine = document.getElementById('coTaxLine');
   if (taxAmt > 0) {
     taxLine.style.display = '';
@@ -1599,6 +1676,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal, result.id);
+  const _zelleSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!zelleEmailVal, method: 'zelle' };
   _openWa(_waWin, buildWhatsAppUrl());
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -1608,7 +1686,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   document.getElementById('gcMsg').textContent='';
   document.getElementById('cpCodeInput').value='';
   document.getElementById('cpMsg').textContent='';
-  showSuccess();
+  showSuccess(_zelleSuccess);
 });
 
 // ─── SQUARE PAYMENT ──────────────────────────────────────────
@@ -1690,6 +1768,12 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     // 22 oct (auditoría): el carrito ya NO se vacía antes de pagar — si la tarjeta se rechaza o la
     // clienta vuelve atrás desde Square, lo encuentra igual. Se vacía al volver con ?paid=1.
     try { sessionStorage.setItem('cacusa_order_pending', '1'); } catch (_) {}
+    // Para la pantalla de éxito al volver de Square: solo el total que vio la clienta en el
+    // resumen y si dejó email (sí/no) — nunca el email ni otros datos personales.
+    try {
+      const _shownTotal = parseFloat((document.getElementById('coTotal').textContent || '').replace(/[^0-9.]/g, ''));
+      sessionStorage.setItem('cacusa_success_info', JSON.stringify({ total: isNaN(_shownTotal) ? null : _shownTotal, hasEmail: !!customer.email }));
+    } catch (_) {}
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
@@ -1942,6 +2026,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, emailVal, result.id);
+  const _waSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!emailVal, method: 'whatsapp' };
   _openWa(_waWin, buildWhatsAppUrl({ method: 'whatsapp' }));
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -1951,22 +2036,64 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   document.getElementById('gcMsg').textContent='';
   document.getElementById('cpCodeInput').value='';
   document.getElementById('cpMsg').textContent='';
-  showSuccess();
+  showSuccess(_waSuccess);
 });
 
-function showSuccess() {
-  document.getElementById('success-overlay').classList.add('open');
+// Pantalla de éxito. info = { orderNum, total, hasEmail, method } — cada campo es opcional
+// y solo se muestra si el flujo de verdad lo tiene (el regreso de Square no trae número de
+// pedido: lo genera cacusa-square del lado del servidor al confirmar el pago).
+let _successReleaseTrap = null;
+function showSuccess(info) {
+  info = info || {};
+  const en = __LANG === 'en';
+  const box = document.getElementById('successDetails');
+  if (box) {
+    let h = '';
+    if (info.orderNum) h += '<p>' + (en ? 'Order #' : 'Pedido #') + '<strong>' + esc(info.orderNum) + '</strong></p>';
+    if (typeof info.total === 'number' && isFinite(info.total)) h += '<p>Total: <strong>$' + info.total.toFixed(2) + '</strong></p>';
+    h += '<p>' + (en ? 'Personalized pieces are handmade in 5 to 10 business days, plus shipping time.' : 'Las piezas personalizadas se elaboran a mano en 5 a 10 días hábiles, más el tiempo de envío.') + '</p>';
+    if (info.hasEmail) h += '<p>✓ ' + (en ? 'We sent the confirmation to your email.' : 'Te enviamos la confirmación a tu email.') + '</p>';
+    if (info.method === 'zelle' && info.orderNum) {
+      const waText = (en ? 'Hi! Here is the payment screenshot for my order #' : '¡Hola! Te envío la captura del pago de mi pedido #') + info.orderNum;
+      h += '<ol class="success-steps">' +
+        '<li>' + (en ? 'Pay' : 'Paga') + (typeof info.total === 'number' ? ' $' + info.total.toFixed(2) : '') + (en ? ' by Zelle to facturacioncacusa@gmail.com or by bank transfer.' : ' por Zelle a facturacioncacusa@gmail.com o por transferencia.') + '</li>' +
+        '<li>' + (en ? 'Send the screenshot on WhatsApp with your order #' : 'Envía la captura por WhatsApp con tu pedido #') + esc(info.orderNum) + '.</li>' +
+        '</ol><a class="success-wa" href="' + esc(_waLink(waText)) + '" target="_blank" rel="noopener">' + (en ? 'Send screenshot on WhatsApp' : 'Enviar captura por WhatsApp') + '</a>';
+    }
+    box.innerHTML = h;
+  }
+  const ov = document.getElementById('success-overlay');
+  ov.classList.add('open');
+  if (_successReleaseTrap) _successReleaseTrap();
+  _successReleaseTrap = trapFocus(ov, closeSuccess);
 }
-document.getElementById('successBack').addEventListener('click', () => {
+function closeSuccess() {
   document.getElementById('success-overlay').classList.remove('open');
-});
+  if (_successReleaseTrap) { const r = _successReleaseTrap; _successReleaseTrap = null; r(); }
+}
+document.getElementById('successBack').addEventListener('click', closeSuccess);
 
 // ─── LANG ───────────────────────────────────────────────────
-window.cacusaLang = l => { __LS.setItem('cacusa-lang', l); location.reload(); };
+// Cambia de idioma yendo a la página equivalente del otro idioma (el hreflang de la
+// página actual: producto, categoría o tienda) y guarda la elección — lo usan el
+// selector ES/EN de la barra y el del menú móvil.
+function _goLang(l) {
+  const lang = l === 'en' ? 'en' : 'es';
+  __LS.setItem('cacusa-lang', lang);
+  let dest = lang === 'en' ? '/en/ui_kits/store/' : '/ui_kits/store/';
+  const link = document.getElementById(lang === 'en' ? 'hreflangEn' : 'hreflangEs');
+  try {
+    if (link && link.getAttribute('href')) {
+      const u = new URL(link.getAttribute('href'), location.href);
+      if (/\/ui_kits\/store\//.test(u.pathname)) dest = u.pathname;
+    }
+  } catch (_) {}
+  window.location.href = dest;
+}
+window.cacusaLang = _goLang;
 
 // ─── INIT ───────────────────────────────────────────────────
 updateCartUI();
-refreshCursorTargets();
 
 // Detectar regreso desde Square (?paid=1) → solo mostrar success.
 // El pedido, el cupón y la tarjeta de regalo ya NO se registran acá: este parámetro en la URL
@@ -1977,7 +2104,9 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
   history.replaceState({}, '', window.location.pathname);
   try { sessionStorage.removeItem('cacusa_order_pending'); } catch (_) {}
   cart = []; saveCart(); updateCartUI();
-  showSuccess();
+  let _sqInfo = {};
+  try { _sqInfo = JSON.parse(sessionStorage.getItem('cacusa_success_info') || '{}') || {}; sessionStorage.removeItem('cacusa_success_info'); } catch (_) {}
+  showSuccess({ total: typeof _sqInfo.total === 'number' ? _sqInfo.total : undefined, hasEmail: !!_sqInfo.hasEmail, method: 'square' });
 }
 
 // ─── STARS RENDERER ────────────────────────────────────────
@@ -2366,7 +2495,7 @@ function _injectProductSchema(p) {
 function _clearProductSchema() {
   const el = document.getElementById('ld-product'); if (el) el.remove();
   document.title = 'Tienda de joyería personalizada | CACUSA by Taitus';
-  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y oro 18k. Personalización disponible. Envíos a Ecuador y USA.');
+  _setMeta('meta-desc', 'Joyería y bisutería personalizada hecha a mano: anillos, collares, pulseras y aretes en plata 925 y baño de oro 18k. Personalización disponible. Envíos a Ecuador y USA.');
   _setCanonical(_SEO_BASE);
   _setHreflang(_STORE_BASE_ES, _STORE_BASE_EN);
   { const h1el = document.querySelector('.store-hero-h'); if (h1el) h1el.textContent = TEXTS.heroTitle; }
@@ -2669,7 +2798,46 @@ let _vigReleaseTrap = null;
   if (!__LS.getItem('cacusa-vig') && (__LS.getItem('cacusa-vig2') || __LS.getItem('cacusa-vig-store'))) {
     __LS.setItem('cacusa-vig', '1');
   }
+  // Se abre por intención, no por temporizador: 50% de scroll, después de ver 2 productos
+  // en la sesión (al cerrar el segundo), o con el mouse saliendo por arriba en escritorio.
+  // Como máximo una vez por sesión, nunca encima de otro panel abierto, y nunca en los
+  // primeros segundos si la clienta acaba de llegar desde afuera (buscador) directo a un
+  // producto — que primero lo vea.
+  const _VIG_SESSION_KEY = 'cacusa-vig-session';
+  const _sessGet = k => { try { return sessionStorage.getItem(k); } catch (_) { return null; } };
+  const _sessSet = (k, v) => { try { sessionStorage.setItem(k, v); } catch (_) {} };
+  let _landedOnProduct = false;
+  try {
+    _landedOnProduct = !!(new URLSearchParams(location.search).get('p') || window.__CACUSA_STATIC_PRODUCT_ID) &&
+      (!document.referrer || new URL(document.referrer).origin !== location.origin);
+  } catch (_) {}
+  const _vigNotBefore = Date.now() + (_landedOnProduct ? 20000 : 0);
+  const _overlayOpen = () => ['modal-overlay', 'checkout-overlay', 'success-overlay', 'cart-drawer', 'navDrawer', 'wish-drawer', 'lightbox']
+    .some(id => { const el = document.getElementById(id); return el && (el.classList.contains('open') || el.classList.contains('show')); });
+  function _vigBlocked() { return !!(__LS.getItem('cacusa-vig') || _sessGet(_VIG_SESSION_KEY)); }
+  function _vigScrollCheck() {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    if (h > 0 && window.scrollY / h >= 0.5) tryOpenVig();
+  }
+  function _vigExitIntent(e) { if (!e.relatedTarget && e.clientY <= 0) tryOpenVig(); }
+  function _vigDetach() {
+    window.removeEventListener('scroll', _vigScrollCheck);
+    document.removeEventListener('mouseout', _vigExitIntent);
+  }
+  function tryOpenVig() {
+    if (_vigBlocked()) { _vigDetach(); return; }
+    if (vig.classList.contains('show') || Date.now() < _vigNotBefore || _overlayOpen()) return;
+    _vigDetach();
+    openVig();
+  }
+  // Lo llama closeModal(): cuenta productos vistos en la sesión
+  window._vigProductViewed = function () {
+    const n = (parseInt(_sessGet('cacusa-vig-views') || '0', 10) || 0) + 1;
+    _sessSet('cacusa-vig-views', String(n));
+    if (n >= 2) setTimeout(tryOpenVig, 600);
+  };
   function openVig() {
+    _sessSet(_VIG_SESSION_KEY, '1');
     vig.classList.add('show');
     _vigReleaseTrap = trapFocus(vig, closeVig);
   }
@@ -2678,7 +2846,10 @@ let _vigReleaseTrap = null;
     __LS.setItem('cacusa-vig', '1');
     if (_vigReleaseTrap) { _vigReleaseTrap(); _vigReleaseTrap = null; }
   }
-  if (!__LS.getItem('cacusa-vig')) setTimeout(openVig, 3500);
+  if (!_vigBlocked()) {
+    window.addEventListener('scroll', _vigScrollCheck, { passive: true });
+    if (window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) document.addEventListener('mouseout', _vigExitIntent);
+  }
   [document.getElementById('vigClose'), document.getElementById('vigSkip')].forEach(el => el && el.addEventListener('click', closeVig));
   const vigBtn = document.getElementById('vigBtn');
   if (vigBtn) vigBtn.addEventListener('click', async () => {
