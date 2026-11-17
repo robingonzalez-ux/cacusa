@@ -386,7 +386,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 <div id="lovers-confirm-err" class="ss-overlay" role="alert" aria-live="assertive">
   <div class="ss-icon" aria-hidden="true">✕</div>
   <h2 class="ss-title">Este enlace ya no es válido</h2>
-  <p class="ss-sub">Puede que ya lo hayas usado, o que hayan pasado más de 48 horas desde que llenaste el formulario. Escribinos por WhatsApp si necesitás ayuda.</p>
+  <p class="ss-sub">Puede que ya lo hayas usado, o que hayan pasado más de 48 horas desde que llenaste el formulario. Escríbenos por WhatsApp si necesitas ayuda.</p>
   <button class="ss-btn" onclick="document.getElementById('lovers-confirm-err').classList.remove('show');history.replaceState({},'',location.pathname)">Cerrar</button>
 </div>
 
@@ -573,9 +573,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="./guias.html" class="drawer-link">Guías</a>
   </nav>
   <div class="drawer-lang">
-    <button class="drawer-lang-btn" onclick="window.location.href='/cacusa-lovers.html'">ES</button>
+    <button class="drawer-lang-btn" aria-current="page" onclick="localStorage.setItem('cacusa-lang','es');window.location.href='/cacusa-lovers.html'">ES</button>
     <span style="opacity:.5">/</span>
-    <button class="drawer-lang-btn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button>
+    <button class="drawer-lang-btn" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='/en/cacusa-lovers.html'">EN</button>
   </div>
 </div>
 
@@ -596,6 +596,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <button class="btn-primary" onclick="joinNow()">♡ Quiero ser Cacusa Lover</button>
       <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">¿Cómo funciona?</button>
     </div>
+    <div class="hero-trust reveal" data-delay="4" id="lHeroTrust" style="margin-top:14px;font-family:var(--fu);font-size:12.5px;color:var(--ink-muted);letter-spacing:.03em">2 piezas al mes · nada se cobra solo · cancela cuando quieras</div>
     <div class="hero-urgency reveal" data-delay="5" id="lUrgencyNote" style="margin-top:14px;font-family:var(--fu);font-size:12.5px;color:var(--pink-deep);font-weight:600"></div>
   </div>
   <div class="hero-scroll"><span>Descubrir</span><div class="scroll-line"></div></div>
@@ -653,7 +654,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planMonthlyAmount">19</span>
             <span class="plan-cents" id="planMonthlyCents">.99</span>
           </div>
-          <div class="plan-subtitle">al mes</div>
+          <div class="plan-subtitle">al mes <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planMonthlyPerPiece">≈ $9.99 por pieza</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesMonthly">
@@ -678,7 +679,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planAnnualAmount">219</span>
             <span class="plan-cents" id="planAnnualCents">.89</span>
           </div>
-          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mes · ahorras $19.99</span></div>
+          <div class="plan-subtitle">al año <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mes · ahorras $19.99</span><span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 por pieza</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesAnnual">
@@ -791,6 +792,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA4"><span>¿Cómo es el pago mensual?</span><span class="faq-icon">+</span></button>
         <div class="faq-a" id="faqA4"><p>Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago.</p></div>
       </div>
+      <div class="faq-item reveal" data-delay="4">
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA5"><span>¿Cómo cancelo mi suscripción?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA5"><p>No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan: recibes la caja de ese período.</p></div>
+      </div>
+      <div class="faq-item reveal" data-delay="4">
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA6"><span>¿Qué pasa si una pieza llega dañada?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA6"><p>Si una pieza llega con un defecto de fabricación, escríbenos por WhatsApp con fotos dentro de las primeras 48 horas desde la entrega y te la reponemos sin costo. Fuera de ese caso no hay cambios ni devoluciones.</p></div>
+      </div>
     </div>
   </div>
 </section>
@@ -799,7 +808,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 {"@type":"Question","name":"¿Cuándo recibiré mi primera caja?","acceptedAnswer":{"@type":"Answer","text":"Todas las cajas, incluida la primera, salen juntas en la tercera semana del mes (del 15 al 21). Si tu pago se confirma hasta el día 10, tu caja sale ese mismo mes; si es después del 10, sale en la tercera semana del mes siguiente."}},
 {"@type":"Question","name":"¿Puedo elegir las joyas que recibo?","acceptedAnswer":{"@type":"Answer","text":"No — la sorpresa es parte de la experiencia. Cada mes, el equipo de CACUSA selecciona las 2 piezas que recibirás, cuidando siempre variedad y calidad, sin que tengas que elegir nada."}},
 {"@type":"Question","name":"¿Envían a toda la República del Ecuador y USA?","acceptedAnswer":{"@type":"Answer","text":"Sí. El envío está incluido en el precio de la membresía tanto para Ecuador como para Estados Unidos, sin costo adicional."}},
-{"@type":"Question","name":"¿Cómo es el pago mensual?","acceptedAnswer":{"@type":"Answer","text":"El cobro se realiza automáticamente cada mes con tu tarjeta a través de Square, nuestro procesador de pagos seguro. Square te envía un recibo por email después de cada cobro."}}
+{"@type":"Question","name":"¿Cómo es el pago mensual?","acceptedAnswer":{"@type":"Answer","text":"Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago."}},
+{"@type":"Question","name":"¿Cómo cancelo mi suscripción?","acceptedAnswer":{"@type":"Answer","text":"No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan: recibes la caja de ese período."}},
+{"@type":"Question","name":"¿Qué pasa si una pieza llega dañada?","acceptedAnswer":{"@type":"Answer","text":"Si una pieza llega con un defecto de fabricación, escríbenos por WhatsApp con fotos dentro de las primeras 48 horas desde la entrega y te la reponemos sin costo. Fuera de ese caso no hay cambios ni devoluciones."}}
 ]}
 </script>
 <script type="application/ld+json" id="productJsonLd">
@@ -999,7 +1010,7 @@ async function loadLoversContent() {
     const waFloatEl = document.getElementById('waFloat');
     if (waFloatEl && waNum) {
       const waFloatNum = String(waNum).replace(/\D/g, '');
-      const waFloatMsg = localStorage.getItem('cacusa-lang') === 'en' ? 'Hi, I have a question about Cacusa Lovers' : 'Hola, tengo una consulta sobre Cacusa Lovers';
+      const waFloatMsg = document.documentElement.lang === 'en' ? 'Hi, I have a question about Cacusa Lovers' : 'Hola, tengo una consulta sobre Cacusa Lovers';
       waFloatEl.href = 'https://wa.me/' + waFloatNum + '?text=' + encodeURIComponent(waFloatMsg);
     }
     const l = data.config && data.config.lovers;
@@ -1035,11 +1046,13 @@ function applyLoversContent(l) {
     const [w, c] = mp.toFixed(2).split('.');
     setText('planMonthlyAmount', w); setText('planMonthlyCents', '.' + c);
     setText('optMonthlyPrice', '$' + mp.toFixed(2) + '/mes');
+    setText('planMonthlyPerPiece', '≈ $' + (mp / 2).toFixed(2) + ' por pieza');
   }
   if (ap != null) {
     const [w, c] = ap.toFixed(2).split('.');
     setText('planAnnualAmount', w); setText('planAnnualCents', '.' + c);
     setText('optAnnualPrice', '$' + ap.toFixed(2) + '/año');
+    setText('planAnnualPerPiece', '≈ $' + (ap / 24).toFixed(2) + ' por pieza');
     if (mp) {
       setText('planAnnualSub', '≈ $' + (ap / 12).toFixed(2) + '/mes · ahorras $' + mp.toFixed(2));
       if (savePct != null) { setText('planBadgeAnnual', 'AHORRA ' + savePct + '%'); setText('optAnnualBadge', 'AHORRA ' + savePct + '%'); }
@@ -1103,22 +1116,22 @@ function applyLoversContent(l) {
 }
 loadLoversContent();
 
-// ── URGENCIA REAL: corte de envío mensual (tercera semana del mes) ──
+// ── URGENCIA REAL: corte mensual del día 10 (mismo LOVERS_CUTOFF_DAY del Worker de Lovers) ──
 function renderLoversUrgency() {
   const el = document.getElementById('lUrgencyNote');
   if (!el) return;
   const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  const CUTOFF_DAY = 15;
+  const CUTOFF_DAY = 10;
   const now = new Date();
   const day = now.getDate();
   if (day <= CUTOFF_DAY) {
     const daysLeft = CUTOFF_DAY - day;
     el.textContent = daysLeft === 0
-      ? '⏳ Hoy es el último día para que tu primera caja salga este mes'
-      : `⏳ Suscríbete en los próximos ${daysLeft} día${daysLeft === 1 ? '' : 's'} para que tu primera caja salga este mes`;
+      ? '✦ Hoy es el último día para que tu primera caja salga este mes'
+      : `✦ Suscríbete en los próximos ${daysLeft} día${daysLeft === 1 ? '' : 's'} para que tu primera caja salga este mes`;
   } else {
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    el.textContent = `⏳ El envío de este mes ya salió — suscríbete ahora y tu primera caja sale en ${MESES[nextMonth.getMonth()]}`;
+    el.textContent = `✦ El corte de este mes ya pasó: suscríbete ahora y tu primera caja sale en ${MESES[nextMonth.getMonth()]}`;
   }
 }
 renderLoversUrgency();

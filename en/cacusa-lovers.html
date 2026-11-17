@@ -573,9 +573,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <a href="../guias.html" class="drawer-link">Guides</a>
   </nav>
   <div class="drawer-lang">
-    <button class="drawer-lang-btn" onclick="window.location.href='/cacusa-lovers.html'">ES</button>
+    <button class="drawer-lang-btn" onclick="localStorage.setItem('cacusa-lang','es');window.location.href='/cacusa-lovers.html'">ES</button>
     <span style="opacity:.5">/</span>
-    <button class="drawer-lang-btn" onclick="window.location.href='/en/cacusa-lovers.html'">EN</button>
+    <button class="drawer-lang-btn" aria-current="page" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='/en/cacusa-lovers.html'">EN</button>
   </div>
 </div>
 
@@ -596,6 +596,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
       <button class="btn-primary" onclick="joinNow()">♡ I want to be a Cacusa Lover</button>
       <button class="btn-ghost" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How does it work?</button>
     </div>
+    <div class="hero-trust reveal" data-delay="4" id="lHeroTrust" style="margin-top:14px;font-family:var(--fu);font-size:12.5px;color:var(--ink-muted);letter-spacing:.03em">2 pieces a month · nothing charges automatically · cancel anytime</div>
     <div class="hero-urgency reveal" data-delay="5" id="lUrgencyNote" style="margin-top:14px;font-family:var(--fu);font-size:12.5px;color:var(--pink-deep);font-weight:600"></div>
   </div>
   <div class="hero-scroll"><span>Discover</span><div class="scroll-line"></div></div>
@@ -653,7 +654,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planMonthlyAmount">19</span>
             <span class="plan-cents" id="planMonthlyCents">.99</span>
           </div>
-          <div class="plan-subtitle">per month</div>
+          <div class="plan-subtitle">per month <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planMonthlyPerPiece">≈ $9.99 per piece</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesMonthly">
@@ -678,7 +679,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
             <span class="plan-amount" id="planAnnualAmount">219</span>
             <span class="plan-cents" id="planAnnualCents">.89</span>
           </div>
-          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span></div>
+          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span><span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 per piece</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesAnnual">
@@ -791,6 +792,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
         <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA4"><span>How does the monthly payment work?</span><span class="faq-icon">+</span></button>
         <div class="faq-a" id="faqA4"><p>Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment.</p></div>
       </div>
+      <div class="faq-item reveal" data-delay="4">
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA5"><span>How do I cancel my subscription?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA5"><p>There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box.</p></div>
+      </div>
+      <div class="faq-item reveal" data-delay="4">
+        <button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA6"><span>What if a piece arrives damaged?</span><span class="faq-icon">+</span></button>
+        <div class="faq-a" id="faqA6"><p>If a piece arrives with a manufacturing defect, message us on WhatsApp with photos within 48 hours of delivery and we'll replace it at no cost. Outside of that case there are no exchanges or returns.</p></div>
+      </div>
     </div>
   </div>
 </section>
@@ -799,7 +808,9 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 {"@type":"Question","name":"When will I receive my first box?","acceptedAnswer":{"@type":"Answer","text":"All boxes, including the first one, ship together in the third week of the month (15th–21st). If your payment is confirmed by the 10th, your box ships that same month; if it's after the 10th, it ships in the third week of the following month."}},
 {"@type":"Question","name":"Can I choose the jewelry I receive?","acceptedAnswer":{"@type":"Answer","text":"No — the surprise is part of the experience. Each month, the CACUSA team selects the 2 pieces you'll receive, always taking care to balance variety and quality, with nothing for you to choose."}},
 {"@type":"Question","name":"Do you ship throughout Ecuador and the USA?","acceptedAnswer":{"@type":"Answer","text":"Yes. Shipping is included in the membership price for both Ecuador and the United States, at no extra cost."}},
-{"@type":"Question","name":"How does the monthly payment work?","acceptedAnswer":{"@type":"Answer","text":"Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."}}
+{"@type":"Question","name":"How does the monthly payment work?","acceptedAnswer":{"@type":"Answer","text":"Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."}},
+{"@type":"Question","name":"How do I cancel my subscription?","acceptedAnswer":{"@type":"Answer","text":"There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box."}},
+{"@type":"Question","name":"What if a piece arrives damaged?","acceptedAnswer":{"@type":"Answer","text":"If a piece arrives with a manufacturing defect, message us on WhatsApp with photos within 48 hours of delivery and we'll replace it at no cost. Outside of that case there are no exchanges or returns."}}
 ]}
 </script>
 <script type="application/ld+json" id="productJsonLd">
@@ -995,7 +1006,7 @@ async function loadLoversContent() {
     const waFloatEl = document.getElementById('waFloat');
     if (waFloatEl && waNum) {
       const waFloatNum = String(waNum).replace(/\D/g, '');
-      const waFloatMsg = localStorage.getItem('cacusa-lang') === 'en' ? 'Hi, I have a question about Cacusa Lovers' : 'Hola, tengo una consulta sobre Cacusa Lovers';
+      const waFloatMsg = document.documentElement.lang === 'en' ? 'Hi, I have a question about Cacusa Lovers' : 'Hola, tengo una consulta sobre Cacusa Lovers';
       waFloatEl.href = 'https://wa.me/' + waFloatNum + '?text=' + encodeURIComponent(waFloatMsg);
     }
     const l = data.config && data.config.lovers_en;
@@ -1028,11 +1039,13 @@ function applyLoversContent(l) {
     const [w, c] = mp.toFixed(2).split('.');
     setText('planMonthlyAmount', w); setText('planMonthlyCents', '.' + c);
     setText('optMonthlyPrice', '$' + mp.toFixed(2) + '/mo');
+    setText('planMonthlyPerPiece', '≈ $' + (mp / 2).toFixed(2) + ' per piece');
   }
   if (ap != null) {
     const [w, c] = ap.toFixed(2).split('.');
     setText('planAnnualAmount', w); setText('planAnnualCents', '.' + c);
     setText('optAnnualPrice', '$' + ap.toFixed(2) + '/yr');
+    setText('planAnnualPerPiece', '≈ $' + (ap / 24).toFixed(2) + ' per piece');
     if (mp) {
       setText('planAnnualSub', '≈ $' + (ap / 12).toFixed(2) + '/mo · save $' + mp.toFixed(2));
       if (savePct != null) { setText('planBadgeAnnual', 'SAVE ' + savePct + '%'); setText('optAnnualBadge', 'SAVE ' + savePct + '%'); }
@@ -1090,22 +1103,22 @@ function applyLoversContent(l) {
 }
 loadLoversContent();
 
-// ── Real urgency: monthly shipping cutoff (third week of the month) ──
+// ── Real urgency: monthly cutoff on the 10th (same LOVERS_CUTOFF_DAY as the Lovers Worker) ──
 function renderLoversUrgency() {
   const el = document.getElementById('lUrgencyNote');
   if (!el) return;
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const CUTOFF_DAY = 15;
+  const CUTOFF_DAY = 10;
   const now = new Date();
   const day = now.getDate();
   if (day <= CUTOFF_DAY) {
     const daysLeft = CUTOFF_DAY - day;
     el.textContent = daysLeft === 0
-      ? '⏳ Today is the last day for your first box to ship this month'
-      : `⏳ Subscribe in the next ${daysLeft} day${daysLeft === 1 ? '' : 's'} for your first box to ship this month`;
+      ? '✦ Today is the last day for your first box to ship this month'
+      : `✦ Subscribe in the next ${daysLeft} day${daysLeft === 1 ? '' : 's'} for your first box to ship this month`;
   } else {
     const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    el.textContent = `⏳ This month's shipment already went out — subscribe now and your first box ships in ${MONTHS[nextMonth.getMonth()]}`;
+    el.textContent = `✦ This month's cutoff has passed: subscribe now and your first box ships in ${MONTHS[nextMonth.getMonth()]}`;
   }
 }
 renderLoversUrgency();

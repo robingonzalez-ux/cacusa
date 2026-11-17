@@ -340,6 +340,14 @@
         {
           "q": "¿Cómo es el pago mensual?",
           "a": "Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago."
+        },
+        {
+          "q": "¿Cómo cancelo mi suscripción?",
+          "a": "No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan: recibes la caja de ese período."
+        },
+        {
+          "q": "¿Qué pasa si una pieza llega dañada?",
+          "a": "Si una pieza llega con un defecto de fabricación, escríbenos por WhatsApp con fotos dentro de las primeras 48 horas desde la entrega y te la reponemos sin costo. Fuera de ese caso no hay cambios ni devoluciones."
         }
       ],
       "ctaScript": "¿Lista para unirte?",
@@ -450,6 +458,14 @@
         {
           "q": "How does the monthly payment work?",
           "a": "Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."
+        },
+        {
+          "q": "How do I cancel my subscription?",
+          "a": "There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded: you get that period's box."
+        },
+        {
+          "q": "What if a piece arrives damaged?",
+          "a": "If a piece arrives with a manufacturing defect, message us on WhatsApp with photos within 48 hours of delivery and we'll replace it at no cost. Outside of that case there are no exchanges or returns."
         }
       ],
       "ctaScript": "Ready to join?",
