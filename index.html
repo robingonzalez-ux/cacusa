@@ -237,6 +237,35 @@ section{padding:96px 0}
 .lb-vip{font-family:var(--fu);font-size:12px;font-weight:500;color:var(--pink-deep)}
 .lb-cta{display:inline-block;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.05em;border-radius:999px;padding:15px 32px;text-decoration:none;box-shadow:0 4px 24px rgba(238,111,168,.4);transition:transform .3s var(--ease-out),box-shadow .3s var(--ease-out);white-space:nowrap}
 .lb-cta:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(238,111,168,.5)}
+/* ── NAVIDAD (banda de campaña, config.campaign) — oculta salvo campaña activa ── */
+#xmas-band{background:linear-gradient(180deg,var(--pearl) 0%,var(--pink-pale) 100%);padding:72px 0}
+#xmas-band[hidden],.xb-cards li[hidden]{display:none}
+.xb-box{position:relative;overflow:hidden;background:white;border-radius:28px;padding:44px 48px;box-shadow:0 8px 48px rgba(238,111,168,.14);border:1.5px solid var(--pink-pale)}
+.xb-box::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--grad-full)}
+.xb-head{max-width:680px}
+.xb-cards{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:30px}
+.xb-card{display:flex;align-items:center;gap:16px;height:100%;padding:20px 22px;border-radius:22px;background:var(--pearl);border:1.5px solid var(--pink-pale);text-decoration:none;color:var(--ink);transition:transform .35s var(--ease-out),box-shadow .35s var(--ease-out),border-color .35s var(--ease-out)}
+.xb-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(238,111,168,.2);border-color:var(--pink-mid)}
+.xb-card:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px}
+.xb-ic{flex-shrink:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;line-height:1;box-shadow:0 4px 16px rgba(238,111,168,.25)}
+.xb-txt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.xb-t{font-family:var(--fd);font-weight:700;font-size:20px;line-height:1.15}
+.xb-n{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
+.xb-n:empty,.xb-note:empty{display:none}
+.xb-note{font-family:var(--fe);font-style:italic;font-size:15px;color:var(--ink-muted);line-height:1.35}
+.xb-go{flex-shrink:0;font-family:var(--fu);font-size:18px;color:var(--ink-mid);transition:transform .35s var(--ease-out)}
+.xb-card:hover .xb-go{transform:translateX(4px)}
+.xb-guide{display:inline-block;margin-top:24px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;transition:color .2s var(--ease-out)}
+.xb-guide:hover{color:var(--pink-deep)}
+.xb-guide:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px;border-radius:4px}
+@media(max-width:768px){
+  #xmas-band{padding:48px 0}
+  .xb-box{padding:30px 22px}
+  .xb-cards{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  .xb-card{padding:16px 18px;gap:14px}
+  .xb-ic{width:42px;height:42px;font-size:18px}
+  .xb-t{font-size:18px}
+}
 
 /* ── BRAND STORY ───────────────────────────────────── */
 #story{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);position:relative;overflow:hidden}
@@ -635,6 +664,25 @@ main#main:focus{outline:none}
   </div>
 </section>
 
+<!-- NAVIDAD — config.campaign (renderXmasBand): oculta por defecto, se muestra solo con la campaña activa -->
+<section id="xmas-band" aria-labelledby="xmasH" hidden>
+  <div class="container">
+    <div class="xb-box reveal">
+      <div class="xb-head">
+        <div class="section-label" data-i18n="landing.xmasLabel">✦ Temporada navideña</div>
+        <h2 class="section-h" id="xmasH">Regalos de Navidad</h2>
+        <p class="section-sub" id="xmasLine"></p>
+      </div>
+      <ul class="xb-cards">
+        <li id="xmasLi30"><a class="xb-card" id="xmasCard30" href="/ui_kits/store/?precio=0-30"><span class="xb-ic gB" aria-hidden="true">✦</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasUnder30">Menos de $30</span><span class="xb-n" id="xmasN30"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
+        <li id="xmasLi60"><a class="xb-card" id="xmasCard60" href="/ui_kits/store/?precio=30-60"><span class="xb-ic gC" aria-hidden="true">◇</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmas30to60">De $30 a $60</span><span class="xb-n" id="xmasN60"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
+        <li id="xmasLiName"><a class="xb-card" id="xmasCardName" href="/ui_kits/store/?regalo=1"><span class="xb-ic gE" aria-hidden="true">♡</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasName">Con su nombre</span><span class="xb-n" id="xmasNName"></span><span class="xb-note" id="xmasNoteName"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
+      </ul>
+      <a class="xb-guide" id="xmasGuide" href="/guia-regalos.html" data-i18n="landing.xmasGuide">Ver la guía de regalos →</a>
+    </div>
+  </div>
+</section>
+
 <!-- PRODUCTS -->
 <section id="products">
   <div class="container">
@@ -926,6 +974,8 @@ const __LANDING_EN = {
   "landing.loversMonthly":"Monthly plan","landing.loversAnnual":"Annual plan",
   "landing.loversVip":"✦ VIP access 48h before the monthly plan","landing.loversCta":"Join Cacusa Lovers →",
   "landing.footerGifts":"Gift guide","landing.footerSizes":"Size guide",
+  "landing.xmasLabel":"✦ Holiday season","landing.xmasUnder30":"Under $30","landing.xmas30to60":"$30 to $60",
+  "landing.xmasName":"With their name","landing.xmasGuide":"Browse the gift guide →",
   "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
   "landing.formNamePh":"Your name","landing.formWhatsPh":"+1 (555) 555-5555","landing.formWhatsLabel":"Your WhatsApp",
   "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
@@ -1083,6 +1133,7 @@ function loadHomeContent(){
       heroSlideshow();
       renderFeaturedProducts();
       renderLoversBand(cfg.lovers);
+      renderXmasBand(cfg.campaign, window._cacusaProds);
       renderTestimonials();
     })
     .catch(e => { /* mantiene el contenido por defecto */ });
@@ -1149,7 +1200,21 @@ const tickerMsgs = _tickerLang === 'en' ? [
   'Baño de oro 18k, acero inoxidable y gold filled','Descuento 10% primera compra','Joyería artesanal única','Nueva colección disponible',
 ];
 const tt = document.getElementById('tTrack');
-tickerMsgs.forEach(m=>{tt.innerHTML+=`<div class="t-item"><div class="t-dot"></div>${m}</div>`;});
+// La lista va duplicada (2 mitades iguales) para que translateX(-50%) cierre el loop sin salto.
+// _tickerMsgs guarda la lista pintada (tickerMsgs, o enMsgs si applyI18n la cambia) para que
+// renderXmasBand() pueda anteponer el aviso de Navidad cuando llega products.json.
+let _tickerMsgs = tickerMsgs;
+function _paintTicker(msgs){
+  _tickerMsgs = msgs;
+  tt.innerHTML = msgs.map(m => `<div class="t-item"><div class="t-dot"></div>${m}</div>`).join('');
+}
+// Antepone un mensaje a CADA mitad, así el loop duplicado sigue empalmando sin salto.
+function _prependTickerMsg(m){
+  const half = _tickerMsgs.slice(0, Math.ceil(_tickerMsgs.length / 2));
+  const next = [m].concat(half);
+  _paintTicker(next.concat(next));
+}
+_paintTicker(tickerMsgs);
 
 // ── NAV SCROLL ──────────────────────────────────────────────
 window.addEventListener('scroll',()=>{
@@ -1339,6 +1404,112 @@ function renderLoversBand(lv){
   const mEl = document.getElementById('lbMonthly'), aEl = document.getElementById('lbAnnual');
   if (mEl && m) mEl.textContent = m + (_en ? ' / month' : ' / mes');
   if (aEl && a) aEl.textContent = a + (_en ? ' / year' : ' / año');
+}
+
+// ── NAVIDAD (config.campaign) — banda #xmas-band + aviso en el ticker ──
+// Mismo contrato y mismos valores por defecto que DEFAULT_CAMPAIGN del panel admin y de
+// ui_kits/store/app.js. Fechas límite: USPS Ground Advantage 2026 (enviar a más tardar el
+// 17 dic para llegar en Navidad), personalización 5–10 días hábiles, Servientrega 1–3 días.
+const HOME_DEFAULT_CAMPAIGN = {
+  enabled: true, endsAt: '2026-12-26',
+  title: 'Regalos de Navidad', title_en: 'Christmas gifts',
+  banner: '', banner_en: '',
+  deadlinePersonalEc: '2026-12-08', deadlinePersonalUs: '2026-12-03',
+  deadlineStockEc: '2026-12-18', deadlineStockUs: '2026-12-14'
+};
+function _homeIsIsoDate(v){
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+function _homeCampaign(raw){
+  const r = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+  const c = { ...HOME_DEFAULT_CAMPAIGN };
+  if (typeof r.enabled === 'boolean') c.enabled = r.enabled;
+  ['endsAt', 'deadlinePersonalEc', 'deadlinePersonalUs', 'deadlineStockEc', 'deadlineStockUs'].forEach(k => { if (_homeIsIsoDate(r[k])) c[k] = r[k]; });
+  ['title', 'title_en'].forEach(k => { if (typeof r[k] === 'string' && r[k].trim()) c[k] = r[k].trim(); });
+  ['banner', 'banner_en'].forEach(k => { if (typeof r[k] === 'string') c[k] = r[k].trim(); });
+  return c;
+}
+// Hoy en hora LOCAL como 'YYYY-MM-DD' (nunca toISOString(): en UTC ya sería mañana por la noche).
+function _homeTodayIso(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+const _HOME_MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const _HOME_MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// '2026-12-03' → "3 de diciembre" / "December 3" (fecha local: new Date(y, m-1, d)).
+function _homeFmtDate(iso, en){
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return en ? _HOME_MONTHS_EN[dt.getMonth()] + ' ' + dt.getDate() : dt.getDate() + ' de ' + _HOME_MONTHS_ES[dt.getMonth()];
+}
+function _homeCampaignActive(c){
+  const today = _homeTodayIso();
+  if (!c.enabled || today > c.endsAt) return false;
+  return [c.deadlinePersonalEc, c.deadlinePersonalUs, c.deadlineStockEc, c.deadlineStockUs].some(d => d >= today);
+}
+// Fechas límite todavía vigentes, EE.UU. primero. kind: 'stock' | 'personal'.
+function _homeDeadlines(c, kind){
+  const today = _homeTodayIso(), k = kind === 'personal' ? 'Personal' : 'Stock';
+  return [{ cc: 'US', date: c['deadline' + k + 'Us'] }, { cc: 'EC', date: c['deadline' + k + 'Ec'] }]
+    .filter(x => x.date && x.date >= today);
+}
+function renderXmasBand(rawCampaign, products){
+  const sec = document.getElementById('xmas-band');
+  if (!sec) return;
+  const c = _homeCampaign(rawCampaign);
+  const stock = _homeCampaignActive(c) ? _homeDeadlines(c, 'stock') : [];
+  if (!stock.length) { sec.hidden = true; return; }
+  const en = localStorage.getItem('cacusa-lang') === 'en';
+  const fmt = iso => _homeFmtDate(iso, en);
+  const where = cc => cc === 'EC' ? 'Ecuador' : (en ? 'the US' : 'EE.UU.');
+  const tag = cc => cc === 'EC' ? 'Ecuador' : (en ? 'US' : 'EE.UU.');
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  // — Título y línea de fechas (stock = piezas listas) —
+  setTxt('xmasH', en ? c.title_en : c.title);
+  const custom = en ? c.banner_en : c.banner;
+  let line;
+  if (custom) {
+    line = custom.replace(/\{(fecha|date)\}/g, stock.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(' · '));
+  } else if (en) {
+    line = 'Order by ' + stock.map(x => fmt(x.date) + ' in ' + where(x.cc)).join(' and ') + ' to get it before Christmas';
+  } else {
+    line = 'Pide antes del ' + stock.map(x => fmt(x.date) + ' en ' + where(x.cc)).join(' y del ') + ' para recibir antes de Navidad';
+  }
+  setTxt('xmasLine', line);
+  // — Tarjetas: piezas disponibles en cada grupo (mismos filtros que ?precio / ?regalo en la tienda) —
+  const avail = (Array.isArray(products) ? products : []).filter(p => p && p.available !== false);
+  const inRange = (p, min, max) => { const pr = Number(p.price); return pr >= min && pr <= max; };
+  const pieces = n => n + (en ? (n === 1 ? ' piece' : ' pieces') : (n === 1 ? ' pieza' : ' piezas'));
+  const store = en ? '/en/ui_kits/store/' : '/ui_kits/store/';
+  const personal = _homeDeadlines(c, 'personal');
+  const cards = [
+    { li: 'xmasLi30', a: 'xmasCard30', n: 'xmasN30', q: '?precio=0-30', count: avail.filter(p => inRange(p, 0, 30)).length },
+    { li: 'xmasLi60', a: 'xmasCard60', n: 'xmasN60', q: '?precio=30-60', count: avail.filter(p => inRange(p, 30, 60)).length },
+    // Personalizadas: se ocultan cuando ya pasó su fecha límite (5–10 días hábiles de taller).
+    { li: 'xmasLiName', a: 'xmasCardName', n: 'xmasNName', q: '?regalo=1', count: personal.length ? avail.filter(p => p.personalized).length : 0 }
+  ];
+  cards.forEach(k => {
+    const li = document.getElementById(k.li), a = document.getElementById(k.a);
+    if (!li || !a) return;
+    a.href = store + k.q;
+    setTxt(k.n, pieces(k.count));
+    li.hidden = !k.count;
+  });
+  if (personal.length) {
+    setTxt('xmasNoteName', (en ? 'Order by ' : 'Pide antes del ') +
+      personal.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(en ? ' or ' : ' o del '));
+  }
+  const guide = document.getElementById('xmasGuide');
+  if (guide) guide.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
+  sec.hidden = false;
+  const box = sec.querySelector('.reveal');
+  if (box) obs.observe(box);
+  // — Ticker: aviso con la fecha de EE.UU. (o la de Ecuador si la de EE.UU. ya pasó) —
+  const first = stock[0];
+  _prependTickerMsg('✦ ' + (en ? 'Christmas: order by ' : 'Navidad: pide antes del ') + fmt(first.date) + (first.cc === 'EC' ? ' (Ecuador)' : ''));
 }
 
 // ── COUNT-UP ────────────────────────────────────────────────
@@ -1625,8 +1796,7 @@ document.getElementById('vigBtn').addEventListener('click',async ()=>{
         'Free shipping on orders +$90','Personalize your piece','Handmade with love','Ecuador & USA',
         '18k gold plating, stainless steel & gold filled','10% off your first purchase','Unique artisan jewelry','New collection available',
       ];
-      tt.innerHTML = '';
-      enMsgs.forEach(m => { tt.innerHTML += '<div class="t-item"><div class="t-dot"></div>' + m + '</div>'; });
+      _paintTicker(enMsgs);
     }
   }
   const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
