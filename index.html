@@ -480,10 +480,15 @@ html.lm .hero-h1{opacity:1;animation:none}
 html.lm .col-bg{inset:-24px 0!important}
 #story::before{translate:0 var(--sp1,0px)}
 #story::after{translate:0 var(--sp2,0px)}
+/* Enlace "saltar al contenido": oculto hasta recibir foco con Tab */
+a.skip-link{position:fixed;top:12px;left:12px;z-index:10001;background:var(--ink);color:#fff;font-family:var(--fu);font-size:14px;font-weight:600;letter-spacing:.02em;padding:12px 22px;border-radius:999px;text-decoration:none;box-shadow:0 4px 18px rgba(139,42,90,.3);transform:translateY(-160%);opacity:0;pointer-events:none}
+a.skip-link:focus{transform:none;opacity:1;pointer-events:auto;outline:2px solid var(--ink);outline-offset:3px}
+main#main:focus{outline:none}
 </style>
 <script defer src="./assets/landing-motion.js"></script>
 </head>
 <body>
+<a class="skip-link" href="#main" data-i18n="landing.skip">Saltar al contenido</a>
 <!--NOSCRIPT_HOME_START-->
 <noscript>
 <section aria-label="CACUSA by Taitus">
@@ -558,6 +563,8 @@ html.lm .col-bg{inset:-24px 0!important}
     <button class="drawer-lang-btn" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='./en/'">EN</button>
   </div>
 </div>
+
+<main id="main" tabindex="-1">
 
 <!-- HERO -->
 <section id="hero">
@@ -823,6 +830,8 @@ html.lm .col-bg{inset:-24px 0!important}
   </div>
 </section>
 
+</main>
+
 <!-- FOOTER -->
 <footer>
   <div class="container">
@@ -932,6 +941,7 @@ const __LANDING_EN = {
   "landing.vigTitle":"Your first jewel is waiting",
   "landing.vigDesc":"Subscribe and get 10% off your first purchase.",
   "landing.vigBtn":"I want my discount →","landing.vigSkip":"Not now",
+  "landing.skip":"Skip to content",
   "landing.vigFine":"Valid only for purchases at CACUSA by Taitus. Does not apply to Cacusa Gold products.",
   "landing.quickView":"See details →","landing.addBtn":"View piece",
   "cat.cadenas":"Chains","cat.aretes":"Earrings","cat.anillos":"Rings","cat.hombres":"Men",

@@ -353,9 +353,14 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
   /* Reveal animations off on mobile — show everything immediately */
   .reveal,.reveal-left,.reveal-scale{opacity:1!important;transform:none!important;transition:none!important}
 }
+/* Enlace "saltar al contenido": oculto hasta recibir foco con Tab */
+a.skip-link{position:fixed;top:12px;left:12px;z-index:10001;background:var(--ink);color:#fff;font-family:var(--fu);font-size:14px;font-weight:600;letter-spacing:.02em;padding:12px 22px;border-radius:999px;text-decoration:none;box-shadow:0 4px 18px rgba(139,42,90,.3);transform:translateY(-160%);opacity:0;pointer-events:none}
+a.skip-link:focus{transform:none;opacity:1;pointer-events:auto;outline:2px solid var(--ink);outline-offset:3px}
+main#main:focus{outline:none}
 </style>
 </head>
 <body>
+<a class="skip-link" href="#main">Saltar al contenido</a>
 
 <!-- WHATSAPP FLOTANTE -->
 <a id="waFloat" class="wa-float" href="https://wa.me/17867375336?text=Hola%2C%20tengo%20una%20consulta%20sobre%20Cacusa%20Lovers" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
@@ -570,6 +575,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     <button class="drawer-lang-btn" onclick="localStorage.setItem('cacusa-lang','en');window.location.href='/en/cacusa-lovers.html'">EN</button>
   </div>
 </div>
+
+<main id="main" tabindex="-1">
 
 <!-- HERO -->
 <section id="hero">
@@ -914,6 +921,8 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
     </div>
   </div>
 </section>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
