@@ -49,6 +49,11 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .store-hero-s{font-family:var(--fs);font-size:28px;color:white;position:relative;z-index:1;margin-top:4px}
 .store-hero-value{font-family:var(--fu);font-size:12px;letter-spacing:.03em;color:rgba(255,255,255,.85);position:relative;z-index:1;margin-top:12px}
 #freeShippingBanner{text-align:center;padding:10px 16px;background:var(--pink-pale);color:var(--ink);font-family:var(--fu);font-size:12.5px;font-weight:600;letter-spacing:.02em}
+/* Franja de temporada (campaña de Navidad, config.campaign): enlaza a la guía de regalos */
+.season-banner{display:block;text-align:center;padding:10px 16px;background:var(--pink-deep);color:#fff;font-family:var(--fu);font-size:13.5px;font-weight:600;letter-spacing:.02em;line-height:1.45;text-decoration:none;overflow-wrap:anywhere;transition:background-color .2s var(--ease-out)}
+.season-banner:hover{background:var(--ink)}
+.season-banner:focus-visible{outline:2px solid #fff;outline-offset:-4px}
+.season-banner[hidden]{display:none}
 
 /* FILTERS */
 .filters{padding:28px 48px;background:white;border-bottom:1.5px solid var(--ink-light);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -56,6 +61,13 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .filter-btn:hover{border-color:var(--pink);color:var(--pink)}
 .filter-btn.active{background:var(--pink-deep);border-color:var(--pink-deep);color:white;box-shadow:0 2px 12px rgba(238,111,168,.3)}
 .filter-label{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);margin-right:4px}
+/* Chips de filtros que llegan por URL (?precio= / ?regalo=1): se quitan con un clic */
+.url-filter-chips{display:flex;flex-wrap:wrap;gap:8px;flex:0 0 100%}
+.url-filter-chips[hidden]{display:none}
+.url-chip{font-family:var(--fu);font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;border:1.5px solid var(--pink-deep);background:var(--pink-pale);color:var(--ink);cursor:pointer;transition:background-color .2s var(--ease-out),color .2s var(--ease-out)}
+.url-chip:hover{background:var(--pink-deep);color:#fff}
+.url-chip:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+@media(max-width:600px),(hover:none){.url-chip{min-height:44px}}
 .search-wrap{position:relative;flex:1;min-width:180px;max-width:280px;margin-left:auto}
 .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-muted)}
 .search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-muted);display:none;line-height:1;padding:2px;font-size:16px}
@@ -173,6 +185,8 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .modal-cat{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin-bottom:8px}
 .modal-name{font-family:var(--fd);font-weight:900;font-size:32px;color:var(--ink);line-height:1.1;margin-bottom:10px}
 .modal-price{font-family:var(--fu);font-size:24px;font-weight:700;color:var(--ink-mid);margin-bottom:16px}
+.modal-xmas{font-family:var(--fu);font-size:13.5px;font-weight:600;line-height:1.4;color:var(--ink);background:var(--pink-pale);border-radius:12px;padding:8px 12px;margin:-6px 0 16px}
+.modal-xmas[hidden]{display:none}
 .modal-desc{font-family:var(--fe);font-size:16px;font-style:italic;color:var(--ink-muted);line-height:1.7;margin-bottom:24px}
 .modal-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;display:block}
 .modal-select{width:100%;padding:11px 14px;border:1.5px solid var(--ink-light);border-radius:10px;font-family:var(--fu);font-size:14px;color:var(--ink);outline:none;background:white;margin-bottom:14px;cursor:pointer}

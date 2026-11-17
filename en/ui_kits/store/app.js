@@ -124,6 +124,76 @@ let SHIPPING   = { freeThreshold: 90, cost: 10 };
 // shippingDetails en el JSON-LD del cliente — ver _seoShippingDetails() más
 // abajo, replica build_shipping_details() de generate_product_schema.py.
 let SHIPPING_CFG = {};
+// ─── CAMPAÑA DE TEMPORADA (Navidad) ─────────────────────────
+// config.campaign viene del panel admin (mismo contrato y mismos valores por defecto que
+// DEFAULT_CAMPAIGN del admin); si falta la clave o un campo, se usan estos. Fechas límite:
+// USPS Ground Advantage 2026 (enviar a más tardar el 17 dic para llegar en Navidad),
+// personalización 5–10 días hábiles y Servientrega Ecuador 1–3 días.
+const DEFAULT_CAMPAIGN = {
+  enabled: true, endsAt: '2026-12-26',
+  title: 'Regalos de Navidad', title_en: 'Christmas gifts',
+  banner: '', banner_en: '',
+  deadlinePersonalEc: '2026-12-08', deadlinePersonalUs: '2026-12-03',
+  deadlineStockEc: '2026-12-18', deadlineStockUs: '2026-12-14'
+};
+let CAMPAIGN = { ...DEFAULT_CAMPAIGN };
+function _isIsoDate(v) {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+function _normalizeCampaign(raw) {
+  const r = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+  const c = { ...DEFAULT_CAMPAIGN };
+  if (typeof r.enabled === 'boolean') c.enabled = r.enabled;
+  ['endsAt', 'deadlinePersonalEc', 'deadlinePersonalUs', 'deadlineStockEc', 'deadlineStockUs'].forEach(k => { if (_isIsoDate(r[k])) c[k] = r[k]; });
+  ['title', 'title_en'].forEach(k => { if (typeof r[k] === 'string' && r[k].trim()) c[k] = r[k].trim(); });
+  ['banner', 'banner_en'].forEach(k => { if (typeof r[k] === 'string') c[k] = r[k].trim(); });
+  return c;
+}
+// Hoy en hora LOCAL como 'YYYY-MM-DD' (nunca toISOString(): en UTC ya sería mañana por la
+// noche en Ecuador/EE.UU.). Las fechas ISO se comparan directamente como texto.
+function _todayIso() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// '2026-12-03' → "3 de diciembre" / "December 3" (fecha local: new Date(y, m-1, d)).
+const _MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const _MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function _fmtCampaignDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return __LANG === 'en'
+    ? _MONTHS_EN[dt.getMonth()] + ' ' + dt.getDate()
+    : dt.getDate() + ' de ' + _MONTHS_ES[dt.getMonth()];
+}
+// Mercado de la visitante según el país que loadData() ya detecta por IP
+// (window.__visitorCountry). Otro país o sin dato → null: se muestran EE.UU. y Ecuador.
+function _campaignCountry() {
+  const c = String(window.__visitorCountry || '').toUpperCase();
+  return c === 'EC' || c === 'US' ? c : null;
+}
+// kind: 'personal' | 'stock'; country: 'EC' | 'US' | null (null → null, mostrar ambos).
+function campaignDeadline(kind, country) {
+  if (country !== 'EC' && country !== 'US') return null;
+  return CAMPAIGN['deadline' + (kind === 'personal' ? 'Personal' : 'Stock') + (country === 'EC' ? 'Ec' : 'Us')] || null;
+}
+function campaignActive() {
+  const c = CAMPAIGN, today = _todayIso();
+  if (!c.enabled || today > c.endsAt) return false;
+  return [c.deadlinePersonalEc, c.deadlinePersonalUs, c.deadlineStockEc, c.deadlineStockUs].some(d => d >= today);
+}
+// Fechas límite todavía vigentes para la visitante: una sola si se conoce su mercado, o
+// EE.UU. y Ecuador por separado si no. Lista vacía = ya no llega a tiempo → no se muestra.
+function _campaignDeadlines(kind) {
+  if (!campaignActive()) return [];
+  const today = _todayIso(), cc = _campaignCountry();
+  return (cc ? [cc] : ['US', 'EC'])
+    .map(c => ({ country: c, date: campaignDeadline(kind, c) }))
+    .filter(x => x.date && x.date >= today);
+}
+function _campaignCountryLabel(cc) { return cc === 'EC' ? 'Ecuador' : (__LANG === 'en' ? 'US' : 'EE.UU.'); }
 const US_STATE_TAX = {
   AL:0.04,AZ:0.056,AR:0.065,CA:0.0725,CO:0.029,CT:0.0635,FL:0.07,GA:0.04,
   HI:0.04,ID:0.06,IL:0.0625,IN:0.07,IA:0.06,KS:0.065,KY:0.06,LA:0.0445,
@@ -297,6 +367,59 @@ let currentProduct = null, qty = 1, activeFilter = 'all', searchTerm = '';
 // las categorías en vez de los 74 productos juntos — se "apaga" en cuanto la clienta elige
 // una categoría, busca algo, o pide ver todo el catálogo.
 let _categoryPickerDismissed = false;
+// ─── FILTROS POR URL (?precio=min-max / ?regalo=1) ──────────
+// Enlaces de campaña (guía de regalos, redes) que llegan directo a un rango de precio o a
+// "ideas de regalo" (personalizables primero, luego Bestseller, luego el resto; solo en
+// stock). Se aplican encima de la categoría y la búsqueda, y cada uno se quita con su chip.
+let _urlPrice = null, _urlGift = false;
+function _readUrlFilters() {
+  const sp = new URLSearchParams(window.location.search);
+  const m = /^(\d{1,5}(?:\.\d{1,2})?)-(\d{1,5}(?:\.\d{1,2})?)?$/.exec((sp.get('precio') || '').trim());
+  _urlPrice = null;
+  if (m) {
+    const min = Number(m[1]), max = m[2] != null ? Number(m[2]) : null;
+    if (max == null || max >= min) _urlPrice = { min, max };
+  }
+  _urlGift = sp.get('regalo') === '1';
+}
+_readUrlFilters();
+// Con ?precio o ?regalo (y sin ?cat) se salta el selector de categorías: grilla directa.
+if (_urlPrice || _urlGift) _categoryPickerDismissed = true;
+function _giftRank(p) { return p.personalized ? 0 : (_isBestseller(p) ? 1 : 2); }
+function _priceChipLabel(pr) {
+  const en = __LANG === 'en', f = n => '$' + (Number.isInteger(n) ? n : n.toFixed(2));
+  if (pr.max == null) return (en ? 'From ' : 'Desde ') + f(pr.min);
+  if (pr.min === 0) return (en ? 'Up to ' : 'Hasta ') + f(pr.max);
+  return f(pr.min) + (en ? ' to ' : ' a ') + f(pr.max);
+}
+function _renderUrlFilterChips() {
+  const wrap = document.getElementById('urlFilterChips');
+  if (!wrap) return;
+  const en = __LANG === 'en';
+  const chips = [];
+  if (_urlPrice) chips.push({ param: 'precio', label: _priceChipLabel(_urlPrice) });
+  if (_urlGift) chips.push({ param: 'regalo', label: en ? 'Gift ideas' : 'Ideas de regalo' });
+  wrap.hidden = !chips.length;
+  wrap.innerHTML = chips.map(c =>
+    '<button type="button" class="url-chip" data-param="' + c.param + '" aria-label="' + esc((en ? 'Remove filter: ' : 'Quitar filtro: ') + c.label) + '">' +
+    esc(c.label) + ' <span aria-hidden="true">✕</span></button>').join('');
+}
+function _removeUrlFilter(param) {
+  const u = new URL(window.location.href);
+  u.searchParams.delete(param);
+  history.replaceState(history.state, '', u.toString());
+  _readUrlFilters();
+  renderProducts();
+  const next = document.querySelector('#urlFilterChips .url-chip') || document.getElementById('searchInput');
+  if (next) next.focus();
+}
+(function () {
+  const wrap = document.getElementById('urlFilterChips');
+  if (wrap) wrap.addEventListener('click', e => {
+    const b = e.target.closest('.url-chip');
+    if (b) _removeUrlFilter(b.dataset.param);
+  });
+})();
 // Activa un div/span con role="button" desde el teclado (Enter/Espacio) — reusado por
 // todas las tarjetas clicables que no son <a>/<button> nativos (category picker,
 // relacionados, miniaturas de galería/lightbox).
@@ -378,6 +501,7 @@ function _showCatalogLoadError() {
     }
     if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     if (__LANG === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
+    CAMPAIGN = _normalizeCampaign(cfg.campaign);
     // Antes se excluían acá los agotados (available:false) — el producto
     // desaparecía del todo, del sitio y de los buscadores. Ahora se quedan en
     // PRODUCTS con su flag 'available' correcto, y cada consumidor decide qué
@@ -448,6 +572,7 @@ function _showCatalogLoadError() {
   // o manipulados en localStorage; el cobro real igual se valida en el backend)
   reconcileCartPrices();
   applyTexts();
+  renderSeasonBanner();
   renderFreeShippingBanner();
   renderFilters();
   renderMaterials();
@@ -523,6 +648,49 @@ function renderFreeShippingBanner() {
     ? 'Free shipping on orders over $' + threshold
     : 'Envío gratis en pedidos desde $' + threshold;
   el.style.display = 'block';
+}
+// Franja de temporada sobre el aviso de envío gratis (#seasonBanner). Fecha de "stock"
+// (piezas listas) del mercado de la visitante, o las 2 si no se conoce; se oculta sola
+// cuando la campaña está apagada/vencida o la fecha de la visitante ya pasó.
+function renderSeasonBanner() {
+  const el = document.getElementById('seasonBanner');
+  if (!el) return;
+  const en = __LANG === 'en';
+  const list = _campaignDeadlines('stock');
+  if (!list.length) { el.hidden = true; return; }
+  const known = !!_campaignCountry();
+  const title = en ? CAMPAIGN.title_en : CAMPAIGN.title;
+  const custom = en ? CAMPAIGN.banner_en : CAMPAIGN.banner;
+  let text;
+  if (custom) {
+    const fecha = known
+      ? _fmtCampaignDate(list[0].date)
+      : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(' · ');
+    text = custom.replace(/\{(fecha|date)\}/g, fecha);
+  } else if (known) {
+    text = '✦ ' + title + ' · ' + (en ? 'order by ' : 'pide antes del ') + _fmtCampaignDate(list[0].date) + (en ? ' to get it in time' : ' para recibirlo a tiempo');
+  } else {
+    text = '✦ ' + title + ' · ' + list.map((x, i) =>
+      _campaignCountryLabel(x.country) + ': ' + (en ? (i ? 'by ' : 'order by ') : (i ? 'antes del ' : 'pide antes del ')) + _fmtCampaignDate(x.date)
+    ).join(' · ');
+  }
+  el.textContent = text;
+  el.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
+  el.hidden = false;
+}
+// Línea "llega antes de Navidad" del modal, bajo el precio: fecha de personalización si la
+// pieza es personalizable, si no la de stock. Oculta si ya pasó o si está agotada.
+function _renderModalXmas(p) {
+  const el = document.getElementById('modalXmas');
+  if (!el) return;
+  const en = __LANG === 'en';
+  const list = (p && p.available !== false) ? _campaignDeadlines(p.personalized ? 'personal' : 'stock') : [];
+  if (!list.length) { el.hidden = true; el.textContent = ''; return; }
+  const dates = _campaignCountry()
+    ? _fmtCampaignDate(list[0].date)
+    : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(en ? ' or ' : ' o del ');
+  el.textContent = '◇ ' + (en ? 'Arrives before Christmas if you order by ' : 'Llega antes de Navidad si pides antes del ') + dates;
+  el.hidden = false;
 }
 function renderFilters() {
   const wrap = document.getElementById('filterBtns');
@@ -696,6 +864,7 @@ function renderCategoryPicker() {
 // ─── RENDER PRODUCTS ────────────────────────────────────────
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
+  _renderUrlFilterChips();
   if (activeFilter === 'all' && !searchTerm && !_categoryPickerDismissed) { renderCategoryPicker(); return; }
   _clearCatTileTimers();
   grid.className = 'prod-grid';
@@ -711,6 +880,8 @@ function renderProducts() {
       (p.cat || '').toLowerCase().includes(q)
     );
   }
+  if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr <= _urlPrice.max); });
+  if (_urlGift) filtered = filtered.filter(p => p.available !== false);
   const sort = document.getElementById('sortSelect').value;
   const _soldOutLast = (a, b) => (a.available === false ? 1 : 0) - (b.available === false ? 1 : 0);
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
@@ -723,6 +894,8 @@ function renderProducts() {
   // etiqueta "Bestseller" que pone el negocio desde el panel. Esos van primero y el resto
   // conserva el orden destacado de siempre.
   else if (sort === 'bestseller') filtered = [...filtered].sort((a, b) => _soldOutLast(a, b) || (_isBestseller(b) - _isBestseller(a)));
+  // ?regalo=1 con el orden "Destacados": personalizables, luego Bestseller, luego el resto.
+  else if (_urlGift) filtered = [...filtered].sort((a, b) => _giftRank(a) - _giftRank(b));
   else filtered = [...filtered].sort((a, b) => {
     const sa = a.available === false ? 2 : (a.badge === 'badge-sale' || a.badge === 'badge-promo' || a.isPromo) ? 0 : 1;
     const sb = b.available === false ? 2 : (b.badge === 'badge-sale' || b.badge === 'badge-promo' || b.isPromo) ? 0 : 1;
@@ -754,7 +927,9 @@ function _emptyStateHtml() {
   const en = __LANG === 'en';
   const msg = searchTerm
     ? (en ? 'No products match "' : 'No hay productos que coincidan con "') + esc(searchTerm) + '".'
-    : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
+    : (_urlPrice || _urlGift)
+      ? (en ? 'No products match these filters.' : 'No hay productos con estos filtros.')
+      : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
   const waText = searchTerm
     ? (en ? 'Hi! I am looking for: ' : '¡Hola! Estoy buscando: ') + searchTerm
     : (en ? 'Hi! I have a question about a product' : '¡Hola! Tengo una consulta sobre un producto');
@@ -771,6 +946,12 @@ function _clearAllFilters() {
   searchTerm = '';
   const si = document.getElementById('searchInput'); if (si) si.value = '';
   const sc = document.getElementById('searchClear'); if (sc) sc.style.display = 'none';
+  if (_urlPrice || _urlGift) {
+    const u = new URL(window.location.href);
+    u.searchParams.delete('precio'); u.searchParams.delete('regalo');
+    history.replaceState(history.state, '', u.toString());
+    _readUrlFilters();
+  }
   selectCategory('all');
 }
 function _pcardHtml(p, i) {
@@ -1044,6 +1225,7 @@ function openModal(id) {
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
   const _origPrice = (p.isPromo && p.originalPrice) ? (+p.originalPrice).toFixed(2) : (p.oldPrice || null);
   document.getElementById('modalPrice').textContent = '$' + (+p.price).toFixed(2) + (_origPrice ? (_mLang ? ' — was $' : ' — antes $') + _origPrice : '');
+  _renderModalXmas(p);
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
@@ -2405,6 +2587,7 @@ window.addEventListener('popstate', () => {
   const catParam = new URLSearchParams(window.location.search).get('cat');
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   activeFilter = match || 'all';
+  _readUrlFilters();
   document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === activeFilter));
   _scrollActiveChipIntoView();
   renderProducts();
