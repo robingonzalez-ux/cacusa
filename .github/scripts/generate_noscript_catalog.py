@@ -56,8 +56,8 @@ TARGETS = [
         "aria_label": "Catálogo de productos CACUSA by Taitus",
         "h2": "Catálogo de joyería personalizada CACUSA by Taitus",
         "intro": (
-            "Bisutería y joyería artesanal hecha a mano en plata 925, baño de oro 18k "
-            "y acero inoxidable. Personalización con nombre, inicial, fecha o mensaje. "
+            "Bisutería y joyería artesanal hecha a mano en baño de oro 18k, acero "
+            "inoxidable y gold filled. Personalización con nombre, inicial, fecha o mensaje. "
             "Envíos a Ecuador y Estados Unidos."
         ),
         "home_href": "/",
@@ -69,8 +69,8 @@ TARGETS = [
         "aria_label": "CACUSA by Taitus product catalog",
         "h2": "CACUSA by Taitus personalized jewelry catalog",
         "intro": (
-            "Handmade artisanal jewelry in 925 silver, 18k gold plating and stainless "
-            "steel. Personalization with name, initial, date or message. Shipping to "
+            "Handmade artisanal jewelry in 18k gold plating, stainless steel and gold "
+            "filled. Personalization with name, initial, date or message. Shipping to "
             "the USA and Ecuador."
         ),
         "home_href": "/en/",

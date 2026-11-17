@@ -305,10 +305,24 @@ function activateOnKey(e, fn) {
 }
 // Función compartida entre los botones de filtro de la cabecera y las tarjetas de
 // categoría de la primera pantalla — ambos caminos llevan al mismo resultado.
+// En móvil los chips de categoría son una fila deslizable (#filterBtns con overflow-x):
+// al activarse uno (clic, ?cat= al cargar, atrás/adelante) se centra dentro de su fila.
+// Se mueve solo el scroll horizontal de la fila (no scrollIntoView sobre la página) para
+// no desplazar nunca la página en vertical. En escritorio la fila no desborda y no hace nada.
+function _scrollActiveChipIntoView() {
+  const wrap = document.getElementById('filterBtns');
+  const btn = wrap && wrap.querySelector('.filter-btn.active');
+  if (!btn || wrap.scrollWidth <= wrap.clientWidth) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const br = btn.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+  const left = wrap.scrollLeft + (br.left - wr.left) - (wrap.clientWidth - br.width) / 2;
+  wrap.scrollTo({ left: Math.max(0, left), behavior: reduce ? 'auto' : 'smooth' });
+}
 function selectCategory(cat) {
   _categoryPickerDismissed = true;
   activeFilter = cat;
   document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
+  _scrollActiveChipIntoView();
   renderProducts();
   const u = new URL(window.location.href);
   u.searchParams.delete('p');
@@ -528,6 +542,7 @@ function renderFilters() {
       wrap.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       match.classList.add('active');
       activeFilter = match.dataset.filter;
+      requestAnimationFrame(_scrollActiveChipIntoView);
     }
   }
 }
@@ -2391,6 +2406,7 @@ window.addEventListener('popstate', () => {
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   activeFilter = match || 'all';
   document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === activeFilter));
+  _scrollActiveChipIntoView();
   renderProducts();
   _updateListingSeo();
 });
