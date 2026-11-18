@@ -1281,6 +1281,7 @@ function openModal(id, _fromHistory) {
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
+  _resetPersonUI();
   document.getElementById('qtyNum').textContent = qty;
   const addBtn = document.getElementById('modalAddBtn');
   const soldOutTag = document.getElementById('modalSoldOut');
@@ -1379,8 +1380,9 @@ document.getElementById('qtyPlus').addEventListener('click', () => { if (qty < M
 
 document.getElementById('modalAddBtn').addEventListener('click', () => {
   if (!currentProduct || currentProduct.available === false) return;
-  // Recorta a 20 caracteres como respaldo del maxlength del input
-  const personText = document.getElementById('modalPersonText').value.slice(0, 20);
+  // Recorta a 20 caracteres como respaldo del maxlength del input (y vuelve a sanear: el
+  // texto del input ya viene filtrado, esto solo cubre un pegado que se haya colado)
+  const personText = _sanitizePersonText(document.getElementById('modalPersonText').value).clean.trim().slice(0, PERSON_MAX);
   const material = currentProduct.material || '';
   const existingLine = cart.find(it => !it.isCombo && it.id === currentProduct.id && (it.personalization || '') === personText && (it.material || '') === material);
   if (existingLine) {
@@ -1395,6 +1397,68 @@ document.getElementById('modalAddBtn').addEventListener('click', () => {
   btn.classList.add('added');
   setTimeout(() => { closeModal(); openCart(); }, 800);
 });
+
+// ─── M4: PERSONALIZACIÓN GUIADA (modal de producto) ─────────
+// Contador en vivo, filtro de caracteres y link a WhatsApp con el texto ya escrito. El precio
+// de personalizar NUNCA se muestra en la web: se cotiza por WhatsApp (5–10 días hábiles).
+// Todo con chequeo de null: las páginas físicas por producto son copias de la plantilla y
+// pueden tener el HTML anterior hasta que el workflow las regenere.
+const PERSON_MAX = 20;
+// Permitido: letras latinas (con tildes y ñ), dígitos, espacio y . , & - ' ♡ ✦
+const _PERSON_BAD_G = /[^\p{Script=Latin}0-9 .,&'\-\u2661\u2726]/gu;
+const _PERSON_BAD = /[^\p{Script=Latin}0-9 .,&'\-\u2661\u2726]/u;
+function _sanitizePersonText(raw) {
+  const norm = String(raw || '').normalize('NFC')
+    .replace(/[\u2018\u2019\u02BC\u00B4`]/g, "'")   // apóstrofo "inteligente" del celular
+    .replace(/[\uFE0E\uFE0F]/g, '');                 // selector de variante tras ♡/✦
+  const rejected = _PERSON_BAD.test(norm);
+  const clean = norm.replace(_PERSON_BAD_G, '').replace(/ {2,}/g, ' ').replace(/^ +/, '');
+  return { clean, rejected };
+}
+function _personWaText(text) {
+  const p = currentProduct;
+  const name = p ? ((__LANG === 'en' && p.name_en) ? p.name_en : p.name) : '';
+  const txt = String(text || '').trim();
+  if (__LANG === 'en') return 'Hi, I\'d like to personalize: ' + name + '.' + (txt ? ' Text: "' + txt + '".' : '') + ' What would the price be?';
+  return 'Hola, quiero personalizar: ' + name + '.' + (txt ? ' Texto: "' + txt + '".' : '') + ' ¿Cuál sería el precio?';
+}
+function _updatePersonUI() {
+  const inp = document.getElementById('modalPersonText');
+  if (!inp) return;
+  const count = document.getElementById('modalPersonCount');
+  if (count) count.textContent = inp.value.length + '/' + PERSON_MAX;
+  const wa = document.getElementById('modalPersonWa');
+  if (wa) wa.href = _waLink(_personWaText(inp.value));
+}
+function _resetPersonUI() {
+  const err = document.getElementById('modalPersonErr');
+  if (err) err.textContent = '';
+  _updatePersonUI();
+}
+(() => {
+  const inp = document.getElementById('modalPersonText');
+  if (!inp) return;
+  inp.addEventListener('input', () => {
+    const before = inp.value;
+    const { clean, rejected } = _sanitizePersonText(before);
+    const next = clean.slice(0, PERSON_MAX);
+    if (next !== before) {
+      const caret = Math.max(0, (inp.selectionStart != null ? inp.selectionStart : before.length) - (before.length - next.length));
+      inp.value = next;
+      try { inp.setSelectionRange(caret, caret); } catch (_) {}
+    }
+    const err = document.getElementById('modalPersonErr');
+    if (err) {
+      if (rejected) err.textContent = __LANG === 'en'
+        ? 'Only letters, numbers, spaces and . , & - \' ♡ ✦'
+        : 'Solo letras, números, espacios y . , & - \' ♡ ✦';
+      else if (err.textContent) err.textContent = '';
+    }
+    _updatePersonUI();
+  });
+  // Al salir del campo: sin espacios al final
+  inp.addEventListener('blur', () => { const v = inp.value.replace(/ +$/, ''); if (v !== inp.value) { inp.value = v; _updatePersonUI(); } });
+})();
 
 // ─── CART ───────────────────────────────────────────────────
 // Email del lead de carrito abandonado que se registró en ESTA sesión (si se registró
@@ -1986,7 +2050,6 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   }
   const direccion = document.getElementById('coDireccion').value.trim();
   const apto      = document.getElementById('coApto').value.trim();
-  const notas     = document.getElementById('coNotas').value.trim();
   const zelleSubtotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price) * (i.qty || 1), 0);
   const free          = _cpIsFreeShip() || zelleSubtotal >= SHIPPING.freeThreshold;
   const shippingCost  = free ? 0 : SHIPPING.cost;
@@ -2024,7 +2087,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     impuesto:  zelleTax,
     pago:      'Zelle',
     estado:    'Nuevo',
-    notas:     [notas, zelleExtras].filter(Boolean).join(' | ') || undefined,
+    notas:     _composeNotas(zelleExtras) || undefined,
     giftcard:  zelleGcDiscount > 0 ? { code: _gcCode, amount: zelleGcDiscount } : undefined,
     cuponAplicado: _cpCode || undefined
   });
@@ -2038,6 +2101,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   _openWa(_waWin, buildWhatsAppUrl());
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
+  _resetGift();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
   _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
   document.getElementById('gcCodeInput').value='';
@@ -2089,7 +2153,8 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     city:     document.getElementById('coCiudad').value.trim(),
     address:  document.getElementById('coDireccion').value.trim(),
     apto:     document.getElementById('coApto').value.trim(),
-    notes:    document.getElementById('coNotas').value.trim(),
+    // Notas libres + línea de regalo (M7); deja lugar para GC/CP que suma cacusa-square
+    notes:    _composeNotas(''),
     idioma:   __LANG
   };
 
@@ -2151,6 +2216,65 @@ function generateOrderNum() {
 }
 let _currentOrderNum = '';
 
+// ─── M7: OPCIÓN DE REGALO (checkout, paso 1) ────────────────
+// Viaja en las notas del pedido por los 3 caminos (tarjeta, Zelle/transferencia, WhatsApp) y
+// en el mensaje de WhatsApp. Los Workers cortan las notas a 500 caracteres (y cacusa-square
+// les suma GC/CP del lado del servidor), así que se compone con tope: la línea de regalo y
+// los extras tienen prioridad y, si no entra todo, se recortan las notas libres.
+const NOTAS_MAX = 500, NOTAS_EXTRAS_RESERVE = 100, GIFT_MSG_MAX = 150;
+function _giftState() {
+  const box = document.getElementById('coGift');
+  if (!box || !box.checked) return null;
+  const msgEl = document.getElementById('coGiftMsg');
+  const hideEl = document.getElementById('coGiftHide');
+  const msg = String((msgEl && msgEl.value) || '').replace(/\s+/g, ' ').replace(/"/g, "'").trim().slice(0, GIFT_MSG_MAX);
+  return { msg, hide: !!(hideEl && hideEl.checked) };
+}
+// Línea compacta para el admin (siempre en español: la leen Tita/Robin)
+function _giftNoteLine() {
+  const g = _giftState();
+  if (!g) return '';
+  return '[REGALO] Ocultar precios: ' + (g.hide ? 'sí' : 'no') + '.' + (g.msg ? ' Tarjeta: "' + g.msg + '"' : '');
+}
+function _composeNotas(extras) {
+  const notasEl = document.getElementById('coNotas');
+  const gift = _giftNoteLine();
+  const ex = extras || '';
+  const reserve = Math.max(NOTAS_EXTRAS_RESERVE, ex ? ex.length + 3 : 0);
+  const room = NOTAS_MAX - reserve - (gift ? gift.length + 3 : 0);
+  let free = String((notasEl && notasEl.value) || '').trim();
+  if (free.length > room) free = free.slice(0, Math.max(0, room)).trim();
+  return [free, gift, ex].filter(Boolean).join(' | ').slice(0, NOTAS_MAX);
+}
+function _updateCoCount(inputId, countId, max) {
+  const el = document.getElementById(inputId), c = document.getElementById(countId);
+  if (el && c) c.textContent = el.value.length + '/' + max;
+}
+function _syncGiftPanel() {
+  const box = document.getElementById('coGift'), panel = document.getElementById('coGiftPanel');
+  if (!box || !panel) return;
+  panel.hidden = !box.checked;
+  box.setAttribute('aria-expanded', box.checked ? 'true' : 'false');
+}
+function _resetGift() {
+  const box = document.getElementById('coGift');
+  if (!box) return;
+  box.checked = false;
+  const msgEl = document.getElementById('coGiftMsg'); if (msgEl) msgEl.value = '';
+  const hideEl = document.getElementById('coGiftHide'); if (hideEl) hideEl.checked = false;
+  _syncGiftPanel();
+  _updateCoCount('coGiftMsg', 'coGiftMsgCount', GIFT_MSG_MAX);
+}
+(() => {
+  const box = document.getElementById('coGift');
+  if (box) box.addEventListener('change', _syncGiftPanel);
+  const msgEl = document.getElementById('coGiftMsg');
+  if (msgEl) msgEl.addEventListener('input', () => _updateCoCount('coGiftMsg', 'coGiftMsgCount', GIFT_MSG_MAX));
+  const notasEl = document.getElementById('coNotas');
+  if (notasEl) notasEl.addEventListener('input', () => _updateCoCount('coNotas', 'coNotasCount', notasEl.maxLength > 0 ? notasEl.maxLength : 200));
+  _syncGiftPanel();
+})();
+
 // ─── WHATSAPP FALLBACK ────────────────────────────────────────
 // Lleva la ventana abierta de antemano al chat de WhatsApp; si el navegador no dejó abrirla,
 // abre WhatsApp en esta misma pestaña (lo importante es que la clienta reciba el mensaje).
@@ -2204,6 +2328,12 @@ function buildWhatsAppUrl(opts = {}) {
   const _waApto = document.getElementById('coApto').value.trim();
   if (direccion) msg += (_waEN ? '*Address:* ' : '*Dirección:* ') + direccion + (_waApto ? ', ' + _waApto : '') + '\n';
   if (notas) msg += (_waEN ? '*Notes:* ' : '*Notas:* ') + notas + '\n';
+  const _waGift = _giftState();
+  if (_waGift) {
+    msg += _waEN
+      ? '*Gift:* yes · Hide prices: ' + (_waGift.hide ? 'yes' : 'no') + (_waGift.msg ? ' · Card: "' + _waGift.msg + '"' : '') + '\n'
+      : '*Regalo:* sí · Ocultar precios: ' + (_waGift.hide ? 'sí' : 'no') + (_waGift.msg ? ' · Tarjeta: "' + _waGift.msg + '"' : '') + '\n';
+  }
   msg += _waEN ? '\n*Products:*\n' : '\n*Productos:*\n';
   cart.forEach(item => {
     const _iName  = _waEN && item.name_en ? item.name_en : item.name;
@@ -2334,7 +2464,6 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   }
   const direccion  = document.getElementById('coDireccion').value.trim();
   const apto       = document.getElementById('coApto').value.trim();
-  const notas      = document.getElementById('coNotas').value.trim();
   const total      = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
   const free       = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
   const waShip     = free ? 0 : SHIPPING.cost;
@@ -2374,7 +2503,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     impuesto: waTax,
     pago:   'WhatsApp',
     estado: 'Nuevo',
-    notas:  [notas, waExtras].filter(Boolean).join(' | ') || undefined,
+    notas:  _composeNotas(waExtras) || undefined,
     giftcard: waGcDiscount > 0 ? { code: _gcCode, amount: waGcDiscount } : undefined,
     cuponAplicado: _cpCode || undefined
   });
@@ -2388,6 +2517,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   _openWa(_waWin, buildWhatsAppUrl({ method: 'whatsapp' }));
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
+  _resetGift();
   _gcCode=null; _gcBalance=0; _gcApplied=0;
   _cpCode=null; _cpType=null; _cpAmount=0; _cpDiscount=0;
   document.getElementById('gcCodeInput').value='';
@@ -2462,6 +2592,7 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
   history.replaceState({}, '', window.location.pathname);
   try { sessionStorage.removeItem('cacusa_order_pending'); } catch (_) {}
   cart = []; saveCart(); updateCartUI();
+  _resetGift();
   let _sqInfo = {};
   try { _sqInfo = JSON.parse(sessionStorage.getItem('cacusa_success_info') || '{}') || {}; sessionStorage.removeItem('cacusa_success_info'); } catch (_) {}
   showSuccess({ total: typeof _sqInfo.total === 'number' ? _sqInfo.total : undefined, hasEmail: !!_sqInfo.hasEmail, method: 'square' });

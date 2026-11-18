@@ -717,3 +717,22 @@ main#main:focus{outline:none}
 .cart-suggest--empty .cs-title{text-align:center}
 .cart-suggest--empty .cs-list{grid-template-columns:repeat(2,1fr)}
 .combo-add.added{background:var(--pink-deep);color:white}
+
+/* ─── M4: personalización guiada (modal de producto) ─────── */
+.person-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.person-count{font-family:var(--fu);font-size:11px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.person-err{font-family:var(--fu);font-size:12px;color:#c0336e}
+.person-err:not(:empty){margin:0 0 6px}
+#modalPersonField .modal-hint{margin-bottom:8px;font-size:11px;line-height:1.5}
+.person-wa{display:inline-block;font-family:var(--fu);font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:3px;margin-bottom:16px;transition:color .2s var(--ease-out)}
+.person-wa::before{content:'✦ ';color:var(--pink-deep);text-decoration:none;display:inline-block;margin-right:4px}
+.person-wa:hover{color:var(--pink-deep)}
+/* ─── M7: opción de regalo (checkout) ─────────────────────── */
+.co-count{font-family:var(--fu);font-size:11px;color:var(--ink-muted);text-align:right;margin-top:4px;font-variant-numeric:tabular-nums}
+.co-textarea{resize:vertical;min-height:76px;line-height:1.5}
+.co-gift{margin-bottom:14px;padding:4px 14px;border:1.5px solid var(--ink-light);border-radius:12px}
+.co-check{display:flex;align-items:center;gap:10px;min-height:44px;font-family:var(--fu);font-size:14px;color:var(--ink);cursor:pointer}
+.co-check input{width:18px;height:18px;margin:0;flex-shrink:0;accent-color:var(--pink-deep);cursor:pointer}
+.co-gift-panel{padding:4px 0 6px;animation:coGiftIn .3s var(--ease-out) both}
+.co-gift-panel .co-field{margin-bottom:6px}
+@keyframes coGiftIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
