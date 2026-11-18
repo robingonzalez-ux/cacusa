@@ -305,7 +305,7 @@
         },
         {
           "title": "Política de cancelación",
-          "desc": "No hay cobros automáticos: si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp o a facturacioncacusa@gmail.com y la anulamos. No ofrecemos reembolsos sobre pagos ya hechos: recibes la caja de ese período. Si te suscribiste antes de octubre de 2026 con cobro automático de tarjeta, puedes cancelar desde el enlace \"Manage subscription\" que Square te envía con cada pago, o escribirnos y te ayudamos."
+          "desc": "Cada mes pagas tu factura de Square. Si no quieres seguir, simplemente no pagues la próxima factura, o escríbenos por WhatsApp o a facturacioncacusa@gmail.com y la anulamos. No ofrecemos reembolsos sobre pagos ya hechos: recibes la caja de ese período. Si te suscribiste antes de octubre de 2026 con cobro automático de tarjeta, puedes cancelar desde el enlace \"Manage subscription\" que Square te envía con cada pago, o escribirnos y te ayudamos."
         },
         {
           "title": "Pago pendiente",
@@ -339,11 +339,11 @@
         },
         {
           "q": "¿Cómo es el pago mensual?",
-          "a": "Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. No guardamos tu tarjeta ni hacemos cobros automáticos. Square te envía el recibo después de cada pago."
+          "a": "Cada mes te llega por correo una factura de Square y la pagas con Apple Pay, Google Pay o tarjeta, en un toque. Square te envía el recibo después de cada pago."
         },
         {
           "q": "¿Cómo cancelo mi suscripción?",
-          "a": "Desde octubre de 2026 no hay cobros automáticos: si no quieres seguir, no pagues la próxima factura o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan. Si te suscribiste antes con cobro automático de tarjeta, cancela desde el enlace \"Manage subscription\" de Square o escríbenos."
+          "a": "Cada mes te llega una factura de Square para pagar con Apple Pay, Google Pay o tarjeta. Si no quieres seguir, no pagues la próxima factura o escríbenos por WhatsApp y la anulamos. Los pagos ya hechos no se reembolsan. Si te suscribiste antes con cobro automático de tarjeta, cancela desde el enlace \"Manage subscription\" de Square o escríbenos."
         },
         {
           "q": "¿Qué pasa si una pieza llega dañada?",
@@ -423,7 +423,7 @@
         },
         {
           "title": "Cancellation policy",
-          "desc": "There are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp or at facturacioncacusa@gmail.com and we'll void it. We don't refund payments already made: you receive that period's box. If you subscribed before October 2026 with automatic card billing, you can cancel from the \"Manage subscription\" link Square emails you with each payment, or write to us and we'll help."
+          "desc": "Each month you pay your Square invoice. If you don't want to continue, just don't pay the next invoice, or message us on WhatsApp or at facturacioncacusa@gmail.com and we'll void it. We don't refund payments already made: you receive that period's box. If you subscribed before October 2026 with automatic card billing, you can cancel from the \"Manage subscription\" link Square emails you with each payment, or write to us and we'll help."
         },
         {
           "title": "Pending payment",
@@ -457,11 +457,11 @@
         },
         {
           "q": "How does the monthly payment work?",
-          "a": "Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. We don't store your card and there are no automatic charges. Square emails you a receipt after each payment."
+          "a": "Every month you get a Square invoice by email and pay it with Apple Pay, Google Pay or card in one tap. Square emails you a receipt after each payment."
         },
         {
           "q": "How do I cancel my subscription?",
-          "a": "Since October 2026 there are no automatic charges: if you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded. If you subscribed earlier with automatic card billing, cancel from Square's \"Manage subscription\" link or message us."
+          "a": "Every month you get a Square invoice to pay with Apple Pay, Google Pay or card. If you don't want to continue, just don't pay the next invoice, or message us on WhatsApp and we'll void it. Payments already made aren't refunded. If you subscribed earlier with automatic card billing, cancel from Square's \"Manage subscription\" link or message us."
         },
         {
           "q": "What if a piece arrives damaged?",
