@@ -645,7 +645,7 @@ main#main:focus{outline:none}
     <h2 class="hero-label" data-i18n="landing.heroLabel">Joyería artesanal personalizada</h2>
     <h1 class="hero-h1 mask-h" id="heroH1" data-mask-delay="1">Hecha<br>para <em>ti.</em></h1>
     <div class="hero-script">by Taitus</div>
-    <p class="hero-value" id="heroValue">18k gold plating and stainless steel · free shipping over $90 · personalized in 5–10 business days</p>
+    <p class="hero-value" id="heroValue">18k gold plating and stainless steel · free shipping from $90 · personalized in 5–10 business days</p>
     <p class="hero-desc" data-i18n="landing.heroDesc">"creamos para que luzcas más bella de lo que ya eres"</p>
     <div class="hero-btns">
       <a class="btn-h1" href="./ui_kits/store/" data-i18n="landing.heroBtnShop">Ver colección</a>
@@ -711,7 +711,7 @@ main#main:focus{outline:none}
       <ul class="xb-cards">
         <li id="xmasLi30"><a class="xb-card" id="xmasCard30" href="/en/ui_kits/store/?precio=0-30"><span class="xb-ic gB" aria-hidden="true">✦</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasUnder30">Under $30</span><span class="xb-n" id="xmasN30"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
         <li id="xmasLi60"><a class="xb-card" id="xmasCard60" href="/en/ui_kits/store/?precio=30-60"><span class="xb-ic gC" aria-hidden="true">◇</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmas30to60">$30 to $60</span><span class="xb-n" id="xmasN60"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
-        <li id="xmasLiName"><a class="xb-card" id="xmasCardName" href="/en/ui_kits/store/?regalo=1"><span class="xb-ic gE" aria-hidden="true">♡</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasName">With their name</span><span class="xb-n" id="xmasNName"></span><span class="xb-note" id="xmasNoteName"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
+        <li id="xmasLiName"><a class="xb-card" id="xmasCardName" href="/en/ui_kits/store/?personalizado=1"><span class="xb-ic gE" aria-hidden="true">♡</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasName">With their name</span><span class="xb-n" id="xmasNName"></span><span class="xb-note" id="xmasNoteName"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
       </ul>
       <a class="xb-guide" id="xmasGuide" href="/en/guia-regalos.html" data-i18n="landing.xmasGuide">Browse the gift guide →</a>
     </div>
@@ -788,7 +788,7 @@ main#main:focus{outline:none}
      El lector de pantalla lee la frase una sola vez (.sr-only); las palabras van con aria-hidden. -->
 <section id="tagline">
   <div class="container">
-    <p class="tl-text"><span class="sr-only tl-sr">Handmade, made for you, ready to gift.</span><span class="tl-words" aria-hidden="true">Handmade, made for you, ready to gift.</span></p>
+    <p class="tl-text"><span class="sr-only tl-sr">Crafted by hand, made for you, ready to give.</span><span class="tl-words" aria-hidden="true">Crafted by hand, made for you, ready to give.</span></p>
   </div>
 </section>
 
@@ -1249,7 +1249,7 @@ function renderHeroValue(threshold){
   const n = Number(threshold);
   const amt = '$' + (Number.isFinite(n) && n > 0 ? (Number.isInteger(n) ? n : n.toFixed(2)) : 90);
   el.textContent = localStorage.getItem('cacusa-lang') === 'en'
-    ? '18k gold plating and stainless steel · free shipping over ' + amt + ' · personalized in 5–10 business days'
+    ? '18k gold plating and stainless steel · free shipping from ' + amt + ' · personalized in 5–10 business days'
     : 'Baño de oro 18k y acero · envío gratis desde ' + amt + ' · personalización en 5–10 días hábiles';
 }
 renderHeroValue();
@@ -1540,44 +1540,59 @@ function renderXmasBand(rawCampaign, products){
   const custom = en ? c.banner_en : c.banner;
   let line;
   if (custom) {
-    line = custom.replace(/\{(fecha|date)\}/g, stock.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(' · '));
+    line = custom.replace(/\{(fecha|date)\}/g, stock.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(en ? ' or ' : ' o hasta el '));
   } else if (en) {
     line = 'Order by ' + stock.map(x => fmt(x.date) + ' in ' + where(x.cc)).join(' and ') + ' to get it before Christmas';
   } else {
-    line = 'Pide antes del ' + stock.map(x => fmt(x.date) + ' en ' + where(x.cc)).join(' y del ') + ' para recibir antes de Navidad';
+    line = 'Pide hasta el ' + stock.map(x => fmt(x.date) + ' en ' + where(x.cc)).join(' y hasta el ') + ' para recibir antes de Navidad';
   }
   setTxt('xmasLine', line);
-  // — Tarjetas: piezas disponibles en cada grupo (mismos filtros que ?precio / ?regalo en la tienda) —
+  // — Tarjetas: piezas en stock de cada grupo, con el mismo criterio que ?precio / ?personalizado
+  // en la tienda: precio final (promo vigente; si no, recargo del 4% con tarjeta que informa el
+  // Worker, pedido aparte y best-effort igual que en la tienda) y rango semiabierto (mínimo
+  // incluido, máximo excluido: una pieza de $30 cuenta solo en "De $30 a $60").
   const avail = (Array.isArray(products) ? products : []).filter(p => p && p.available !== false);
-  const inRange = (p, min, max) => { const pr = Number(p.price); return pr >= min && pr <= max; };
+  const _now = new Date();
+  const finalPrice = (p, sr) => {
+    if (p.promo && p.promo.price && !(p.promo.endsAt && new Date(p.promo.endsAt) < _now)) return Number(p.promo.price);
+    return (sr && sr[p.id] === true) ? Math.round(Number(p.price) * 1.04 * 100) / 100 : Number(p.price);
+  };
+  const inRange = (p, min, max, sr) => { const pr = finalPrice(p, sr); return pr >= min && pr < max; };
   const pieces = n => n + (en ? (n === 1 ? ' piece' : ' pieces') : (n === 1 ? ' pieza' : ' piezas'));
   const store = en ? '/en/ui_kits/store/' : '/ui_kits/store/';
   const personal = _homeDeadlines(c, 'personal');
   const cards = [
-    { li: 'xmasLi30', a: 'xmasCard30', n: 'xmasN30', q: '?precio=0-30', count: avail.filter(p => inRange(p, 0, 30)).length },
-    { li: 'xmasLi60', a: 'xmasCard60', n: 'xmasN60', q: '?precio=30-60', count: avail.filter(p => inRange(p, 30, 60)).length },
-    // Personalizadas: se ocultan cuando ya pasó su fecha límite (5–10 días hábiles de taller).
-    { li: 'xmasLiName', a: 'xmasCardName', n: 'xmasNName', q: '?regalo=1', count: personal.length ? avail.filter(p => p.personalized).length : 0 }
+    { li: 'xmasLi30', a: 'xmasCard30', n: 'xmasN30', q: '?precio=0-30', count: sr => avail.filter(p => inRange(p, 0, 30, sr)).length },
+    { li: 'xmasLi60', a: 'xmasCard60', n: 'xmasN60', q: '?precio=30-60', count: sr => avail.filter(p => inRange(p, 30, 60, sr)).length },
+    // Personalizadas (?personalizado=1: solo las personalizables en stock): se ocultan cuando
+    // ya pasó su fecha límite (5–10 días hábiles de taller).
+    { li: 'xmasLiName', a: 'xmasCardName', n: 'xmasNName', q: '?personalizado=1', count: () => personal.length ? avail.filter(p => p.personalized).length : 0 }
   ];
-  cards.forEach(k => {
+  const setCounts = sr => cards.forEach(k => {
     const li = document.getElementById(k.li), a = document.getElementById(k.a);
     if (!li || !a) return;
+    const n = k.count(sr);
     a.href = store + k.q;
-    setTxt(k.n, pieces(k.count));
-    li.hidden = !k.count;
+    setTxt(k.n, pieces(n));
+    li.hidden = !n;
   });
+  setCounts(null);
+  fetch('https://cacusa-admin.facturacioncacusa.workers.dev/pub/surcharges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && d.surcharges && typeof d.surcharges === 'object') setCounts(d.surcharges); })
+    .catch(() => {});
   if (personal.length) {
-    setTxt('xmasNoteName', (en ? 'Order by ' : 'Pide antes del ') +
-      personal.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(en ? ' or ' : ' o del '));
+    setTxt('xmasNoteName', (en ? 'Order by ' : 'Pide hasta el ') +
+      personal.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(en ? ' or ' : ' o hasta el '));
   }
   const guide = document.getElementById('xmasGuide');
   if (guide) guide.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
   sec.hidden = false;
   const box = sec.querySelector('.reveal');
   if (box) obs.observe(box);
-  // — Ticker: aviso con la fecha de EE.UU. (o la de Ecuador si la de EE.UU. ya pasó) —
-  const first = stock[0];
-  _prependTickerMsg('✦ ' + (en ? 'Christmas: order by ' : 'Navidad: pide antes del ') + fmt(first.date) + (first.cc === 'EC' ? ' (Ecuador)' : ''));
+  // — Ticker: las fechas vigentes, siempre con su país (el home no detecta el país) —
+  _prependTickerMsg('✦ ' + (en ? 'Christmas: order by ' : 'Navidad: pide hasta el ') +
+    stock.map(x => fmt(x.date) + ' (' + tag(x.cc) + ')').join(en ? ' or ' : ' o hasta el '));
 }
 
 // ── COUNT-UP ────────────────────────────────────────────────
@@ -1632,8 +1647,10 @@ function renderTestimonials(products){
         Object.values(revs).forEach(v => {
           if (!v || typeof v !== 'object' || v.approved === false) return;
           const comment = typeof v.comment === 'string' ? v.comment.trim() : '';
-          const rating = v.rating == null ? 5 : Math.round(Number(v.rating));
-          if (!comment || !(rating >= 1 && rating <= 5)) return;
+          // Sin calificación numérica no se muestra (nunca inventar 5 estrellas); mismo
+          // criterio que el resumen de reseñas de la tienda.
+          const rating = Math.round(Number(v.rating));
+          if (v.rating == null || !comment || !(rating >= 1 && rating <= 5)) return;
           const first = String(v.name || '').trim().split(/\s+/)[0].slice(0, 24);
           const p = byId.get(String(pid));
           list.push({
@@ -1944,7 +1961,7 @@ window.cacusaLang = l => { localStorage.setItem('cacusa-lang', l); location.relo
   const sec = document.getElementById('tagline');
   if (!sec) return;
   const text = localStorage.getItem('cacusa-lang') === 'en'
-    ? 'Handmade, made for you, ready to gift.'
+    ? 'Crafted by hand, made for you, ready to give.'
     : 'Hecha a mano, pensada para ti, lista para regalar.';
   const srEl = sec.querySelector('.tl-sr'), words = sec.querySelector('.tl-words');
   if (srEl) srEl.textContent = text;

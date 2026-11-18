@@ -388,11 +388,14 @@ let currentProduct = null, qty = 1, activeFilter = 'all', searchTerm = '';
 // las categorías en vez de los 74 productos juntos — se "apaga" en cuanto la clienta elige
 // una categoría, busca algo, o pide ver todo el catálogo.
 let _categoryPickerDismissed = false;
-// ─── FILTROS POR URL (?precio=min-max / ?regalo=1) ──────────
-// Enlaces de campaña (guía de regalos, redes) que llegan directo a un rango de precio o a
-// "ideas de regalo" (personalizables primero, luego Bestseller, luego el resto; solo en
-// stock). Se aplican encima de la categoría y la búsqueda, y cada uno se quita con su chip.
-let _urlPrice = null, _urlGift = false;
+// ─── FILTROS POR URL (?precio=min-max / ?regalo=1 / ?personalizado=1) ──────────
+// Enlaces de campaña (guía de regalos, home, redes) que llegan directo a un rango de precio,
+// a "ideas de regalo" (personalizables primero, luego Bestseller, luego el resto) o solo a
+// las piezas personalizables ("Con su nombre"). Los 3 muestran solo piezas en stock (mismo
+// criterio que los conteos del home). Rango de precio semiabierto: mínimo incluido, máximo
+// excluido (una pieza de $30 cae en 30-60, no en 0-30), sobre el precio final (con recargo
+// y promo). Se aplican encima de la categoría y la búsqueda, y cada uno se quita con su chip.
+let _urlPrice = null, _urlGift = false, _urlPersonal = false;
 function _readUrlFilters() {
   const sp = new URLSearchParams(window.location.search);
   const m = /^(\d{1,5}(?:\.\d{1,2})?)-(\d{1,5}(?:\.\d{1,2})?)?$/.exec((sp.get('precio') || '').trim());
@@ -402,15 +405,17 @@ function _readUrlFilters() {
     if (max == null || max >= min) _urlPrice = { min, max };
   }
   _urlGift = sp.get('regalo') === '1';
+  _urlPersonal = sp.get('personalizado') === '1';
 }
 _readUrlFilters();
-// Con ?precio o ?regalo (y sin ?cat) se salta el selector de categorías: grilla directa.
-if (_urlPrice || _urlGift) _categoryPickerDismissed = true;
+// Con ?precio, ?regalo o ?personalizado (y sin ?cat) se salta el selector de categorías: grilla directa.
+function _hasUrlFilters() { return !!(_urlPrice || _urlGift || _urlPersonal); }
+if (_hasUrlFilters()) _categoryPickerDismissed = true;
 function _giftRank(p) { return p.personalized ? 0 : (_isBestseller(p) ? 1 : 2); }
 function _priceChipLabel(pr) {
   const en = __LANG === 'en', f = n => '$' + (Number.isInteger(n) ? n : n.toFixed(2));
   if (pr.max == null) return (en ? 'From ' : 'Desde ') + f(pr.min);
-  if (pr.min === 0) return (en ? 'Up to ' : 'Hasta ') + f(pr.max);
+  if (pr.min === 0) return (en ? 'Under ' : 'Menos de ') + f(pr.max);
   return f(pr.min) + (en ? ' to ' : ' a ') + f(pr.max);
 }
 function _renderUrlFilterChips() {
@@ -420,6 +425,7 @@ function _renderUrlFilterChips() {
   const chips = [];
   if (_urlPrice) chips.push({ param: 'precio', label: _priceChipLabel(_urlPrice) });
   if (_urlGift) chips.push({ param: 'regalo', label: en ? 'Gift ideas' : 'Ideas de regalo' });
+  if (_urlPersonal) chips.push({ param: 'personalizado', label: en ? 'With their name' : 'Con su nombre' });
   wrap.hidden = !chips.length;
   wrap.innerHTML = chips.map(c =>
     '<button type="button" class="url-chip" data-param="' + c.param + '" aria-label="' + esc((en ? 'Remove filter: ' : 'Quitar filtro: ') + c.label) + '">' +
@@ -666,7 +672,7 @@ function renderFreeShippingBanner() {
   if (!el) return;
   const threshold = SHIPPING.freeThreshold.toFixed(0);
   el.textContent = __LANG === 'en'
-    ? 'Free shipping on orders over $' + threshold
+    ? 'Free shipping on orders $' + threshold + '+'
     : 'Envío gratis en pedidos desde $' + threshold;
   el.style.display = 'block';
 }
@@ -686,13 +692,13 @@ function renderSeasonBanner() {
   if (custom) {
     const fecha = known
       ? _fmtCampaignDate(list[0].date)
-      : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(' · ');
+      : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(en ? ' or ' : ' o hasta el ');
     text = custom.replace(/\{(fecha|date)\}/g, fecha);
   } else if (known) {
-    text = '✦ ' + title + ' · ' + (en ? 'order by ' : 'pide antes del ') + _fmtCampaignDate(list[0].date) + (en ? ' to get it in time' : ' para recibirlo a tiempo');
+    text = '✦ ' + title + ' · ' + (en ? 'order by ' : 'pide hasta el ') + _fmtCampaignDate(list[0].date) + (en ? ' to get them in time' : ' para recibirlos a tiempo');
   } else {
     text = '✦ ' + title + ' · ' + list.map((x, i) =>
-      _campaignCountryLabel(x.country) + ': ' + (en ? (i ? 'by ' : 'order by ') : (i ? 'antes del ' : 'pide antes del ')) + _fmtCampaignDate(x.date)
+      _campaignCountryLabel(x.country) + ': ' + (en ? (i ? 'by ' : 'order by ') : (i ? 'hasta el ' : 'pide hasta el ')) + _fmtCampaignDate(x.date)
     ).join(' · ');
   }
   el.textContent = text;
@@ -700,7 +706,9 @@ function renderSeasonBanner() {
   el.hidden = false;
 }
 // Línea "llega antes de Navidad" del modal, bajo el precio: fecha de personalización si la
-// pieza es personalizable, si no la de stock. Oculta si ya pasó o si está agotada.
+// pieza es personalizable, si no la de stock. Oculta si ya pasó o si está agotada. En las
+// personalizables los 5–10 días hábiles corren desde que se confirma el diseño por WhatsApp,
+// así que la frase pide pedir Y confirmar hasta esa fecha (no garantiza solo por pedir).
 function _renderModalXmas(p) {
   const el = document.getElementById('modalXmas');
   if (!el) return;
@@ -709,8 +717,10 @@ function _renderModalXmas(p) {
   if (!list.length) { el.hidden = true; el.textContent = ''; return; }
   const dates = _campaignCountry()
     ? _fmtCampaignDate(list[0].date)
-    : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(en ? ' or ' : ' o del ');
-  el.textContent = '◇ ' + (en ? 'Arrives before Christmas if you order by ' : 'Llega antes de Navidad si pides antes del ') + dates;
+    : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(en ? ' or ' : ' o hasta el ');
+  el.textContent = '◇ ' + (p.personalized
+    ? (en ? 'To get it before Christmas, order and confirm your design on WhatsApp by ' : 'Para recibirla antes de Navidad, pide y confirma tu diseño por WhatsApp hasta el ')
+    : (en ? 'Arrives before Christmas if you order by ' : 'Llega antes de Navidad si pides hasta el ')) + dates;
   el.hidden = false;
 }
 function renderFilters() {
@@ -901,8 +911,9 @@ function renderProducts() {
       (p.cat || '').toLowerCase().includes(q)
     );
   }
-  if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr <= _urlPrice.max); });
-  if (_urlGift) filtered = filtered.filter(p => p.available !== false);
+  if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr < _urlPrice.max); });
+  if (_hasUrlFilters()) filtered = filtered.filter(p => p.available !== false);
+  if (_urlPersonal) filtered = filtered.filter(p => p.personalized);
   const sort = document.getElementById('sortSelect').value;
   const _soldOutLast = (a, b) => (a.available === false ? 1 : 0) - (b.available === false ? 1 : 0);
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
@@ -954,7 +965,7 @@ function _emptyStateHtml() {
   const en = __LANG === 'en';
   const msg = searchTerm
     ? (en ? 'No products match "' : 'No hay productos que coincidan con "') + esc(searchTerm) + '".'
-    : (_urlPrice || _urlGift)
+    : _hasUrlFilters()
       ? (en ? 'No products match these filters.' : 'No hay productos con estos filtros.')
       : t('store.emptyCategory', 'No hay productos en esta categoría aún.');
   const waText = searchTerm
@@ -972,9 +983,9 @@ function _clearAllFilters() {
   searchTerm = '';
   const si = document.getElementById('searchInput'); if (si) si.value = '';
   const sc = document.getElementById('searchClear'); if (sc) sc.style.display = 'none';
-  if (_urlPrice || _urlGift) {
+  if (_hasUrlFilters()) {
     const u = new URL(window.location.href);
-    u.searchParams.delete('precio'); u.searchParams.delete('regalo');
+    u.searchParams.delete('precio'); u.searchParams.delete('regalo'); u.searchParams.delete('personalizado');
     history.replaceState(history.state, '', u.toString());
     _readUrlFilters();
   }
@@ -1319,6 +1330,9 @@ function _modalHistoryOpen(p, fromHistory) {
   const st = { modal: p.id };
   // Adelante del navegador hacia una entrada de modal: ya existe, no se apila otra.
   if (fromHistory) { _modalPushed = true; return; }
+  // Recarga estando en una entrada de modal (history.state ya es {modal: id}): se reutiliza
+  // esa entrada en vez de apilar otra igual, así ✕/Escape/Atrás vuelven a la entrada base.
+  if (!_modalPushed && history.state && String(history.state.modal) === String(p.id)) { history.replaceState(st, '', u.toString()); _modalPushed = true; return; }
   // Cambio de producto con el modal abierto: se reemplaza la entrada, así Atrás cierra el modal.
   if (_modalPushed && history.state && history.state.modal != null) { history.replaceState(st, '', u.toString()); return; }
   // Entrada base sin ?p=: un link directo (?p=) queda como "listado + modal encima" y
