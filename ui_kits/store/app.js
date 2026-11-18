@@ -547,6 +547,9 @@ function _showCatalogLoadError() {
     PRODUCTS = [];
     _showCatalogLoadError();
   }
+  // Inventario (18 nov): ids agotados por stock — se pide en paralelo y se aplica antes de
+  // pintar. Si el Worker no responde, la tienda sigue igual (solo cuenta available del catálogo).
+  const _soldOutP = _fetchSoldOut();
   // Apply per-product surcharges desde el worker (best-effort, non-blocking)
   try {
     const _srRes = await fetch(ADMIN_WORKER_URL + '/pub/surcharges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
@@ -597,6 +600,7 @@ function _showCatalogLoadError() {
       if (_ip && _ip.country) window.__visitorCountry = _ip.country;
     }
   } catch(_) {}
+  _applySoldOut(await _soldOutP);
   // Re-sincroniza el carrito con precios canónicos (evita precios obsoletos
   // o manipulados en localStorage; el cobro real igual se valida en el backend)
   reconcileCartPrices();
@@ -633,6 +637,27 @@ function _showCatalogLoadError() {
   if (_autoW) { const _wids = _autoW.split(',').filter(Boolean); if (_wids.length) openWishlist(_wids); }
 })();
 
+// ─── INVENTARIO (18 nov) ────────────────────────────────────
+// El stock vive en el Worker (KV). /pub/stock devuelve solo los ids agotados (nunca
+// cantidades); se tratan EXACTAMENTE como available === false: tarjeta "Agotado", modal sin
+// botón de agregar, línea del carrito marcada y checkout bloqueado.
+let SOLD_OUT_IDS = new Set();
+function _fetchSoldOut() {
+  return Promise.race([
+    fetch(ADMIN_WORKER_URL + '/pub/stock').then(r => (r.ok ? r.json() : null)).catch(() => null),
+    new Promise(res => setTimeout(() => res(null), 4000))
+  ]).catch(() => null);
+}
+function _applySoldOut(data) {
+  if (!data || !Array.isArray(data.soldOut)) return;
+  SOLD_OUT_IDS = new Set(data.soldOut.map(String));
+  PRODUCTS.forEach(p => { if (SOLD_OUT_IDS.has(String(p.id))) { p.available = false; p.stockSoldOut = true; } });
+}
+function _cartItemSoldOut(item) {
+  if (!item || item.isCombo) return false;
+  const prod = PRODUCTS.find(p => String(p.id) === String(item.id));
+  return !!prod && prod.available === false;
+}
 // Vuelve a aplicar los precios/recargos actuales del catálogo a los ítems guardados
 function reconcileCartPrices() {
   if (!Array.isArray(cart) || !cart.length || !PRODUCTS.length) return;
@@ -1530,6 +1555,7 @@ function updateCartUI() {
         <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name)}</div>
         <div class="ci-body">
           <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
+          ${_cartItemSoldOut(item) ? `<div class="ci-soldout" role="note" style="color:#B42318;font-size:12px;font-weight:700;margin:2px 0">${__LANG === 'en' ? 'Sold out · remove it to continue' : 'Agotado · quítalo para continuar'}</div>` : ''}
           ${item.personalization ? `<div class="ci-custom">"${esc(item.personalization)}"</div>` : ''}
           ${item.material ? `<div class="ci-mat">${esc((()=>{const _cEN={'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};const _m=item.material;return __LANG==='en'?(_cEN[_m]||_m):_m;})())}</div>` : ''}
           <div class="ci-foot">
@@ -1537,7 +1563,7 @@ function updateCartUI() {
             <div class="ci-qty">
               <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, -1)" aria-label="Restar cantidad">−</button>
               <span class="ci-qty-num">${item.qty || 1}</span>
-              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="Sumar cantidad"${(item.qty || 1) >= MAX_QTY ? ' disabled' : ''}>+</button>
+              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="Sumar cantidad"${(item.qty || 1) >= MAX_QTY || _cartItemSoldOut(item) ? ' disabled' : ''}>+</button>
             </div>
             <button class="ci-remove" onclick="removeItem(${item.cartId})" aria-label="Quitar del carrito">✕</button>
           </div>
@@ -1625,6 +1651,7 @@ function removeItem(cartId) { cart = cart.filter(i => i.cartId !== cartId); save
 function changeQty(cartId, delta) {
   const item = cart.find(i => i.cartId === cartId);
   if (!item) return;
+  if (delta > 0 && _cartItemSoldOut(item)) return; // agotado: solo se puede bajar o quitar
   const next = (item.qty || 1) + delta;
   if (next <= 0) { removeItem(cartId); return; }
   if (next > MAX_QTY) return;
@@ -1772,6 +1799,12 @@ function _setCoCodesOpen(open) {
   });
 })();
 function openCheckout() {
+  // Inventario (18 nov): no se puede pagar un carrito con piezas agotadas.
+  if (cart.some(_cartItemSoldOut)) {
+    showToast(__LANG === 'en' ? 'Some pieces in your cart are sold out. Remove them to continue.' : 'Hay piezas agotadas en tu carrito. Quítalas para continuar.', 4500);
+    updateCartUI(); openCart(); // el botón Pagar cierra el carrito antes: se vuelve a abrir
+    return;
+  }
   document.getElementById('checkout-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   coGoStep1();
