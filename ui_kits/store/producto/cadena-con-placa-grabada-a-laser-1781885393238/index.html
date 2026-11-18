@@ -98,7 +98,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>try{document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';}catch(_){document.documentElement.className='lang-es';}</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=c0ca682f55">
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=a20c95597c">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-product">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/"},{"@type":"ListItem","position":2,"name":"Tienda","item":"https://cacusabytaitus.com/ui_kits/store/"},{"@type":"ListItem","position":3,"name":"Hombres","item":"https://cacusabytaitus.com/ui_kits/store/categoria/hombres/"},{"@type":"ListItem","position":4,"name":"Cadena con placa grabada a láser","item":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-con-placa-grabada-a-laser-1781885393238/"}]},{"@type":"Product","name":"Cadena con placa grabada a láser","description":"Un grabado a láser. Puedes personalizar el labrado de la cadena. Puedes elegir entre distintas formas de placa. Rectangular, circular, en forma de corazón, dorada, plateada. \nSi deseas personalizar con dos grabados a láser el valor es $65","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-con-placa-grabada-a-laser-1781885393238/","sku":"1781885393238","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"offers":{"@type":"Offer","priceCurrency":"USD","price":"55","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-con-placa-grabada-a-laser-1781885393238/","shippingDetails":[{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"EC"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":2,"unitCode":"DAY"}}},{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":2,"maxValue":5,"unitCode":"DAY"}}}],"hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy","applicableCountry":["EC","US"],"returnPolicyCategory":"https://schema.org/MerchantReturnFiniteReturnWindow","merchantReturnDays":2,"returnMethod":"https://schema.org/ReturnByMail","returnFees":"https://schema.org/FreeReturn","refundType":"https://schema.org/ExchangeRefund","merchantReturnLink":"https://cacusabytaitus.com/devoluciones.html"}},"image":["https://cacusabytaitus.com/ui_kits/store/images/1781885292209_7d9f9d34_f5c7_4f06_b249_e644df5ddf00_jpe.webp"],"material":"Acero inoxidable"}]}</script>
@@ -361,9 +361,14 @@
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
-        <label class="modal-label" for="modalPersonText"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
-        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…" maxlength="20">
-        <div class="modal-hint"><span class="t-es">Máx. 20 caracteres · letras, números y espacios</span><span class="t-en">Max. 20 characters · letters, numbers and spaces</span></div>
+        <div class="person-head">
+          <label class="modal-label" for="modalPersonText"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
+          <span class="person-count" id="modalPersonCount" aria-live="polite">0/20</span>
+        </div>
+        <input class="modal-input" id="modalPersonText" placeholder="Nombre, fecha o mensaje especial…" maxlength="20" autocomplete="off" aria-describedby="modalPersonErr modalPersonHint">
+        <div class="person-err" id="modalPersonErr" role="status" aria-live="polite"></div>
+        <div class="modal-hint" id="modalPersonHint"><span class="t-es">El precio de la personalización se confirma por WhatsApp · lista en 5–10 días hábiles</span><span class="t-en">We'll confirm the personalization price on WhatsApp · ready in 5–10 business days</span></div>
+        <a class="person-wa" id="modalPersonWa" href="https://wa.me/17867375336" target="_blank" rel="noopener"><span class="t-es">Consultar mi personalización por WhatsApp</span><span class="t-en">Ask about my personalization on WhatsApp</span></a>
       </div>
       <div class="modal-qty">
         <button class="qty-btn" id="qtyMinus" aria-label="Disminuir cantidad">&#x2212;</button>
@@ -556,7 +561,14 @@
           <input class="co-input" id="coZip" maxlength="5" inputmode="numeric">
         </div>
         <div class="co-field"><label class="co-label" for="coCiudad"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad" maxlength="50" required aria-required="true" aria-describedby="coCiudadErr"><div class="co-field-err" id="coCiudadErr"></div></div>
-        <div class="co-field"><label class="co-label" for="coNotas"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas" maxlength="200"></div>
+        <div class="co-field"><label class="co-label" for="coNotas"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas" maxlength="200" aria-describedby="coNotasCount"><div class="co-count" id="coNotasCount">0/200</div></div>
+        <div class="co-gift">
+          <label class="co-check" for="coGift"><input type="checkbox" id="coGift" aria-controls="coGiftPanel"><span class="t-es">◇ Es un regalo</span><span class="t-en">◇ This is a gift</span></label>
+          <div class="co-gift-panel" id="coGiftPanel" hidden>
+            <div class="co-field"><label class="co-label" for="coGiftMsg"><span class="t-es">Mensaje para la tarjeta (opcional)</span><span class="t-en">Message for the card (optional)</span></label><textarea class="co-input co-textarea" id="coGiftMsg" maxlength="150" rows="3" aria-describedby="coGiftMsgCount"></textarea><div class="co-count" id="coGiftMsgCount">0/150</div></div>
+            <label class="co-check" for="coGiftHide"><input type="checkbox" id="coGiftHide"><span class="t-es">Ocultar precios en el paquete</span><span class="t-en">Don't include prices in the package</span></label>
+          </div>
+        </div>
 
         <div class="co-error" id="coErrorStep1" role="alert" aria-live="assertive"></div>
         <button class="co-step-next" id="coNextBtn"><span class="t-es">Continuar →</span><span class="t-en">Continue →</span></button>
@@ -710,6 +722,6 @@
   </div>
 </div>
 
-<script src="/ui_kits/store/app.js?v=1f311b854b"></script>
+<script src="/ui_kits/store/app.js?v=d2a260f61e"></script>
 </body>
 </html>
