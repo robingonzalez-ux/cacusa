@@ -103,7 +103,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>document.documentElement.className='lang-en';</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=68d6918da8">
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=c0ca682f55">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-product">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/en/"},{"@type":"ListItem","position":2,"name":"Store","item":"https://cacusabytaitus.com/en/ui_kits/store/"},{"@type":"ListItem","position":3,"name":"Earrings","item":"https://cacusabytaitus.com/en/ui_kits/store/categoria/aretes/"},{"@type":"ListItem","position":4,"name":"Interlaced earrings","item":"https://cacusabytaitus.com/en/ui_kits/store/producto/interlaced-earrings-1789834493333/"}]},{"@type":"Product","name":"Interlaced earrings","description":"The gold that transforms even the simplest look. ✦\nTheir interlocking shapes create volume and movement, achieving that sophisticated effect that makes them look like a designer piece. With 18K gold plating, they are perfect to wear with your hair pulled back and let the earrings do all the work.","url":"https://cacusabytaitus.com/en/ui_kits/store/producto/interlaced-earrings-1789834493333/","sku":"1789834493333","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"offers":{"@type":"Offer","priceCurrency":"USD","price":"25","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/en/ui_kits/store/producto/interlaced-earrings-1789834493333/","shippingDetails":[{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"EC"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":2,"unitCode":"DAY"}}},{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":2,"maxValue":5,"unitCode":"DAY"}}}],"hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy","applicableCountry":["EC","US"],"returnPolicyCategory":"https://schema.org/MerchantReturnFiniteReturnWindow","merchantReturnDays":2,"returnMethod":"https://schema.org/ReturnByMail","returnFees":"https://schema.org/FreeReturn","refundType":"https://schema.org/ExchangeRefund","merchantReturnLink":"https://cacusabytaitus.com/devoluciones.html"}},"image":["https://cacusabytaitus.com/ui_kits/store/images/1789834412116_a1cf8e38_6a94_4e00_9510_0bcc4399665d_jpe.webp"],"material":"Baño de oro 18k"}]}</script>
@@ -176,6 +176,7 @@
   <p class="store-hero-value"><span class="t-es">Baño de oro 18k y acero inoxidable · Personalización disponible por WhatsApp · Envíos a Ecuador y USA</span><span class="t-en">18k gold plating and stainless steel · Personalization available via WhatsApp · Shipping to Ecuador and USA</span></p>
 </div>
 <section class="static-pdp"><nav class="static-crumbs" aria-label="Breadcrumb"><ol><li><a href="/en/">Home</a></li><li><a href="/en/ui_kits/store/">Store</a></li><li><a href="/en/ui_kits/store/categoria/aretes/">Earrings</a></li><li aria-current="page">Interlaced earrings</li></ol></nav><div class="static-pdp-grid"><img class="static-pdp-img" src="https://cacusabytaitus.com/ui_kits/store/images/1789834412116_a1cf8e38_6a94_4e00_9510_0bcc4399665d_jpe.webp" alt="Interlaced earrings — CACUSA by Taitus" width="600" height="600" decoding="async" fetchpriority="high"><div class="static-pdp-info"><p class="static-pdp-price">$25.00</p><p class="static-pdp-meta">Material: 18k gold plating · In stock</p><p class="static-pdp-desc">The gold that transforms even the simplest look. ✦ Their interlocking shapes create volume and movement, achieving that sophisticated effect that makes them look like a designer piece. With 18K gold plating, they are perfect to wear with your hair pulled back and let the earrings do all the work.</p><p class="static-pdp-ship">Ships to Ecuador and the United States. Free on orders over $90.</p><div class="static-pdp-actions"><button type="button" class="static-pdp-cta" onclick="openModal(1789834493333)">View details and buy</button><a class="static-pdp-more" href="/en/ui_kits/store/categoria/aretes/">See more earrings</a></div></div></div></section>
+<a id="seasonBanner" class="season-banner" href="/en/guia-regalos.html" hidden></a>
 <div id="freeShippingBanner" style="display:none"></div>
 
 <!-- FILTERS -->
@@ -197,6 +198,7 @@
     <option value="new">Más nuevos</option>
     <option value="bestseller">Más vendidos</option>
   </select>
+  <div class="url-filter-chips" id="urlFilterChips" hidden></div>
 </div>
 
 <!-- COMBO SECTION -->
@@ -360,6 +362,7 @@
       <div class="modal-cat" id="modalCat"></div><span class="modal-soldout-tag" id="modalSoldOut" style="display:none"></span>
       <div class="modal-name" id="modalName"></div>
       <div class="modal-price" id="modalPrice"></div>
+      <p class="modal-xmas" id="modalXmas" hidden></p>
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
       <div id="modalPersonField" style="display:none">
@@ -372,7 +375,10 @@
         <span class="qty-num" id="qtyNum">1</span>
         <button class="qty-btn" id="qtyPlus" aria-label="Aumentar cantidad">+</button>
       </div>
-      <button class="modal-add" id="modalAddBtn">A&#xF1;adir al carrito</button>
+      <div class="modal-buybar" id="modalBuybar">
+        <div class="modal-buybar-price" id="modalBarPrice" aria-hidden="true"></div>
+        <button class="modal-add" id="modalAddBtn">A&#xF1;adir al carrito</button>
+      </div>
       <button class="modal-wish-btn" id="modalWishBtn" onclick="toggleWishFromModal()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
         <span class="t-es">Guardar en lista de deseos</span><span class="t-en">Save to wishlist</span>
@@ -480,10 +486,10 @@
         <div class="co-title"><span class="t-es">Finalizar pedido</span><span class="t-en">Checkout</span></div>
         <div class="co-subtitle"><span class="t-es">CACUSA by Taitus · Joyería personalizada</span><span class="t-en">CACUSA by Taitus · Personalized Jewelry</span></div>
 
-        <div class="co-dots">
-          <div class="co-dot act" id="coDot1"></div>
-          <div class="co-dot" id="coDot2"></div>
-        </div>
+        <ol class="co-steps" aria-label="Checkout steps">
+          <li class="co-stepl act" id="coDot1" aria-current="step"><span class="co-stepn" aria-hidden="true">1</span><span class="t-es">Envío</span><span class="t-en">Shipping</span></li>
+          <li class="co-stepl" id="coDot2"><span class="co-stepn" aria-hidden="true">2</span><span class="t-es">Pago</span><span class="t-en">Payment</span></li>
+        </ol>
 
         <div class="co-step active" id="coStep1">
         <div class="co-section"><span class="t-es">Información de contacto</span><span class="t-en">Contact Information</span></div>
@@ -498,9 +504,10 @@
         <div class="co-field">
           <label class="co-label" for="coDireccion"><span class="t-es">Dirección completa</span><span class="t-en">Full Address</span></label>
           <div class="addr-wrap">
-            <input class="co-input" placeholder="123 Main St…" id="coDireccion" autocomplete="off" maxlength="120">
+            <input class="co-input" placeholder="123 Main St…" id="coDireccion" autocomplete="off" maxlength="120" required aria-required="true" aria-describedby="coDireccionErr">
             <div id="addrSuggestions" class="addr-suggestions"></div>
           </div>
+          <div class="co-field-err" id="coDireccionErr"></div>
         </div>
         <div class="co-field">
           <label class="co-label" for="coApto"><span class="t-es">Apto / Unidad (opcional)</span><span class="t-en">Apt / Unit (optional)</span></label>
@@ -553,7 +560,7 @@
           <label class="co-label" for="coZip"><span class="t-es">Código ZIP</span><span class="t-en">ZIP Code</span></label>
           <input class="co-input" id="coZip" maxlength="5" inputmode="numeric">
         </div>
-        <div class="co-field"><label class="co-label" for="coCiudad"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad" maxlength="50"></div>
+        <div class="co-field"><label class="co-label" for="coCiudad"><span class="t-es">Ciudad</span><span class="t-en">City</span></label><input class="co-input" placeholder="Miami" id="coCiudad" maxlength="50" required aria-required="true" aria-describedby="coCiudadErr"><div class="co-field-err" id="coCiudadErr"></div></div>
         <div class="co-field"><label class="co-label" for="coNotas"><span class="t-es">Notas adicionales (opcional)</span><span class="t-en">Additional notes (optional)</span></label><input class="co-input" placeholder="Color, talla, detalle especial…" id="coNotas" maxlength="200"></div>
 
         <div class="co-error" id="coErrorStep1" role="alert" aria-live="assertive"></div>
@@ -566,7 +573,7 @@
         <div class="pay-method-grid" role="radiogroup" aria-label="Payment method">
           <div class="pay-method-opt selected" data-method="square" role="radio" aria-checked="true" tabindex="0" onclick="selectPayMethod(this)" onkeydown="payMethodKeydown(event,this)">
             <span class="t-es">Square / Tarjeta</span><span class="t-en">Square / Credit Card</span>
-            <small>Apple Pay · Google Pay</small>
+            <small class="pm-badges"><span class="pm-badge">Apple Pay</span><span class="pm-badge">Google Pay</span><span class="pm-badge"><span class="t-es">Tarjeta</span><span class="t-en">Card</span></span></small>
           </div>
           <div class="pay-method-opt" data-method="zelle" role="radio" aria-checked="false" tabindex="-1" onclick="selectPayMethod(this)" onkeydown="payMethodKeydown(event,this)">
             Zelle / Transfer
@@ -575,6 +582,8 @@
         </div>
         <div class="co-wa-note" id="zelleTrustNote" style="display:none"><span class="t-es">Zelle es tan seguro y trazable como pagar con tarjeta — solo cambia el método de cobro, seguimos confirmando tu pedido igual.</span><span class="t-en">Zelle is just as secure and trackable as paying by card — only the payment method changes, we confirm your order the same way.</span></div>
 
+        <button type="button" class="co-codes-toggle" id="coCodesToggle" aria-expanded="false" aria-controls="coCodesPanel"><span class="t-es">¿Tienes un código?</span><span class="t-en">Have a code?</span> <span class="co-codes-chev" aria-hidden="true">◇</span></button>
+        <div class="co-codes-panel" id="coCodesPanel" hidden>
         <div class="gc-wrap">
           <label for="gcCodeInput" style="display:block;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px"><span class="t-es">Tarjeta de regalo</span><span class="t-en">Gift card</span></label>
           <div class="gc-row">
@@ -595,6 +604,7 @@
             </button>
           </div>
           <div class="gc-msg" id="cpMsg" role="status" aria-live="polite"></div>
+        </div>
         </div>
 
         <div class="co-error" id="coError" role="alert" aria-live="assertive"></div>
@@ -637,7 +647,7 @@
         </div>
         <div style="margin-top:20px;padding:16px;background:rgba(238,111,168,.1);border-radius:12px">
           <div style="font-family:var(--fu);font-size:11px;font-weight:600;color:var(--ink);margin-bottom:6px;letter-spacing:.1em"><span class="t-es">¿NECESITAS AYUDA?</span><span class="t-en">NEED HELP?</span></div>
-          <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6">Instagram: <strong style="color:var(--ink)" id="igHandle">@cacusabytaitus</strong></div>
+          <div style="font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6"><span class="t-es">Escríbenos por</span><span class="t-en">Message us on</span> <a id="coHelpWa" href="https://wa.me/17867375336" target="_blank" rel="noopener" style="color:var(--ink);font-weight:700;font-style:normal;text-decoration:underline">WhatsApp</a></div>
         </div>
         <button style="background:none;border:none;color:var(--ink-muted);font-family:var(--fu);font-size:12px;cursor:pointer;margin-top:16px;text-decoration:underline" id="checkoutBack"><span class="t-es">← Volver al carrito</span><span class="t-en">← Back to cart</span></button>
       </div>
@@ -705,6 +715,6 @@
   </div>
 </div>
 
-<script src="/en/ui_kits/store/app.js?v=e126dc0212"></script>
+<script src="/en/ui_kits/store/app.js?v=4fdb6fb78b"></script>
 </body>
 </html>
