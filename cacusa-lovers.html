@@ -161,6 +161,11 @@ section{padding:96px 0}
 .plan-features{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
 .plan-features li{display:flex;align-items:center;gap:12px;font-family:var(--fu);font-size:14px;color:var(--ink)}
 .plan-features li::before{content:'♡';color:var(--pink);font-size:16px;flex-shrink:0}
+/* Regalar la membresía: se coordina por WhatsApp (siempre visible, no depende de la campaña) */
+.plans-gift{font-family:var(--fe);font-size:16px;font-style:italic;color:var(--ink-muted);text-align:center;max-width:900px;margin:32px auto 0;line-height:1.6}
+.plans-gift a{font-family:var(--fu);font-style:normal;font-weight:600;font-size:14px;color:var(--pink-deep);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;transition:color .2s var(--ease-out)}
+.plans-gift a:hover{color:var(--ink)}
+.plans-gift a:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px;border-radius:4px}
 .plan-note{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);text-align:center;margin-top:14px}
 .btn-join{display:block;width:100%;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:700;font-size:15px;letter-spacing:.05em;border:none;border-radius:999px;padding:17px;cursor:pointer;box-shadow:0 6px 28px rgba(238,111,168,.45);transition:all .3s var(--ease-out);text-align:center;text-decoration:none}
 .btn-join:hover{transform:translateY(-2px);box-shadow:0 10px 36px rgba(238,111,168,.55)}
@@ -711,6 +716,7 @@ main#main:focus{outline:none}
       </div>
 
     </div>
+    <p class="plans-gift">¿Quieres regalarlo? <a id="loversGiftWa" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20regalar%20Cacusa%20Lovers%20%28plan%20mensual%20o%20anual%29.%20%C2%BFC%C3%B3mo%20lo%20coordinamos%3F" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y lo coordinamos</p>
   </div>
 </section>
 
@@ -1029,6 +1035,14 @@ async function loadLoversContent() {
       const waFloatNum = String(waNum).replace(/\D/g, '');
       const waFloatMsg = document.documentElement.lang === 'en' ? 'Hi, I have a question about Cacusa Lovers' : 'Hola, tengo una consulta sobre Cacusa Lovers';
       waFloatEl.href = 'https://wa.me/' + waFloatNum + '?text=' + encodeURIComponent(waFloatMsg);
+    }
+    // — Regalar la membresía: mismo número, mensaje de regalo —
+    const giftEl = document.getElementById('loversGiftWa');
+    if (giftEl && waNum) {
+      const giftMsg = document.documentElement.lang === 'en'
+        ? "Hi, I'd like to gift Cacusa Lovers (monthly or annual plan). How do we arrange it?"
+        : 'Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?';
+      giftEl.href = 'https://wa.me/' + String(waNum).replace(/\D/g, '') + '?text=' + encodeURIComponent(giftMsg);
     }
     const l = data.config && data.config.lovers;
     if (!l || typeof l !== 'object') return;

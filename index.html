@@ -268,6 +268,9 @@ html.sr .sr-rise.sr-in{opacity:1;transform:none}
 .xb-note{font-family:var(--fe);font-style:italic;font-size:15px;color:var(--ink-muted);line-height:1.35}
 .xb-go{flex-shrink:0;font-family:var(--fu);font-size:18px;color:var(--ink-mid);transition:transform .35s var(--ease-out)}
 .xb-card:hover .xb-go{transform:translateX(4px)}
+/* Regalos por WhatsApp (Cacusa Lovers / gift card): se coordinan por chat, no hay compra en línea */
+.xb-gifts{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px}
+.xb-card:hover .xb-go--out{transform:translate(3px,-3px)}
 .xb-guide{display:inline-block;margin-top:24px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;transition:color .2s var(--ease-out)}
 .xb-guide:hover{color:var(--pink-deep)}
 .xb-guide:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px;border-radius:4px}
@@ -275,6 +278,7 @@ html.sr .sr-rise.sr-in{opacity:1;transform:none}
   #xmas-band{padding:48px 0}
   .xb-box{padding:30px 22px}
   .xb-cards{grid-template-columns:1fr;gap:12px;margin-top:22px}
+  .xb-gifts{margin-top:12px}
   .xb-card{padding:16px 18px;gap:14px}
   .xb-ic{width:42px;height:42px;font-size:18px}
   .xb-t{font-size:18px}
@@ -708,6 +712,10 @@ main#main:focus{outline:none}
         <li id="xmasLi60"><a class="xb-card" id="xmasCard60" href="/ui_kits/store/?precio=30-60"><span class="xb-ic gC" aria-hidden="true">◇</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmas30to60">De $30 a $60</span><span class="xb-n" id="xmasN60"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
         <li id="xmasLiName"><a class="xb-card" id="xmasCardName" href="/ui_kits/store/?personalizado=1"><span class="xb-ic gE" aria-hidden="true">♡</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasName">Con su nombre</span><span class="xb-n" id="xmasNName"></span><span class="xb-note" id="xmasNoteName"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
       </ul>
+      <ul class="xb-cards xb-gifts">
+        <li><a class="xb-card" id="xmasGiftLovers" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20regalar%20Cacusa%20Lovers%20%28plan%20mensual%20o%20anual%29.%20%C2%BFC%C3%B3mo%20lo%20coordinamos%3F" target="_blank" rel="noopener"><span class="xb-ic gA" aria-hidden="true">✧</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasGiftLovers">Regala Cacusa Lovers ♡</span><span class="xb-n" data-i18n="landing.xmasViaWa">Por WhatsApp</span></span><span class="xb-go xb-go--out" aria-hidden="true">↗</span></a></li>
+        <li><a class="xb-card" id="xmasGiftCard" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20una%20gift%20card%20de%20%24___%20para%20regalar." target="_blank" rel="noopener"><span class="xb-ic gC" aria-hidden="true">✦</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasGiftCard">Regala una gift card ◇</span><span class="xb-n" data-i18n="landing.xmasViaWa">Por WhatsApp</span></span><span class="xb-go xb-go--out" aria-hidden="true">↗</span></a></li>
+      </ul>
       <a class="xb-guide" id="xmasGuide" href="/guia-regalos.html" data-i18n="landing.xmasGuide">Ver la guía de regalos →</a>
     </div>
   </div>
@@ -1007,6 +1015,7 @@ const __LANDING_EN = {
   "landing.footerGifts":"Gift guide","landing.footerSizes":"Size guide",
   "landing.xmasLabel":"✦ Holiday season","landing.xmasUnder30":"Under $30","landing.xmas30to60":"$30 to $60",
   "landing.xmasName":"With their name","landing.xmasGuide":"Browse the gift guide →",
+  "landing.xmasGiftLovers":"Gift Cacusa Lovers ♡","landing.xmasGiftCard":"Gift a gift card ◇","landing.xmasViaWa":"Via WhatsApp",
   "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
   "landing.formNamePh":"Your name","landing.formWhatsPh":"+1 (555) 555-5555","landing.formWhatsLabel":"Your WhatsApp",
   "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
@@ -1582,6 +1591,13 @@ function renderXmasBand(rawCampaign, products){
   }
   const guide = document.getElementById('xmasGuide');
   if (guide) guide.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
+  // — Regalar Cacusa Lovers / gift card: se coordinan por WhatsApp (pago y datos de quien recibe) —
+  const waNum = String(CACUSA_WHATSAPP || '17867375336').replace(/\D/g, '') || '17867375336';
+  const waGift = [
+    ['xmasGiftLovers', en ? "Hi, I'd like to gift Cacusa Lovers (monthly or annual plan). How do we arrange it?" : 'Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?'],
+    ['xmasGiftCard', en ? "Hi, I'd like a $___ gift card to give as a gift." : 'Hola, quiero una gift card de $___ para regalar.']
+  ];
+  waGift.forEach(([id, msg]) => { const a = document.getElementById(id); if (a) a.href = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg); });
   sec.hidden = false;
   const box = sec.querySelector('.reveal');
   if (box) obs.observe(box);
@@ -1645,7 +1661,8 @@ function renderTestimonials(products){
           // Sin calificación numérica no se muestra (nunca inventar 5 estrellas); mismo
           // criterio que el resumen de reseñas de la tienda.
           const rating = Math.round(Number(v.rating));
-          if (v.rating == null || !comment || !(rating >= 1 && rating <= 5)) return;
+          // Solo 4 y 5 estrellas en el home (la tienda sigue mostrando todas las aprobadas).
+          if (v.rating == null || !comment || !(rating >= 4 && rating <= 5)) return;
           const first = String(v.name || '').trim().split(/\s+/)[0].slice(0, 24);
           const p = byId.get(String(pid));
           list.push({

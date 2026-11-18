@@ -70,6 +70,11 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .occ-cats{display:flex;gap:8px;flex-wrap:wrap}
 .occ-cat{font-family:var(--fu);font-size:12.5px;font-weight:600;color:var(--pink);background:var(--pink-pale);border-radius:999px;padding:7px 16px;transition:background .2s}
 .occ-cat:hover{background:var(--pink);color:white}
+/* Regalar Cacusa Lovers / gift card: se coordinan por WhatsApp (no hay compra en línea) */
+.gd-gifts{margin-top:16px;padding-top:14px;border-top:1px dashed var(--pink-pale)}
+.occ .gd-gifts p{font-size:14px;margin-bottom:10px}
+.occ-cat.occ-wa{background:white;border:1.5px solid var(--pink-pale)}
+.occ-cat.occ-wa:hover{background:var(--pink);border-color:var(--pink);color:white}
 /* NAVIDAD (campaña de temporada: config.campaign, se oculta sola al terminar) */
 .occ-xmas{background:linear-gradient(135deg,rgba(252,232,243,.55),rgba(238,228,250,.45))}
 .gd-table{width:100%;border-collapse:collapse;margin:0 0 14px;font-family:var(--fu);font-size:14px;background:white;border-radius:12px;overflow:hidden}
@@ -150,6 +155,13 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         <a class="occ-cat" href="./ui_kits/store/?precio=30-60" data-i18n="gr.x.c60">De $30 a $60</a>
         <a class="occ-cat" href="./ui_kits/store/?personalizado=1" data-i18n="gr.x.cName">Con su nombre</a>
         <a class="occ-cat" href="./ui_kits/store/categoria/hombres/" data-i18n="cat.hombres">Hombres</a>
+      </div>
+      <div class="gd-gifts">
+        <p data-i18n="gr.x.giftP">¿Prefieres regalar el club o una gift card? Lo coordinamos contigo por WhatsApp.</p>
+        <div class="occ-cats">
+          <a class="occ-cat occ-wa" id="grGiftLovers" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20regalar%20Cacusa%20Lovers%20%28plan%20mensual%20o%20anual%29.%20%C2%BFC%C3%B3mo%20lo%20coordinamos%3F" target="_blank" rel="noopener" data-i18n="gr.x.giftLovers">Regala Cacusa Lovers ♡</a>
+          <a class="occ-cat occ-wa" id="grGiftCard" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20una%20gift%20card%20de%20%24___%20para%20regalar." target="_blank" rel="noopener" data-i18n="gr.x.giftCard">Regala una gift card ◇</a>
+        </div>
       </div>
       <p class="gd-note" data-i18n="gr.x.pack">✦ Cada pieza llega en un empaque especial para regalo, lista para poner bajo el árbol.</p>
     </div>
@@ -263,7 +275,9 @@ const I18N_EN = {
   'gr.x.cap':'Order by','gr.x.us':'US','gr.x.personal':'Personalized','gr.x.stock':'In-stock piece',
   'gr.x.dPersonalUs':'December 3','gr.x.dPersonalEc':'December 8','gr.x.dStockUs':'December 14','gr.x.dStockEc':'December 18',
   'gr.x.c30':'Under $30','gr.x.c60':'$30 to $60','gr.x.cName':'With their name',
-  'gr.x.pack':'✦ Every piece arrives in special gift packaging, ready to go under the tree.'
+  'gr.x.pack':'✦ Every piece arrives in special gift packaging, ready to go under the tree.',
+  'gr.x.giftP':"Would you rather give the club or a gift card? We'll arrange it with you on WhatsApp.",
+  'gr.x.giftLovers':'Gift Cacusa Lovers ♡','gr.x.giftCard':'Gift a gift card ◇'
 };
 // Campaña de Navidad: config.campaign del panel admin, con los mismos valores por defecto
 // que DEFAULT_CAMPAIGN del admin y de la tienda (USPS Ground Advantage 2026: enviar a más
@@ -273,6 +287,18 @@ const I18N_EN = {
 var GR_CAMP_DEF={enabled:true,endsAt:'2026-12-26',deadlinePersonalUs:'2026-12-03',deadlinePersonalEc:'2026-12-08',deadlineStockUs:'2026-12-14',deadlineStockEc:'2026-12-18'};
 var GR_DATE_KEYS=['endsAt','deadlinePersonalUs','deadlinePersonalEc','deadlineStockUs','deadlineStockEc'];
 var GR_MONTHS_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+// Regalar Cacusa Lovers / gift card por WhatsApp: [id, mensaje ES, mensaje EN] (arrays, no
+// objetos con claves entre comillas, por la misma razón de arriba).
+var GR_GIFT_WA=[
+  ['grGiftLovers','Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?',"Hi, I'd like to gift Cacusa Lovers (monthly or annual plan). How do we arrange it?"],
+  ['grGiftCard','Hola, quiero una gift card de $___ para regalar.',"Hi, I'd like a $___ gift card to give as a gift."]
+];
+function grGiftLinks(num,lang){
+  GR_GIFT_WA.forEach(function(g){
+    var a=document.getElementById(g[0]);
+    if(a)a.href='https://wa.me/'+num+'?text='+encodeURIComponent(lang==='en'?g[2]:g[1]);
+  });
+}
 var GR_MONTHS_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 // Hoy en hora LOCAL como 'YYYY-MM-DD' (nunca toISOString(): en UTC ya sería mañana).
 function grToday(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -316,6 +342,7 @@ function grApplyCampaign(c,lang){
   document.documentElement.lang=_L;
   var camp=grCampaign(null);
   grApplyCampaign(camp,_L);
+  grGiftLinks('17867375336',_L);
   try{
     const res=await fetch('/data/products.json?v='+Date.now());
     if(res.ok){
@@ -324,8 +351,9 @@ function grApplyCampaign(c,lang){
       camp=grCampaign(cfg.campaign);
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?"Hi, I'd like help choosing a CACUSA gift ✨":'Hola, quisiera ayuda para elegir un regalo CACUSA ✨';
+        const msg=_L==='en'?"Hi, I'd like help choosing a CACUSA gift ✦":'Hola, quisiera ayuda para elegir un regalo CACUSA ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
+        grGiftLinks(num,_L);
       }
     }
   }catch(e){}
