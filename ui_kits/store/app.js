@@ -1430,8 +1430,10 @@ function _updatePersonUI() {
   const wa = document.getElementById('modalPersonWa');
   if (wa) wa.href = _waLink(_personWaText(inp.value));
 }
+let _personErrT = null;
 function _resetPersonUI() {
   const err = document.getElementById('modalPersonErr');
+  clearTimeout(_personErrT);
   if (err) err.textContent = '';
   _updatePersonUI();
 }
@@ -1448,11 +1450,14 @@ function _resetPersonUI() {
       try { inp.setSelectionRange(caret, caret); } catch (_) {}
     }
     const err = document.getElementById('modalPersonErr');
-    if (err) {
-      if (rejected) err.textContent = __LANG === 'en'
+    // El aviso se queda unos segundos (no se borra con la siguiente tecla válida),
+    // para que en el celular se entienda por qué desapareció un carácter.
+    if (err && rejected) {
+      err.textContent = __LANG === 'en'
         ? 'Only letters, numbers, spaces and . , & - \' ♡ ✦'
         : 'Solo letras, números, espacios y . , & - \' ♡ ✦';
-      else if (err.textContent) err.textContent = '';
+      clearTimeout(_personErrT);
+      _personErrT = setTimeout(() => { err.textContent = ''; }, 4000);
     }
     _updatePersonUI();
   });
@@ -2154,7 +2159,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     address:  document.getElementById('coDireccion').value.trim(),
     apto:     document.getElementById('coApto').value.trim(),
     // Notas libres + línea de regalo (M7); deja lugar para GC/CP que suma cacusa-square
-    notes:    _composeNotas(''),
+    notes:    _composeNotas('', NOTAS_SQUARE_MAX),
     idioma:   __LANG
   };
 
@@ -2221,7 +2226,11 @@ let _currentOrderNum = '';
 // en el mensaje de WhatsApp. Los Workers cortan las notas a 500 caracteres (y cacusa-square
 // les suma GC/CP del lado del servidor), así que se compone con tope: la línea de regalo y
 // los extras tienen prioridad y, si no entra todo, se recortan las notas libres.
-const NOTAS_MAX = 500, NOTAS_EXTRAS_RESERVE = 100, GIFT_MSG_MAX = 150;
+// En el camino de tarjeta se pasa un tope menor (NOTAS_SQUARE_MAX): el Worker de Square
+// arma customer_note con nombre/WA/país/ciudad/dirección + estas notas + GiftCard/Cupón y
+// corta todo a 500, así que las notas tienen que dejar lugar al resto. La línea de regalo
+// va primero para que nunca sea lo que se corta.
+const NOTAS_MAX = 500, NOTAS_SQUARE_MAX = 260, NOTAS_EXTRAS_RESERVE = 100, GIFT_MSG_MAX = 150;
 function _giftState() {
   const box = document.getElementById('coGift');
   if (!box || !box.checked) return null;
@@ -2236,15 +2245,16 @@ function _giftNoteLine() {
   if (!g) return '';
   return '[REGALO] Ocultar precios: ' + (g.hide ? 'sí' : 'no') + '.' + (g.msg ? ' Tarjeta: "' + g.msg + '"' : '');
 }
-function _composeNotas(extras) {
+function _composeNotas(extras, max) {
+  const cap = max || NOTAS_MAX;
   const notasEl = document.getElementById('coNotas');
   const gift = _giftNoteLine();
   const ex = extras || '';
-  const reserve = Math.max(NOTAS_EXTRAS_RESERVE, ex ? ex.length + 3 : 0);
-  const room = NOTAS_MAX - reserve - (gift ? gift.length + 3 : 0);
+  const reserve = cap < NOTAS_MAX ? (ex ? ex.length + 3 : 0) : Math.max(NOTAS_EXTRAS_RESERVE, ex ? ex.length + 3 : 0);
+  const room = cap - reserve - (gift ? gift.length + 3 : 0);
   let free = String((notasEl && notasEl.value) || '').trim();
   if (free.length > room) free = free.slice(0, Math.max(0, room)).trim();
-  return [free, gift, ex].filter(Boolean).join(' | ').slice(0, NOTAS_MAX);
+  return [gift, free, ex].filter(Boolean).join(' | ').slice(0, cap);
 }
 function _updateCoCount(inputId, countId, max) {
   const el = document.getElementById(inputId), c = document.getElementById(countId);
@@ -2254,7 +2264,6 @@ function _syncGiftPanel() {
   const box = document.getElementById('coGift'), panel = document.getElementById('coGiftPanel');
   if (!box || !panel) return;
   panel.hidden = !box.checked;
-  box.setAttribute('aria-expanded', box.checked ? 'true' : 'false');
 }
 function _resetGift() {
   const box = document.getElementById('coGift');
