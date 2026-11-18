@@ -136,6 +136,11 @@ export default {
       try { return await handleMktUnsub(request, env); }
       catch (e) { console.error('m/baja:', e.message); return new Response('Error', { status: 500 }); }
     }
+    // Stock público para la tienda (18 nov): GET, sin sesión ni body, cacheable 60 s.
+    if (path.endsWith('/pub/stock') && (request.method === 'GET' || request.method === 'POST')) {
+      try { return await handlePubStock(env, allowOrigin); }
+      catch (e) { console.error('pub/stock:', e.message); return err('Error del servidor', 500, allowOrigin); }
+    }
     if (request.method !== 'POST') return err('Method not allowed', 405, allowOrigin);
     // Base de los links de baja: el mismo Worker que atiende esta request.
     const selfBase = new URL(request.url).origin;
@@ -428,6 +433,8 @@ export default {
       if (path.endsWith('/order/usps-status')) return await handleUspsStatus(body, env, allowOrigin);
       if (path.endsWith('/order/cns-export')) return await handleCnsExport(body, env, allowOrigin);
       if (path.endsWith('/product/identify')) return await handleProductIdentify(body, env, allowOrigin);
+      if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
+      if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -1237,6 +1244,10 @@ async function handleOrder(body, env, origin, ctx, request) {
     }
   }
 
+  // Stock (18 nov): se calcula acá — después de la idempotencia (un reintento ya devolvió
+  // arriba y nunca vuelve a descontar) — y se confirma solo si el pedido se guarda.
+  const stockPlanNew = await stockPrepareNewOrder(env, newOrder);
+
   // Cada pedido en su propia llave — nunca se lee ni se escribe un blob compartido, así
   // que dos pedidos concurrentes en llaves DISTINTAS nunca se pisan. Si la escritura
   // falla, se libera la reserva de gift card en vez de dejarla huérfana (F03-a/F06).
@@ -1254,6 +1265,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   if (gcReserved) await gcCommit(env, gcCodeReq, orderRef).catch(e => console.error('gcCommit falló (el pedido ya se guardó igual):', e.message));
   if (idemKey) await env.CACUSA_KV.put(`idem:${idemKey}`, JSON.stringify({ orderId: newOrder.id, fingerprint }), { expirationTtl: 86400 });
   if (idemClaimed) await orderIdemFinalize(env, idemKey, newOrder.id, fingerprint).catch(() => {});
+  await stockFinishNewOrder(env, newOrder, stockPlanNew);
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   // Si esta clienta tenía un carrito marcado como abandonado, ya no lo está — compró.
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
@@ -1305,7 +1317,10 @@ async function handleOrderManual(body, env, origin, session, ctx) {
 
   assignOrderId(newOrder);
   if (!newOrder.numero && order.numero) newOrder.numero = String(newOrder.id);
+  // Stock (18 nov): solo líneas con id del catálogo; sin ids no se consulta nada.
+  const stockPlanNew = newOrder.productos.some((p) => p.id) ? await stockPrepareNewOrder(env, newOrder) : null;
   await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  await stockFinishNewOrder(env, newOrder, stockPlanNew);
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
@@ -1361,6 +1376,10 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   // Se resuelve TODO antes de tocar el pedido: si algo falla, no se escribe nada.
   const piecesRes = await applyOrderPiecePatch(order, patch, session);
   if (piecesRes.error) return err(piecesRes.error, piecesRes.status || 400, origin);
+  // Stock (18 nov): deltas de piezas agregadas/quitadas + devolución al cancelar (una vez).
+  const stockDeltas = { ...(piecesRes.stockDeltas || {}) };
+  const stockNames = { ...(piecesRes.stockNames || {}) };
+  const wasCancelled = order.estado === 'Cancelado';
   for (const [k, v] of Object.entries(patch)) {
     if (k === 'cliente' && v && typeof v === 'object') {
       order.cliente = order.cliente || {};
@@ -1406,7 +1425,24 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   order.updatedAt = new Date().toISOString();
   order.updatedBy = session.user;
 
+  // Cancelar devuelve TODO lo descontado, una sola vez: stockApplied pasa a stockRestored y
+  // las líneas pierden su marca stockTaken (así quitar una pieza después no devuelve doble).
+  // Reactivar un pedido cancelado NO vuelve a descontar — se documenta, se ajusta a mano.
+  if (!wasCancelled && order.estado === 'Cancelado' && order.stockApplied && Object.keys(order.stockApplied).length) {
+    for (const [sid, q] of Object.entries(order.stockApplied)) {
+      const n = Number(q) || 0;
+      if (n > 0) stockDeltas[sid] = (stockDeltas[sid] || 0) + n;
+    }
+    for (const p of order.productos || []) { if (p && p.id != null && !stockNames[String(p.id)]) stockNames[String(p.id)] = p.name; if (p) delete p.stockTaken; }
+    order.stockRestored = { ...(order.stockRestored || {}), ...order.stockApplied };
+    order.stockRestoredAt = new Date().toISOString();
+    order.stockApplied = {};
+  }
+  const stockPlanUpd = Object.keys(stockDeltas).length ? await stockPlan(env, stockDeltas) : null;
+  if (stockPlanUpd && Object.keys(stockPlanUpd.oversold).length) order.stockOversold = { ...(order.stockOversold || {}), ...stockPlanUpd.oversold };
+
   await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
+  if (stockPlanUpd) await stockCommit(env, stockPlanUpd, stockNames).catch((e) => console.error('stock commit (update):', e.message));
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   if (sendShipEmail && ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de envío (tracking manual) falló:', e.message)));
   if (ctx && uspsTrackingNew && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id, { auto: true }).catch(e => console.error('avisos USPS falló:', e.message)));
@@ -1429,12 +1465,22 @@ async function applyOrderPiecePatch(order, patch, session) {
   if (!hasAdd && !hasRemove) return {};
   if (!orderAllowsPieceLoad(order)) return { error: 'Solo se pueden cargar piezas en cajas de Lovers o pedidos manuales' };
   const productos = Array.isArray(order.productos) ? order.productos.slice() : [];
+  const stockDeltas = {}, stockNames = {};
+  const applied = { ...(order.stockApplied || {}) };
 
   if (hasRemove) {
     const idx = patch.removeProductIndex;
     if (!Number.isInteger(idx) || idx < 0 || idx >= productos.length) return { error: 'Pieza fuera de rango' };
     if (!productos[idx] || !productos[idx].addedBy) return { error: 'Solo se pueden quitar piezas cargadas desde el panel' };
-    productos.splice(idx, 1);
+    const [gone] = productos.splice(idx, 1);
+    // Devuelve la unidad solo si esa línea la había descontado (stockTaken).
+    if (gone.stockTaken && gone.id) {
+      const sid = String(gone.id);
+      stockDeltas[sid] = (stockDeltas[sid] || 0) + 1;
+      stockNames[sid] = gone.name;
+      applied[sid] = Math.max(0, (applied[sid] || 0) - 1);
+      if (!applied[sid]) delete applied[sid];
+    }
   }
 
   if (hasAdd) {
@@ -1465,11 +1511,17 @@ async function applyOrderPiecePatch(order, patch, session) {
         imageUrl: catalogImageUrl(prod),
         addedBy: session.user,
         addedAt: now,
+        stockTaken: 1, // esta línea descontó 1 unidad (se devuelve al quitarla o cancelar)
       });
+      const sid = String(prod.id);
+      stockDeltas[sid] = (stockDeltas[sid] || 0) - 1;
+      stockNames[sid] = prod.name;
+      applied[sid] = (applied[sid] || 0) + 1;
     }
   }
   order.productos = productos;
-  return { changed: true };
+  if (Object.keys(applied).length || order.stockApplied) order.stockApplied = applied;
+  return { changed: true, stockDeltas, stockNames };
 }
 
 // ── Identificar una pieza por foto con Claude (18 nov) ───────────────────────────────
@@ -1648,6 +1700,165 @@ async function handleProductIdentify(body, env, origin) {
     if (matches.length >= 3) break;
   }
   return ok({ ok: true, matches, candidates: candidates.length }, origin);
+}
+
+// ── Inventario / stock (18 nov) ──────────────────────────────────────────────────────
+// Vive en KV (stock:<id> = entero en texto), NO en data/products.json: el panel publica el
+// catálogo entero y pisaría lo que escriba este Worker. Decisión del usuario: TODO producto
+// tiene 1 unidad por defecto — una llave que no existe vale 1 (no hay "sin control").
+// Descuentan: pedidos nuevos de la tienda (Square/Zelle/WhatsApp, solo la 1ra vez, nunca un
+// reintento), pedidos manuales con ids del catálogo y piezas cargadas en cajas de Lovers.
+// Cada pedido anota lo que descontó en stockApplied {id: cantidad}; cancelarlo lo devuelve
+// UNA vez (pasa a stockRestored). Volver a activar un pedido cancelado NO vuelve a
+// descontar (habría que ajustar el stock a mano en el panel).
+// Lectura-modificación-escritura por llave, sin lock (KV no tiene CAS): 2 ventas casi
+// simultáneas de la misma pieza pueden leer el mismo valor — aceptable al volumen real.
+// stock_soldout = lista derivada de ids agotados (la lee /pub/stock con UN solo get; nunca
+// se hace list() en una ruta pública: el plan gratis tiene 1.000 list/día). Se reescribe
+// solo cuando cambia la lista, y /stock/list (panel) la repara si quedó desfasada.
+const STOCK_DEFAULT = 1;
+const STOCK_MAX = 9999;
+const STOCK_SOLDOUT_KEY = 'stock_soldout';
+function stockKey(id) { return 'stock:' + String(id); }
+function stockParse(raw) {
+  if (raw == null) return STOCK_DEFAULT;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) ? Math.max(0, n) : STOCK_DEFAULT;
+}
+async function stockGetMany(env, ids) {
+  const uniq = [...new Set(ids.map(String))];
+  const raws = await kvGetMany(env, uniq.map(stockKey));
+  const out = new Map();
+  for (const id of uniq) out.set(id, stockParse(raws.get(stockKey(id))));
+  return out;
+}
+// Calcula (sin escribir) el resultado de aplicar deltas {id: ±n}. Los decrementos que
+// pasan de 0 se recortan a 0 y se anotan como sobreventa (oversold).
+async function stockPlan(env, deltas) {
+  const ids = Object.keys(deltas).filter((id) => Number.isFinite(deltas[id]) && deltas[id] !== 0);
+  const before = ids.length ? await stockGetMany(env, ids) : new Map();
+  const next = {}, oversold = {};
+  for (const id of ids) {
+    const cur = before.get(id), want = cur + deltas[id];
+    if (want < 0) oversold[id] = -want;
+    next[id] = Math.min(STOCK_MAX, Math.max(0, want));
+  }
+  return { before, next, oversold };
+}
+async function stockSoldoutSync(env, changes) {
+  // changes: {id: nuevoStock}. Solo escribe si cambia la pertenencia a la lista.
+  const write = async () => {
+    let cur = { ids: [] };
+    try { cur = JSON.parse(await env.CACUSA_KV.get(STOCK_SOLDOUT_KEY)) || cur; } catch (_) {}
+    const set = new Set((cur.ids || []).map(String));
+    let changed = false;
+    for (const [id, qty] of Object.entries(changes)) {
+      if (qty <= 0 && !set.has(id)) { set.add(id); changed = true; }
+      if (qty > 0 && set.has(id)) { set.delete(id); changed = true; }
+    }
+    if (changed) await env.CACUSA_KV.put(STOCK_SOLDOUT_KEY, JSON.stringify({ ids: [...set], updatedAt: new Date().toISOString() }));
+  };
+  try { await write(); }
+  catch (e) { await new Promise((r) => setTimeout(r, 1100)); await write(); } // 1 escritura/s por llave
+}
+async function stockCommit(env, plan, names = {}) {
+  for (const [id, qty] of Object.entries(plan.next)) await env.CACUSA_KV.put(stockKey(id), String(qty));
+  if (Object.keys(plan.next).length) await stockSoldoutSync(env, plan.next).catch((e) => console.error('stock_soldout:', e.message));
+  const over = Object.keys(plan.oversold);
+  if (over.length) {
+    const label = over.map((id) => sanitizePushText(names[id] || ('id ' + id))).join(', ').slice(0, 120);
+    console.warn('stock: vendido sin stock', over.join(','));
+    await adminPush(env, 'CACUSA · Vendido sin stock', 'Vendido sin stock: ' + label, 'cacusa-stock', 'high');
+    if (env.NTFY_TOPIC) {
+      try {
+        await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: 'POST',
+          headers: { 'Title': 'CACUSA · Vendido sin stock', 'Priority': 'high', 'Tags': 'warning', 'Click': ADMIN_URL, 'Content-Type': 'text/plain; charset=utf-8' },
+          body: 'Vendido sin stock: ' + label });
+      } catch (e) { console.error('ntfy stock:', e.message); }
+    }
+  }
+}
+// Plan para un pedido nuevo: cuenta solo líneas cuyo id es un producto del catálogo
+// (los combos y las líneas a mano sin id no tienen stock propio).
+function stockDeltasForLines(productos, catalogProducts) {
+  const known = new Set((catalogProducts || []).map((p) => String(p.id)));
+  const applied = {}, names = {};
+  for (const p of productos || []) {
+    const id = p && p.id != null ? String(p.id) : '';
+    if (!id || !known.has(id)) continue;
+    const qty = Number.isFinite(p.qty) ? Math.max(1, Math.floor(p.qty)) : 1;
+    applied[id] = (applied[id] || 0) + qty;
+    names[id] = p.name || names[id];
+  }
+  return { applied, names };
+}
+// Antes de guardar un pedido nuevo: deja order.stockApplied (y stockOversold si aplica) y
+// devuelve el plan para confirmarlo (stockCommit) DESPUÉS de que el pedido se guardó.
+// Nunca bloquea el pedido: si el catálogo no responde, el pedido se guarda sin descontar
+// y se avisa por push para ajustar a mano.
+async function stockPrepareNewOrder(env, order, catalog) {
+  try {
+    const cat = catalog || await fetchCatalogForOrderValidation();
+    if (!cat) { order.stockPending = true; return null; }
+    const { applied, names } = stockDeltasForLines(order.productos, cat.products);
+    if (!Object.keys(applied).length) return null;
+    const deltas = {};
+    for (const [id, q] of Object.entries(applied)) deltas[id] = -q;
+    const plan = await stockPlan(env, deltas);
+    order.stockApplied = applied;
+    if (Object.keys(plan.oversold).length) order.stockOversold = plan.oversold;
+    plan.names = names;
+    return plan;
+  } catch (e) {
+    console.error('stock (pedido nuevo):', e.message);
+    order.stockPending = true;
+    return null;
+  }
+}
+async function stockFinishNewOrder(env, order, plan) {
+  if (order.stockPending) {
+    await adminPush(env, 'CACUSA · Stock sin descontar', `No se pudo descontar el stock del pedido ${sanitizePushText(order.numero || order.id)} (catálogo no disponible). Ajústalo a mano.`, 'cacusa-stock', 'normal');
+    return;
+  }
+  if (plan) await stockCommit(env, plan, plan.names).catch((e) => console.error('stock commit:', e.message));
+}
+
+// GET /pub/stock — para la tienda. Solo los ids agotados, nunca cantidades.
+async function handlePubStock(env, origin) {
+  let data = { ids: [], updatedAt: null };
+  if (env.CACUSA_KV) { try { data = JSON.parse(await env.CACUSA_KV.get(STOCK_SOLDOUT_KEY)) || data; } catch (_) {} }
+  return new Response(JSON.stringify({ soldOut: (data.ids || []).map(String), updatedAt: data.updatedAt || null }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=60', ...cors(origin), 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' },
+  });
+}
+// POST /stock/list (sesión) — stock efectivo de TODOS los productos del catálogo (sin llave = 1).
+async function handleStockList(env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
+  const ids = catalog.products.filter((p) => p && p.id != null).map((p) => String(p.id));
+  const map = ids.length ? await stockGetMany(env, ids) : new Map();
+  const stock = {};
+  for (const id of ids) stock[id] = map.get(id);
+  // Repara stock_soldout si quedó desfasada (ej. una escritura que falló).
+  await stockSoldoutSync(env, stock).catch(() => {});
+  return ok({ ok: true, stock, default: STOCK_DEFAULT }, origin);
+}
+// POST /stock/set (sesión) { id, qty } — entero 0..9999, id del catálogo.
+async function handleStockSet(body, env, origin, session) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.id != null ? String(body.id) : '';
+  if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+  const qty = body.qty;
+  if (!Number.isInteger(qty) || qty < 0 || qty > STOCK_MAX) return err(`El stock debe ser un número entero entre 0 y ${STOCK_MAX}`, 400, origin);
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
+  if (!catalog.products.some((p) => p && String(p.id) === id)) return err('Producto no encontrado en el catálogo publicado (si es nuevo, publícalo primero)', 400, origin);
+  await env.CACUSA_KV.put(stockKey(id), String(qty));
+  await stockSoldoutSync(env, { [id]: qty }).catch((e) => console.error('stock_soldout:', e.message));
+  console.log('stock/set', id, qty, 'por', session.user);
+  return ok({ ok: true, id, qty }, origin);
 }
 
 // ── Square (proxy de solo-lectura para el POS — evita el bloqueo CORS de Square) ──
