@@ -275,9 +275,15 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .sub-body{padding:28px 32px}
 .sub-step{display:none}
 .sub-step.active{display:block}
-.sub-dots{display:flex;gap:6px;justify-content:center;margin-bottom:22px}
-.sub-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-light);transition:all .3s var(--ease-out)}
-.sub-dot.act{background:var(--pink);transform:scale(1.2)}
+.sub-dots{display:flex;gap:10px;justify-content:center;align-items:center;margin:0 0 22px;padding:0;list-style:none;font-family:var(--fu);font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--ink-muted)}
+.sub-dot{display:flex;align-items:center;gap:7px;transition:color .3s var(--ease-out)}
+.sub-dot-n{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--ink-light);color:var(--ink);font-size:11px;font-weight:700;transition:background .3s var(--ease-out),color .3s var(--ease-out)}
+.sub-dot-sep{margin-right:3px;color:var(--ink-light)}
+.sub-dot.act{color:var(--ink);font-weight:700}
+.sub-dot.act .sub-dot-n{background:var(--pink-deep);color:white}
+.sub-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.sub-trust{font-family:var(--fu);font-size:12px;font-weight:600;color:var(--ink);text-align:center;margin-top:10px;letter-spacing:.02em}
+.sub-trust span{color:var(--pink-deep)}
 .sub-field{margin-bottom:14px}
 .sub-field-label{display:block;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:5px}
 .sub-input{width:100%;border:1.5px solid var(--ink-light);border-radius:12px;padding:11px 13px;font-family:var(--fu);font-size:16px;color:var(--ink);outline:none;transition:border-color .2s var(--ease-out);background:white;appearance:none;-webkit-appearance:none}
@@ -320,8 +326,10 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .ss-icon{font-size:72px;margin-bottom:20px;animation:ssIn .6s cubic-bezier(.34,1.56,.64,1)}
 .ss-title{font-family:var(--fd);font-weight:900;font-size:clamp(32px,5vw,52px);color:white;margin-bottom:12px}
 .ss-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:460px;line-height:1.7;margin-bottom:32px}
-.ss-btn{background:white;color:var(--ink);font-family:var(--fu);font-weight:700;font-size:14px;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,.15);transition:transform .3s var(--ease-out)}
+.ss-btn{background:white;color:var(--ink);font-family:var(--fu);font-weight:700;font-size:14px;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;box-shadow:0 4px 24px rgba(0,0,0,.15);transition:transform .3s var(--ease-out);text-decoration:none;display:inline-block}
 .ss-btn:hover{transform:scale(1.04)}
+.ss-actions{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ss-btn--ghost{background:transparent;color:white;border:1.5px solid rgba(255,255,255,.8);box-shadow:none}
 @keyframes ssIn{from{transform:scale(0) rotate(-15deg)}to{transform:scale(1) rotate(0)}}
 
 /* ── RESPONSIVE ── */
@@ -389,17 +397,23 @@ main#main:focus{outline:none}
 </a>
 
 <!-- SUCCESS SCREEN -->
-<div id="sub-success" class="ss-overlay">
+<div id="sub-success" class="ss-overlay" role="status" aria-live="polite">
   <div class="ss-icon" aria-hidden="true">✦</div>
   <h2 class="ss-title">¡Bienvenida al club!</h2>
   <p class="ss-sub">Tu suscripción <strong>Cacusa Lovers</strong> está activa. Recibirás un email de confirmación de Square y tu primera caja llegará en los próximos días. ♡</p>
-  <button class="ss-btn" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+  <div class="ss-actions">
+    <a class="ss-btn js-style-wa" href="https://wa.me/17867375336?text=Hola%2C%20me%20acabo%20de%20suscribir%20a%20Cacusa%20Lovers.%20Mi%20estilo%3A%20tono%20%28dorado%2Fplateado%29%3A%20__%2C%20aretes%3A%20s%C3%AD%2Fno%2C%20talla%20de%20anillo%3A%20__" target="_blank" rel="noopener">Contarnos tu estilo ♡ por WhatsApp<span class="sub-sr"> (se abre en una pestaña nueva)</span></a>
+    <button class="ss-btn ss-btn--ghost" onclick="document.getElementById('sub-success').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+  </div>
 </div>
 <div id="lovers-confirm-ok" class="ss-overlay" role="status" aria-live="polite">
   <div class="ss-icon" aria-hidden="true">✓</div>
   <h2 class="ss-title">¡Correo confirmado!</h2>
-  <p class="ss-sub">Ya guardamos tus datos. Si todavía no completaste el pago, hacelo desde el link que te llevó a Square — si ya pagaste, tu suscripción sigue su curso normal. ♡</p>
-  <button class="ss-btn" onclick="document.getElementById('lovers-confirm-ok').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+  <p class="ss-sub">Ya guardamos tus datos. Si todavía no completaste el pago, hazlo desde el link que te llevó a Square — si ya pagaste, tu suscripción sigue su curso normal. ♡</p>
+  <div class="ss-actions">
+    <a class="ss-btn js-style-wa" href="https://wa.me/17867375336?text=Hola%2C%20me%20acabo%20de%20suscribir%20a%20Cacusa%20Lovers.%20Mi%20estilo%3A%20tono%20%28dorado%2Fplateado%29%3A%20__%2C%20aretes%3A%20s%C3%AD%2Fno%2C%20talla%20de%20anillo%3A%20__" target="_blank" rel="noopener">Contarnos tu estilo ♡ por WhatsApp<span class="sub-sr"> (se abre en una pestaña nueva)</span></a>
+    <button class="ss-btn ss-btn--ghost" onclick="document.getElementById('lovers-confirm-ok').classList.remove('show');history.replaceState({},'',location.pathname)">Explorar más →</button>
+  </div>
 </div>
 <div id="lovers-confirm-err" class="ss-overlay" role="alert" aria-live="assertive">
   <div class="ss-icon" aria-hidden="true">✕</div>
@@ -418,10 +432,11 @@ main#main:focus{outline:none}
       <div class="sub-head-price" id="subHeadPrice">$19.99/mes · 2 joyas seleccionadas · envío incluido</div>
     </div>
     <div class="sub-body">
-      <div class="sub-dots">
-        <div class="sub-dot act" id="dot1"></div>
-        <div class="sub-dot" id="dot2"></div>
-      </div>
+      <ol class="sub-dots" aria-label="Pasos de la suscripción">
+        <li class="sub-dot act" id="dot1" aria-current="step"><span class="sub-dot-n">1</span>Tus datos</li>
+        <li class="sub-dot" id="dot2"><span class="sub-dot-sep" aria-hidden="true">·</span><span class="sub-dot-n">2</span>Pago</li>
+      </ol>
+      <p class="sub-sr" id="subStepLive" role="status" aria-live="polite"></p>
       <!-- STEP 1: Personal & shipping info -->
       <div class="sub-step active" id="sub-step1">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -552,6 +567,7 @@ main#main:focus{outline:none}
         <button class="sub-btn" id="sPayBtn" onclick="submitSubscription()">
           Suscribirme · $19.99/mes <span class="spin"></span>
         </button>
+        <p class="sub-trust"><span aria-hidden="true">✓ </span>Nada se cobra solo · Cancela cuando quieras</p>
         <button class="sub-back" onclick="goStep1()">← Volver y editar datos</button>
         <p class="sub-legal" id="subLegal">Al continuar irás a la página de pago segura de Square, donde puedes pagar con Apple Pay, Google Pay o tarjeta.</p>
       </div>
@@ -1044,6 +1060,16 @@ async function loadLoversContent() {
         : 'Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?';
       giftEl.href = 'https://wa.me/' + String(waNum).replace(/\D/g, '') + '?text=' + encodeURIComponent(giftMsg);
     }
+    // — Después de suscribirse: contarnos su estilo por WhatsApp (mensaje prellenado, sin
+    //   pedir ningún dato nuevo en la página) —
+    if (waNum) {
+      const styleMsg = document.documentElement.lang === 'en'
+        ? 'Hi, I just subscribed to Cacusa Lovers. My style: tone (gold/silver): __, earrings: yes/no, ring size: __'
+        : 'Hola, me acabo de suscribir a Cacusa Lovers. Mi estilo: tono (dorado/plateado): __, aretes: sí/no, talla de anillo: __';
+      document.querySelectorAll('.js-style-wa').forEach(a => {
+        a.href = 'https://wa.me/' + String(waNum).replace(/\D/g, '') + '?text=' + encodeURIComponent(styleMsg);
+      });
+    }
     const l = data.config && data.config.lovers;
     if (!l || typeof l !== 'object') return;
     window._loversData = l;
@@ -1426,8 +1452,7 @@ function closeSub(){
   // Reset to step 1
   document.getElementById('sub-step2').classList.remove('active');
   document.getElementById('sub-step1').classList.add('active');
-  document.getElementById('dot2').classList.remove('act');
-  document.getElementById('dot1').classList.add('act');
+  _setSubStep(1);
   document.getElementById('sErr1').textContent='';
   document.getElementById('sErr2').textContent='';
   document.querySelectorAll('.sub-input').forEach(el => el.style.borderColor = '');
@@ -1445,6 +1470,17 @@ function _markFieldError(id, err, msg){
   const el = document.getElementById(id);
   if (el) { el.style.borderColor = '#C0336E'; el.setAttribute('aria-invalid', 'true'); el.focus(); }
   if (err) err.textContent = msg;
+}
+// Indicador de pasos visible (1 Tus datos · 2 Pago): marca el actual con aria-current="step"
+// y, al avanzar o volver, lo anuncia a lectores de pantalla por el role="status" oculto.
+function _setSubStep(n, announce){
+  [1, 2].forEach(i => {
+    const el = document.getElementById('dot' + i);
+    el.classList.toggle('act', i === n);
+    if (i === n) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current');
+  });
+  const live = document.getElementById('subStepLive');
+  if (live) live.textContent = announce ? (n === 2 ? 'Paso 2 de 2: Pago' : 'Paso 1 de 2: Tus datos') : '';
 }
 function goStep2(){
   const err      = document.getElementById('sErr1');
@@ -1492,14 +1528,12 @@ function goStep2(){
 
   document.getElementById('sub-step1').classList.remove('active');
   document.getElementById('sub-step2').classList.add('active');
-  document.getElementById('dot1').classList.remove('act');
-  document.getElementById('dot2').classList.add('act');
+  _setSubStep(2, true);
 }
 function goStep1(){
   document.getElementById('sub-step2').classList.remove('active');
   document.getElementById('sub-step1').classList.add('active');
-  document.getElementById('dot2').classList.remove('act');
-  document.getElementById('dot1').classList.add('act');
+  _setSubStep(1, true);
   document.getElementById('sErr2').textContent='';
 }
 function selectPlan(plan){
