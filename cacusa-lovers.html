@@ -1148,7 +1148,9 @@ function applyLoversContent(l) {
     const list = document.getElementById('faqList');
     if (list) {
       list.innerHTML = l.faq.map((f, i) =>
-        '<div class="faq-item reveal" data-delay="' + Math.min(i + 1, 4) + '">' +
+        // "visible" ya puesto: estas filas se crean después de que el observer de entradas
+        // registró los .reveal, así que nunca recibirían la clase y quedarían invisibles.
+        '<div class="faq-item reveal visible" data-delay="' + Math.min(i + 1, 4) + '">' +
           '<button type="button" class="faq-q" onclick="toggleFaq(this)" aria-expanded="false" aria-controls="faqA-dyn-' + i + '"><span>' + esc(f.q) + '</span><span class="faq-icon">+</span></button>' +
           '<div class="faq-a" id="faqA-dyn-' + i + '"><p>' + esc(f.a) + '</p></div>' +
         '</div>'
