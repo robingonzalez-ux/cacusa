@@ -256,37 +256,30 @@ html.sr .sr-rise.sr-in{opacity:1;transform:none}
 .lb-cta{display:inline-block;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.05em;border-radius:999px;padding:15px 32px;text-decoration:none;box-shadow:0 4px 24px rgba(238,111,168,.4);transition:transform .3s var(--ease-out),box-shadow .3s var(--ease-out);white-space:nowrap}
 .lb-cta:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(238,111,168,.5)}
 /* ── NAVIDAD (banda de campaña, config.campaign) — oculta salvo campaña activa ── */
-#xmas-band{background:linear-gradient(180deg,var(--pearl) 0%,var(--pink-pale) 100%);padding:72px 0}
-#xmas-band[hidden],.xb-cards li[hidden]{display:none}
-.xb-box{position:relative;overflow:hidden;background:white;border-radius:28px;padding:44px 48px;box-shadow:0 8px 48px rgba(238,111,168,.14);border:1.5px solid var(--pink-pale)}
-.xb-box::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--grad-full)}
-.xb-head{max-width:680px}
-.xb-cards{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:30px}
-.xb-card{display:flex;align-items:center;gap:16px;height:100%;padding:20px 22px;border-radius:22px;background:var(--pearl);border:1.5px solid var(--pink-pale);text-decoration:none;color:var(--ink);transition:transform .35s var(--ease-out),box-shadow .35s var(--ease-out),border-color .35s var(--ease-out)}
-.xb-card:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(238,111,168,.2);border-color:var(--pink-mid)}
-.xb-card:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px}
-.xb-ic{flex-shrink:0;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;line-height:1;box-shadow:0 4px 16px rgba(238,111,168,.25)}
-.xb-txt{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
-.xb-t{font-family:var(--fd);font-weight:700;font-size:20px;line-height:1.15}
-.xb-n{font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pink-deep)}
-.xb-n:empty,.xb-note:empty{display:none}
-.xb-note{font-family:var(--fe);font-style:italic;font-size:15px;color:var(--ink-muted);line-height:1.35}
-.xb-go{flex-shrink:0;font-family:var(--fu);font-size:18px;color:var(--ink-mid);transition:transform .35s var(--ease-out)}
-.xb-card:hover .xb-go{transform:translateX(4px)}
-/* Regalos por WhatsApp (Cacusa Lovers / gift card): se coordinan por chat, no hay compra en línea */
-.xb-gifts{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:18px}
-.xb-card:hover .xb-go--out{transform:translate(3px,-3px)}
-.xb-guide{display:inline-block;margin-top:24px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;transition:color .2s var(--ease-out)}
+#xmas-band{background:var(--pearl);padding-top:24px}
+#xmas-band[hidden],.xb-grid li[hidden]{display:none}
+.xb-grid{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:48px}
+.xb-grid li{height:320px;min-width:0}
+.xb-tile{height:100%}
+.xb-tile .col-tag{font-size:10px}
+.xb-tile .col-title{font-size:26px}
+.xb-note{font-family:var(--fe);font-style:italic;font-size:14px;color:rgba(255,255,255,.92);line-height:1.35;margin-top:6px}
+.xb-note:empty{display:none}
+.xb-gifts-line{margin-top:30px;font-family:var(--fe);font-style:italic;font-size:18px;color:var(--ink-mid);line-height:1.6}
+.xb-gifts-line a{font-family:var(--fu);font-style:normal;font-size:14px;font-weight:600;letter-spacing:.02em;color:var(--pink-deep);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;white-space:nowrap}
+.xb-gifts-line a:hover{color:var(--ink)}
+.xb-sep{color:var(--pink-mid);margin:0 6px}
+.xb-guide{display:inline-block;margin-top:18px;font-family:var(--fu);font-size:13px;font-weight:600;letter-spacing:.04em;color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink-mid);text-underline-offset:4px;transition:color .2s var(--ease-out)}
 .xb-guide:hover{color:var(--pink-deep)}
-.xb-guide:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px;border-radius:4px}
+.xb-gifts-line a:focus-visible,.xb-guide:focus-visible{outline:2px solid var(--pink-deep);outline-offset:3px;border-radius:4px}
 @media(max-width:768px){
-  #xmas-band{padding:48px 0}
-  .xb-box{padding:30px 22px}
-  .xb-cards{grid-template-columns:1fr;gap:12px;margin-top:22px}
-  .xb-gifts{margin-top:12px}
-  .xb-card{padding:16px 18px;gap:14px}
-  .xb-ic{width:42px;height:42px;font-size:18px}
-  .xb-t{font-size:18px}
+  #xmas-band{padding-top:8px}
+  .xb-grid{grid-template-columns:1fr 1fr;gap:12px;margin-top:30px}
+  .xb-grid li{height:220px}
+  .xb-grid li:last-child{grid-column:1/-1}
+  .xb-tile .col-title{font-size:22px}
+  .xb-tile .col-cta{opacity:1}
+  .xb-gifts-line{font-size:16px}
 }
 
 /* ── FRASE (revelado por palabra al hacer scroll, taglineReveal) ── */
@@ -706,23 +699,28 @@ main#main:focus{outline:none}
 <!-- NAVIDAD — config.campaign (renderXmasBand): oculta por defecto, se muestra solo con la campaña activa -->
 <section id="xmas-band" aria-labelledby="xmasH" hidden>
   <div class="container">
-    <div class="xb-box reveal">
-      <div class="xb-head">
-        <div class="section-label" data-i18n="landing.xmasLabel">✦ Holiday season</div>
-        <h2 class="section-h" id="xmasH">Christmas gifts</h2>
-        <p class="section-sub" id="xmasLine"></p>
-      </div>
-      <ul class="xb-cards">
-        <li id="xmasLi30"><a class="xb-card" id="xmasCard30" href="/en/ui_kits/store/?precio=0-30"><span class="xb-ic gB" aria-hidden="true">✦</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasUnder30">Under $30</span><span class="xb-n" id="xmasN30"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
-        <li id="xmasLi60"><a class="xb-card" id="xmasCard60" href="/en/ui_kits/store/?precio=30-60"><span class="xb-ic gC" aria-hidden="true">◇</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmas30to60">$30 to $60</span><span class="xb-n" id="xmasN60"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
-        <li id="xmasLiName"><a class="xb-card" id="xmasCardName" href="/en/ui_kits/store/?personalizado=1"><span class="xb-ic gE" aria-hidden="true">♡</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasName">With their name</span><span class="xb-n" id="xmasNName"></span><span class="xb-note" id="xmasNoteName"></span></span><span class="xb-go" aria-hidden="true">→</span></a></li>
-      </ul>
-      <ul class="xb-cards xb-gifts">
-        <li><a class="xb-card" id="xmasGiftLovers" href="https://wa.me/17867375336?text=Hi%2C%20I%27d%20like%20to%20gift%20Cacusa%20Lovers%20%28monthly%20or%20annual%20plan%29.%20How%20do%20we%20arrange%20it%3F" target="_blank" rel="noopener"><span class="xb-ic gA" aria-hidden="true">✧</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasGiftLovers">Gift Cacusa Lovers ♡</span><span class="xb-n" data-i18n="landing.xmasViaWa">Via WhatsApp</span></span><span class="xb-go xb-go--out" aria-hidden="true">↗</span></a></li>
-        <li><a class="xb-card" id="xmasGiftCard" href="https://wa.me/17867375336?text=Hi%2C%20I%27d%20like%20a%20%24___%20gift%20card%20to%20give%20as%20a%20gift." target="_blank" rel="noopener"><span class="xb-ic gC" aria-hidden="true">✦</span><span class="xb-txt"><span class="xb-t" data-i18n="landing.xmasGiftCard">Gift a gift card ◇</span><span class="xb-n" data-i18n="landing.xmasViaWa">Via WhatsApp</span></span><span class="xb-go xb-go--out" aria-hidden="true">↗</span></a></li>
-      </ul>
-      <a class="xb-guide" id="xmasGuide" href="/en/guia-regalos.html" data-i18n="landing.xmasGuide">Browse the gift guide →</a>
-    </div>
+    <div class="reveal"><div class="section-label" data-i18n="landing.xmasLabel">✦ Holiday season</div></div>
+    <div><h2 class="section-h" id="xmasH">Christmas<br><em>gifts</em></h2></div>
+    <p class="section-sub" id="xmasLine"></p>
+    <ul class="xb-grid">
+    <li id="xmasLi30"><a class="col-card xb-tile" id="xmasCard30" href="/en/ui_kits/store/?precio=0-30">
+      <div class="col-bg gB" style="position:absolute;inset:0"></div>
+      <div class="col-overlay"></div>
+      <div class="col-content"><div class="col-tag" id="xmasN30"></div><div class="col-title" data-i18n="landing.xmasUnder30">Under $30</div><div class="col-cta" data-i18n="landing.colSee">See →</div></div>
+    </a></li>
+    <li id="xmasLi60"><a class="col-card xb-tile" id="xmasCard60" href="/en/ui_kits/store/?precio=30-60">
+      <div class="col-bg gC" style="position:absolute;inset:0"></div>
+      <div class="col-overlay"></div>
+      <div class="col-content"><div class="col-tag" id="xmasN60"></div><div class="col-title" data-i18n="landing.xmas30to60">$30 to $60</div><div class="col-cta" data-i18n="landing.colSee">See →</div></div>
+    </a></li>
+    <li id="xmasLiName"><a class="col-card xb-tile" id="xmasCardName" href="/en/ui_kits/store/?personalizado=1">
+      <div class="col-bg gE" style="position:absolute;inset:0"></div>
+      <div class="col-overlay"></div>
+      <div class="col-content"><div class="col-tag" id="xmasNName"></div><div class="col-title" data-i18n="landing.xmasName">With their name</div><div class="xb-note" id="xmasNoteName"></div><div class="col-cta" data-i18n="landing.colSee">See →</div></div>
+    </a></li>
+    </ul>
+    <p class="xb-gifts-line"><span data-i18n="landing.xmasGiftIntro">Prefer to gift an experience? Message us on WhatsApp:</span> <a id="xmasGiftLovers" href="https://wa.me/17867375336" target="_blank" rel="noopener" data-i18n="landing.xmasGiftLovers">Gift Cacusa Lovers ♡</a><span class="xb-sep" aria-hidden="true">·</span><a id="xmasGiftCard" href="https://wa.me/17867375336" target="_blank" rel="noopener" data-i18n="landing.xmasGiftCard">Gift a gift card ◇</a></p>
+    <a class="xb-guide" id="xmasGuide" href="/en/guia-regalos.html" data-i18n="landing.xmasGuide">Browse the gift guide →</a>
   </div>
 </section>
 
@@ -1020,7 +1018,7 @@ const __LANDING_EN = {
   "landing.footerGifts":"Gift guide","landing.footerSizes":"Size guide",
   "landing.xmasLabel":"✦ Holiday season","landing.xmasUnder30":"Under $30","landing.xmas30to60":"$30 to $60",
   "landing.xmasName":"With their name","landing.xmasGuide":"Browse the gift guide →",
-  "landing.xmasGiftLovers":"Gift Cacusa Lovers ♡","landing.xmasGiftCard":"Gift a gift card ◇","landing.xmasViaWa":"Via WhatsApp",
+  "landing.xmasGiftLovers":"Gift Cacusa Lovers ♡","landing.xmasGiftCard":"Gift a gift card ◇","landing.xmasViaWa":"Via WhatsApp","landing.xmasGiftIntro":"Prefer to gift an experience? Message us on WhatsApp:",
   "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
   "landing.formNamePh":"Your name","landing.formWhatsPh":"+1 (555) 555-5555","landing.formWhatsLabel":"Your WhatsApp",
   "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
@@ -1545,7 +1543,20 @@ function renderXmasBand(rawCampaign, products){
   const tag = cc => cc === 'EC' ? 'Ecuador' : (en ? 'US' : 'EE.UU.');
   const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   // — Título y línea de fechas (stock = piezas listas) —
-  setTxt('xmasH', en ? c.title_en : c.title);
+  // Título con el mismo estilo de los demás encabezados: la última palabra en cursiva (sin innerHTML)
+  (() => {
+    const h = document.getElementById('xmasH'); if (!h) return;
+    const words = String((en ? c.title_en : c.title) || '').trim().split(/\s+/).filter(Boolean);
+    if (!words.length) return;
+    h.textContent = '';
+    if (words.length === 1) { const em = document.createElement('em'); em.textContent = words[0]; h.appendChild(em); return; }
+    const head = words.slice(0, -1);
+    const cut = Math.ceil(head.length / 2);
+    h.appendChild(document.createTextNode(head.slice(0, cut).join(' ')));
+    h.appendChild(document.createElement('br'));
+    if (head.length > cut) h.appendChild(document.createTextNode(head.slice(cut).join(' ') + ' '));
+    const em = document.createElement('em'); em.textContent = words[words.length - 1]; h.appendChild(em);
+  })();
   const custom = en ? c.banner_en : c.banner;
   let line;
   if (custom) {
@@ -1603,6 +1614,20 @@ function renderXmasBand(rawCampaign, products){
     ['xmasGiftCard', en ? "Hi, I'd like a $___ gift card to give as a gift." : 'Hola, quiero una gift card de $___ para regalar.']
   ];
   waGift.forEach(([id, msg]) => { const a = document.getElementById(id); if (a) a.href = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg); });
+  // — Fotos de las tarjetas (mismo estilo que Colecciones): una pieza con foto de cada grupo —
+  const pickPhoto = list => list.find(p => p.tag === 'Bestseller') || list.find(p => p.tag === 'Nuevo') || list[0];
+  const withImg = avail.filter(p => p.imageUrl);
+  [['xmasCard30', withImg.filter(p => inRange(p, 0, 30, null))],
+   ['xmasCard60', withImg.filter(p => inRange(p, 30, 60, null))],
+   ['xmasCardName', withImg.filter(p => p.personalized)]].forEach(([id, list]) => {
+    const bg = document.querySelector('#' + id + ' .col-bg'); const p = pickPhoto(list);
+    if (!bg || !p) return;
+    const fx = _focal(p.focalX), fy = _focal(p.focalY);
+    bg.style.backgroundImage = 'url("' + String(p.imageUrl).replace(/"/g, '%22') + '")';
+    bg.style.backgroundSize = 'cover';
+    bg.style.backgroundPosition = fx + '% ' + fy + '%';
+    bg.className = 'col-bg';
+  });
   sec.hidden = false;
   const box = sec.querySelector('.reveal');
   if (box) obs.observe(box);
