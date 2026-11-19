@@ -97,8 +97,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script>try{document.documentElement.className=(localStorage.getItem('cacusa-lang')||'es')==='en'?'lang-en':'lang-es';}catch(_){document.documentElement.className='lang-es';}</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=e01bad692b">
+  <script>document.documentElement.className='lang-es';</script>
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=46ead8b184">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-product">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/"},{"@type":"ListItem","position":2,"name":"Tienda","item":"https://cacusabytaitus.com/ui_kits/store/"},{"@type":"ListItem","position":3,"name":"Cadenas","item":"https://cacusabytaitus.com/ui_kits/store/categoria/cadenas/"},{"@type":"ListItem","position":4,"name":"Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble","item":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-de-dije-de-opalo-turquesa-en-la-parte-frontal-luce-co-1781885110437/"}]},{"@type":"Product","name":"Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble","description":"Llamativa cadena dorada con dije de ópalo turquesa que crea un efecto de cadena doble en el frente. Única, original y sofisticada.","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-de-dije-de-opalo-turquesa-en-la-parte-frontal-luce-co-1781885110437/","sku":"1781885110437","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"offers":{"@type":"Offer","priceCurrency":"USD","price":"45","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/ui_kits/store/producto/cadena-de-dije-de-opalo-turquesa-en-la-parte-frontal-luce-co-1781885110437/","shippingDetails":[{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"EC"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":2,"unitCode":"DAY"}}},{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":2,"maxValue":5,"unitCode":"DAY"}}}],"hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy","applicableCountry":["EC","US"],"returnPolicyCategory":"https://schema.org/MerchantReturnFiniteReturnWindow","merchantReturnDays":2,"returnMethod":"https://schema.org/ReturnByMail","returnFees":"https://schema.org/FreeReturn","refundType":"https://schema.org/ExchangeRefund","merchantReturnLink":"https://cacusabytaitus.com/devoluciones.html"}},"image":["https://cacusabytaitus.com/ui_kits/store/images/1781885074186_img_0929_jpeg.webp"],"material":"Baño de oro 18k"}]}</script>
@@ -149,6 +149,8 @@
   <button id="navDrawerClose" aria-label="Cerrar menú">✕</button>
   <nav class="drawer-nav">
     <a href="/" class="drawer-link"><span class="t-es">Volver al inicio</span><span class="t-en">Back to home</span></a>
+    <a href="/ui_kits/store/" class="drawer-link"><span class="t-es">Tienda</span><span class="t-en">Shop</span></a>
+    <div class="drawer-cats" id="drawerCats"></div>
     <a href="../../../../cacusa-lovers.html" class="drawer-link drawer-link--lovers">Cacusa Lovers ♡</a>
     <a href="/#story" class="drawer-link"><span class="t-es">Nosotros</span><span class="t-en">About Us</span></a>
     <a href="/#personalize" class="drawer-link"><span class="t-es">Personaliza</span><span class="t-en">Customize</span></a>
@@ -385,7 +387,6 @@
       </button>
       <div class="modal-perks">
         <div class="perk"><div class="perk-dot"></div>Hecho a mano</div>
-        <div class="perk"><div class="perk-dot"></div>Env&#xED;o express</div>
         <div class="perk"><div class="perk-dot"></div>5&#x2013;10 d&#xED;as h&#xE1;biles</div>
         <div class="perk"><div class="perk-dot"></div>Empaque especial para regalo</div>
       </div>
@@ -418,8 +419,8 @@
             <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="4 estrellas" tabindex="-1" onclick="setRevRating(4)">★</button>
             <button type="button" class="sp-star lit" role="radio" aria-checked="true" aria-label="5 estrellas" tabindex="0" onclick="setRevRating(5)">★</button>
           </div>
-          <input class="rev-inp" id="revName" maxlength="40" placeholder="Tu nombre / Your name" aria-label="Tu nombre / Your name">
-          <textarea class="rev-inp rev-ta" id="revComment" maxlength="300" placeholder="Tu opinión… / Your review…" aria-label="Tu opinión / Your review"></textarea>
+          <input class="rev-inp" id="revName" maxlength="40" placeholder="Tu nombre" aria-label="Tu nombre">
+          <textarea class="rev-inp rev-ta" id="revComment" maxlength="300" placeholder="Tu opinión…" aria-label="Tu opinión"></textarea>
           <button class="rev-submit" id="revSubmitBtn" onclick="submitReview()"><span class="t-es">Enviar</span><span class="t-en">Submit</span></button>
         </div>
       </div>
@@ -516,8 +517,8 @@
         <div class="co-field">
           <label class="co-label" for="coPais"><span class="t-es">País</span><span class="t-en">Country</span></label>
           <select class="co-input" id="coPais">
-            <option value="US" selected>Estados Unidos</option>
-            <option value="EC">Ecuador</option>
+            <option value="EC" selected>Ecuador</option>
+            <option value="US">Estados Unidos</option>
             <option value="CO">Colombia</option>
             <option value="PE">Per&#xFA;</option>
             <option value="MX">M&#xE9;xico</option>
@@ -583,8 +584,8 @@
             <small class="pm-badges"><span class="pm-badge">Apple Pay</span><span class="pm-badge">Google Pay</span><span class="pm-badge"><span class="t-es">Tarjeta</span><span class="t-en">Card</span></span></small>
           </div>
           <div class="pay-method-opt" data-method="zelle" role="radio" aria-checked="false" tabindex="-1" onclick="selectPayMethod(this)" onkeydown="payMethodKeydown(event,this)">
-            Zelle / Transfer
-            <small><span class="t-es">-4% descuento</span><span class="t-en">-4% discount</span></small>
+            <span class="t-es">Zelle / Transferencia</span><span class="t-en">Zelle / Transfer</span>
+            <small class="zelle-disc-badge" hidden><span class="t-es">-4% descuento</span><span class="t-en">-4% discount</span></small>
           </div>
         </div>
         <div class="co-wa-note" id="zelleTrustNote" style="display:none"><span class="t-es">Zelle es tan seguro y trazable como pagar con tarjeta — solo cambia el método de cobro, seguimos confirmando tu pedido igual.</span><span class="t-en">Zelle is just as secure and trackable as paying by card — only the payment method changes, we confirm your order the same way.</span></div>
@@ -722,6 +723,6 @@
   </div>
 </div>
 
-<script src="/ui_kits/store/app.js?v=8c1171aee5"></script>
+<script src="/ui_kits/store/app.js?v=b4a7e130d8"></script>
 </body>
 </html>
