@@ -97,6 +97,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:500;padding:0 52px;height:68px;d
 .btn-ghost{background:rgba(255,255,255,.4);color:var(--ink);border:1.5px solid rgba(139,42,90,.35);font-family:var(--fu);font-weight:500;font-size:14px;border-radius:999px;padding:14px 32px;cursor:pointer;transition:all .3s var(--ease-out);backdrop-filter:blur(8px)}
 .btn-ghost:hover{background:rgba(255,255,255,.6)}
 .hero-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+/* En pantallas angostas o bajas el contenido del hero ocupa todo el alto: el indicador se ocultaría encima del texto */
+@media (max-width:768px),(max-height:940px){.hero-scroll{display:none}}
 .hero-scroll span{font-family:var(--fu);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(139,42,90,.75)}
 .scroll-line{width:1px;height:36px;background:linear-gradient(to bottom,rgba(255,255,255,.5),transparent);animation:sLine 2s ease infinite}
 @keyframes sLine{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
@@ -132,7 +134,9 @@ section{padding:96px 0}
 .what-card:not(:first-child){height:160px}
 .what-card .gfill{width:100%;height:100%;transition:transform .5s var(--ease-out)}
 .what-card:hover .gfill{transform:scale(1.06)}
-.what-card .wc-label{position:absolute;bottom:14px;left:14px;font-family:var(--fs);font-size:18px;color:white;text-shadow:0 1px 8px rgba(0,0,0,.2)}
+/* Velo inferior: la etiqueta en script blanco se lee aunque la foto tenga fondo claro */
+.what-card::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(139,42,90,.62) 0%,rgba(139,42,90,.18) 40%,transparent 65%);pointer-events:none}
+.what-card .wc-label{z-index:1;position:absolute;bottom:14px;left:14px;font-family:var(--fs);font-size:18px;color:white;text-shadow:0 1px 8px rgba(0,0,0,.2)}
 .what-list{display:flex;flex-direction:column;gap:18px;margin-top:28px}
 .what-item{display:flex;gap:14px;align-items:flex-start}
 .wi-icon{width:36px;height:36px;border-radius:50%;background:var(--grad-warm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 4px 12px rgba(238,111,168,.3)}
@@ -142,22 +146,22 @@ section{padding:96px 0}
 /* ── PLAN ── */
 #plan{background:var(--lilac-pale)}
 .plan-center{text-align:center;margin-bottom:56px}
-.plans-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:900px;margin:0 auto;align-items:start}
-.plan-card{background:white;border-radius:28px;overflow:visible;box-shadow:0 16px 60px rgba(238,111,168,.18);position:relative}
-.plan-card--annual{box-shadow:0 20px 70px rgba(155,93,229,.28);border:2px solid rgba(155,93,229,.25)}
-.plan-badge-annual{position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:linear-gradient(rgba(139,42,90,.35),rgba(139,42,90,.35)),linear-gradient(135deg,#9B5DE5,#E8508A);color:white;font-family:var(--fu);font-weight:800;font-size:11px;letter-spacing:.12em;padding:6px 18px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(155,93,229,.45);z-index:2}
-.plan-card--annual .plan-header{background:linear-gradient(rgba(139,42,90,.25),rgba(139,42,90,.25)),linear-gradient(135deg,#7C3ADE,#9B5DE5,#C86DD4)}
+/* Las 2 tarjetas con el mismo estilo de marca; filas compartidas (subgrid) = encabezados y cuerpos de igual alto */
+.plans-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:0 28px;max-width:900px;margin:0 auto;align-items:stretch}
+.plan-card{background:white;border-radius:28px;overflow:hidden;box-shadow:0 16px 60px rgba(238,111,168,.18);position:relative;display:grid;grid-row:span 2;grid-template-rows:subgrid}
+.plan-card--annual{border:2px solid var(--pink);box-shadow:0 20px 70px rgba(238,111,168,.3)}
+.plan-badge-annual{position:absolute;top:16px;right:16px;background:white;color:var(--pink-deep);font-family:var(--fu);font-weight:800;font-size:11px;letter-spacing:.12em;padding:6px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 16px rgba(139,42,90,.25);z-index:2}
+.plan-save{display:block;margin-top:6px;font-family:var(--fu);font-style:normal;font-size:13px;font-weight:600;letter-spacing:.01em;color:white}
 .plan-cents{font-family:var(--fd);font-weight:900;font-size:36px;color:white;align-self:flex-end;padding-bottom:10px}
-.btn-join--annual{background:linear-gradient(rgba(139,42,90,.2),rgba(139,42,90,.2)),linear-gradient(135deg,#7C3ADE,#9B5DE5)!important;box-shadow:0 6px 28px rgba(155,93,229,.45)!important}
-.btn-join--annual:hover{box-shadow:0 10px 36px rgba(155,93,229,.6)!important}
-.plan-header{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:44px 40px 36px;text-align:center;position:relative}
+.plan-header{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:44px 40px 36px;text-align:center;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .plan-tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);border-radius:999px;font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:white;padding:5px 16px;margin-bottom:18px}
 .plan-price-wrap{display:flex;align-items:flex-start;justify-content:center;gap:6px;margin-bottom:8px}
 .plan-currency{font-family:var(--fd);font-weight:700;font-size:28px;color:white;margin-top:12px}
 .plan-amount{font-family:var(--fd);font-weight:900;font-size:80px;color:white;line-height:1}
 .plan-period{font-family:var(--fu);font-size:14px;color:white;align-self:flex-end;padding-bottom:8px}
 .plan-subtitle{font-family:var(--fs);font-size:22px;color:white}
-.plan-body{padding:36px 40px}
+.plan-body{padding:36px 40px;display:flex;flex-direction:column}
+.plan-body .plan-features{flex:1}
 .plan-features{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
 .plan-features li{display:flex;align-items:center;gap:12px;font-family:var(--fu);font-size:14px;color:var(--ink)}
 .plan-features li::before{content:'♡';color:var(--pink);font-size:16px;flex-shrink:0}
@@ -215,6 +219,8 @@ section{padding:96px 0}
 .cta-h{font-family:var(--fd);font-weight:900;font-size:clamp(36px,5vw,60px);color:white;line-height:1.05;margin-bottom:16px;text-shadow:0 2px 24px rgba(0,0,0,.1)}
 .cta-sub{font-family:var(--fe);font-size:18px;font-style:italic;color:white;max-width:460px;margin:0 auto 40px;line-height:1.7}
 .cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.cta-btns .btn-ghost{background:rgba(255,255,255,.16);color:white;border-color:rgba(255,255,255,.9);font-weight:600}
+.cta-btns .btn-ghost:hover{background:rgba(255,255,255,.3)}
 
 /* ── FAQ ── */
 #faq{background:var(--pearl)}
@@ -233,25 +239,35 @@ section{padding:96px 0}
 /* ── CONDITIONS ── */
 #conditions{background:var(--lilac-pale)}
 .cond-center{text-align:center;margin-bottom:48px}
-.cond-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto}
-.cond-item{background:white;border-radius:18px;padding:24px 28px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(196,160,236,.12)}
-.cond-item--critical{border-left:3px solid var(--pink)}
+/* 2 columnas parejas (10 condiciones = 5 filas completas); si quedara una sola al final, ocupa todo el ancho */
+.cond-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:960px;margin:0 auto}
+.cond-grid > :last-child:nth-child(odd){grid-column:1/-1}
+.cond-item{background:white;border-radius:18px;padding:24px 26px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(196,160,236,.12);border:1.5px solid rgba(196,160,236,.4)}
+.cond-item--critical{border-color:var(--pink-mid)}
 .cond-icon{width:40px;height:40px;border-radius:50%;background:var(--lilac-pale);border:1.5px solid var(--lilac);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .cond-text{flex:1}
 .cond-title{font-family:var(--fu);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}
-.cond-desc{font-family:var(--fe);font-size:13px;font-style:italic;color:var(--ink-muted);line-height:1.6}
+.cond-desc{font-family:var(--fu);font-size:14px;font-style:normal;color:var(--ink);line-height:1.6}
 
-/* ── FOOTER ── */
-footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:48px 0 28px;text-align:center}
-.fb-w{font-family:var(--fd);font-weight:900;font-size:24px;letter-spacing:.16em;color:white;text-transform:uppercase}
-.fb-s{font-family:var(--fs);font-size:18px;color:white;margin-top:-2px;margin-bottom:14px}
-.footer-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
-.footer-links a{font-family:var(--fu);font-size:13px;color:white;text-decoration:none;transition:color .2s var(--ease-out);cursor:pointer}
-.footer-links a:hover{color:white}
-.footer-social{display:flex;justify-content:center;gap:14px;margin-bottom:20px}
-.footer-social a{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;transition:background .2s var(--ease-out);cursor:pointer}
-.footer-social a:hover{background:rgba(255,255,255,.32)}
+/* ── FOOTER — mismo diseño y links que el home ── */
+footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-full);padding:64px 0 32px}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:44px}
+.fb-w{font-family:var(--fd);font-weight:900;font-size:26px;letter-spacing:.16em;color:white;text-transform:uppercase}
+.fb-s{font-family:var(--fs);font-size:18px;color:white;margin-top:-2px}
+.fb-tag{font-family:var(--fe);font-size:15px;font-style:italic;color:rgba(255,255,255,.95);line-height:1.7;max-width:210px;margin-top:14px}
+.ft{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.98);margin-bottom:14px}
+.fl{display:block;font-family:var(--fu);font-size:13px;color:white;margin-bottom:10px;cursor:pointer;transition:color .2s var(--ease-out);text-decoration:none}
+.fl:hover{color:white;text-decoration:underline}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.2);padding-top:22px;display:flex;justify-content:space-between;align-items:center}
 .footer-copy{font-family:var(--fu);font-size:11px;color:rgba(255,255,255,.98)}
+.footer-by{font-family:var(--fs);font-size:20px;color:rgba(255,255,255,.97)}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.95);text-align:center;margin-bottom:14px}
+.f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+.f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s var(--ease-out);cursor:pointer}
+.f-social-btn:hover{background:rgba(255,255,255,.28)}
+footer a:focus-visible{outline-color:white}
+@media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;gap:28px 24px}.footer-bottom{flex-direction:column;gap:10px;text-align:center}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}}
 
 /* ── GRADIENT HELPERS ── */
 .gA{background:linear-gradient(150deg,#F5C8A8,#EE6FA8,#C4A0EC)}
@@ -354,8 +370,13 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
   .what-grid{grid-template-columns:1fr;gap:40px}
   .steps-grid{grid-template-columns:1fr;gap:20px}
   .step-connector{display:none}
-  .plans-grid{grid-template-columns:1fr}
-  .plan-card--annual{margin-top:20px}
+  .plans-grid{grid-template-columns:1fr;grid-template-rows:none;gap:24px}
+  .plan-card{grid-row:auto;grid-template-rows:auto 1fr}
+  .cond-grid{grid-template-columns:1fr}
+  .cond-item{padding:20px}
+  .nav-cta{display:none}
+  /* WhatsApp flotante más chico y abajo: no tapa los textos del hero */
+  .wa-float{width:48px;height:48px;right:14px;bottom:14px}
   .plan-header{padding:32px 24px 28px}
   .plan-body{padding:28px 24px}
   .what-card:first-child{height:180px}
@@ -559,6 +580,7 @@ main#main:focus{outline:none}
           <div class="sub-sum-feature">2 stainless steel jewelry pieces every month</div>
           <div class="sub-sum-feature">Home delivery included</div>
           <div class="sub-sum-feature">Free shipping on all your purchases</div>
+          <div class="sub-sum-feature">5% off in the store</div>
           <div class="sub-sum-feature">Early access to new collections</div>
           <div class="sub-sum-row"><span id="sum-period-label">Monthly total</span><span id="sum-price">$19.99</span></div>
         </div>
@@ -697,6 +719,7 @@ main#main:focus{outline:none}
             <li>2 stainless steel jewelry pieces hand-picked</li>
             <li>Home delivery included — Ecuador and USA</li>
             <li>Free shipping on all your store purchases</li>
+            <li>5% off in the store</li>
             <li>Exclusive discount coupons</li>
             <li>Early access to new collections</li>
           </ul>
@@ -715,13 +738,14 @@ main#main:focus{outline:none}
             <span class="plan-amount" id="planAnnualAmount">219</span>
             <span class="plan-cents" id="planAnnualCents">.89</span>
           </div>
-          <div class="plan-subtitle">per year <span style="font-size:12px;opacity:.7;display:block;margin-top:2px" id="planAnnualSub">≈ $18.32/mo · save $19.99</span><span style="font-family:var(--fu);font-style:normal;font-size:13px;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 per piece</span></div>
+          <div class="plan-subtitle">per year <span class="plan-save" id="planAnnualSub">≈ $18.32/mo · save $19.99</span><span style="font-family:var(--fu);font-style:normal;font-size:13px;display:block;margin-top:2px" id="planAnnualPerPiece">≈ $9.16 per piece</span></div>
         </div>
         <div class="plan-body">
           <ul class="plan-features" id="planFeaturesAnnual">
             <li>2 stainless steel jewelry pieces hand-picked</li>
             <li>Home delivery included — Ecuador and USA</li>
             <li>Free shipping on all your store purchases</li>
+            <li>5% off in the store</li>
             <li>Exclusive discount coupons</li>
             <li>Early access to new collections</li>
             <li>VIP early access — 48h before the monthly plan</li>
@@ -857,21 +881,6 @@ main#main:focus{outline:none}
 ]}
 </script>
 
-<!-- CTA FINAL -->
-<section id="cta-final">
-  <div class="container">
-    <div class="cta-inner">
-      <div class="cta-script reveal">Ready to join?</div>
-      <h2 class="cta-h reveal" data-delay="1">This month's jewel<br><em>is waiting for you</em></h2>
-      <p class="cta-sub reveal" data-delay="2">"Made to help you shine even more beautiful than you already are"</p>
-      <div class="cta-btns reveal" data-delay="3">
-        <button class="btn-primary" onclick="joinNow()">♡ Join Cacusa Lovers</button>
-        <a href="./ui_kits/store/" class="btn-ghost" style="display:inline-flex;align-items:center;text-decoration:none">View store →</a>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- CONDITIONS -->
 <section id="conditions">
   <div class="container">
@@ -960,31 +969,56 @@ main#main:focus{outline:none}
   </div>
 </section>
 
+<!-- CTA FINAL -->
+<section id="cta-final">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="cta-script reveal">Ready to join?</div>
+      <h2 class="cta-h reveal" data-delay="1">This month's jewel<br><em>is waiting for you</em></h2>
+      <p class="cta-sub reveal" data-delay="2">"Made to help you shine even more beautiful than you already are"</p>
+      <div class="cta-btns reveal" data-delay="3">
+        <button class="btn-primary" onclick="joinNow()">♡ Join Cacusa Lovers</button>
+        <a href="./ui_kits/store/" class="btn-ghost" style="display:inline-flex;align-items:center;text-decoration:none">View store →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
 </main>
 
 <!-- FOOTER -->
 <footer>
   <div class="container">
-    <div class="fb-w">CACUSA</div>
-    <div class="fb-s">by Taitus</div>
-    <div class="footer-social">
-      <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" aria-label="Instagram CACUSA by Taitus">
+    <div class="footer-grid">
+      <div><div class="fb-w">CACUSA</div><div class="fb-s">by Taitus</div><div class="fb-tag">"made to help you look even more beautiful than you already are"</div></div>
+      <div>
+        <div class="ft">Store</div>
+        <a class="fl" href="./ui_kits/store/categoria/cadenas/">Chains</a><a class="fl" href="./ui_kits/store/categoria/anillos/">Rings</a><a class="fl" href="./ui_kits/store/categoria/pulseras/">Bracelets</a><a class="fl" href="./ui_kits/store/categoria/aretes/">Earrings</a><a class="fl" href="./ui_kits/store/categoria/hombres/">Men</a>
+      </div>
+      <div>
+        <div class="ft">Help</div>
+        <a class="fl" href="./envios.html">Shipping</a><a class="fl" href="./devoluciones.html">Returns</a><a class="fl" href="./cuidados.html">Care</a><a class="fl" href="./guias.html">Guides</a><a class="fl" href="./guia-tallas.html">Size guide</a><a class="fl" href="./guia-regalos.html">Gift guide</a><a class="fl" href="/privacidad.html">Privacy</a><a class="fl" id="fContact" href="https://wa.me/17867375336" target="_blank" rel="noopener">Contact</a>
+      </div>
+      <div>
+        <div class="ft">About Us</div>
+        <a class="fl" href="./cacusa-lovers.html" aria-current="page">Cacusa Lovers ♡</a><a class="fl" href="./#story">Our story</a><a class="fl" href="./#personalize">Artisan process</a>
+      </div>
+    </div>
+    <div class="f-social-label">Follow us on social media</div>
+    <div class="f-social">
+      <a href="https://www.instagram.com/cacusabytaitus/" target="_blank" rel="noopener" class="f-social-btn">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+        @cacusabytaitus
       </a>
-      <a href="https://www.tiktok.com/@cacusabytaitus" target="_blank" rel="noopener" aria-label="TikTok CACUSA by Taitus">
+      <a href="https://www.tiktok.com/@cacusabytaitus" target="_blank" rel="noopener" class="f-social-btn">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.15 8.15 0 0 0 4.77 1.52V6.76a4.85 4.85 0 0 1-1-.07z"/></svg>
+        @cacusabytaitus
       </a>
     </div>
-    <div class="footer-links">
-      <a href="./index.html">Home</a>
-      <a href="./ui_kits/store/">Store</a>
-      <a href="./cacusa-lovers.html">Cacusa Lovers</a>
-      <a href="./#personalize">Customize</a>
-      <a href="../envios.html">Shipping</a>
-      <a href="../devoluciones.html">Returns</a>
-      <a href="../guias.html">Guides</a>
+    <div class="footer-bottom">
+      <div class="footer-copy">© <span id="fYear">2026</span> CACUSA by Taitus · Ecuador &amp; USA · Made with love ♡</div>
+      <div class="footer-by">by Taitus</div>
     </div>
-    <div class="footer-copy">© 2025 CACUSA by Taitus · Ecuador &amp; USA · Made with love ♡</div>
   </div>
 </footer>
 
@@ -1013,6 +1047,61 @@ async function _fbSignIn(){
   } catch(_){}
 }
 function _fbUrl(base){ return _fbIdToken ? `${base}?auth=${_fbIdToken}` : base; }
+// ── Fotos de "¿Qué es Cacusa Lovers?" ─────────────────────────
+// La página tiene CSP img-src 'self': solo sirven fotos del propio dominio. Las URLs absolutas de
+// cacusabytaitus.com se pasan a ruta relativa al sitio; cualquier otro origen se descarta (quedaría
+// un recuadro en blanco), y en ese caso se mantiene la foto de respaldo.
+function _sameOriginImg(url){
+  try {
+    const u = new URL(String(url || ''), location.href);
+    if (u.origin === location.origin || u.hostname === 'cacusabytaitus.com' || u.hostname === 'www.cacusabytaitus.com') return u.pathname + u.search;
+  } catch (_) {}
+  return '';
+}
+function _setWhatPhoto(fillId, url, pos){
+  const el = document.getElementById(fillId); const src = _sameOriginImg(url);
+  if (!el || !src) return false;
+  el.style.backgroundImage = 'url("' + src.replace(/"/g, '%22') + '")';
+  el.style.backgroundSize = 'cover'; el.style.backgroundPosition = pos || 'center'; el.style.backgroundRepeat = 'no-repeat';
+  el.classList.remove('gA','gB','gC','gD','gE');
+  return true;
+}
+// Respaldo si Firebase/el panel no dan fotos: piezas reales de acero inoxidable de products.json
+// (lo que se recibe en el club), una por tarjeta y sin repetir: collar, anillo, pulsera.
+function fillWhatFallback(products){
+  const all = (Array.isArray(products) ? products : []).filter(p => p && p.available !== false && _sameOriginImg(p.imageUrl));
+  const steel = all.filter(p => /acero/i.test(String(p.material || '')));
+  const used = new Set();
+  const pick = cat => {
+    const pools = [steel.filter(p => p.category === cat), steel, all.filter(p => p.category === cat), all];
+    for (const pool of pools) { const p = pool.find(x => !used.has(x.id)); if (p) { used.add(p.id); return p; } }
+    return null;
+  };
+  [['wfill1', 'Cadenas'], ['wfill2', 'Anillos'], ['wfill3', 'Pulseras']].forEach(([fillId, cat]) => {
+    const el = document.getElementById(fillId);
+    if (!el || !/\bg[A-E]\b/.test(el.className)) return; // ya tiene foto del panel
+    const p = pick(cat); if (!p) return;
+    const fx = Number.isFinite(Number(p.focalX)) ? Math.max(0, Math.min(100, Number(p.focalX))) : 50;
+    const fy = Number.isFinite(Number(p.focalY)) ? Math.max(0, Math.min(100, Number(p.focalY))) : 50;
+    _setWhatPhoto(fillId, p.imageUrl, fx + '% ' + fy + '%');
+  });
+}
+// Título del CTA final desde el panel: mismo formato que el HTML (salto de línea y la segunda
+// línea en cursiva), armado con nodos DOM — nunca innerHTML con texto del panel.
+function setCtaHeading(el, text){
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  if (!el || !words.length) return;
+  el.textContent = '';
+  if (words.length === 1) { const em = document.createElement('em'); em.textContent = words[0]; el.appendChild(em); return; }
+  let cut = 1, best = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length);
+    if (d < best) { best = d; cut = i; }
+  }
+  el.appendChild(document.createTextNode(words.slice(0, cut).join(' ')));
+  el.appendChild(document.createElement('br'));
+  const em = document.createElement('em'); em.textContent = words.slice(cut).join(' '); el.appendChild(em);
+}
 // ── Load what-card photos from Firebase ─────────────────────────────────────
 async function loadLoversPhotos() {
   try {
@@ -1023,10 +1112,7 @@ async function loadLoversPhotos() {
     if (!data) return;
     [['card1','wfill1'],['card2','wfill2'],['card3','wfill3']].forEach(([key, fillId]) => {
       const url = data[key]?.url;
-      if (url) {
-        const el = document.getElementById(fillId);
-        if (el) { el.style.backgroundImage = `url('${url}')`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundRepeat='no-repeat'; el.classList.remove('gA','gB','gC','gD','gE'); }
-      }
+      if (url) _setWhatPhoto(fillId, url);
     });
   } catch(_) {}
 }
@@ -1042,6 +1128,9 @@ async function loadLoversContent() {
     if (!r.ok) return;
     const data = await r.json();
     const waNum = data.whatsapp || (data.config && data.config.whatsapp);
+    fillWhatFallback(data.products);
+    const fContactEl = document.getElementById('fContact');
+    if (fContactEl && waNum) fContactEl.href = 'https://wa.me/' + String(waNum).replace(/\D/g, '');
     const waFloatEl = document.getElementById('waFloat');
     if (waFloatEl && waNum) {
       const waFloatNum = String(waNum).replace(/\D/g, '');
@@ -1109,12 +1198,13 @@ function applyLoversContent(l) {
     }
   }
   // Plan benefits
-  if (Array.isArray(l.planFeatures)) {
-    const mLis = document.querySelectorAll('#planFeaturesMonthly li');
-    l.planFeatures.forEach((f, i) => { if (mLis[i]) mLis[i].textContent = f; });
-    const aLis = document.querySelectorAll('#planFeaturesAnnual li');
-    l.planFeatures.forEach((f, i) => { if (aLis[i]) aLis[i].textContent = f; });
-    if (aLis[l.planFeatures.length] && l.planFeatureAnnualExtra) aLis[l.planFeatures.length].textContent = l.planFeatureAnnualExtra;
+  if (Array.isArray(l.planFeatures) && l.planFeatures.length) {
+    const fillList = (id, items) => {
+      const ul = document.getElementById(id); if (!ul) return;
+      ul.replaceChildren(...items.filter(f => typeof f === 'string' && f.trim()).map(f => { const li = document.createElement('li'); li.textContent = f; return li; }));
+    };
+    fillList('planFeaturesMonthly', l.planFeatures);
+    fillList('planFeaturesAnnual', l.planFeatureAnnualExtra ? l.planFeatures.concat([l.planFeatureAnnualExtra]) : l.planFeatures);
   }
   // How it works
   if (Array.isArray(l.howSteps)) {
@@ -1156,11 +1246,12 @@ function applyLoversContent(l) {
   const ctaScriptEl = document.querySelector('.cta-script');
   if (ctaScriptEl && l.ctaScript) ctaScriptEl.textContent = l.ctaScript;
   const ctaHEl = document.querySelector('.cta-h');
-  if (ctaHEl && l.ctaHeading) ctaHEl.textContent = l.ctaHeading;
+  if (ctaHEl && l.ctaHeading) setCtaHeading(ctaHEl, l.ctaHeading);
   const ctaSubEl = document.querySelector('.cta-sub');
   if (ctaSubEl && l.ctaSub) ctaSubEl.textContent = '"' + l.ctaSub + '"';
 }
 loadLoversContent();
+(function footerYear(){ const y = document.getElementById('fYear'); if (y) y.textContent = String(new Date().getFullYear()); })();
 
 // ── Real urgency: monthly cutoff on the 10th (same LOVERS_CUTOFF_DAY as the Lovers Worker) ──
 function renderLoversUrgency() {
