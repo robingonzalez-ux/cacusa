@@ -100,12 +100,15 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 
 /* FOOTER */
 footer{background:var(--grad-full);padding:40px 24px;text-align:center}
+/* Velo oscuro detras del contenido del footer (como el CTA del home): los links blancos de 13px no se leian sobre la parte clara del degradado */
+footer{position:relative;isolation:isolate}
+footer::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(42,22,32,.42) 0%,rgba(42,22,32,.55) 100%);pointer-events:none}
 .f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
-.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.85)}
 .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8)}
+.f-links a{font-family:var(--fu);font-size:13px;color:#fff}
 .f-links a:hover{color:white}
-.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:20px;margin-bottom:12px}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:20px;margin-bottom:12px}
 .f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
 .f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s}
 .f-social-btn:hover{background:rgba(255,255,255,.28)}

@@ -242,8 +242,8 @@ section{padding:96px 0}
 /* 2 columnas parejas (10 condiciones = 5 filas completas); si quedara una sola al final, ocupa todo el ancho */
 .cond-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:960px;margin:0 auto}
 .cond-grid > :last-child:nth-child(odd){grid-column:1/-1}
-.cond-item{background:white;border-radius:18px;padding:24px 26px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(196,160,236,.12);border:1.5px solid rgba(196,160,236,.4)}
-.cond-item--critical{border-color:var(--pink-mid)}
+/* Mismo borde en todas las condiciones (antes las "criticas" llevaban rosa); lila mas firme para que se vea sobre el fondo lila */
+.cond-item{background:white;border-radius:18px;padding:24px 26px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 4px 16px rgba(150,110,210,.12);border:1.5px solid rgba(150,110,210,.38)}
 .cond-icon{width:40px;height:40px;border-radius:50%;background:var(--lilac-pale);border:1.5px solid var(--lilac);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .cond-text{flex:1}
 .cond-title{font-family:var(--fu);font-weight:600;font-size:14px;color:var(--ink);margin-bottom:4px}

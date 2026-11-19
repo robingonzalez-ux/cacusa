@@ -1746,12 +1746,15 @@ function _syncCountryFields() {
   const isUS = document.getElementById('coPais').value === 'US';
   document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
   document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
+  // Ejemplos de dirección: estilo EE.UU. para US (y siempre en la tienda en inglés);
+  // estilo Ecuador/Latam en español para cualquier otro país.
+  const usStyle = isUS || __LANG === 'en';
+  document.getElementById('coDireccion').placeholder = usStyle ? '123 Main St…' : 'Av. Amazonas N34-120 y Juan Pablo II…';
+  document.getElementById('coApto').placeholder      = usStyle ? 'Apt 4B, Suite 200…' : 'Depto 3B, edificio, referencia…';
 }
 _syncCountryFields();
 document.getElementById('coPais').addEventListener('change', function() {
-  const isUS = this.value === 'US';
-  document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
-  document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
+  _syncCountryFields();
   document.getElementById('coEstado').value = '';
   document.getElementById('coZip').value    = '';
   renderCheckoutSummary();

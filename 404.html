@@ -54,6 +54,10 @@
     (function(){
       var en=/^\/en(\/|$)/.test(location.pathname);
       var store=en?'/en/ui_kits/store/':'/ui_kits/store/';
+      // Ficha de producto con slug viejo (el producto se renombro y su carpeta cambio):
+      // ir directo a la tienda con ?p=<slug-id>; la tienda resuelve ?p= por el ID final.
+      var mp=location.pathname.match(/^\/(?:en\/)?ui_kits\/store\/producto\/([a-z0-9-]*?-?(\d+))\/?(?:index\.html)?$/i);
+      if(mp){ window.location.replace(store+'?p='+encodeURIComponent(mp[1])); return; }
       if(en){
         document.documentElement.lang='en';
         document.title='Page not found — CACUSA by Taitus';

@@ -153,8 +153,8 @@ nav.scrolled .nav-cta{background:var(--pink-deep);color:white;box-shadow:0 2px 1
 .hero-h1{font-family:var(--fd);font-weight:900;font-size:clamp(52px,7vw,86px);line-height:1;color:var(--ink);margin-bottom:10px;opacity:0;animation:fUp .9s 1s both var(--ease-out)}
 .hero-h1 em{font-style:italic;font-weight:400}
 .hero-script{font-family:var(--fs);font-size:clamp(28px,3.5vw,44px);color:rgba(139,42,90,.85);margin-bottom:24px;opacity:0;animation:fUp .8s 1.2s both var(--ease-out)}
-/* Una sola línea en escritorio ancho: puede pasar del ancho de .hero-content, sin entrar a la zona opaca de la foto */
-.hero-value{font-family:var(--fu);font-size:13px;font-weight:500;letter-spacing:.03em;color:var(--ink);line-height:1.6;width:max-content;max-width:min(580px,calc(55vw - 80px));margin:-10px 0 18px;opacity:0;animation:fUp .8s 1.28s both var(--ease-out)}
+/* Escritorio: máx. ~460px para no montarse sobre la foto (que empieza en el 34% del ancho); halo claro para que se lea sobre el fundido */
+.hero-value{font-family:var(--fu);font-size:13px;font-weight:500;letter-spacing:.03em;color:var(--ink);line-height:1.6;width:auto;max-width:min(460px,calc(38vw - 80px));text-shadow:0 0 10px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9);margin:-10px 0 18px;opacity:0;animation:fUp .8s 1.28s both var(--ease-out)}
 .hero-desc{font-family:var(--fe);font-size:18px;font-style:italic;color:rgba(139,42,90,.9);line-height:1.7;max-width:420px;margin-bottom:34px;opacity:0;animation:fUp .8s 1.35s both var(--ease-out)}
 .hero-btns{display:flex;gap:14px;opacity:0;animation:fUp .8s 1.5s both var(--ease-out)}
 .btn-h1,.btn-h2{display:inline-flex;align-items:center;text-decoration:none}
