@@ -187,8 +187,9 @@ html[lang=es] [data-l=es],html[lang=en] [data-l=en]{display:revert}
 
 <script>
 (function(){
-  var L='es';
-  try{L=localStorage.getItem('cacusa-lang')==='en'?'en':'es';}catch(e){}
+  // Arranca siempre en español (la URL es la versión en español); el inglés se elige con el
+  // selector de esta misma página o llegando con ?lang=en (links desde las páginas /en/).
+  var L=/[?&]lang=en(&|$)/.test(location.search)?'en':'es';
   function apply(l){
     document.documentElement.lang=l;
     document.title=l==='en'?'Privacy Policy — CACUSA by Taitus':'Política de Privacidad — CACUSA by Taitus';

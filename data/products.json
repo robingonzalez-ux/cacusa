@@ -476,23 +476,21 @@
     },
     "pages": {
       "envios": {
-        "intro": "Cada pieza CACUSA se elabora de forma artesanal y personalizada para cada cliente, por lo que el tiempo de preparación es parte del proceso. Aquí te contamos cómo, cuándo y cuánto cuesta recibir tu joya.",
-        "servientregaSameCityRate": "desde $3.50",
-        "servientregaOtherCityRate": "$5.25 – $6.30",
-        "servientregaNote": "Entrega el mismo día si se despacha temprano dentro de la misma ciudad; 1–2 días hábiles a otras ciudades. Los envíos del sábado se entregan el lunes.",
+        "intro": "Aquí te contamos cuánto cuesta, cuánto tarda y cómo sigues el envío de tu joya. Las piezas en stock salen en pocos días; las personalizadas se elaboran a mano para ti antes de enviarse.",
+        "servientregaNote": "Una vez despachado, tu pedido llega en 1–2 días hábiles (el mismo día dentro de la misma ciudad si sale temprano). Los envíos del sábado se entregan el lunes.",
         "uspsTime": "2–5 días hábiles",
         "otrosPaisesBody": "¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación."
       },
       "devoluciones": {
-        "intro": "En CACUSA by Taitus, cada joya se elabora de forma artesanal y personalizada para ti. Si tu pieza llega con un defecto de fabricación, la reparamos o reemplazamos sin costo dentro de las primeras 48 horas. Por tratarse de piezas hechas a medida y bajo pedido, no podemos aceptar devoluciones o cambios por otros motivos.",
-        "secPorQueBody": "Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son finales.",
+        "intro": "En CACUSA by Taitus revisamos cada joya a mano antes de enviarla. Si tu pieza llega con un defecto de fabricación, la reparamos o reemplazamos sin costo si nos escribes dentro de las primeras 48 horas desde la entrega. No aceptamos devoluciones ni cambios por otros motivos, como gusto, talla o cambio de opinión.",
+        "secPorQueBody": "Somos un taller pequeño y trabajamos con una política simple: cubrimos los defectos de fabricación reportados dentro de las 48 horas desde la entrega, y no aceptamos devoluciones ni cambios por gusto, talla o cambio de opinión. Las piezas personalizadas (con nombre, fecha, iniciales o mensaje) se elaboran especialmente para ti y no pueden revenderse, así que tampoco admiten cambios — solo la cobertura por defecto de fábrica.",
         "secAntesBody": "Te pedimos revisar con cuidado todos los detalles antes de confirmar tu compra. Si tienes cualquier duda, escríbenos por WhatsApp y con gusto te asesoramos.",
-        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a recibir el pedido, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional.",
+        "secDefectoBody": "Tu satisfacción nos importa. Si tu pieza llegara con un defecto de fabricación o hubiera un error atribuible a nosotros, contáctanos dentro de las 48 horas posteriores a la entrega, adjuntando fotos claras del producto. Evaluaremos el caso y, de corresponder, realizaremos la reparación o reposición de tu pieza sin costo adicional.",
         "secPostBody": "Pasadas las 48 horas, esa cobertura por defecto de fábrica ya no aplica — pero eso no significa que te quedes sin ayuda. Si tu joya necesita limpieza, se opacó o el baño se desgastó con el uso, escríbenos por WhatsApp: te orientamos sobre cómo cuidarla y qué opciones tienes."
       },
       "cuidados": {
-        "intro": "Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo.",
-        "sec1Body": "No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.",
+        "intro": "Con los cuidados correctos, tus joyas CACUSA mantienen su brillo y su color por mucho más tiempo. Aquí te contamos cómo protegerlas del agua y los químicos, cómo guardarlas y limpiarlas, y qué necesita cada material.",
+        "sec1Body": "La humedad constante y el cloro o la sal del agua opacan el baño de oro, oscurecen la plata y, con el tiempo, debilitan broches y uniones. Esto aplica sobre todo a las piezas con baño de oro, baño de rodio y plata 925: retíralas antes de ducharte, nadar o lavar los platos. El acero inoxidable resiste bien el agua (solo sécalo después) y el gold filled tolera mejor la humedad, aunque igual conviene quitártelo para el mar y la piscina.",
         "sec2Body": "Evita el contacto directo con perfumes, cremas, alcohol, lociones y protector solar. Estos productos contienen químicos que reaccionan con el material y aceleran que la joya pierda su brillo o cambie de color.",
         "sec3Body": "Cuando no la uses, guárdala en su empaque original o en una bolsita individual, separada de otras joyas para evitar que se rayen entre sí. Mantenla en un lugar seco, lejos de la luz solar directa y la humedad.",
         "sec5Body": "Limpia tu joya de vez en cuando con un paño suave y seco para retirar el polvo y la grasa natural de la piel. Evita usar pastas dentales, bicarbonato u otros productos abrasivos: pueden rayar la superficie y dañar el acabado."
@@ -500,23 +498,21 @@
     },
     "pages_en": {
       "envios": {
-        "intro": "Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here's what you need to know about shipping times, methods and costs.",
-        "servientregaSameCityRate": "from $3.50",
-        "servientregaOtherCityRate": "$5.25 – $6.30",
-        "servientregaNote": "Same-day delivery if dispatched early within the same city; 1–2 business days to other cities. Saturday shipments are delivered on Monday.",
+        "intro": "Here's what shipping costs, how long it takes and how to track your jewelry. In-stock pieces ship within a few days; personalized pieces are handcrafted for you before they ship.",
+        "servientregaNote": "Once shipped, your order arrives in 1–2 business days (same day within the same city if it ships early). Saturday shipments are delivered on Monday.",
         "uspsTime": "2–5 business days",
         "otrosPaisesBody": "Writing to us from another country? Contact us on WhatsApp and we'll confirm availability, time and the exact shipping cost to your location."
       },
       "devoluciones": {
-        "intro": "At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized just for you. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.",
-        "secPorQueBody": "Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Because each one is unique to the person who ordered it, it cannot be resold or returned to inventory, so all sales are final.",
+        "intro": "At CACUSA by Taitus we check every piece by hand before shipping it. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost if you message us within the first 48 hours after delivery. We do not accept returns or exchanges for other reasons, such as taste, size or a change of mind.",
+        "secPorQueBody": "We are a small workshop with a simple policy: we cover manufacturing defects reported within 48 hours of delivery, and we do not accept returns or exchanges for taste, size or a change of mind. Personalized pieces (with a name, date, initials or message) are made especially for you and cannot be resold, so they cannot be exchanged either — only the manufacturing-defect coverage applies.",
         "secAntesBody": "We ask you to carefully review all the details before confirming your purchase. If you have any questions, message us on WhatsApp and we'll be glad to advise you.",
         "secDefectoBody": "Your satisfaction matters to us. If your piece arrives with a manufacturing defect or there was an error attributable to us, contact us within 48 hours of receiving the order, attaching clear photos of the product. We'll review the case and, if applicable, repair or replace your piece at no additional cost.",
         "secPostBody": "After the first 48 hours, that manufacturing-defect coverage no longer applies — but that doesn't mean you're on your own. If your piece needs cleaning, has tarnished, or the plating has worn with use, message us on WhatsApp: we'll guide you on how to care for it and what your options are."
       },
       "cuidados": {
-        "intro": "Thank you for your purchase and for supporting Ecuadorian craftsmanship. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer.",
-        "sec1Body": "Don't shower, swim or wash dishes while wearing your jewelry. Constant moisture and the chlorine or salt in water dull the plating and weaken the clasps and joints over time. Take it off before showering or going to the pool or sea.",
+        "intro": "With the right care, your CACUSA jewelry keeps its shine and color for much longer. Here's how to protect it from water and chemicals, how to store and clean it, and what each material needs.",
+        "sec1Body": "Constant moisture and the chlorine or salt in water dull gold plating, darken silver and, over time, weaken clasps and joints. This applies mainly to gold-plated, rhodium-plated and 925 silver pieces: take them off before showering, swimming or washing dishes. Stainless steel is water resistant (just dry it afterwards) and gold filled handles moisture better, though it's still best to take it off for the sea and the pool.",
         "sec2Body": "Avoid direct contact with perfumes, creams, alcohol, lotions and sunscreen. These products contain chemicals that react with the material and speed up tarnishing or color change.",
         "sec3Body": "When not wearing it, store it in its original packaging or in an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.",
         "sec5Body": "Clean your jewelry occasionally with a soft, dry cloth to remove dust and the skin's natural oils. Avoid toothpaste, baking soda or other abrasive products: they can scratch the surface and damage the finish."
@@ -598,24 +594,22 @@
         "envios.hLabel": "Customer Service",
         "envios.hTitle": "Shipping",
         "envios.sec1H2": "Shipping cost",
-        "envios.lblStandard": "Standard shipping",
+        "envios.lblStandard": "Shipping to Ecuador and the United States",
         "envios.lblFree": "Free shipping on orders from",
-        "envios.cartCallout": "The cost and the free-shipping threshold are calculated automatically in the <strong>store</strong> cart at checkout.",
+        "envios.cartCallout": "<strong>Flat rate:</strong> the same cost anywhere in Ecuador and the United States, whatever the city. Free shipping is applied automatically in the <strong>store</strong> cart at checkout.",
         "envios.sec2H2": "Preparation and delivery time",
         "envios.ecH2": "Ecuador — via Servientrega",
         "envios.ecBody": "We ship nationwide with Servientrega, delivered to your door anywhere in the country.",
-        "envios.ecSame": "Within the same city",
-        "envios.ecOther": "To another city",
         "envios.usaH2": "United States — via USPS",
         "envios.usaBody": "For customers in the USA, we ship with USPS Ground Advantage.",
         "envios.usaRate": "Rate",
         "envios.otrosH2": "Other countries",
-        "envios.disc": "* Servientrega and USPS rates are for reference and may vary depending on the weight, package dimensions and each carrier's current coverage. The final cost is confirmed with you before your order ships.",
+        "envios.disc": "* Delivery times are carrier estimates and are counted in business days from dispatch. The shipping rate is flat: it does not change with weight or city.",
         "envios.trackH2": "Tracking your order",
-        "envios.trackBody": "We confirm by WhatsApp when your order is dispatched, along with the tracking number (when applicable), so you always know where your jewelry is.",
+        "envios.trackBody": "When we ship your order, you receive the tracking number by email so you always know where your jewelry is. In the United States that email is sent automatically, with a direct USPS tracking link.",
         "envios.contact": "Have questions about your shipment? We're here to help.",
         "dev.hTitle": "Return Policy",
-        "dev.sec1H2": "Why don't we accept returns?",
+        "dev.sec1H2": "What does our policy cover?",
         "dev.sec2H2": "Before buying, double-check your order",
         "dev.sec2Li1": "The model and piece you are choosing",
         "dev.sec2Li2": "The material (silver, gold plating, steel, etc.)",
@@ -628,7 +622,7 @@
         "dev.sec4Link": "See our jewelry care guide →",
         "dev.contact": "Have questions before buying? We're here to help.",
         "cui.hTitle": "Caring for Your Jewelry",
-        "cui.sec1H2": "Avoid contact with water",
+        "cui.sec1H2": "Careful with water",
         "cui.sec2H2": "Keep away from chemicals and cosmetics",
         "cui.sec2Li1": "Apply perfume and cream before putting on your jewelry, never after",
         "cui.sec2Li2": "Avoid hand sanitizer gel and hand cleansers while wearing your jewelry",
@@ -651,7 +645,17 @@
         "cat.parejas": "Couples",
         "cat.personalizado": "Custom",
         "cat.gold edition": "Gold Edition",
-        "cat.colección": "Collection"
+        "cat.colección": "Collection",
+        "nav.shop": "Shop",
+        "nav.backShort": "← Home",
+        "nav.shipping": "Shipping",
+        "nav.returns": "Returns",
+        "nav.care": "Care",
+        "nav.guides": "Guides",
+        "nav.privacy": "Privacy",
+        "envios.prepStock": "<strong>In-stock pieces:</strong> ship within <strong>1 to 3 business days</strong> of your order.",
+        "envios.prepCustom": "<strong>Personalized pieces:</strong> are handcrafted for you in <strong>5 to 10 business days</strong>, depending on the design, and then shipped.",
+        "envios.prepBody": "You place your order online in the store and receive the confirmation by email. The carrier's delivery time, shown below for your country, is added to the preparation time."
       }
     }
   },

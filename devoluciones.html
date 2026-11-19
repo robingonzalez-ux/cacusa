@@ -72,6 +72,8 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .sec li::before{content:'✓';position:absolute;left:0;top:8px;color:var(--pink);font-weight:700}
 .callout{background:var(--pink-pale);border-left:4px solid var(--pink);border-radius:12px;padding:18px 22px;margin:6px 0 4px}
 .callout strong{color:var(--ink)}
+.text-link{color:var(--pink-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.text-link:hover{color:var(--pink)}
 .contact{margin-top:36px;padding-top:30px;border-top:1.5px solid var(--ink-light);text-align:center}
 .contact p{font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-bottom:16px}
 .wa-btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.04em;border-radius:999px;padding:14px 30px;box-shadow:0 4px 20px rgba(238,111,168,.35);transition:transform .25s}
@@ -96,15 +98,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="./ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Tienda</a>
     <div class="lang-sw"><a id="lEs" class="on" aria-current="page" href="/devoluciones.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" href="/en/devoluciones.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+    <a href="./" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Volver al inicio</span><span class="nb-short" data-i18n="nav.backShort">← Inicio</span></a>
   </div>
 </nav>
 
@@ -116,11 +139,11 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro" id="devIntro">En CACUSA by Taitus, cada joya se elabora de forma <strong>artesanal y personalizada</strong> para ti. Si tu pieza llega con un <strong>defecto de fabricación</strong>, la reparamos o reemplazamos sin costo dentro de las primeras 48 horas. Por tratarse de piezas hechas a medida y bajo pedido, no podemos aceptar devoluciones o cambios por otros motivos.</p>
+    <p class="intro" id="devIntro">En CACUSA by Taitus revisamos cada joya a mano antes de enviarla. Si tu pieza llega con un <strong>defecto de fabricación</strong>, la reparamos o reemplazamos sin costo si nos escribes dentro de las primeras <strong>48 horas</strong> desde la entrega. No aceptamos devoluciones ni cambios por otros motivos, como gusto, talla o cambio de opinión.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span><span data-i18n="dev.sec1H2">¿Por qué no aceptamos devoluciones?</span></h2>
-      <p id="devPorQueBody">Nuestras piezas no son productos de stock genérico: se diseñan y confeccionan especialmente para ti, con tus datos de personalización (nombre, fecha, iniciales, mensaje, material, talla o color elegidos). Al ser únicas para cada persona, no pueden revenderse ni reincorporarse al inventario, por lo que todas las ventas son <strong>finales</strong>.</p>
+      <h2><span class="dot"></span><span data-i18n="dev.sec1H2">¿Qué cubre nuestra política?</span></h2>
+      <p id="devPorQueBody">Somos un taller pequeño y trabajamos con una política simple: cubrimos los <strong>defectos de fabricación</strong> reportados dentro de las 48 horas desde la entrega, y no aceptamos devoluciones ni cambios por gusto, talla o cambio de opinión. Las <strong>piezas personalizadas</strong> (con nombre, fecha, iniciales o mensaje) se elaboran especialmente para ti y no pueden revenderse, así que tampoco admiten cambios — solo la cobertura por defecto de fábrica.</p>
     </div>
 
     <div class="sec">
@@ -144,7 +167,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="dev.sec4H2">¿Y si necesitas ayuda después de las 48 horas?</span></h2>
       <p id="devPostBody">Pasadas las 48 horas, esa cobertura por defecto de fábrica ya no aplica — pero eso no significa que te quedes sin ayuda. Si tu joya necesita limpieza, se opacó o el baño se desgastó con el uso, escríbenos por WhatsApp: te orientamos sobre cómo cuidarla y qué opciones tienes.</p>
-      <p style="margin-top:8px"><a href="./cuidados.html" data-i18n="dev.sec4Link">Ver guía de cuidado de joyas →</a></p>
+      <p style="margin-top:8px"><a class="text-link" href="./cuidados.html" data-i18n="dev.sec4Link">Ver guía de cuidado de joyas →</a></p>
     </div>
 
     <div class="contact">
@@ -175,13 +198,19 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="./" data-i18n="nav.home">Inicio</a>
-    <a href="./ui_kits/store/" data-i18n="nav.store">Tienda</a>
+    <a href="./ui_kits/store/" data-i18n="nav.shop">Tienda</a>
+    <a href="./envios.html" data-i18n="nav.shipping">Envíos</a>
+    <a href="./devoluciones.html" data-i18n="nav.returns">Devoluciones</a>
+    <a href="./cuidados.html" data-i18n="nav.care">Cuidados</a>
+    <a href="./guias.html" data-i18n="nav.guides">Guías</a>
+    <a href="./privacidad.html" data-i18n="nav.privacy">Privacidad</a>
+    <a href="./cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
 <script>
 (async function(){
-  var _L=localStorage.getItem('cacusa-lang')||'es';
+  var _L='es'; // idioma por URL: esta es la versión en español (generate_en_guides.py lo cambia a 'en' en /en/)
   document.documentElement.lang=_L;
   try{
     const res=await fetch('/data/products.json?v='+Date.now());
@@ -190,7 +219,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?'Hi, I have a question about a CACUSA product before buying ✨':'Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✨';
+        const msg=_L==='en'?'Hi, I have a question about a CACUSA product before buying ✦':'Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const pg=(cfg.pages&&cfg.pages.devoluciones)||{};
@@ -206,9 +235,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         document.title='Return Policy — CACUSA by Taitus';
         document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         const devI=document.getElementById('devIntro');
-        if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus, every piece is <strong>handcrafted and personalized</strong> just for you. If your piece arrives with a <strong>manufacturing defect</strong>, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.';
+        if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus we check every piece by hand before shipping it. If your piece arrives with a <strong>manufacturing defect</strong>, we will repair or replace it at no cost if you message us within the first <strong>48 hours</strong> after delivery. We do not accept returns or exchanges for other reasons, such as taste, size or a change of mind.';
         const devP=document.getElementById('devPorQueBody');
-        if(devP)devP.innerHTML=pgEn.secPorQueBody||'Our pieces are not generic stock products — they are designed and crafted especially for you, with your personalization details. As each piece is unique to you, all sales are <strong>final</strong>.';
+        if(devP)devP.innerHTML=pgEn.secPorQueBody||'We are a small workshop with a simple policy: we cover <strong>manufacturing defects</strong> reported within 48 hours of delivery, and we do not accept returns or exchanges for taste, size or a change of mind. <strong>Personalized pieces</strong> (with a name, date, initials or message) are made especially for you and cannot be resold, so they cannot be exchanged either — only the manufacturing-defect coverage applies.';
         st('devAntesBody',pgEn.secAntesBody||'We ask you to carefully review all details before confirming your purchase. If you have any questions, message us on WhatsApp:');
         const devD=document.getElementById('devDefectoBody');
         if(devD)devD.innerHTML=pgEn.secDefectoBody||'Your satisfaction matters to us. If your piece arrives with a <strong>manufacturing defect</strong> or an error on our part, contact us within <strong>48 hours</strong> of receiving your order with clear photos. We\'ll evaluate the case and, where applicable, proceed with <strong>repair or replacement</strong> at no extra charge.';
@@ -216,8 +245,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       }
     }
   }catch(e){}
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}

@@ -97,15 +97,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="./ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Tienda</a>
     <div class="lang-sw"><a id="lEs" class="on" aria-current="page" href="/como-combinar-joyas.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" href="/en/como-combinar-joyas.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+    <a href="./" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Volver al inicio</span><span class="nb-short" data-i18n="nav.backShort">← Inicio</span></a>
   </div>
 </nav>
 
@@ -120,12 +141,12 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <p class="intro" data-i18n="cc.intro">No hace falta un curso de estilismo para verte bien con varias piezas puestas a la vez. Con estas reglas simples, mezclar metales, apilar anillos y usar varios collares se ve intencional, no recargado.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span><span data-i18n="cc.sec1H2">Mezclar plata y oro — sí se puede</span></h2>
-      <p data-i18n="cc.sec1Body">La regla de "solo un metal a la vez" ya quedó atrás. Mezclar baño de oro 18k con plata 925 o acero inoxidable se ve moderno cuando lo haces con intención, no al azar.</p>
+      <h2><span class="dot"></span><span data-i18n="cc.sec1H2">Mezclar dorado y plateado — sí se puede</span></h2>
+      <p data-i18n="cc.sec1Body">La regla de "solo un metal a la vez" ya quedó atrás. Combinar tonos dorados (baño de oro 18k, gold filled) con tonos plateados (acero, baño de rodio) se ve moderno cuando lo haces con intención, no al azar.</p>
       <ul>
-        <li data-i18n="cc.sec1Li1">Elige un metal "dominante" (el que más se repite) y usa el otro como acento</li>
-        <li data-i18n="cc.sec1Li2">Repite el metal secundario al menos 2 veces (ej. un anillo y un arete) para que se vea buscado</li>
-        <li data-i18n="cc.sec1Li3">Las piezas con ambos tonos en una sola pieza (como la plata con baño de oro) son un buen "puente" entre las dos</li>
+        <li data-i18n="cc.sec1Li1">Elige un tono "dominante" (el que más se repite) y usa el otro como acento</li>
+        <li data-i18n="cc.sec1Li2">Repite el tono secundario al menos 2 veces (ej. un anillo y un arete) para que se vea buscado</li>
+        <li data-i18n="cc.sec1Li3">Las piezas que combinan dorado y plateado en un mismo diseño son un buen "puente" entre los dos tonos</li>
       </ul>
     </div>
 
@@ -194,21 +215,28 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="./" data-i18n="nav.home">Inicio</a>
-    <a href="./ui_kits/store/" data-i18n="nav.store">Tienda</a>
+    <a href="./ui_kits/store/" data-i18n="nav.shop">Tienda</a>
+    <a href="./envios.html" data-i18n="nav.shipping">Envíos</a>
+    <a href="./devoluciones.html" data-i18n="nav.returns">Devoluciones</a>
+    <a href="./cuidados.html" data-i18n="nav.care">Cuidados</a>
+    <a href="./guias.html" data-i18n="nav.guides">Guías</a>
+    <a href="./privacidad.html" data-i18n="nav.privacy">Privacidad</a>
+    <a href="./cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
 <script>
 const I18N_EN = {
+  'nav.shop':'Shop','nav.backShort':'← Home','nav.shipping':'Shipping','nav.returns':'Returns','nav.care':'Care','nav.guides':'Guides','nav.privacy':'Privacy',
   'nav.back':'← Back to home','nav.waBtn':'Message us on WhatsApp','nav.followUs':'Follow us on social media',
   'nav.home':'Home','nav.store':'Store',
   'cc.hLabel':'Guide · Style','cc.hTitle':'How to Combine Your Jewelry',
   'cc.intro':"You don't need a styling course to look great wearing several pieces at once. With these simple rules, mixing metals, stacking rings, and layering necklaces looks intentional, not overdone.",
-  'cc.sec1H2':'Mixing silver and gold — yes, you can',
-  'cc.sec1Body':'The "only one metal at a time" rule is outdated. Mixing 18k gold plating with 925 silver or stainless steel looks modern when done with intention, not at random.',
-  'cc.sec1Li1':'Pick a "dominant" metal (the one you repeat most) and use the other as an accent',
-  'cc.sec1Li2':'Repeat the secondary metal at least twice (e.g. a ring and an earring) so it looks deliberate',
-  'cc.sec1Li3':'Pieces with both tones in one (like silver with gold plating) work as a "bridge" between the two',
+  'cc.sec1H2':'Mixing gold and silver tones — yes, you can',
+  'cc.sec1Body':'The "only one metal at a time" rule is outdated. Combining gold tones (18k gold plating, gold filled) with silver tones (stainless steel, rhodium plating) looks modern when done with intention, not at random.',
+  'cc.sec1Li1':'Pick a "dominant" tone (the one you repeat most) and use the other as an accent',
+  'cc.sec1Li2':'Repeat the secondary tone at least twice (e.g. a ring and an earring) so it looks deliberate',
+  'cc.sec1Li3':'Pieces that combine gold and silver tones in one design work as a "bridge" between the two',
   'cc.sec2H2':'Stacking rings',
   'cc.sec2Body':"Adjustable rings are perfect for this — you can mix sizes and fingers without committing to one fixed size.",
   'cc.sec2Li1':'Combine different widths: one thin + one wider statement ring',
@@ -229,7 +257,7 @@ const I18N_EN = {
   'cc.moreGuides':'See all guides →'
 };
 (async function(){
-  var _L=localStorage.getItem('cacusa-lang')||'es';
+  var _L='es'; // idioma por URL: esta es la versión en español (generate_en_guides.py lo cambia a 'en' en /en/)
   document.documentElement.lang=_L;
   try{
     const res=await fetch('/data/products.json?v='+Date.now());
@@ -238,7 +266,7 @@ const I18N_EN = {
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?"Hi, I'd like help combining my CACUSA pieces ✨":'Hola, quisiera ayuda para combinar mis piezas CACUSA ✨';
+        const msg=_L==='en'?"Hi, I'd like help combining my CACUSA pieces ✦":'Hola, quisiera ayuda para combinar mis piezas CACUSA ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
     }
@@ -248,8 +276,7 @@ const I18N_EN = {
     document.querySelectorAll('[data-i18n]').forEach(el=>{const v=I18N_EN[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
     document.querySelectorAll('a[href^="./ui_kits/store/"]').forEach(a=>{a.href=a.href.replace('/ui_kits/store/','/en/ui_kits/store/');});
   }
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}

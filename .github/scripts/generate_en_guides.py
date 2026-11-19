@@ -27,9 +27,10 @@ Cómo traduce (emula el JS de cada página, no un diccionario aparte):
   Si aparece en el bloque EN un patrón que este script no sabe emular, falla
   en vez de publicar una página a medio traducir.
 
-La página EN fija el idioma (`var _L='en';` en vez de leer localStorage),
-igual que en/index.html fija __LANG, así el JS de la página nunca la vuelve
-a pasar a español. El selector ES/EN son links <a href> reales entre las
+El idioma lo decide la URL, no localStorage: la guía en español fija
+`var _L='es';` y la página EN generada lo reemplaza por `var _L='en';`
+(igual que en/index.html fija __LANG), así ninguna de las dos cambia de
+idioma por una preferencia guardada. El selector ES/EN son links <a href> reales entre las
 dos URLs (guardan además la preferencia en localStorage, como antes).
 
 Uso:
@@ -447,6 +448,9 @@ class LinkMapper:
             return "/en/"
         if base in self.guides or base == "cacusa-lovers.html":
             return "/en/" + base
+        if base == "privacidad.html":
+            # Página única con selector en el cliente: arranca en inglés con ?lang=en.
+            return "/privacidad.html?lang=en"
         if base.startswith("ui_kits/store/"):
             rest = base[len("ui_kits/store/"):]
             q = dict(kv.split("=", 1) for kv in query.split("&") if "=" in kv)
@@ -481,11 +485,12 @@ def build_en(fname, data, mapper):
     if n != 1:
         raise GenError(f'{fname}: sin <html lang="es">')
 
-    # Fijar el idioma: el JS de la página nunca vuelve a leer localStorage acá.
-    out, n = re.subn(r"var _L=localStorage\.getItem\('cacusa-lang'\)\|\|'es';",
+    # Fijar el idioma: la guía en español ya lo fija a 'es' (el idioma lo decide la URL,
+    # nunca localStorage — una URL en español siempre se ve en español); acá pasa a 'en'.
+    out, n = re.subn(r"var _L='es';[^\n]*",
                      "var _L='en'; // página EN generada: idioma fijo, igual que __LANG en en/index.html", out)
     if n != 1:
-        raise GenError(f"{fname}: no se encontró la lectura de _L desde localStorage")
+        raise GenError(f"{fname}: no se encontró la línea var _L='es'; (idioma fijo por URL)")
 
     # Links internos → equivalentes /en/ (también dentro de strings del JS,
     # para que las traducciones que el JS reaplica en runtime queden iguales).

@@ -94,15 +94,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .intro-card{padding:26px 24px;border-radius:18px}
   .guide-grid{grid-template-columns:1fr}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="./ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Tienda</a>
     <div class="lang-sw"><a id="lEs" class="on" aria-current="page" href="/guias.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" href="/en/guias.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+    <a href="./" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Volver al inicio</span><span class="nb-short" data-i18n="nav.backShort">← Inicio</span></a>
   </div>
 </nav>
 
@@ -114,7 +135,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="intro-card">
-    <p data-i18n="gs.intro">Todo lo que necesitas saber antes, durante y después de tu compra — tallas, regalos, cuidados y más, en un solo lugar.</p>
+    <p data-i18n="gs.intro">Todo lo que necesitas saber antes, durante y después de tu compra — tallas, regalos, cuidados, envíos, devoluciones y más, en un solo lugar.</p>
   </div>
 
   <div class="guide-grid">
@@ -148,10 +169,25 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <p data-i18n="gs.c7p">Ideas para regalarle a él, y piezas con significado religioso — cruces, San Benito y ángel de la guarda.</p>
       <span class="go" data-i18n="gs.goLink">Ver guía →</span>
     </a>
+    <a class="guide-card" href="./envios.html">
+      <h2><span class="dot"></span><span data-i18n="gs.c8h">Envíos</span></h2>
+      <p data-i18n="gs.c8p">Costos, tarifa plana de $10, envío gratis desde $90, tiempos de entrega y seguimiento.</p>
+      <span class="go" data-i18n="gs.goPolicy">Ver política →</span>
+    </a>
+    <a class="guide-card" href="./devoluciones.html">
+      <h2><span class="dot"></span><span data-i18n="gs.c9h">Devoluciones</span></h2>
+      <p data-i18n="gs.c9p">Qué hacer si tu pieza llega con un defecto de fábrica y cómo funciona la cobertura de 48 horas.</p>
+      <span class="go" data-i18n="gs.goPolicy">Ver política →</span>
+    </a>
+    <a class="guide-card" href="./privacidad.html">
+      <h2><span class="dot"></span><span data-i18n="gs.c10h">Privacidad</span></h2>
+      <p data-i18n="gs.c10p">Qué datos usamos para procesar tu pedido y cómo los protegemos.</p>
+      <span class="go" data-i18n="gs.goPolicy">Ver política →</span>
+    </a>
     <a class="guide-card" href="./ui_kits/store/">
-      <h2><span class="dot"></span><span data-i18n="gs.c6h">Ir a la tienda</span></h2>
+      <h2><span class="dot"></span><span data-i18n="gs.c6h">Nuestra tienda</span></h2>
       <p data-i18n="gs.c6p">Explora anillos, cadenas, pulseras, aretes y más — hechos a mano.</p>
-      <span class="go" data-i18n="gs.goLink">Ver guía →</span>
+      <span class="go" data-i18n="gs.goStore">Ir a la tienda →</span>
     </a>
   </div>
 
@@ -184,29 +220,40 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="./" data-i18n="nav.home">Inicio</a>
-    <a href="./ui_kits/store/" data-i18n="nav.store">Tienda</a>
+    <a href="./ui_kits/store/" data-i18n="nav.shop">Tienda</a>
+    <a href="./envios.html" data-i18n="nav.shipping">Envíos</a>
+    <a href="./devoluciones.html" data-i18n="nav.returns">Devoluciones</a>
+    <a href="./cuidados.html" data-i18n="nav.care">Cuidados</a>
+    <a href="./guias.html" data-i18n="nav.guides">Guías</a>
+    <a href="./privacidad.html" data-i18n="nav.privacy">Privacidad</a>
+    <a href="./cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
 <script>
 const I18N_EN = {
+  'nav.shop':'Shop','nav.backShort':'← Home','nav.shipping':'Shipping','nav.returns':'Returns','nav.care':'Care','nav.guides':'Guides','nav.privacy':'Privacy',
   'nav.back':'← Back to home','nav.waBtn':'Message us on WhatsApp','nav.followUs':'Follow us on social media',
   'nav.home':'Home','nav.store':'Store',
   'gs.hLabel':'Help center','gs.hTitle':'Guides',
-  'gs.intro':"Everything you need to know before, during and after your purchase — sizing, gifts, care and more, all in one place.",
+  'gs.intro':"Everything you need to know before, during and after your purchase — sizing, gifts, care, shipping, returns and more, all in one place.",
   'gs.c1h':'Size guide','gs.c1p':'How adjustable rings work, how to measure your size at home, and what chain length to pick.',
   'gs.c2h':'Gift guide','gs.c2p':"Ideas by occasion — Valentine's Day, birthdays, anniversaries, Mother's Day and more.",
   'gs.c3h':'Jewelry care','gs.c3p':'How to clean, store and preserve your piece — and why the material matters.',
   'gs.c4h':'Birthstone meanings','gs.c4p':"Each month's traditional birthstone and what it represents.",
   'gs.c5h':'How to combine your jewelry','gs.c5p':'Mixing metals, stacking rings, and layering necklaces without overdoing it.',
   'gs.c7h':'Gifts for him & religious jewelry','gs.c7p':'Ideas to gift him, plus pieces with religious meaning — crosses, Saint Benedict medals and guardian angels.',
+  'gs.c8h':'Shipping','gs.c8p':'Costs, flat $10 rate, free shipping from $90, delivery times and tracking.',
+  'gs.c9h':'Returns','gs.c9p':'What to do if your piece arrives with a manufacturing defect, and how the 48-hour coverage works.',
+  'gs.c10h':'Privacy','gs.c10p':'What data we use to process your order and how we protect it.',
+  'gs.goPolicy':'Read policy →','gs.goStore':'Go to the store →',
   'gs.c6h':'Shop our collection','gs.c6p':'Browse rings, chains, bracelets, earrings and more — all handmade.',
   'gs.catLinks':'Or jump straight to a category: <a href="./ui_kits/store/categoria/anillos/">Rings</a> · <a href="./ui_kits/store/categoria/cadenas/">Chains</a> · <a href="./ui_kits/store/categoria/aretes/">Earrings</a> · <a href="./ui_kits/store/categoria/pulseras/">Bracelets</a>',
   'gs.goLink':'View guide →',
   'gs.contact':"Have a question that's not here? Message us and we'll help."
 };
 (async function(){
-  var _L=localStorage.getItem('cacusa-lang')||'es';
+  var _L='es'; // idioma por URL: esta es la versión en español (generate_en_guides.py lo cambia a 'en' en /en/)
   document.documentElement.lang=_L;
   try{
     const res=await fetch('/data/products.json?v='+Date.now());
@@ -215,7 +262,7 @@ const I18N_EN = {
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?'Hi, I have a question ✨':'Hola, tengo una consulta ✨';
+        const msg=_L==='en'?'Hi, I have a question ✦':'Hola, tengo una consulta ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
     }
@@ -225,8 +272,7 @@ const I18N_EN = {
     document.querySelectorAll('[data-i18n]').forEach(el=>{const v=I18N_EN[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
     document.querySelectorAll('a[href^="./ui_kits/store/"]').forEach(a=>{a.href=a.href.replace('/ui_kits/store/','/en/ui_kits/store/');});
   }
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}

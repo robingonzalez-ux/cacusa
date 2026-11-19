@@ -1028,7 +1028,7 @@ const __LANDING_EN = {
   "landing.footerGifts":"Gift guide","landing.footerSizes":"Size guide",
   "landing.xmasLabel":"✦ Holiday season","landing.xmasUnder30":"Under $30","landing.xmas30to60":"$30 to $60",
   "landing.xmasName":"With their name","landing.xmasGuide":"Browse the gift guide →",
-  "landing.xmasGiftLovers":"Gift Cacusa Lovers ♡","landing.xmasGiftCard":"Gift a gift card ◇","landing.xmasViaWa":"Via WhatsApp","landing.xmasGiftIntro":"Prefer to gift an experience? Message us on WhatsApp:",
+  "landing.xmasGiftLovers":"Gift Cacusa Lovers ♡","landing.xmasGiftCard":"Give a gift card ◇","landing.xmasViaWa":"Via WhatsApp","landing.xmasGiftIntro":"Prefer to gift an experience? Message us on WhatsApp:",
   "landing.formTitle":"Start your piece","landing.formNameLabel":"Your name",
   "landing.formNamePh":"Your name","landing.formWhatsPh":"+1 (555) 555-5555","landing.formWhatsLabel":"Your WhatsApp",
   "landing.formTypeLabel":"Type of jewelry","landing.formTypePh":"Necklace, ring…",
@@ -1666,7 +1666,7 @@ function renderXmasBand(rawCampaign, products){
   const waNum = String(CACUSA_WHATSAPP || '17867375336').replace(/\D/g, '') || '17867375336';
   const waGift = [
     ['xmasGiftLovers', en ? "Hi, I'd like to gift Cacusa Lovers (monthly or annual plan). How do we arrange it?" : 'Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?'],
-    ['xmasGiftCard', en ? "Hi, I'd like a $___ gift card to give as a gift." : 'Hola, quiero una gift card de $___ para regalar.']
+    ['xmasGiftCard', en ? "Hi, I'd like to give a gift card. What amounts do you have?" : 'Hola, quiero regalar una gift card. ¿Qué montos tienen?']
   ];
   waGift.forEach(([id, msg]) => { const a = document.getElementById(id); if (a) a.href = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg); });
   // — Fotos de las tarjetas (mismo estilo que Colecciones): una pieza con foto de cada grupo —

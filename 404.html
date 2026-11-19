@@ -13,40 +13,62 @@
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700;900&family=Pinyon+Script&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--grad-full:linear-gradient(135deg,#F5C8A8 0%,#EE6FA8 30%,#C4A0EC 65%,#88C8F0 100%)}
   body{
     min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:32px;
+    text-align:center;padding:32px 16px;
     background:linear-gradient(160deg,#fff5f9 0%,#ffeaf3 45%,#fbe3ee 100%);
     color:#3a2330;font-family:'Outfit',sans-serif;
   }
-  .mark{font-family:'Pinyon Script',cursive;font-size:clamp(38px,8vw,68px);color:#EE6FA8;line-height:1;margin-bottom:8px}
+  /* Mismo logotipo que .nav-logo del home: CACUSA en Bodoni con el degradado de marca + "by Taitus" en script */
+  .logo{display:inline-flex;flex-direction:column;align-items:center;line-height:1;margin-bottom:18px;text-decoration:none}
+  .logo .w{font-family:'Bodoni Moda',serif;font-weight:900;font-size:clamp(26px,6vw,36px);letter-spacing:.16em;padding-left:.16em;text-transform:uppercase;background:var(--grad-full);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .logo .s{font-family:'Pinyon Script',cursive;font-size:clamp(17px,3.6vw,22px);color:#96486F;margin-top:2px}
   .code{font-family:'Bodoni Moda',serif;font-weight:900;font-size:clamp(72px,18vw,140px);color:#EE6FA8;line-height:.9;letter-spacing:2px}
   h1{font-family:'Bodoni Moda',serif;font-weight:700;font-size:clamp(22px,4vw,34px);margin:18px 0 10px;color:#2a1620}
   p{font-size:clamp(15px,2.4vw,18px);max-width:480px;color:#6b4a5a;line-height:1.55;margin-bottom:28px}
+  .spark{color:#EE6FA8}
   .btns{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
   a.btn{
     display:inline-block;padding:14px 30px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px;
     transition:transform .15s ease,box-shadow .15s ease;
   }
-  a.primary{background:#EE6FA8;color:#fff;box-shadow:0 8px 22px rgba(238,111,168,.35)}
-  a.secondary{background:#fff;color:#EE6FA8;border:1.5px solid #EE6FA8}
+  a.primary{background:#C0336E;color:#fff;box-shadow:0 8px 22px rgba(238,111,168,.35)}
+  a.secondary{background:#fff;color:#C0336E;border:1.5px solid #EE6FA8}
   a.btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(238,111,168,.4)}
-  .hint{margin-top:26px;font-size:13px;color:#a98a99}
+  .hint{margin-top:26px;font-size:13px;color:#96486F}
 </style>
 </head>
 <body>
-  <div class="mark">CACUSA by Taitus</div>
+  <a class="logo" id="logo" href="/"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
   <div class="code">404</div>
-  <h1>Esta página ya no existe</h1>
-  <p>Puede que el enlace sea antiguo o esté roto. Pero tu joya perfecta sigue esperándote ✨</p>
+  <h1 id="t">Esta página ya no existe</h1>
+  <p><span id="d">Puede que el enlace sea antiguo o esté roto. Pero tu joya perfecta sigue esperándote</span> <span class="spark" aria-hidden="true">✦</span></p>
   <div class="btns">
-    <a class="btn primary" href="/ui_kits/store/">Ir a la tienda</a>
-    <a class="btn secondary" href="/">Página principal</a>
+    <a class="btn primary" id="bStore" href="/ui_kits/store/">Ir a la tienda</a>
+    <a class="btn secondary" id="bHome" href="/">Página principal</a>
   </div>
-  <div class="hint">Te llevaremos a la tienda automáticamente…</div>
+  <div class="hint" id="h">Te llevaremos a la tienda automáticamente…</div>
   <script>
-    // Redirige a humanos a la tienda tras unos segundos (el estado HTTP sigue siendo 404 para los buscadores).
-    setTimeout(function(){ window.location.replace('/ui_kits/store/'); }, 5000);
+    // El idioma sale de la URL pedida: todo lo que empieza con /en/ es la versión en inglés.
+    (function(){
+      var en=/^\/en(\/|$)/.test(location.pathname);
+      var store=en?'/en/ui_kits/store/':'/ui_kits/store/';
+      if(en){
+        document.documentElement.lang='en';
+        document.title='Page not found — CACUSA by Taitus';
+        document.getElementById('t').textContent='This page no longer exists';
+        document.getElementById('d').textContent='The link may be old or broken. But your perfect piece is still waiting for you';
+        document.getElementById('bStore').textContent='Go to the store';
+        document.getElementById('bHome').textContent='Home page';
+        document.getElementById('h').textContent='We’ll take you to the store automatically…';
+        document.getElementById('bHome').href='/en/';
+        document.getElementById('logo').href='/en/';
+      }
+      document.getElementById('bStore').href=store;
+      // Redirige a humanos a la tienda tras unos segundos (el estado HTTP sigue siendo 404 para los buscadores).
+      setTimeout(function(){ window.location.replace(store); }, 5000);
+    })();
   </script>
 </body>
 </html>

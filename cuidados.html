@@ -97,15 +97,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="./" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="./ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Tienda</a>
     <div class="lang-sw"><a id="lEs" class="on" aria-current="page" href="/cuidados.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" href="/en/cuidados.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="./" class="nav-back"><span data-i18n="nav.back">← Volver al inicio</span></a>
+    <a href="./" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Volver al inicio</span><span class="nb-short" data-i18n="nav.backShort">← Inicio</span></a>
   </div>
 </nav>
 
@@ -117,11 +138,11 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro" id="cuiIntro">Gracias por tu compra y por apoyar al emprendimiento ecuatoriano. Cada pieza CACUSA está hecha con dedicación, y con los cuidados correctos puedes disfrutarla por mucho más tiempo. ¡Aquí te dejamos nuestras recomendaciones!</p>
+    <p class="intro" id="cuiIntro">Con los cuidados correctos, tus joyas CACUSA mantienen su brillo y su color por mucho más tiempo. Aquí te contamos cómo protegerlas del agua y los químicos, cómo guardarlas y limpiarlas, y qué necesita cada material.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span><span data-i18n="cui.sec1H2">Evita el contacto con agua</span></h2>
-      <p id="cuiSec1Body">No te bañes, nades ni laves los platos con tu joya puesta. La humedad constante y el cloro o sal del agua opacan el baño y debilitan los broches y uniones con el tiempo. Retírala antes de ducharte, ir a la piscina o al mar.</p>
+      <h2><span class="dot"></span><span data-i18n="cui.sec1H2">Cuidado con el agua</span></h2>
+      <p id="cuiSec1Body">La humedad constante y el cloro o la sal del agua opacan el baño de oro, oscurecen la plata y, con el tiempo, debilitan broches y uniones. Esto aplica sobre todo a las piezas con baño de oro, baño de rodio y plata 925: retíralas antes de ducharte, nadar o lavar los platos. El acero inoxidable resiste bien el agua (solo sécalo después) y el gold filled tolera mejor la humedad, aunque igual conviene quitártelo para el mar y la piscina.</p>
     </div>
 
     <div class="sec">
@@ -160,6 +181,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <ul>
         <li data-i18n="cui.sec6Li1"><b>Plata 925:</b> plata de ley real (92.5% pura). Es duradera, pero puede oxidarse un poco con el aire y la humedad — el paño suave la devuelve a su brillo original.</li>
         <li data-i18n="cui.sec6Li2"><b>Baño de oro 18k:</b> una capa fina de oro sobre una base metálica. Es más accesible que el oro sólido, pero justamente por ser una capa, se desgasta más rápido si tiene contacto frecuente con agua, químicos o fricción — por eso los cuidados de arriba son especialmente importantes en estas piezas.</li>
+        <li data-i18n="cui.sec6Li4"><b>Gold filled:</b> una capa gruesa de oro unida a presión sobre una base metálica — mucho más gruesa que un baño. Resiste mejor el uso diario y no se pela con facilidad; con un paño suave recupera su brillo.</li>
+        <li data-i18n="cui.sec6Li5"><b>Baño de rodio:</b> una capa de rodio, un metal de la familia del platino, que da un tono plateado muy brillante y protege contra rayones y oxidación. Como todo baño, cuídalo igual que el baño de oro: lejos del agua, los químicos y la fricción.</li>
         <li data-i18n="cui.sec6Li3"><b>Acero inoxidable:</b> el más resistente al agua, los golpes y el uso diario. No se opaca con facilidad y es una buena opción hipoalergénica si tu piel es sensible a otros metales.</li>
       </ul>
       <p style="margin-top:12px" data-i18n="cui.sec6Shop">Explora las piezas por categoría: <a href="./ui_kits/store/categoria/anillos/" style="color:var(--pink-deep);text-decoration:underline">anillos</a>, <a href="./ui_kits/store/categoria/cadenas/" style="color:var(--pink-deep);text-decoration:underline">cadenas</a>, <a href="./ui_kits/store/categoria/aretes/" style="color:var(--pink-deep);text-decoration:underline">aretes</a> y <a href="./ui_kits/store/categoria/pulseras/" style="color:var(--pink-deep);text-decoration:underline">pulseras</a>.</p>
@@ -194,13 +217,19 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="./" data-i18n="nav.home">Inicio</a>
-    <a href="./ui_kits/store/" data-i18n="nav.store">Tienda</a>
+    <a href="./ui_kits/store/" data-i18n="nav.shop">Tienda</a>
+    <a href="./envios.html" data-i18n="nav.shipping">Envíos</a>
+    <a href="./devoluciones.html" data-i18n="nav.returns">Devoluciones</a>
+    <a href="./cuidados.html" data-i18n="nav.care">Cuidados</a>
+    <a href="./guias.html" data-i18n="nav.guides">Guías</a>
+    <a href="./privacidad.html" data-i18n="nav.privacy">Privacidad</a>
+    <a href="./cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
 <script>
 (async function(){
-  var _L=localStorage.getItem('cacusa-lang')||'es';
+  var _L='es'; // idioma por URL: esta es la versión en español (generate_en_guides.py lo cambia a 'en' en /en/)
   document.documentElement.lang=_L;
   try{
     const res=await fetch('/data/products.json?v='+Date.now());
@@ -224,8 +253,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         const pgEn=(cfg.pages_en&&cfg.pages_en.cuidados)||{};
         document.title='Jewelry Care Guide — CACUSA by Taitus';
         document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
-        st('cuiIntro',pgEn.intro||'Thank you for your purchase and for supporting this Ecuadorian venture. Each CACUSA piece is made with dedication, and with the right care you can enjoy it for much longer. Here are our recommendations!');
-        st('cuiSec1Body',pgEn.sec1Body||"Don't shower, swim, or wash dishes while wearing your piece. Constant moisture and chlorine or salt water dull the finish and weaken clasps and joints over time. Remove it before showering, swimming pools, or the ocean.");
+        st('cuiIntro',pgEn.intro||"With the right care, your CACUSA jewelry keeps its shine and color for much longer. Here's how to protect it from water and chemicals, how to store and clean it, and what each material needs.");
+        st('cuiSec1Body',pgEn.sec1Body||"Constant moisture and the chlorine or salt in water dull gold plating, darken silver and, over time, weaken clasps and joints. This applies mainly to gold-plated, rhodium-plated and 925 silver pieces: take them off before showering, swimming or washing dishes. Stainless steel is water resistant (just dry it afterwards) and gold filled handles moisture better, though it's still best to take it off for the sea and the pool.");
         st('cuiSec2Body',pgEn.sec2Body||'Avoid direct contact with perfumes, creams, alcohol, lotions, and sunscreen. These products contain chemicals that react with the metal and accelerate loss of shine or color change.');
         st('cuiSec3Body',pgEn.sec3Body||'When not in use, store it in its original packaging or an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.');
         st('cuiSec5Body',pgEn.sec5Body||'Clean your piece occasionally with a soft, dry cloth to remove dust and natural skin oils. Avoid toothpaste, baking soda, or other abrasive products — they can scratch the surface and damage the finish.');
@@ -234,6 +263,8 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
           'cui.sec6Body':'Each CACUSA material behaves differently, and knowing the difference helps you care for it better:',
           'cui.sec6Li1':'<b>Sterling silver 925:</b> real sterling silver (92.5% pure). It\'s durable, but can tarnish slightly with air and humidity — a soft cloth restores its original shine.',
           'cui.sec6Li2':'<b>18k gold plating:</b> a thin layer of gold over a metal base. It\'s more affordable than solid gold, but being a thin layer, it wears faster with frequent contact with water, chemicals, or friction — which is why the care tips above matter especially for these pieces.',
+          'cui.sec6Li4':'<b>Gold filled:</b> a thick layer of gold bonded under pressure to a metal base — far thicker than plating. It holds up better to daily wear and doesn\'t flake easily; a soft cloth brings back its shine.',
+          'cui.sec6Li5':'<b>Rhodium plating:</b> a layer of rhodium, a platinum-family metal, that gives a bright silver tone and protects against scratches and tarnish. Like any plating, care for it the same way as gold plating: away from water, chemicals and friction.',
           'cui.sec6Li3':'<b>Stainless steel:</b> the most resistant to water, knocks, and daily wear. It doesn\'t tarnish easily and is a good hypoallergenic option if your skin is sensitive to other metals.',
           'cui.sec6Shop':'Browse pieces by category: <a href="./ui_kits/store/categoria/anillos/" style="color:var(--pink-deep);text-decoration:underline">rings</a>, <a href="./ui_kits/store/categoria/cadenas/" style="color:var(--pink-deep);text-decoration:underline">chains</a>, <a href="./ui_kits/store/categoria/aretes/" style="color:var(--pink-deep);text-decoration:underline">earrings</a> and <a href="./ui_kits/store/categoria/pulseras/" style="color:var(--pink-deep);text-decoration:underline">bracelets</a>.',
           'cui.moreGuides':'See all guides →'
@@ -242,8 +273,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       }
     }
   }catch(e){}
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
