@@ -969,6 +969,8 @@ function renderProducts() {
     filtered = filtered.filter(p =>
       [p.name, p.name_en, p.desc, p.description_en, p.cat, t('cat.' + (p.cat || '').toLowerCase(), '')]
         .some(f => f && _searchNorm(f).includes(q))
+      // Código de producto (AN001): "an001", "AN 001", "an-001" o "an00" también lo encuentran.
+      || (typeof p.sku === 'string' && /^[a-z]{2}\d+$/.test(q.replace(/[\s-]+/g, '')) && _searchNorm(p.sku).startsWith(q.replace(/[\s-]+/g, '')))
     );
   }
   if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr < _urlPrice.max); });
@@ -1361,6 +1363,20 @@ function openModal(id, _fromHistory) {
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
   if (matEl) matEl.textContent = (_mLang && p.material && _matEN[p.material]) ? _matEN[p.material] : (p.material || '');
+  // Código de producto (sku, ej. AN001 — el mismo de la etiqueta QR del taller): sirve para
+  // pedir una pieza puntual por WhatsApp. Se crea acá para no depender de las ~200 páginas físicas.
+  let skuEl = document.getElementById('modalSku');
+  if (!skuEl && matEl) {
+    skuEl = document.createElement('div');
+    skuEl.id = 'modalSku';
+    skuEl.style.cssText = 'font-family:var(--fu);font-size:11px;letter-spacing:.08em;color:var(--ink-muted);margin:-8px 0 14px';
+    matEl.insertAdjacentElement('afterend', skuEl);
+  }
+  if (skuEl) {
+    const _sku = typeof p.sku === 'string' ? p.sku.trim() : '';
+    skuEl.textContent = _sku ? (_mLang ? 'Code: ' : 'Código: ') + _sku : '';
+    skuEl.hidden = !_sku;
+  }
   document.getElementById('modalPersonField').style.display = p.personalized ? 'block' : 'none';
   document.getElementById('modalPersonText').value = '';
   _resetPersonUI();

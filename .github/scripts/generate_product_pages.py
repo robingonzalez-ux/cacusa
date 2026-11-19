@@ -184,11 +184,11 @@ def inject_static_var(html_text, var_name, value):
 
 
 UI = {
-    "es": {"home": "Inicio", "store": "Tienda", "crumbs": "Ruta de navegación", "material": "Material",
+    "es": {"home": "Inicio", "store": "Tienda", "crumbs": "Ruta de navegación", "material": "Material", "code": "Código",
            "in_stock": "Disponible", "out": "Agotado", "view": "Ver detalles y comprar",
            "more": "Ver más {cat}", "perso": "Se puede personalizar con nombre, inicial o fecha: escríbenos por WhatsApp y te damos el precio final. Listo en 5 a 10 días hábiles.",
            "ship": "Envío a Ecuador y Estados Unidos. Gratis en compras desde $90."},
-    "en": {"home": "Home", "store": "Store", "crumbs": "Breadcrumb", "material": "Material",
+    "en": {"home": "Home", "store": "Store", "crumbs": "Breadcrumb", "material": "Material", "code": "Code",
            "in_stock": "In stock", "out": "Sold out", "view": "View details and buy",
            "more": "See more {cat}", "perso": "Can be personalized with a name, initial or date: message us on WhatsApp for the final price. Ready in 5 to 10 business days.",
            "ship": "Ships to Ecuador and the United States. Free on orders over $90."},
@@ -372,7 +372,10 @@ def product_section_html(p, lang, name, desc, images, crumb_items, cat_label, ca
     if material and lang == "en":
         material = MATERIAL_EN.get(material.lower(), material)
     stock = t["out"] if p.get("available") is False else t["in_stock"]
-    meta = " · ".join(x for x in [f'{t["material"]}: {material}' if material else "", stock] if x)
+    # Código de producto (sku, ej. AN001 — el de la etiqueta QR del taller), si lo tiene.
+    sku = clean(p.get("sku"))
+    meta = " · ".join(x for x in [f'{t["material"]}: {material}' if material else "", stock,
+                                   f'{t["code"]}: {sku}' if sku else ""] if x)
     perso = f'<p class="static-pdp-note">{text_esc(t["perso"])}</p>' if p.get("personalized") else ""
     more = (f'<a class="static-pdp-more" href="{attr_esc(cat_url[len(BASE_URL):])}">'
             f'{text_esc(t["more"].format(cat=cat_label.lower()))}</a>') if cat_url else ""

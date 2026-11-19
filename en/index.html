@@ -1131,6 +1131,9 @@ function loadHomeContent(){
       window._cacusaFeatured = cfg.home && Array.isArray(cfg.home.featuredProductIds) ? cfg.home.featuredProductIds : null;
       window._cacusaHeroIds  = cfg.home && Array.isArray(cfg.home.heroProductIds)     ? cfg.home.heroProductIds     : null;
       window._cacusaCollectionPhotos = (cfg.home && cfg.home.collectionPhotoIds && typeof cfg.home.collectionPhotoIds === 'object') ? cfg.home.collectionPhotoIds : null;
+      // Fotos elegidas en el panel (pestaña Portada) para "Nuestra historia" y la banda de Navidad.
+      window._cacusaStoryIds   = cfg.home && Array.isArray(cfg.home.storyPhotoIds) ? cfg.home.storyPhotoIds : null;
+      window._cacusaXmasPhotos = (cfg.home && cfg.home.xmasPhotoIds && typeof cfg.home.xmasPhotoIds === 'object' && !Array.isArray(cfg.home.xmasPhotoIds)) ? cfg.home.xmasPhotoIds : null;
       renderHeroValue(cfg.shipping && cfg.shipping.freeThreshold);
       const home = cfg.home;
       if (home) {
@@ -1211,6 +1214,7 @@ function loadHomeContent(){
       renderHomeItemListLd(window._cacusaProds);
       // Orden pensado para no repetir fotos: cada sección marca las piezas que usa (_homeUsedIds)
       // y las siguientes, al elegir solas, prefieren otras.
+      applyStoryPicks();
       fillCollectionCards();
       renderFeaturedProducts();
       heroSlideshow();
@@ -1675,12 +1679,15 @@ function renderXmasBand(rawCampaign, products){
   ];
   waGift.forEach(([id, msg]) => { const a = document.getElementById(id); if (a) a.href = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg); });
   // — Fotos de las tarjetas (mismo estilo que Colecciones): una pieza con foto de cada grupo —
-  const pickPhoto = list => _homeUse(_homePick(list, 1))[0];
+  // La pieza elegida en el panel (config.home.xmasPhotoIds) va primero si sigue disponible, con
+  // foto y dentro del grupo de esa tarjeta; si no, se elige sola como siempre.
+  const xPicks = window._cacusaXmasPhotos || {};
+  const pickPhoto = (list, key) => _homeUse([_homeById(list, xPicks[key]) || _homePick(list, 1)[0]])[0];
   const withImg = avail.filter(p => p.imageUrl);
-  [['xmasCard30', withImg.filter(p => inRange(p, 0, 30, null))],
-   ['xmasCard60', withImg.filter(p => inRange(p, 30, 60, null))],
-   ['xmasCardName', withImg.filter(p => p.personalized)]].forEach(([id, list]) => {
-    const bg = document.querySelector('#' + id + ' .col-bg'); const p = pickPhoto(list);
+  [['xmasCard30', withImg.filter(p => inRange(p, 0, 30, null)), 'u30'],
+   ['xmasCard60', withImg.filter(p => inRange(p, 30, 60, null)), 'u60'],
+   ['xmasCardName', withImg.filter(p => p.personalized), 'name']].forEach(([id, list, key]) => {
+    const bg = document.querySelector('#' + id + ' .col-bg'); const p = pickPhoto(list, key);
     if (!bg || !p) return;
     const fx = _focal(p.focalX), fy = _focal(p.focalY);
     bg.style.backgroundImage = 'url("' + String(p.imageUrl).replace(/"/g, '%22') + '")';
@@ -1809,8 +1816,30 @@ function hideIgGrid(grid){
   if (grid) { grid.replaceChildren(); grid.hidden = true; }
   fillStoryFallback();
 }
-// "Nuestra historia": los recuadros 2 y 3 usan fotos del feed; si el feed no carga, fotos de
-// productos de products.json (piezas distintas entre sí y de las demás secciones).
+// "Nuestra historia": si en el panel se eligieron piezas (config.home.storyPhotoIds, hasta 2),
+// los recuadros 2 y 3 usan esas fotos (las que sigan disponibles y con foto) y el feed de
+// Instagram ya no los pisa. Si no, como siempre: fotos del feed o, si el feed no carga, piezas
+// de products.json (distintas entre sí y de las demás secciones).
+function _paintStoryImg(el, p){
+  el.style.backgroundImage = 'url("' + String(p.imageUrl).replace(/"/g, '%22') + '")';
+  el.style.backgroundPosition = _focal(p.focalX) + '% ' + _focal(p.focalY) + '%';
+  el.className = '';
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', String((localStorage.getItem('cacusa-lang') === 'en' && p.name_en) || p.name || 'CACUSA'));
+}
+function applyStoryPicks(){
+  const ids = window._cacusaStoryIds;
+  if (!ids || !ids.length) return;
+  const avail = _homeWithImg();
+  const picks = ids.map(id => _homeById(avail, id)).filter(Boolean).slice(0, 2);
+  ['storyImg2', 'storyImg3'].forEach((id, i) => {
+    const el = document.getElementById(id), p = picks[i];
+    if (!el || !p) return;
+    _paintStoryImg(el, p);
+    el.dataset.picked = '1';
+    _homeUse([p]);
+  });
+}
 function fillStoryFallback(){
   if (_igFeedOk || !_igFeedFailed || !_homeProdsReady) return;
   const els = ['storyImg2', 'storyImg3'].map(id => document.getElementById(id)).filter(el => el && el.classList.length);
@@ -1818,11 +1847,7 @@ function fillStoryFallback(){
   const picks = _homeUse(_homePick(_homeWithImg(), els.length));
   els.forEach((el, i) => {
     const p = picks[i]; if (!p) return;
-    el.style.backgroundImage = 'url("' + String(p.imageUrl).replace(/"/g, '%22') + '")';
-    el.style.backgroundPosition = _focal(p.focalX) + '% ' + _focal(p.focalY) + '%';
-    el.className = '';
-    el.setAttribute('role', 'img');
-    el.setAttribute('aria-label', String((localStorage.getItem('cacusa-lang') === 'en' && p.name_en) || p.name || 'CACUSA'));
+    _paintStoryImg(el, p);
   });
 }
 
@@ -1859,7 +1884,7 @@ if(igG && BEHOLD_FEED_ID){
       const pic = p => { const s=(p&&p.sizes&&(p.sizes.medium||p.sizes.large||p.sizes.small))||{}; return safeUrl(s.mediaUrl||(p&&p.thumbnailUrl)||''); };
       [['storyImg2', posts[1]||posts[0]], ['storyImg3', posts[2]||posts[1]]].forEach(([id, post]) => {
         const el = document.getElementById(id); const src = pic(post);
-        if (el && src) { el.style.backgroundImage = 'url("' + src + '")'; el.className = ''; }
+        if (el && src && !el.dataset.picked) { el.style.backgroundImage = 'url("' + src + '")'; el.className = ''; }
       });
     }catch(e){
       hideIgGrid(igG);
