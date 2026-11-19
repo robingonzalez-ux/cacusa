@@ -136,18 +136,15 @@
       ],
       "footer": {
         "tagline": "creamos para que luzcas más bella de lo que ya eres",
-        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Hecho con amor 🤍"
+        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Hecho con amor ♡"
       },
       "featuredProductIds": [
         1781473627668,
-        1786329660348,
         1786329172109,
-        1786308585824,
-        1781879127320
+        1786308585824
       ],
       "heroProductIds": [
         1786303032752,
-        1786329660348,
         1786329172109,
         1786330341098,
         1788449850640,
@@ -157,7 +154,6 @@
         "Hombres": 1781885393238,
         "Pulseras": 1788449850640,
         "Aretes": 1786303032752,
-        "Anillos": 1781879127320,
         "Cadenas": 1781473627668
       }
     },
@@ -165,7 +161,7 @@
       "storyLabel": "Our Story",
       "storyTitle": "Artisans of the Heart",
       "storyQuote": "Each piece, a unique story",
-      "storyBody": "We are CACUSA by Taitus, custom jewelry artisans with a presence in Ecuador and the United States. We create pieces for courageous, independent and valued women — and the men who accompany them.",
+      "storyBody": "We are CACUSA by Taitus, custom jewelry artisans with a presence in Ecuador and the United States. We create pieces for brave, independent women with values — and the men who accompany them.",
       "stats": [
         {
           "num": "650",
@@ -183,7 +179,7 @@
       "person": {
         "label": "Customization",
         "title": "Your piece, your story",
-        "subtitle": "Tell us what makes it special and we've created it for you.",
+        "subtitle": "Tell us what makes it special and we'll craft it for you.",
         "steps": [
           {
             "title": "Choose your piece",
@@ -194,8 +190,8 @@
             "desc": "Name, date, or special message"
           },
           {
-            "title": "We created this.",
-            "desc": "Handmade, ready in 5–10 days"
+            "title": "We craft it.",
+            "desc": "Handmade, ready in 5–10 business days"
           }
         ]
       },
@@ -233,7 +229,7 @@
       ],
       "footer": {
         "tagline": "made to help you look even more beautiful than you already are",
-        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love 🤍"
+        "copyright": "© 2026 CACUSA by Taitus · Ecuador & USA · Made with love ♡"
       }
     },
     "lovers": {
@@ -540,7 +536,7 @@
         "store.cartTitle": "Your cart",
         "store.subtotal": "Subtotal",
         "store.checkoutBtn": "Checkout",
-        "store.waBadge": "Secure payment with Square 🔒",
+        "store.waBadge": "Secure payment with Square",
         "store.coTitle": "Checkout",
         "store.coSubtitle": "CACUSA by Taitus · Personalized Jewelry",
         "store.coContactSection": "Contact Information",
@@ -562,10 +558,10 @@
         "store.payZelleSub": "-4% discount",
         "store.coPay": "Pay with Square",
         "store.payWithZelle": "Pay with Zelle / Transfer",
-        "store.coSecure": "Secure payment · Apple Pay · Google Pay 🔒",
+        "store.coSecure": "Secure payment · Apple Pay · Google Pay",
         "store.coCustomNote": "Custom made pieces",
         "store.devNote": "see return policy",
-        "store.coWaFallback": "💬 I prefer to coordinate via WhatsApp",
+        "store.coWaFallback": "I prefer to coordinate via WhatsApp",
         "store.orderSummary": "Order Summary",
         "store.shipping": "Shipping",
         "store.tax": "Tax",
@@ -580,7 +576,7 @@
         "store.viewBtn": "+ View",
         "store.emptyCategory": "No products in this category yet.",
         "store.cartEmpty": "Your cart is empty",
-        "store.shippingFree": "🎉 Free shipping unlocked!",
+        "store.shippingFree": "✦ Free shipping unlocked!",
         "store.coFree": "Free",
         "store.coError1": "Please enter your name and WhatsApp number.",
         "store.coError2": "Please select your state.",
@@ -718,7 +714,7 @@
       "focalY": 70
     },
     {
-      "name": "Cadena San Benito con Cruz ",
+      "name": "Cadena San Benito con Cruz",
       "name_en": "Saint Benedict Chain with Zirconia Cross",
       "category": "Cadenas",
       "price": 48,
@@ -738,7 +734,7 @@
       "material": "Baño de oro 18k"
     },
     {
-      "name": "Pulsera tejida macramé con dije y perlas ",
+      "name": "Pulsera tejida macramé con dije y perlas",
       "name_en": "Macramé Bracelet with Charm & Pearls",
       "category": "Pulseras",
       "price": 28,
@@ -746,7 +742,7 @@
       "img": "collar",
       "color": "rose",
       "tag": "Nuevo",
-      "description": "Pulsera tejida macramé con perlas balines con baño de oro y dije de la virgen sede Guadalupe  ",
+      "description": "Pulsera tejida macramé con perlas balines con baño de oro y dije de la virgen sede Guadalupe",
       "description_en": "Macramé woven bracelet with gold-plated bali pearls and Virgin of Guadalupe charm",
       "personalized": false,
       "available": true,
@@ -757,7 +753,7 @@
       "material": "Baño de oro 18k"
     },
     {
-      "name": "Collar negro con ojo turco ",
+      "name": "Collar negro con ojo turco",
       "name_en": "Black Necklace with Evil Eye",
       "category": "Cadenas",
       "price": 35,
@@ -765,7 +761,7 @@
       "img": "collar",
       "color": "rose",
       "tag": "Nuevo",
-      "description": "Collar de semi cuero con dije de ojo turco revertido en un baño de oro ",
+      "description": "Collar de semi cuero con dije de ojo turco revertido en un baño de oro",
       "description_en": "Semi-leather necklace with gold-plated evil eye charm",
       "personalized": false,
       "available": true,
@@ -797,7 +793,7 @@
       "id": 1781472855605
     },
     {
-      "name": "Pulsera triple con dije de corazón ",
+      "name": "Pulsera triple con dije de corazón",
       "name_en": "Triple Crystal Bracelet with Heart Charm",
       "category": "Pulseras",
       "price": 25,
@@ -805,7 +801,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Pulsera de cristales tricolor con dije de corazón ",
+      "description": "Pulsera de cristales tricolor con dije de corazón",
       "description_en": "Tricolor crystal bracelet with heart charm",
       "personalized": false,
       "available": true,
@@ -817,7 +813,7 @@
       "id": 1781473015877
     },
     {
-      "name": "Cadena con dije de corazón y pelota ",
+      "name": "Cadena con dije de corazón y pelota",
       "name_en": "Chain with Heart & Ball Charm",
       "category": "Cadenas",
       "price": 28,
@@ -825,7 +821,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Cadena con dije de corazón llano y silueta de corazón de circon con dije de pelota ",
+      "description": "Cadena con dije de corazón llano y silueta de corazón de circón con dije de pelota",
       "description_en": "Chain with plain heart, zirconia heart silhouette and ball charm",
       "personalized": false,
       "available": true,
@@ -837,7 +833,7 @@
       "id": 1781473438388
     },
     {
-      "name": "Cadena con ángel de la guarda circular ",
+      "name": "Cadena con ángel de la guarda circular",
       "name_en": "Chain with circular guardian angel",
       "category": "Cadenas",
       "price": 35,
@@ -861,7 +857,7 @@
       "promo": null
     },
     {
-      "name": "Cadena con dije de Luna y corazón turquesa ",
+      "name": "Cadena con dije de Luna y corazón turquesa",
       "name_en": "Chain with Moon charm and turquoise heart",
       "category": "Cadenas",
       "price": 45,
@@ -869,7 +865,7 @@
       "img": "collar",
       "color": "rose",
       "tag": "Nuevo",
-      "description": "Cadena veneciana con Dije de Luna y corazón con microcircones turquesas ",
+      "description": "Cadena veneciana con Dije de Luna y corazón con microcircones turquesas",
       "description_en": "Venetian chain with moon charm and heart with turquoise microcircles",
       "personalized": false,
       "available": true,
@@ -885,7 +881,7 @@
       "promo": null
     },
     {
-      "name": "Collar de perla ",
+      "name": "Collar de perla",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -909,14 +905,14 @@
       "promo": null
     },
     {
-      "name": "Cadena clip con dije de árbol de vida ",
+      "name": "Cadena clip con dije de árbol de vida",
       "category": "Cadenas",
       "price": 55,
       "oldPrice": 65,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida ",
+      "description": "Viene en juego con aretes de árbol de vida. Elegante cadena de labrado clip con un broche especial y un dije de microcircones bañado en oro de 18 k. Árbol de vida",
       "description_en": "Pairs perfectly with our Tree of Life earrings. An elegant carved clip chain with a special clasp and an 18k gold-plated micro zircon Tree of Life charm.",
       "personalized": false,
       "available": true,
@@ -933,14 +929,14 @@
       "promo": null
     },
     {
-      "name": "Cadena con dije de gato y panza de corazón con circones ",
+      "name": "Cadena con dije de gato y panza de corazón con circones",
       "category": "Cadenas",
       "price": 35,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones ",
+      "description": "Cadena de estilo clásico con un dije especial de gatito con panza de corazón con circones",
       "description_en": "Classic style chain with a special zircon heart belly kitten charm",
       "personalized": false,
       "available": true,
@@ -957,14 +953,14 @@
       "promo": null
     },
     {
-      "name": "Cadena de balines con dije de corazón con circones ",
+      "name": "Cadena de balines con dije de corazón con circones",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k ",
+      "description": "Cadena de balines bañada en oro acompañada de un dije lleno de microcircones también bañados en oro de 18 k",
       "description_en": "Gold-plated ball chain paired with a charm full of 18k gold-plated micro zircons.",
       "personalized": false,
       "available": true,
@@ -979,7 +975,7 @@
       "promo": null
     },
     {
-      "name": "Anillo ajustable color plateado ",
+      "name": "Anillo ajustable color plateado",
       "category": "Anillos",
       "price": 25,
       "oldPrice": null,
@@ -1019,7 +1015,7 @@
       "name_en": "Adjustable ring of zircons and initial"
     },
     {
-      "name": "Anillo ajustable con microcircones en degrade ",
+      "name": "Anillo ajustable con microcircones en degradé",
       "category": "Anillos",
       "price": 25,
       "oldPrice": null,
@@ -1039,7 +1035,7 @@
       "name_en": "Adjustable Ring with Micro Zirconia Degradé"
     },
     {
-      "name": "Anillo dorado ajustable de circones fucsia ",
+      "name": "Anillo dorado ajustable de circones fucsia",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1059,7 +1055,7 @@
       "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
     },
     {
-      "name": "Ear cuff ancho plateado ",
+      "name": "Ear cuff ancho plateado",
       "category": "Ear cuff",
       "price": 22,
       "oldPrice": null,
@@ -1086,7 +1082,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "También lo puedes pedir con su pulsera en juego ",
+      "description": "También lo puedes pedir con su pulsera en juego",
       "description_en": "Also available as a matching set with its bracelet.",
       "personalized": false,
       "available": true,
@@ -1099,7 +1095,7 @@
       "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
     },
     {
-      "name": "Ajustable. Anillo chuncky con circones verdes ",
+      "name": "Anillo chunky ajustable con circones verdes",
       "category": "Anillos",
       "price": 25,
       "oldPrice": null,
@@ -1119,7 +1115,7 @@
       "name_en": "Adjustable Chunky Ring with Green Zirconia"
     },
     {
-      "name": "Entorchado ajustable ",
+      "name": "Entorchado ajustable",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1139,7 +1135,7 @@
       "name_en": "Adjustable Twisted Ring"
     },
     {
-      "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado ",
+      "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado",
       "category": "Anillos",
       "price": 35,
       "oldPrice": null,
@@ -1159,7 +1155,7 @@
       "name_en": "Size 7 Ring with Emerald Stone and Micro Zirconia"
     },
     {
-      "name": "Anillo ajustable con 3 circones ",
+      "name": "Anillo ajustable con 3 circones",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1179,14 +1175,14 @@
       "name_en": "Adjustable Ring with 3 Zirconia"
     },
     {
-      "name": "Anillos ajustable con trébol negro ",
+      "name": "Anillo ajustable con trébol negro",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "El acero inoxidable tiene a su vez un baño de oro. ",
+      "description": "El acero inoxidable tiene a su vez un baño de oro.",
       "description_en": "Stainless steel with gold plating.",
       "personalized": false,
       "available": true,
@@ -1196,12 +1192,12 @@
       "zoom": 1.3,
       "material": "Acero inoxidable",
       "id": 1781880340918,
-      "name_en": "Black Clover Adjustable Rings",
+      "name_en": "Black Clover Adjustable Ring",
       "images": [],
       "promo": null
     },
     {
-      "name": "Anillo dorado ajustable ",
+      "name": "Anillo dorado ajustable",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1221,7 +1217,7 @@
       "name_en": "Adjustable Gold Ring"
     },
     {
-      "name": "Anillo ajustable con circones blancos ",
+      "name": "Anillo ajustable con circones blancos",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1241,7 +1237,7 @@
       "name_en": "Adjustable Ring with White Zirconia"
     },
     {
-      "name": "Cadena con dije de Cruz grande con piedras color esmeralda ",
+      "name": "Cadena con dije de Cruz grande con piedras color esmeralda",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -1261,7 +1257,7 @@
       "name_en": "Large Emerald Cross Charm Chain"
     },
     {
-      "name": "Cadena delicada con dije de corazón nacarado ",
+      "name": "Cadena delicada con dije de corazón nacarado",
       "category": "Cadenas",
       "price": 38,
       "oldPrice": null,
@@ -1281,14 +1277,14 @@
       "name_en": "Delicate Chain with Mother-of-Pearl Heart Charm"
     },
     {
-      "name": "Cadena veneciana con un dije de Cruz de circones ",
+      "name": "Cadena veneciana con un dije de Cruz de circones",
       "category": "Cadenas",
       "price": 125,
       "oldPrice": 165,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Plata ley 925 con un baño de oro de 18 kilates ",
+      "description": "Plata ley 925 con un baño de oro de 18 kilates",
       "description_en": "925 sterling silver with 18k gold plating",
       "personalized": false,
       "available": true,
@@ -1301,7 +1297,7 @@
       "name_en": "Venetian Chain with Zirconia Cross Charm"
     },
     {
-      "name": "San Benito con cruz ",
+      "name": "San Benito con cruz",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -1321,7 +1317,7 @@
       "name_en": "Saint Benedict Medallion with Cross"
     },
     {
-      "name": "Corazón de perla con una silueta de corazón de circon ",
+      "name": "Corazón de perla con una silueta de corazón de circón",
       "category": "Cadenas",
       "price": 38,
       "oldPrice": null,
@@ -1341,7 +1337,7 @@
       "name_en": "Pearl Heart with Zirconia Heart Silhouette Chain"
     },
     {
-      "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble ",
+      "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
@@ -1361,7 +1357,7 @@
       "name_en": "Turquoise Opal Charm Chain with Double-Chain Effect"
     },
     {
-      "name": "Cadena de circon rosado bajo",
+      "name": "Cadena de circón rosa claro",
       "category": "Cadenas",
       "price": 35,
       "oldPrice": null,
@@ -1381,7 +1377,7 @@
       "name_en": "Soft Pink Zirconia Chain"
     },
     {
-      "name": "Dije de balletista con inicial ",
+      "name": "Dije de bailarina con inicial",
       "category": "Cadenas",
       "price": 38,
       "oldPrice": null,
@@ -1401,7 +1397,7 @@
       "name_en": "Ballerina Charm with Initial"
     },
     {
-      "name": "Cadena con placa grabada a láser ",
+      "name": "Cadena con placa grabada a láser",
       "category": "Hombres",
       "price": 55,
       "oldPrice": null,
@@ -1421,7 +1417,7 @@
       "name_en": "Chain with Laser Engraved Plate"
     },
     {
-      "name": "Anillo de aquamarina ",
+      "name": "Anillo de aguamarina",
       "category": "Anillos",
       "price": 20,
       "oldPrice": null,
@@ -1483,14 +1479,14 @@
       "name_en": "Yin & Yang Couple Bracelets"
     },
     {
-      "name": "GG ",
+      "name": "GG",
       "category": "Juegos",
       "price": 75,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Cadena GG junto con sus aretes, la cadena viene con 5 símbolos GG y 7 circones. \nCon un labrado delicado y elegante ideal para hacerte sentir más confidente y segura. Los aretes son delicados y livianos. ",
+      "description": "Cadena GG junto con sus aretes, la cadena viene con 5 símbolos GG y 7 circones. \nCon un labrado delicado y elegante ideal para hacerte sentir más confidente y segura. Los aretes son delicados y livianos.",
       "personalized": false,
       "available": false,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1782309816739_image_jpg.webp",
@@ -1534,14 +1530,14 @@
       "promo": null
     },
     {
-      "name": "Cadena de cruz con circones ",
+      "name": "Cadena de cruz con circones",
       "category": "Cadenas",
       "price": 45,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Es acero inoxidable con un baño de oro de 18k, resistente para el uso diario e hipoalergénico. La cruz llena de circon le da ese toque Glam pero sigue siendo minimalista. Se ve elegante y con buen brillo. El tamaño de la cruz (1,74 cm) es perfecto para que se destaque sin verse exagerada. ",
+      "description": "Es acero inoxidable con un baño de oro de 18k, resistente para el uso diario e hipoalergénico. La cruz llena de circón le da ese toque Glam pero sigue siendo minimalista. Se ve elegante y con buen brillo. El tamaño de la cruz (1,74 cm) es perfecto para que se destaque sin verse exagerada.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1785465810720_img_5246_jpeg.webp",
@@ -1558,7 +1554,7 @@
       "promo": null
     },
     {
-      "name": "Bangel Evil eye ",
+      "name": "Brazalete ojo turco",
       "category": "Pulseras",
       "price": 35,
       "oldPrice": null,
@@ -1576,13 +1572,13 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1785469064780_img_5259_jpeg.webp"
       ],
-      "name_en": "Bangel Evil eye",
+      "name_en": "Evil Eye Bangle",
       "description_en": "Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection",
       "id": 1785469196142,
       "promo": null
     },
     {
-      "name": "Bangle Greek Eye ",
+      "name": "Brazalete ojo griego",
       "category": "Pulseras",
       "price": 35,
       "oldPrice": null,
@@ -1606,14 +1602,14 @@
       "promo": null
     },
     {
-      "name": "Anillo vintage aventurine ",
+      "name": "Anillo vintage de aventurina",
       "category": "Anillos",
       "price": 20,
       "oldPrice": 25,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Anillo Vintage Aventurine - Baño 18K\n\nAnillo doble capa estilo vintage con acabado en oro 18K sobre acero inoxidable. \nDiseño con aro trenzado y detalle de bolitas, centro con piedra natural verde aventurina ovalada. \nPieza ajustable, liviana y resistente para el uso diario. \n\nDetalles:\n- Estilo: Vintage / Boho Chic\n- Ajustable: Se adapta a todos los tallajes\n\nSimboliza abundancia, suerte y prosperidad. Perfecto para usar solo o en stacking con otros anillos dorados.\n",
+      "description": "Anillo Vintage Aventurine - Baño 18K\n\nAnillo doble capa estilo vintage con acabado en oro 18K sobre acero inoxidable. \nDiseño con aro trenzado y detalle de bolitas, centro con piedra natural verde aventurina ovalada. \nPieza ajustable, liviana y resistente para el uso diario. \n\nDetalles:\n- Estilo: Vintage / Boho Chic\n- Ajustable: Se adapta a todos los tallajes\n\nSimboliza abundancia, suerte y prosperidad. Perfecto para usar solo o en stacking con otros anillos dorados.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1785469932212_img_5265_jpeg.webp",
@@ -1624,7 +1620,7 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1785469948567_img_5266_jpeg.webp"
       ],
-      "name_en": "Vintage aventurine ring",
+      "name_en": "Vintage Aventurine Ring",
       "description_en": "Vintage Aventurine Ring - 18K Gold Plated\n\nVintage-style double layer ring with an 18K gold finish on stainless steel. \nDesign with a braided ring and bead detail, centered with an oval natural green aventurine stone. \nAdjustable, lightweight piece, durable for everyday wear. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect worn alone or stacked with other gold rings.",
       "id": 1785470275920,
       "promo": null
@@ -1637,7 +1633,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Anillo Pulpo Glossy - Baño Oro 18K\n\nEleva tu estilo con nuestro anillo statement de pulpo. Una pieza audaz, con diseño 3D y acabado brillante en oro 18K que rinde homenaje al océano y a la personalidad única.\n\nHecho en acero inoxidable de alta calidad, es resistente y perfecto para el uso diario. Su aro ajustable se adapta a todos los tallajes, y el diseño ergonómico hace que se vea siempre recto y alineado en el dedo.\n\nCaracterísticas:\n- Material: Acero inoxidable premium con baño de oro 18K\n- Diseño: Pulpo 3D con tentáculos y detalle de ventosas\n- Acabado: Glossy brillante\n- Talla: Ajustable - se adapta a tu dedo\n- Estilo: Statement / Marítimo / Boho Chic\n\n¿Por qué te encantará?\nEl pulpo simboliza inteligencia, adaptabilidad y misterio. Este anillo es perfecto para quienes buscan joyería con personalidad que no pase desapercibida. Úsalo solo como pieza protagonista o combínalo con anillos minimalistas para un stacking moderno.\n\nIdeal para regalar o para darle un toque único a tus outfits de verano, playa y ciudad.\n",
+      "description": "Anillo Pulpo Glossy - Baño Oro 18K\n\nEleva tu estilo con nuestro anillo statement de pulpo. Una pieza audaz, con diseño 3D y acabado brillante en oro 18K que rinde homenaje al océano y a la personalidad única.\n\nHecho en acero inoxidable de alta calidad, es resistente y perfecto para el uso diario. Su aro ajustable se adapta a todos los tallajes, y el diseño ergonómico hace que se vea siempre recto y alineado en el dedo.\n\nCaracterísticas:\n- Material: Acero inoxidable premium con baño de oro 18K\n- Diseño: Pulpo 3D con tentáculos y detalle de ventosas\n- Acabado: Glossy brillante\n- Talla: Ajustable - se adapta a tu dedo\n- Estilo: Statement / Marítimo / Boho Chic\n\n¿Por qué te encantará?\nEl pulpo simboliza inteligencia, adaptabilidad y misterio. Este anillo es perfecto para quienes buscan joyería con personalidad que no pase desapercibida. Úsalo solo como pieza protagonista o combínalo con anillos minimalistas para un stacking moderno.\n\nIdeal para regalar o para darle un toque único a tus outfits de verano, playa y ciudad.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1785470541371_img_5268_jpeg.webp",
@@ -1676,14 +1672,14 @@
       "promo": null
     },
     {
-      "name": "FE Red String Bracelet",
+      "name": "Pulsera de hilo rojo FE",
       "category": "Pulseras",
       "price": 20,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": "Bestseller",
-      "description": "Wear your faith every day \nRed adjustable string + 18K Goldfilled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift \n",
+      "description": "Wear your faith every day \nRed adjustable string + 18K Goldfilled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1786308384856_img_5620_jpeg.webp",
@@ -1698,7 +1694,7 @@
       "promo": null
     },
     {
-      "name": "PULSERA OJO TURCO AZUL + MEDALLA + PERLA",
+      "name": "Pulsera ojo turco azul + medalla + perla",
       "category": "Pulseras",
       "price": 25,
       "oldPrice": null,
@@ -1714,7 +1710,7 @@
       "zoom": 1.15,
       "material": "Gold filled",
       "images": [],
-      "name_en": "BLUE TURKISH EYE BRACELET + MEDAL + PEARL",
+      "name_en": "Blue Evil Eye Bracelet + Medal + Pearl",
       "description_en": "Blue Evil Eye Bracelet♡\nFaith, protection & elegance in one\nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl\nProtection, faith & good vibes\nMinimalist design | Unisex\n18K gold-filled | Hypoallergenic\nThe perfect spiritual gift",
       "id": 1786315591380,
       "promo": null
@@ -1727,7 +1723,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Menos es más. \nEsta versión minimalista de nuestra pulsera de hilo rojo resalta lo esencial: el ojo turco rojo como símbolo de protección. Perfecta si buscas un diseño delicado, discreto y con mucho significado. Personalízala con balines o sin balines ",
+      "description": "Menos es más. \nEsta versión minimalista de nuestra pulsera de hilo rojo resalta lo esencial: el ojo turco rojo como símbolo de protección. Perfecta si buscas un diseño delicado, discreto y con mucho significado. Personalízala con balines o sin balines",
       "personalized": true,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1786328331861_img_5627_jpeg.webp",
@@ -1768,7 +1764,7 @@
       "promo": null
     },
     {
-      "name": "Heart Chinoiserie Earrings",
+      "name": "Aretes de corazón chinoiserie",
       "category": "Aretes",
       "price": 25,
       "oldPrice": null,
@@ -1790,14 +1786,14 @@
       "promo": null
     },
     {
-      "name": "Set aretes y cadena ",
+      "name": "Set aretes y cadena",
       "category": "Juegos",
       "price": 55,
       "oldPrice": null,
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Hermosos sets de 18K goldplated stainless steel.\nUna Joya para que luzcas mas bella de lo que ya eres ",
+      "description": "Hermosos sets de 18K goldplated stainless steel.\nUna Joya para que luzcas mas bella de lo que ya eres",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1788107083226_img_6856_jpeg.webp",
@@ -1825,7 +1821,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "18K GOLD PLATED Stainless Steel \nPreciosas, hacen que tu mano luzca femenina y delicada ",
+      "description": "18K GOLD PLATED Stainless Steel \nPreciosas, hacen que tu mano luzca femenina y delicada",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1788107362157_img_6846_jpeg.webp",
@@ -1872,7 +1868,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Hermosas hand chains 18 K Goldplated Stainless steel únicas para lucir tu mano mas bella y femenina. ",
+      "description": "Hermosas hand chains 18 K Goldplated Stainless steel únicas para lucir tu mano mas bella y femenina.",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1788539739688_img_7225_jpeg.webp",
@@ -1905,7 +1901,7 @@
       "img": "collar",
       "color": "rose",
       "tag": "Nuevo",
-      "description": "Un diseño inspirado en las formas orgánicas del mar. El Anillo Conchas Doradas está compuesto por pequeñas conchas entrelazadas que crean una pieza delicada, luminosa y diferente.\n\nElaborado en acero inoxidable 316L con acabado dorado, es ideal para llevar solo como protagonista o combinar con otros anillos para un look más personal.\n\nDetalles: acero inoxidable 316L · acabado dorado · diseño de conchas · estilo delicado y minimalista. . Talla ajustable ",
+      "description": "Un diseño inspirado en las formas orgánicas del mar. El Anillo Conchas Doradas está compuesto por pequeñas conchas entrelazadas que crean una pieza delicada, luminosa y diferente.\n\nElaborado en acero inoxidable 316L con acabado dorado, es ideal para llevar solo como protagonista o combinar con otros anillos para un look más personal.\n\nDetalles: acero inoxidable 316L · acabado dorado · diseño de conchas · estilo delicado y minimalista. . Talla ajustable",
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1788921641910_cacusa_anillo_producto_jpg.webp",
@@ -1992,8 +1988,8 @@
       "promo": null
     },
     {
-      "name": "Argollas pequeñas de 1 cm ",
-      "name_en": "1 cm small rings",
+      "name": "Argollas pequeñas de 1 cm",
+      "name_en": "Small 1 cm Hoops",
       "category": "Aretes",
       "price": 25,
       "oldPrice": null,
@@ -2014,7 +2010,7 @@
       "promo": null
     },
     {
-      "name": "Aretes de flor ",
+      "name": "Aretes de flor",
       "name_en": "Flower earrings",
       "category": "Aretes",
       "price": 25,
@@ -2022,7 +2018,7 @@
       "img": "collar",
       "color": "rose",
       "tag": null,
-      "description": "Hipoalergenico, livianos, no irritan la piel. \nHermosos aretes de flor con un circon en el medio. No son pesados ",
+      "description": "Hipoalergenico, livianos, no irritan la piel. \nHermosos aretes de flor con un circón en el medio. No son pesados",
       "description_en": "Hypoallergenic, lightweight, does not irritate the skin. \nBeautiful flower earrings with a zircon in the middle. They are not heavy",
       "personalized": false,
       "available": true,
@@ -2036,7 +2032,7 @@
       "promo": null
     },
     {
-      "name": "Aretes de rombo de circon",
+      "name": "Aretes de rombo de circón",
       "name_en": "Zircon Diamond Earrings",
       "category": "Aretes",
       "price": 25,
@@ -2103,7 +2099,7 @@
     },
     {
       "name": "Argollas",
-      "name_en": "Rings:",
+      "name_en": "Hoops",
       "category": "Aretes",
       "price": 25,
       "oldPrice": null,
@@ -2278,7 +2274,7 @@
       "promo": null
     },
     {
-      "name": "Aretes de circon verde",
+      "name": "Aretes de circón verde",
       "name_en": "Green Zircon Earrings",
       "category": "Aretes",
       "price": 20,
@@ -2388,7 +2384,7 @@
       "promo": null
     },
     {
-      "name": "Aretes Rectangulo",
+      "name": "Aretes Rectángulo",
       "name_en": "Rectangle Earrings",
       "category": "Aretes",
       "price": 25,
@@ -2454,7 +2450,7 @@
       "promo": null
     },
     {
-      "name": "Anillo triple circon",
+      "name": "Anillo triple circón",
       "name_en": "Triple zircon ring",
       "category": "Anillos",
       "price": 25,
@@ -2499,7 +2495,7 @@
     },
     {
       "name": "Pulseras rojas",
-      "name_en": "Polseres vermelles",
+      "name_en": "Red Bracelets",
       "category": "Pulseras",
       "price": 22,
       "oldPrice": null,
@@ -2590,7 +2586,7 @@
       "promo": null
     },
     {
-      "name": "Pulsera te amo en 100 idiomas ",
+      "name": "Pulsera te amo en 100 idiomas",
       "name_en": "I love you bracelet in 100 languages",
       "category": "Pulseras",
       "price": 28,
@@ -2612,7 +2608,7 @@
       "promo": null
     },
     {
-      "name": "Pulsera roja personalizada ",
+      "name": "Pulsera roja personalizada",
       "name_en": "Custom red bracelet",
       "category": "Pulseras",
       "price": 45,
@@ -2658,8 +2654,8 @@
       "promo": null
     },
     {
-      "name": "Argollas con circon ",
-      "name_en": "Zircon Eyelets",
+      "name": "Argollas con circón",
+      "name_en": "Zircon Hoops",
       "category": "Aretes",
       "price": 25,
       "oldPrice": null,
