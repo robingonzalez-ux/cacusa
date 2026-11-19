@@ -73,6 +73,8 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .sec li::before{content:'✓';position:absolute;left:0;top:8px;color:var(--pink);font-weight:700}
 .callout{background:var(--pink-pale);border-left:4px solid var(--pink);border-radius:12px;padding:18px 22px;margin:6px 0 4px}
 .callout strong{color:var(--ink)}
+.text-link{color:var(--pink-deep);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.text-link:hover{color:var(--pink)}
 .contact{margin-top:36px;padding-top:30px;border-top:1.5px solid var(--ink-light);text-align:center}
 .contact p{font-family:var(--fe);font-size:17px;font-style:italic;color:var(--ink-muted);margin-bottom:16px}
 .wa-btn{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:white;font-family:var(--fu);font-weight:600;font-size:14px;letter-spacing:.04em;border-radius:999px;padding:14px 30px;box-shadow:0 4px 20px rgba(238,111,168,.35);transition:transform .25s}
@@ -81,12 +83,15 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 
 /* FOOTER */
 footer{background:var(--grad-full);padding:40px 24px;text-align:center}
+/* Velo oscuro detras del contenido del footer (como el CTA del home): los links blancos de 13px no se leian sobre la parte clara del degradado */
+footer{position:relative;isolation:isolate}
+footer::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(42,22,32,.42) 0%,rgba(42,22,32,.55) 100%);pointer-events:none}
 .f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
-.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.85)}
 .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8)}
+.f-links a{font-family:var(--fu);font-size:13px;color:#fff}
 .f-links a:hover{color:white}
-.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:20px;margin-bottom:12px}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:20px;margin-bottom:12px}
 .f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
 .f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s}
 .f-social-btn:hover{background:rgba(255,255,255,.28)}
@@ -97,15 +102,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="/en/" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="/en/ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Shop</a>
     <div class="lang-sw"><a id="lEs" href="/devoluciones.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" class="on" aria-current="page" href="/en/devoluciones.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="/en/" class="nav-back"><span data-i18n="nav.back">← Back to home</span></a>
+    <a href="/en/" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Back to home</span><span class="nb-short" data-i18n="nav.backShort">← Home</span></a>
   </div>
 </nav>
 
@@ -117,11 +143,11 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro" id="devIntro">At CACUSA by Taitus, each piece of jewelry is handcrafted and personalized just for you. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.</p>
+    <p class="intro" id="devIntro">At CACUSA by Taitus we check every piece by hand before shipping it. If your piece arrives with a manufacturing defect, we will repair or replace it at no cost if you message us within the first 48 hours after delivery. We do not accept returns or exchanges for other reasons, such as taste, size or a change of mind.</p>
 
     <div class="sec">
-      <h2><span class="dot"></span><span data-i18n="dev.sec1H2">Why don't we accept returns?</span></h2>
-      <p id="devPorQueBody">Our pieces are not generic stock products: they are designed and crafted especially for you, with your personalization details (name, date, initials, message, material, size or color chosen). Because each one is unique to the person who ordered it, it cannot be resold or returned to inventory, so all sales are final.</p>
+      <h2><span class="dot"></span><span data-i18n="dev.sec1H2">What does our policy cover?</span></h2>
+      <p id="devPorQueBody">We are a small workshop with a simple policy: we cover manufacturing defects reported within 48 hours of delivery, and we do not accept returns or exchanges for taste, size or a change of mind. Personalized pieces (with a name, date, initials or message) are made especially for you and cannot be resold, so they cannot be exchanged either — only the manufacturing-defect coverage applies.</p>
     </div>
 
     <div class="sec">
@@ -145,7 +171,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="dev.sec4H2">What if you need help after the 48 hours?</span></h2>
       <p id="devPostBody">After the first 48 hours, that manufacturing-defect coverage no longer applies — but that doesn't mean you're on your own. If your piece needs cleaning, has tarnished, or the plating has worn with use, message us on WhatsApp: we'll guide you on how to care for it and what your options are.</p>
-      <p style="margin-top:8px"><a href="/en/cuidados.html" data-i18n="dev.sec4Link">See our jewelry care guide →</a></p>
+      <p style="margin-top:8px"><a class="text-link" href="/en/cuidados.html" data-i18n="dev.sec4Link">See our jewelry care guide →</a></p>
     </div>
 
     <div class="contact">
@@ -176,7 +202,13 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="/en/" data-i18n="nav.home">Home</a>
-    <a href="/en/ui_kits/store/" data-i18n="nav.store">Store</a>
+    <a href="/en/ui_kits/store/" data-i18n="nav.shop">Shop</a>
+    <a href="/en/envios.html" data-i18n="nav.shipping">Shipping</a>
+    <a href="/en/devoluciones.html" data-i18n="nav.returns">Returns</a>
+    <a href="/en/cuidados.html" data-i18n="nav.care">Care</a>
+    <a href="/en/guias.html" data-i18n="nav.guides">Guides</a>
+    <a href="/privacidad.html?lang=en" data-i18n="nav.privacy">Privacy</a>
+    <a href="/en/cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
@@ -191,7 +223,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?'Hi, I have a question about a CACUSA product before buying ✨':'Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✨';
+        const msg=_L==='en'?'Hi, I have a question about a CACUSA product before buying ✦':'Hola, tengo una consulta sobre un producto de CACUSA antes de comprar ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const pg=(cfg.pages&&cfg.pages.devoluciones)||{};
@@ -207,9 +239,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         document.title='Return Policy — CACUSA by Taitus';
         document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         const devI=document.getElementById('devIntro');
-        if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus, every piece is <strong>handcrafted and personalized</strong> just for you. If your piece arrives with a <strong>manufacturing defect</strong>, we will repair or replace it at no cost within the first 48 hours. Because these are made-to-order pieces, we cannot accept returns or exchanges for other reasons.';
+        if(devI)devI.innerHTML=pgEn.intro||'At CACUSA by Taitus we check every piece by hand before shipping it. If your piece arrives with a <strong>manufacturing defect</strong>, we will repair or replace it at no cost if you message us within the first <strong>48 hours</strong> after delivery. We do not accept returns or exchanges for other reasons, such as taste, size or a change of mind.';
         const devP=document.getElementById('devPorQueBody');
-        if(devP)devP.innerHTML=pgEn.secPorQueBody||'Our pieces are not generic stock products — they are designed and crafted especially for you, with your personalization details. As each piece is unique to you, all sales are <strong>final</strong>.';
+        if(devP)devP.innerHTML=pgEn.secPorQueBody||'We are a small workshop with a simple policy: we cover <strong>manufacturing defects</strong> reported within 48 hours of delivery, and we do not accept returns or exchanges for taste, size or a change of mind. <strong>Personalized pieces</strong> (with a name, date, initials or message) are made especially for you and cannot be resold, so they cannot be exchanged either — only the manufacturing-defect coverage applies.';
         st('devAntesBody',pgEn.secAntesBody||'We ask you to carefully review all details before confirming your purchase. If you have any questions, message us on WhatsApp:');
         const devD=document.getElementById('devDefectoBody');
         if(devD)devD.innerHTML=pgEn.secDefectoBody||'Your satisfaction matters to us. If your piece arrives with a <strong>manufacturing defect</strong> or an error on our part, contact us within <strong>48 hours</strong> of receiving your order with clear photos. We\'ll evaluate the case and, where applicable, proceed with <strong>repair or replacement</strong> at no extra charge.';
@@ -217,8 +249,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       }
     }
   }catch(e){}
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}

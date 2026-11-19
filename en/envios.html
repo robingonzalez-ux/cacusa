@@ -85,12 +85,15 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 
 /* FOOTER */
 footer{background:var(--grad-full);padding:40px 24px;text-align:center}
+/* Velo oscuro detras del contenido del footer (como el CTA del home): los links blancos de 13px no se leian sobre la parte clara del degradado */
+footer{position:relative;isolation:isolate}
+footer::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(42,22,32,.42) 0%,rgba(42,22,32,.55) 100%);pointer-events:none}
 .f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
-.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.85)}
 .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8)}
+.f-links a{font-family:var(--fu);font-size:13px;color:#fff}
 .f-links a:hover{color:white}
-.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:20px;margin-bottom:12px}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:20px;margin-bottom:12px}
 .f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
 .f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s}
 .f-social-btn:hover{background:rgba(255,255,255,.28)}
@@ -101,15 +104,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
 }
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+}
 </style>
 </head>
 <body>
 
 <nav>
   <a href="/en/" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="/en/ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Shop</a>
     <div class="lang-sw"><a id="lEs" href="/envios.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" class="on" aria-current="page" href="/en/envios.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="/en/" class="nav-back"><span data-i18n="nav.back">← Back to home</span></a>
+    <a href="/en/" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Back to home</span><span class="nb-short" data-i18n="nav.backShort">← Home</span></a>
   </div>
 </nav>
 
@@ -121,33 +145,36 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <div class="wrap">
   <div class="card">
-    <p class="intro" id="envIntro">Each CACUSA piece is handcrafted and personalized for every client, so the preparation time is part of the process. Here's what you need to know about shipping times, methods and costs.</p>
+    <p class="intro" id="envIntro">Here's what shipping costs, how long it takes and how to track your jewelry. In-stock pieces ship within a few days; personalized pieces are handcrafted for you before they ship.</p>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.sec1H2">Shipping cost</span></h2>
-      <div class="price-row"><span class="lbl" data-i18n="envios.lblStandard">Standard shipping</span><span class="val" id="shipCost">$10.00</span></div>
+      <div class="price-row"><span class="lbl" data-i18n="envios.lblStandard">Shipping to Ecuador and the United States</span><span class="val" id="shipCost">$10.00</span></div>
       <div class="price-row"><span class="lbl" data-i18n="envios.lblFree">Free shipping on orders from</span><span class="val" id="shipFree">$90.00</span></div>
-      <div class="callout" data-i18n="envios.cartCallout">The cost and the free-shipping threshold are calculated automatically in the <strong>store</strong> cart at checkout.</div>
+      <div class="callout" data-i18n="envios.cartCallout"><strong>Flat rate:</strong> the same cost anywhere in Ecuador and the United States, whatever the city. Free shipping is applied automatically in the <strong>store</strong> cart at checkout.</div>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.sec2H2">Preparation and delivery time</span></h2>
-      <p id="envPrepBody">Since each piece is personalized, it is first crafted especially for you, then shipped. Standard production time is <strong>5 to 10 business days</strong>, depending on the design chosen. Once your order is confirmed via WhatsApp, we'll keep you updated.</p>
+      <ul>
+        <li data-i18n="envios.prepStock"><strong>In-stock pieces:</strong> ship within <strong>1 to 3 business days</strong> of your order.</li>
+        <li data-i18n="envios.prepCustom"><strong>Personalized pieces:</strong> are handcrafted for you in <strong>5 to 10 business days</strong>, depending on the design, and then shipped.</li>
+      </ul>
+      <p data-i18n="envios.prepBody">You place your order online in the store and receive the confirmation by email. The carrier's delivery time, shown below for your country, is added to the preparation time.</p>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.ecH2">Ecuador — via Servientrega</span></h2>
       <p data-i18n="envios.ecBody">We ship nationwide with Servientrega, delivered to your door anywhere in the country.</p>
-      <div class="price-row"><span class="lbl" data-i18n="envios.ecSame">Within the same city</span><span class="val" id="envEC1">from $3.50</span></div>
-      <div class="price-row"><span class="lbl" data-i18n="envios.ecOther">To another city</span><span class="val" id="envEC2">$5.25 – $6.30</span></div>
-      <div class="callout" id="envECNote">Same-day delivery if dispatched early within the same city; 1–2 business days to other cities. Saturday shipments are delivered on Monday.</div>
+      <div class="price-row"><span class="lbl" data-i18n="envios.usaRate">Rate</span><span class="val" id="shipCostEc">$10.00</span></div>
+      <div class="callout" id="envECNote">Once shipped, your order arrives in 1–2 business days (same day within the same city if it ships early). Saturday shipments are delivered on Monday.</div>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.usaH2">United States — via USPS</span></h2>
       <p data-i18n="envios.usaBody">For customers in the USA, we ship with USPS Ground Advantage.</p>
       <div class="price-row"><span class="lbl" data-i18n="envios.usaRate">Rate</span><span class="val" id="shipCostUsa">$10.00</span></div>
-      <div class="callout" id="envUsaCallout">Estimated delivery time: <strong id="envUSATime">2–5 business days</strong>, depending on the destination zone within the US.</div>
+      <div class="callout" id="envUsaCallout">Once shipped, estimated delivery time: <strong id="envUSATime">2–5 business days</strong>, depending on the destination zone within the US.</div>
     </div>
 
     <div class="sec">
@@ -156,12 +183,12 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     </div>
 
     <div class="sec">
-      <p style="font-size:13px;color:var(--ink-muted)" data-i18n="envios.disc">* Servientrega and USPS rates are for reference and may vary depending on the weight, package dimensions and each carrier's current coverage. The final cost is confirmed with you before your order ships.</p>
+      <p style="font-size:13px;color:var(--ink-muted)" data-i18n="envios.disc">* Delivery times are carrier estimates and are counted in business days from dispatch. The shipping rate is flat: it does not change with weight or city.</p>
     </div>
 
     <div class="sec">
       <h2><span class="dot"></span><span data-i18n="envios.trackH2">Tracking your order</span></h2>
-      <p data-i18n="envios.trackBody">We confirm by WhatsApp when your order is dispatched, along with the tracking number (when applicable), so you always know where your jewelry is.</p>
+      <p data-i18n="envios.trackBody">When we ship your order, you receive the tracking number by email so you always know where your jewelry is. In the United States that email is sent automatically, with a direct USPS tracking link.</p>
     </div>
 
     <div class="contact">
@@ -192,7 +219,13 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="/en/" data-i18n="nav.home">Home</a>
-    <a href="/en/ui_kits/store/" data-i18n="nav.store">Store</a>
+    <a href="/en/ui_kits/store/" data-i18n="nav.shop">Shop</a>
+    <a href="/en/envios.html" data-i18n="nav.shipping">Shipping</a>
+    <a href="/en/devoluciones.html" data-i18n="nav.returns">Returns</a>
+    <a href="/en/cuidados.html" data-i18n="nav.care">Care</a>
+    <a href="/en/guias.html" data-i18n="nav.guides">Guides</a>
+    <a href="/privacidad.html?lang=en" data-i18n="nav.privacy">Privacy</a>
+    <a href="/en/cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
@@ -207,17 +240,15 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       const cfg=data.config||{};
       const num=String(data.whatsapp||cfg.whatsapp||'').replace(/\D/g,'');
       if(num){
-        const msg=_L==='en'?'Hi, I have a question about my CACUSA order shipment ✨':'Hola, tengo una consulta sobre el envío de mi pedido CACUSA ✨';
+        const msg=_L==='en'?'Hi, I have a question about my CACUSA order shipment ✦':'Hola, tengo una consulta sobre el envío de mi pedido CACUSA ✦';
         document.getElementById('waBtn').href='https://wa.me/'+num+'?text='+encodeURIComponent(msg);
       }
       const sh=cfg.shipping||{};
-      if(sh.cost!=null){const c='$'+parseFloat(sh.cost).toFixed(2);document.getElementById('shipCost').textContent=c;document.getElementById('shipCostUsa').textContent=c;}
+      if(sh.cost!=null){const c='$'+parseFloat(sh.cost).toFixed(2);['shipCost','shipCostUsa','shipCostEc'].forEach(id=>{document.getElementById(id).textContent=c;});}
       if(sh.freeThreshold!=null) document.getElementById('shipFree').textContent='$'+parseFloat(sh.freeThreshold).toFixed(2);
       const pg=(cfg.pages&&cfg.pages.envios)||{};
       const setTxt=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.textContent=v;};
       setTxt('envIntro',pg.intro);
-      setTxt('envEC1',pg.servientregaSameCityRate);
-      setTxt('envEC2',pg.servientregaOtherCityRate);
       if(pg.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pg.servientregaNote;}
       setTxt('envUSATime',pg.uspsTime);
       setTxt('envOtros',pg.otrosPaisesBody);
@@ -227,19 +258,14 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         document.title='Shipping — CACUSA by Taitus';
         document.querySelectorAll('[data-i18n]').forEach(el=>{const v=T[el.getAttribute('data-i18n')];if(v!==undefined)el.innerHTML=v;});
         setTxt('envIntro',pgEn.intro);
-        setTxt('envEC1',pgEn.servientregaSameCityRate);
-        setTxt('envEC2',pgEn.servientregaOtherCityRate);
         if(pgEn.servientregaNote){const el=document.getElementById('envECNote');if(el)el.textContent=pgEn.servientregaNote;}
         setTxt('envOtros',pgEn.otrosPaisesBody);
-        const prepEl=document.getElementById('envPrepBody');
-        if(prepEl)prepEl.innerHTML='Since each piece is personalized, it is first crafted especially for you, then shipped. Standard production time is <strong>5 to 10 business days</strong>, depending on the design chosen. Once your order is confirmed via WhatsApp, we\'ll keep you updated.';
         const usaC=document.getElementById('envUsaCallout');
-        if(usaC){const t=pgEn.uspsTime||'2–5 business days';usaC.innerHTML='Estimated delivery time: <strong id="envUSATime">'+t+'</strong>, depending on the destination zone within the US.';}
+        if(usaC){const t=pgEn.uspsTime||'2–5 business days';usaC.innerHTML='Once shipped, estimated delivery time: <strong id="envUSATime">'+t+'</strong>, depending on the destination zone within the US.';}
       }
     }
   }catch(e){}
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}

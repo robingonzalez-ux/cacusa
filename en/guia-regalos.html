@@ -78,8 +78,11 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 .occ-cat.occ-wa:hover{background:var(--pink);border-color:var(--pink);color:white}
 /* NAVIDAD (campaña de temporada: config.campaign, se oculta sola al terminar) */
 .occ-xmas{background:linear-gradient(135deg,rgba(252,232,243,.55),rgba(238,228,250,.45))}
-.gd-table{width:100%;border-collapse:collapse;margin:0 0 14px;font-family:var(--fu);font-size:14px;background:white;border-radius:12px;overflow:hidden}
-.gd-table caption{text-align:left;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-muted);padding-bottom:8px}
+/* El título va FUERA de la tabla: dentro de un contenedor redondeado con overflow:hidden se recortaba */
+.gd-cap{text-align:left;font-family:var(--fu);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 8px}
+.gd-table-wrap{margin:0 0 14px;background:white;border-radius:12px;overflow:hidden}
+.gd-table{width:100%;border-collapse:collapse;font-family:var(--fu);font-size:14px}
+.gd-table td{white-space:nowrap}
 .gd-table th,.gd-table td{padding:10px 12px;border-bottom:1px solid var(--ink-light);text-align:left}
 .gd-table tr:last-child th,.gd-table tr:last-child td{border-bottom:none}
 .gd-table thead th{font-size:12px;font-weight:600;color:var(--ink-muted)}
@@ -98,12 +101,15 @@ header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;
 
 /* FOOTER */
 footer{background:var(--grad-full);padding:40px 24px;text-align:center}
+/* Velo oscuro detras del contenido del footer (como el CTA del home): los links blancos de 13px no se leian sobre la parte clara del degradado */
+footer{position:relative;isolation:isolate}
+footer::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(42,22,32,.42) 0%,rgba(42,22,32,.55) 100%);pointer-events:none}
 .f-w{font-family:var(--fd);font-weight:900;font-size:22px;letter-spacing:.16em;color:white;text-transform:uppercase}
-.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.65)}
+.f-s{font-family:var(--fs);font-size:15px;color:rgba(255,255,255,.85)}
 .f-links{margin-top:16px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
-.f-links a{font-family:var(--fu);font-size:13px;color:rgba(255,255,255,.8)}
+.f-links a{font-family:var(--fu);font-size:13px;color:#fff}
 .f-links a:hover{color:white}
-.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-top:20px;margin-bottom:12px}
+.f-social-label{font-family:var(--fu);font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);margin-top:20px;margin-bottom:12px}
 .f-social{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:4px}
 .f-social-btn{display:flex;align-items:center;gap:7px;font-family:var(--fu);font-size:12px;font-weight:500;color:white;text-decoration:none;background:rgba(255,255,255,.15);border-radius:999px;padding:8px 16px;transition:background .25s}
 .f-social-btn:hover{background:rgba(255,255,255,.28)}
@@ -113,8 +119,33 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   header{padding:54px 22px 56px}
   .card{padding:32px 22px;border-radius:18px}
   .intro{font-size:17px}
-  .gd-table{font-size:13px}
-  .gd-table th,.gd-table td{padding:9px 8px}
+  .occ{padding:20px 16px}
+  .gd-table{font-size:12.5px}
+  .gd-table th,.gd-table td{padding:9px 6px}
+}
+/* Pantallas muy angostas: las fechas no caben en una línea; mejor partir que recortar */
+@media(max-width:440px){
+  .gd-table td{white-space:normal}
+}
+
+/* Ajustes comunes de las guías (auditoría visual, nov 2026) */
+.nav-r{display:flex;align-items:center;gap:14px}
+.nav-shop{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink-mid);padding:9px 2px;transition:color .2s}
+.nav-shop:hover{color:var(--pink-deep)}
+.nav-back .nb-short{display:none}
+/* Punto rosa alineado a la primera línea cuando el título ocupa 2 líneas */
+.sec h2,.occ h2,.guide-card h2{align-items:flex-start}
+.sec h2 .dot,.occ h2 .dot,.guide-card h2 .dot{margin-top:calc(.8em - 4px)}
+@media(max-width:600px){
+  nav{padding:12px 14px}
+  .nav-logo .w{font-size:18px}
+  .nav-logo .s{font-size:13px}
+  .nav-r{gap:4px}
+  .nav-back{padding:8px 12px}
+  .nav-back .nb-long{display:none}
+  .nav-back .nb-short{display:inline}
+  .lang-sw{gap:0}
+  .lang-sw a,.lang-sw button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
 }
 </style>
 </head>
@@ -122,9 +153,10 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
 
 <nav>
   <a href="/en/" class="nav-logo"><span class="w">CACUSA</span><span class="s">by Taitus</span></a>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="nav-r">
+    <a href="/en/ui_kits/store/" class="nav-shop" data-i18n="nav.shop">Shop</a>
     <div class="lang-sw"><a id="lEs" href="/guia-regalos.html" hreflang="es" lang="es" onclick="cacusaLang('es');return false">ES</a><a id="lEn" class="on" aria-current="page" href="/en/guia-regalos.html" hreflang="en" lang="en" onclick="cacusaLang('en');return false">EN</a></div>
-    <a href="/en/" class="nav-back"><span data-i18n="nav.back">← Back to home</span></a>
+    <a href="/en/" class="nav-back"><span class="nb-long" data-i18n="nav.back">← Back to home</span><span class="nb-short" data-i18n="nav.backShort">← Home</span></a>
   </div>
 </nav>
 
@@ -141,8 +173,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
     <div class="occ occ-xmas" id="xmasOcc">
       <h2><span class="dot"></span><span data-i18n="gr.x.h">Christmas and New Year</span></h2>
       <p data-i18n="gr.x.p">For under the tree, Secret Santa or a year-end gift exchange: shop by budget or have their name engraved. To get it before Christmas, order in time — personalized pieces take 5 to 10 business days.</p>
-      <table class="gd-table">
-        <caption data-i18n="gr.x.cap">Order by</caption>
+      <div class="gd-cap" id="gdCap" data-i18n="gr.x.cap">Order by</div>
+      <div class="gd-table-wrap">
+      <table class="gd-table" aria-describedby="gdCap">
         <thead>
           <tr><td></td><th scope="col" data-i18n="gr.x.us">US</th><th scope="col">Ecuador</th></tr>
         </thead>
@@ -151,6 +184,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
           <tr><th scope="row" data-i18n="gr.x.stock">In-stock piece</th><td><span id="gdStockUs" data-i18n="gr.x.dStockUs">December 14</span></td><td><span id="gdStockEc" data-i18n="gr.x.dStockEc">December 18</span></td></tr>
         </tbody>
       </table>
+      </div>
       <div class="occ-cats">
         <a class="occ-cat" href="/en/ui_kits/store/?precio=0-30" data-i18n="gr.x.c30">Under $30</a>
         <a class="occ-cat" href="/en/ui_kits/store/?precio=30-60" data-i18n="gr.x.c60">$30 to $60</a>
@@ -161,7 +195,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
         <p data-i18n="gr.x.giftP">Would you rather give the club or a gift card? We'll arrange it with you on WhatsApp.</p>
         <div class="occ-cats">
           <a class="occ-cat occ-wa" id="grGiftLovers" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20regalar%20Cacusa%20Lovers%20%28plan%20mensual%20o%20anual%29.%20%C2%BFC%C3%B3mo%20lo%20coordinamos%3F" target="_blank" rel="noopener" data-i18n="gr.x.giftLovers">Gift Cacusa Lovers ♡</a>
-          <a class="occ-cat occ-wa" id="grGiftCard" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20una%20gift%20card%20de%20%24___%20para%20regalar." target="_blank" rel="noopener" data-i18n="gr.x.giftCard">Gift a gift card ◇</a>
+          <a class="occ-cat occ-wa" id="grGiftCard" href="https://wa.me/17867375336?text=Hola%2C%20quiero%20regalar%20una%20gift%20card.%20%C2%BFQu%C3%A9%20montos%20tienen%3F" target="_blank" rel="noopener" data-i18n="gr.x.giftCard">Give a gift card ◇</a>
         </div>
       </div>
       <p class="gd-note" data-i18n="gr.x.pack">✦ Every piece arrives in special gift packaging, ready to go under the tree.</p>
@@ -171,9 +205,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <h2><span class="dot"></span><span data-i18n="gr.v.h">Valentine's Day</span></h2>
       <p data-i18n="gr.v.p">For your partner, or to treat yourselves together: matching pieces, heart charms, and rings that say a lot without needing words.</p>
       <div class="occ-cats">
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/parejas/" data-i18n="cat.parejas">Couples</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/anillos/" data-i18n="cat.anillos">Rings</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/cadenas/" data-i18n="cat.cadenas">Chains</a>
+        <a class="occ-cat" href="/en/ui_kits/store/?regalo=1" data-i18n="gr.giftIdeas">Gift ideas</a>
       </div>
     </div>
 
@@ -183,7 +217,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <div class="occ-cats">
         <a class="occ-cat" href="/en/ui_kits/store/categoria/aretes/" data-i18n="cat.aretes">Earrings</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/pulseras/" data-i18n="cat.pulseras">Bracelets</a>
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/juegos/" data-i18n="cat.juegos">Sets</a>
+        <a class="occ-cat" href="/en/ui_kits/store/?precio=0-30" data-i18n="gr.x.c30">Under $30</a>
       </div>
     </div>
 
@@ -191,9 +225,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <h2><span class="dot"></span><span data-i18n="gr.a.h">Anniversary</span></h2>
       <p data-i18n="gr.a.p">To celebrate your time together: chains with meaningful charms, matching rings, or something engraved with an important date.</p>
       <div class="occ-cats">
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/parejas/" data-i18n="cat.parejas">Couples</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/cadenas/" data-i18n="cat.cadenas">Chains</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/anillos/" data-i18n="cat.anillos">Rings</a>
+        <a class="occ-cat" href="/en/ui_kits/store/?regalo=1" data-i18n="gr.giftIdeas">Gift ideas</a>
       </div>
     </div>
 
@@ -203,7 +237,7 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <div class="occ-cats">
         <a class="occ-cat" href="/en/ui_kits/store/categoria/cadenas/" data-i18n="cat.cadenas">Chains</a>
         <a class="occ-cat" href="/en/ui_kits/store/categoria/pulseras/" data-i18n="cat.pulseras">Bracelets</a>
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/juegos/" data-i18n="cat.juegos">Sets</a>
+        <a class="occ-cat" href="/en/ui_kits/store/categoria/aretes/" data-i18n="cat.aretes">Earrings</a>
       </div>
     </div>
 
@@ -211,8 +245,9 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
       <h2><span class="dot"></span><span data-i18n="gr.s.h">Treat yourself</span></h2>
       <p data-i18n="gr.s.p">Because you deserve something special too: bolder, more modern pieces, perfect for everyday wear.</p>
       <div class="occ-cats">
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/ear-cuff/" data-i18n="cat.earcuff">Ear cuff</a>
-        <a class="occ-cat" href="/en/ui_kits/store/categoria/hand-chain/" data-i18n="cat.handchain">Hand chain</a>
+        <a class="occ-cat" href="/en/ui_kits/store/categoria/anillos/" data-i18n="cat.anillos">Rings</a>
+        <a class="occ-cat" href="/en/ui_kits/store/categoria/aretes/" data-i18n="cat.aretes">Earrings</a>
+        <a class="occ-cat" href="/en/ui_kits/store/?precio=30-60" data-i18n="gr.x.c60">$30 to $60</a>
         <a class="occ-cat" href="/en/ui_kits/store/" data-i18n="gr.viewAll">Browse the full store</a>
       </div>
     </div>
@@ -249,12 +284,19 @@ footer{background:var(--grad-full);padding:40px 24px;text-align:center}
   </div>
   <div class="f-links">
     <a href="/en/" data-i18n="nav.home">Home</a>
-    <a href="/en/ui_kits/store/" data-i18n="nav.store">Store</a>
+    <a href="/en/ui_kits/store/" data-i18n="nav.shop">Shop</a>
+    <a href="/en/envios.html" data-i18n="nav.shipping">Shipping</a>
+    <a href="/en/devoluciones.html" data-i18n="nav.returns">Returns</a>
+    <a href="/en/cuidados.html" data-i18n="nav.care">Care</a>
+    <a href="/en/guias.html" data-i18n="nav.guides">Guides</a>
+    <a href="/privacidad.html?lang=en" data-i18n="nav.privacy">Privacy</a>
+    <a href="/en/cacusa-lovers.html">Cacusa Lovers</a>
   </div>
 </footer>
 
 <script>
 const I18N_EN = {
+  'nav.shop':'Shop','nav.backShort':'← Home','nav.shipping':'Shipping','nav.returns':'Returns','nav.care':'Care','nav.guides':'Guides','nav.privacy':'Privacy',
   'nav.back':'← Back to home','nav.waBtn':'Message us on WhatsApp','nav.followUs':'Follow us on social media',
   'nav.home':'Home','nav.store':'Store',
   'gr.hLabel':'Buying guide','gr.hTitle':'Gift Guide',
@@ -271,14 +313,14 @@ const I18N_EN = {
   'gr.moreGuides':'See all guides →',
   'cat.parejas':'Couples','cat.anillos':'Rings','cat.cadenas':'Chains','cat.aretes':'Earrings',
   'cat.pulseras':'Bracelets','cat.juegos':'Sets','cat.earcuff':'Ear cuff','cat.handchain':'Hand chain',
-  'cat.hombres':'Men',
+  'cat.hombres':'Men','gr.giftIdeas':'Gift ideas',
   'gr.x.h':'Christmas and New Year','gr.x.p':"For under the tree, Secret Santa or a year-end gift exchange: shop by budget or have their name engraved. To get it before Christmas, order in time — personalized pieces take 5 to 10 business days.",
   'gr.x.cap':'Order by','gr.x.us':'US','gr.x.personal':'Personalized','gr.x.stock':'In-stock piece',
   'gr.x.dPersonalUs':'December 3','gr.x.dPersonalEc':'December 8','gr.x.dStockUs':'December 14','gr.x.dStockEc':'December 18',
   'gr.x.c30':'Under $30','gr.x.c60':'$30 to $60','gr.x.cName':'With their name',
   'gr.x.pack':'✦ Every piece arrives in special gift packaging, ready to go under the tree.',
   'gr.x.giftP':"Would you rather give the club or a gift card? We'll arrange it with you on WhatsApp.",
-  'gr.x.giftLovers':'Gift Cacusa Lovers ♡','gr.x.giftCard':'Gift a gift card ◇'
+  'gr.x.giftLovers':'Gift Cacusa Lovers ♡','gr.x.giftCard':'Give a gift card ◇'
 };
 // Campaña de Navidad: config.campaign del panel admin, con los mismos valores por defecto
 // que DEFAULT_CAMPAIGN del admin y de la tienda (USPS Ground Advantage 2026: enviar a más
@@ -292,7 +334,7 @@ var GR_MONTHS_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agos
 // objetos con claves entre comillas, por la misma razón de arriba).
 var GR_GIFT_WA=[
   ['grGiftLovers','Hola, quiero regalar Cacusa Lovers (plan mensual o anual). ¿Cómo lo coordinamos?',"Hi, I'd like to gift Cacusa Lovers (monthly or annual plan). How do we arrange it?"],
-  ['grGiftCard','Hola, quiero una gift card de $___ para regalar.',"Hi, I'd like a $___ gift card to give as a gift."]
+  ['grGiftCard','Hola, quiero regalar una gift card. ¿Qué montos tienen?',"Hi, I'd like to give a gift card. What amounts do you have?"]
 ];
 function grGiftLinks(num,lang){
   GR_GIFT_WA.forEach(function(g){
@@ -364,8 +406,7 @@ function grApplyCampaign(c,lang){
     document.querySelectorAll('a[href^="./ui_kits/store/"]').forEach(a=>{a.href=a.href.replace('/ui_kits/store/','/en/ui_kits/store/');});
   }
   grApplyCampaign(camp,_L);
-  const d=new Date();
-  document.getElementById('updated').textContent=(_L==='en'?'Last updated: ':'Última actualización: ')+d.toLocaleDateString(_L==='en'?'en-US':'es-EC',{year:'numeric',month:'long'});
+  document.getElementById('updated').textContent=_L==='en'?'Last updated: November 19, 2026':'Última actualización: 19 de noviembre de 2026';
   const bEs=document.getElementById('lEs'),bEn=document.getElementById('lEn');
   if(bEs){bEs.className=_L==='es'?'on':'';_L==='es'?bEs.setAttribute('aria-current','page'):bEs.removeAttribute('aria-current');}
   if(bEn){bEn.className=_L==='en'?'on':'';_L==='en'?bEn.setAttribute('aria-current','page'):bEn.removeAttribute('aria-current');}
