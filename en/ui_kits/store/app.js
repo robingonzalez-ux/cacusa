@@ -2900,7 +2900,34 @@ function _updateCategorySeo(cat) {
 // y actualiza el SEO en consecuencia. Se llama al cargar, al cambiar de filtro y al
 // cerrar el modal de producto (openModal/_injectProductSchema siempre corre después y
 // tiene prioridad si además hay un ?p= en la URL).
+// Migas + introducción de la página física de una categoría (.static-cat, la genera
+// generate_product_pages.py para SEO): solo tienen sentido mientras se ve ESA categoría.
+// Al cambiar de categoría (chips, Todo, Atrás) se ocultan, y el texto largo queda en 2
+// líneas con "Leer más" para no empujar los productos hacia abajo.
+function _syncStaticCat() {
+  const sec = document.querySelector('.static-cat');
+  if (!sec) return;
+  const sc = window.__CACUSA_STATIC_CATEGORY;
+  sec.hidden = !(sc && String(activeFilter).toLowerCase() === String(sc).toLowerCase());
+  const intro = sec.querySelector('.static-cat-intro');
+  if (sec.hidden || !intro || sec.dataset.clampReady) return;
+  sec.dataset.clampReady = '1';
+  intro.classList.add('clamp');
+  if (intro.scrollHeight <= intro.clientHeight + 2) { intro.classList.remove('clamp'); return; }
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'static-cat-more';
+  btn.setAttribute('aria-expanded', 'false');
+  btn.textContent = __LANG === 'en' ? 'Read more' : 'Leer más';
+  btn.addEventListener('click', () => {
+    const open = intro.classList.toggle('clamp') === false;
+    btn.setAttribute('aria-expanded', String(open));
+    btn.textContent = open ? (__LANG === 'en' ? 'Read less' : 'Leer menos') : (__LANG === 'en' ? 'Read more' : 'Leer más');
+  });
+  intro.after(btn);
+}
 function _updateListingSeo() {
+  _syncStaticCat();
   const catParam = new URLSearchParams(window.location.search).get('cat') || window.__CACUSA_STATIC_CATEGORY || null;
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   if (match) _updateCategorySeo(match); else _clearProductSchema();
@@ -2921,7 +2948,8 @@ window.addEventListener('popstate', e => {
     const _mp = PRODUCTS.find(x => String(x.id) === String(_st.modal));
     if (_mp) { openModal(_mp.id, true); return; }
   }
-  const catParam = new URLSearchParams(window.location.search).get('cat');
+  // En la página física de una categoría, la URL sin ?cat es esa categoría (no "Todo").
+  const catParam = new URLSearchParams(window.location.search).get('cat') || window.__CACUSA_STATIC_CATEGORY || null;
   const match = catParam && CATEGORIES.find(c => c.toLowerCase() === catParam.toLowerCase());
   activeFilter = match || 'all';
   _readUrlFilters();
