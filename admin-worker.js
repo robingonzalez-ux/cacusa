@@ -57,12 +57,6 @@
  *                                   estado, ZIP) que va al pie de los correos de marketing —
  *                                   la exige la ley CAN-SPAM de EE.UU. Sin ella el panel no deja
  *                                   crear campañas reales (sí vista previa y prueba).
- *   ANTHROPIC_API_KEY     (secret)  Llave de la API de Claude (console.anthropic.com → API Keys)
- *                                   para "Agregar pieza con foto" del panel (/product/identify):
- *                                   identifica qué producto del catálogo aparece en una foto
- *                                   tomada al armar un pedido. Sin ella, esa ruta responde 503 y
- *                                   el resto del panel sigue igual. Nunca se registra en logs ni
- *                                   se devuelve al navegador. Tope propio: 200 fotos por día.
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -432,7 +426,9 @@ export default {
       if (path.endsWith('/order/usps-notify')) return await handleUspsNotifyRetry(body, env, allowOrigin, ctx);
       if (path.endsWith('/order/usps-status')) return await handleUspsStatus(body, env, allowOrigin);
       if (path.endsWith('/order/cns-export')) return await handleCnsExport(body, env, allowOrigin);
-      if (path.endsWith('/product/identify')) return await handleProductIdentify(body, env, allowOrigin);
+      if (path.endsWith('/identify/refs'))      return await handleIdentifyRefs(env, allowOrigin);
+      if (path.endsWith('/identify/ref/add'))   return await handleIdentifyRefAdd(body, env, allowOrigin);
+      if (path.endsWith('/identify/ref/clear')) return await handleIdentifyRefClear(body, env, allowOrigin);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -1524,27 +1520,23 @@ async function applyOrderPiecePatch(order, patch, session) {
   return { changed: true, stockDeltas, stockNames };
 }
 
-// ── Identificar una pieza por foto con Claude (18 nov) ───────────────────────────────
-// POST /product/identify { token, image (base64 sin "data:"), mediaType, category? }
-// Manda a la API de Claude las fotos del catálogo (como URL, Claude las descarga) + la foto
-// tomada en el taller, y devuelve hasta 3 candidatos que EXISTEN en el catálogo. Nunca
-// escribe el pedido: eso lo hace /order/update cuando la persona elige una opción.
-// fetch directo (sin SDK): este Worker se pega a mano en el dashboard, no hay npm.
-const IDENTIFY_DAILY_MAX = 200;
-const IDENTIFY_MAX_BYTES = 1.5 * 1024 * 1024;
-const IDENTIFY_MAX_CANDIDATES = 95;
-const IDENTIFY_TIMEOUT_MS = 60_000;
-const IDENTIFY_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const IDENTIFY_MODEL = 'claude-opus-5-5';
+// ── Reconocimiento de piezas por foto — referencias aprendidas (19 nov) ──────────────
+// El reconocimiento corre GRATIS en el navegador del panel (MobileNet v2 con TF.js): el
+// panel compara la foto con las fotos del catálogo. Este Worker solo guarda "referencias"
+// aprendidas: cada vez que alguien confirma qué pieza era, el panel manda el vector de esa
+// foto y la próxima vez se reconoce mejor (fotos reales del taller, no solo las del sitio).
+// Todo en UNA llave de KV (identify:refs) → el panel la lee con un solo get. Vectores
+// normalizados (L2) y cuantizados a int8 (-127..127) en base64: IDENTIFY_REF_DIM bytes cada
+// uno (~1,7 KB en base64). Máx. 10 por producto (se descartan los más viejos) y
+// IDENTIFY_REFS_MAX_PRODUCTS productos (≈ 8,5 MB en el peor caso, debajo del límite de KV).
+// Lectura-modificación-escritura sin lock: 2 confirmaciones simultáneas pueden perder una
+// referencia — es solo un dato de mejora, no hay plata ni stock en juego.
 const SITE_ORIGIN = 'https://cacusabytaitus.com';
-const IDENTIFY_SYSTEM = [
-  'Eres el asistente del taller de CACUSA by Taitus (joyería artesanal). Identificas qué pieza del catálogo aparece en una foto tomada en el taller al armar un pedido.',
-  'You identify which catalog jewelry piece appears in a workshop photo.',
-  'Cada pieza del catálogo viene como una línea "ID <id> · nombre · categoría · material" seguida de su foto oficial.',
-  'Compara forma, color del metal (dorado, plateado, rosado), piedras o cristales (color, cantidad, corte), tipo de cadena o eslabón, dijes y tamaño relativo. La foto del taller puede tener otra luz, fondo o ángulo.',
-  'Devuelve hasta 3 candidatos, el más probable primero, con confidence entre 0 y 1 y una razón breve en español.',
-  'Si ninguna pieza es plausible, devuelve una lista vacía. Usa solo ids que aparecen en el catálogo; nunca inventes ids.',
-].join('\n');
+const IDENTIFY_REF_DIM = 1280;            // tamaño del vector de MobileNet v2 (capa previa a logits)
+const IDENTIFY_REFS_PER_PRODUCT = 10;
+const IDENTIFY_REFS_MAX_PRODUCTS = 500;
+const IDENTIFY_REFS_KEY = 'identify:refs';
+
 
 function catalogImageUrl(p) {
   let u = (p && (p.imageUrl || (Array.isArray(p.images) ? p.images[0] : ''))) || '';
@@ -1563,144 +1555,58 @@ function base64DecodedSize(s) {
   return (s.length / 4) * 3 - pad;
 }
 
-async function handleProductIdentify(body, env, origin) {
-  let image = typeof body.image === 'string' ? body.image.trim() : '';
-  const m = /^data:([a-z/+-]+);base64,/i.exec(image);
-  if (m) image = image.slice(m[0].length);
-  image = image.replace(/\s+/g, '');
-  const mediaType = String(body.mediaType || (m ? m[1] : '') || '').toLowerCase();
-  if (!image) return err('Falta la foto', 400, origin);
-  if (!IDENTIFY_MEDIA_TYPES.has(mediaType)) return err('Formato de foto no soportado (usa JPEG, PNG o WebP)', 400, origin);
-  const size = base64DecodedSize(image);
-  if (size == null) return err('La foto no es un base64 válido', 400, origin);
-  if (size > IDENTIFY_MAX_BYTES) return err('La foto es demasiado grande (máximo 1,5 MB)', 400, origin);
-  const category = typeof body.category === 'string' ? body.category.trim().slice(0, 60) : '';
-
-  if (!env.ANTHROPIC_API_KEY) return err('Falta configurar ANTHROPIC_API_KEY en el Worker', 503, origin);
+async function identifyRefsRead(env) {
+  let data = null;
+  try { data = JSON.parse(await env.CACUSA_KV.get(IDENTIFY_REFS_KEY)); } catch (_) { data = null; }
+  if (!data || typeof data !== 'object' || !data.refs || typeof data.refs !== 'object') data = { refs: {} };
+  // Si algún día cambia el modelo (otro tamaño de vector), las referencias viejas no sirven.
+  if (data.dim && data.dim !== IDENTIFY_REF_DIM) data = { refs: {} };
+  return data;
+}
+async function identifyRefsWrite(env, data) {
+  data.dim = IDENTIFY_REF_DIM;
+  data.updatedAt = new Date().toISOString();
+  const body = JSON.stringify(data);
+  try { await env.CACUSA_KV.put(IDENTIFY_REFS_KEY, body); }
+  catch (e) { await new Promise((r) => setTimeout(r, 1100)); await env.CACUSA_KV.put(IDENTIFY_REFS_KEY, body); } // 1 escritura/s por llave
+}
+// POST /identify/refs (sesión) → { refs: {productId: [base64 int8, ...]}, dim }
+async function handleIdentifyRefs(env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
-
-  // Tope diario (hora del Este) para acotar el gasto: lectura-modificación-escritura sin lock
-  // (KV no tiene CAS) — en el peor caso 2 fotos simultáneas cuentan como 1; es un tope blando.
-  const countKey = 'identify:count:' + easternDate();
-  const used = parseInt(await env.CACUSA_KV.get(countKey), 10) || 0;
-  if (used >= IDENTIFY_DAILY_MAX) {
-    return err(`Se alcanzó el límite de ${IDENTIFY_DAILY_MAX} identificaciones por foto de hoy. Mañana se reinicia; mientras tanto, busca la pieza a mano.`, 429, origin);
-  }
-
+  const data = await identifyRefsRead(env);
+  return ok({ ok: true, refs: data.refs, dim: IDENTIFY_REF_DIM }, origin);
+}
+// POST /identify/ref/add (sesión) { id, vector: base64 de IDENTIFY_REF_DIM bytes int8 }
+async function handleIdentifyRefAdd(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.id != null ? String(body.id) : '';
+  if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+  const vector = typeof body.vector === 'string' ? body.vector.trim() : '';
+  if (base64DecodedSize(vector) !== IDENTIFY_REF_DIM) return err(`Vector inválido (se esperan ${IDENTIFY_REF_DIM} bytes en base64)`, 400, origin);
   const catalog = await fetchCatalogForOrderValidation();
   if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
-  const catLc = category && category.toLowerCase() !== 'todas' ? category.toLowerCase() : '';
-  const candidates = [];
-  for (const p of catalog.products) {
-    if (!p || p.available === false || p.id == null) continue;
-    if (catLc && String(p.category || '').toLowerCase() !== catLc) continue;
-    const url = catalogImageUrl(p);
-    if (!url) continue;
-    candidates.push({ id: String(p.id), name: String(p.name || ''), category: String(p.category || ''),
-      material: String(p.material || ''), price: Number(resolveBasePrice(p)) || 0, imageUrl: url });
-    if (candidates.length >= IDENTIFY_MAX_CANDIDATES) break;
+  if (!catalog.products.some((p) => p && String(p.id) === id)) return err('Producto no encontrado en el catálogo', 400, origin);
+  const data = await identifyRefsRead(env);
+  const list = Array.isArray(data.refs[id]) ? data.refs[id] : [];
+  if (!list.length && Object.keys(data.refs).length >= IDENTIFY_REFS_MAX_PRODUCTS) {
+    return err('Se alcanzó el máximo de productos con referencias guardadas', 400, origin);
   }
-  if (!candidates.length) return ok({ ok: true, matches: [], candidates: 0 }, origin);
-
-  const content = [];
-  for (const c of candidates) {
-    content.push({ type: 'text', text: 'ID ' + c.id + ' · ' + c.name + ' · ' + c.category + (c.material ? ' · ' + c.material : '') });
-    content.push({ type: 'image', source: { type: 'url', url: c.imageUrl } });
-  }
-  // El catálogo es igual entre fotos (misma categoría) → se cachea hasta acá.
-  content[content.length - 1].cache_control = { type: 'ephemeral' };
-  content.push({ type: 'text', text: 'Foto a identificar:' });
-  content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: image } });
-  content.push({ type: 'text', text: '¿Qué pieza del catálogo es? Responde en JSON.' });
-
-  const payload = {
-    model: IDENTIFY_MODEL,
-    max_tokens: 2000,
-    output_config: {
-      effort: 'low',
-      format: {
-        type: 'json_schema',
-        schema: {
-          type: 'object',
-          properties: {
-            matches: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: { id: { type: 'string' }, confidence: { type: 'number' }, reason: { type: 'string' } },
-                required: ['id', 'confidence', 'reason'],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ['matches'],
-          additionalProperties: false,
-        },
-      },
-    },
-    // Si el clasificador de seguridad rechaza la foto, la API reintenta sola con otro modelo.
-    fallbacks: 'default',
-    system: IDENTIFY_SYSTEM,
-    messages: [{ role: 'user', content }],
-  };
-
-  // Se cuenta solo cuando de verdad se llama a la API (antes del fetch: un timeout también gasta).
-  try { await env.CACUSA_KV.put(countKey, String(used + 1), { expirationTtl: 2 * 24 * 3600 }); }
-  catch (e) { console.error('identify: no se pudo actualizar el contador diario:', e.message); }
-
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), IDENTIFY_TIMEOUT_MS);
-  let data;
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2026-10-21',
-        'anthropic-beta': 'server-side-fallback-2026-07-01',
-      },
-      body: JSON.stringify(payload),
-      signal: ctrl.signal,
-    });
-    if (!r.ok) {
-      let detail = '';
-      try { const j = await r.json(); detail = String((j && j.error && j.error.type) || ''); } catch (_) {}
-      console.error('identify: API de Claude respondió', r.status, detail);
-      return err(`La IA respondió con un error (HTTP ${r.status}). Intenta de nuevo en un momento.`, 502, origin);
-    }
-    data = await r.json();
-  } catch (e) {
-    if (e && e.name === 'AbortError') return err('La IA tardó demasiado en responder. Intenta de nuevo o elige una categoría.', 504, origin);
-    console.error('identify: fallo de red con la API de Claude:', e && e.message);
-    return err('No se pudo contactar a la IA. Intenta de nuevo en un momento.', 502, origin);
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (data && data.stop_reason === 'refusal') return err('La IA no pudo analizar esta foto. Prueba con otra foto o busca la pieza a mano.', 502, origin);
-  if (data && data.stop_reason === 'max_tokens') return err('La respuesta de la IA quedó incompleta. Intenta de nuevo o elige una categoría.', 502, origin);
-  const textBlock = Array.isArray(data && data.content) ? data.content.find((b) => b && b.type === 'text') : null;
-  let parsed;
-  try { parsed = JSON.parse(textBlock ? textBlock.text : ''); } catch (_) { parsed = null; }
-  if (!parsed || !Array.isArray(parsed.matches)) return err('La respuesta de la IA no se pudo leer. Intenta de nuevo.', 502, origin);
-
-  const byId = new Map(candidates.map((c) => [c.id, c]));
-  const seen = new Set();
-  const matches = [];
-  for (const mt of parsed.matches) {
-    const id = mt && mt.id != null ? String(mt.id).trim() : '';
-    const c = byId.get(id);
-    if (!c || seen.has(id)) continue; // ids inventados o repetidos se descartan
-    seen.add(id);
-    const conf = Number(mt.confidence);
-    matches.push({ id: c.id, name: c.name, category: c.category, price: c.price, imageUrl: c.imageUrl,
-      confidence: Number.isFinite(conf) ? Math.min(1, Math.max(0, conf)) : 0,
-      reason: String(mt.reason || '').slice(0, 300) });
-    if (matches.length >= 3) break;
-  }
-  return ok({ ok: true, matches, candidates: candidates.length }, origin);
+  list.push(vector);
+  data.refs[id] = list.slice(-IDENTIFY_REFS_PER_PRODUCT); // se quedan las 10 más recientes
+  await identifyRefsWrite(env, data);
+  return ok({ ok: true, id, count: data.refs[id].length }, origin);
 }
+// POST /identify/ref/clear (sesión) { id } — borra las referencias aprendidas de un producto.
+async function handleIdentifyRefClear(body, env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.id != null ? String(body.id) : '';
+  if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+  const data = await identifyRefsRead(env);
+  const had = Array.isArray(data.refs[id]) ? data.refs[id].length : 0;
+  if (had) { delete data.refs[id]; await identifyRefsWrite(env, data); }
+  return ok({ ok: true, id, removed: had }, origin);
+}
+
 
 // ── Inventario / stock (18 nov) ──────────────────────────────────────────────────────
 // Vive en KV (stock:<id> = entero en texto), NO en data/products.json: el panel publica el
