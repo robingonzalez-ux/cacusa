@@ -742,3 +742,70 @@ main#main:focus{outline:none}
 .static-cat-intro.clamp{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .static-cat-more{margin-top:6px;padding:4px 0;background:none;border:0;font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink-deep);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .static-cat-more:focus-visible{outline:2px solid var(--pink-deep);outline-offset:2px;border-radius:4px}
+
+/* ── Auditoría visual (nov): arreglos de la tienda ───────────────────────── */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Menú móvil: la regla general nav{position:sticky;height:64px;fondo…} de la barra de
+   arriba también caía sobre <nav class="drawer-nav"> (caja blanca de 64px, texto
+   invisible y encimado). Se neutraliza acá y el menú pasa a ser desplazable. */
+#navDrawer .drawer-nav{position:static;top:auto;z-index:auto;height:auto;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:none;padding:0;justify-content:flex-start;gap:18px;width:100%}
+@media(max-width:768px){
+  #navDrawer{background:linear-gradient(rgba(139,42,90,.78),rgba(139,42,90,.78)),var(--grad);overflow-y:auto;justify-content:flex-start;padding:76px 20px 40px}
+  #navDrawer .drawer-link{opacity:1;text-shadow:0 1px 8px rgba(80,20,50,.35)}
+  #navDrawer .drawer-link--lovers{text-shadow:none}
+  .drawer-cats{flex-wrap:wrap;justify-content:center;gap:8px;max-width:340px;margin:-4px auto 6px}
+  .drawer-cat{display:inline-flex;align-items:center;min-height:40px;padding:8px 16px;border:1.5px solid rgba(255,255,255,.75);border-radius:999px;color:#fff;font-family:var(--fu);font-size:14px;text-decoration:none}
+  .drawer-cat:active,.drawer-cat:hover{background:rgba(255,255,255,.18)}
+}
+.drawer-cats{display:none}
+@media(max-width:768px){#navDrawer .drawer-cats:not(:empty){display:flex}}
+
+/* Cajones del carrito y la lista: sombra solo abiertos (antes asomaba en el borde derecho) */
+#cart-drawer,#wish-drawer{box-shadow:none}
+#cart-drawer.open,#wish-drawer.open{box-shadow:-8px 0 48px rgba(238,111,168,.18)}
+
+/* Lightbox con fondo opaco: el modal ya no se lee detrás */
+#lightbox{background:#120a0e}
+
+/* Buscador: una sola "×" (se oculta la nativa del navegador) */
+.search-input::-webkit-search-cancel-button,.search-input::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
+
+/* Con una búsqueda activa se busca en todo el catálogo: ningún chip se ve activo */
+#filterBtns.is-searching .filter-btn.active{background:transparent;border-color:var(--ink-light);color:var(--ink-muted);box-shadow:none}
+
+/* Chips en móvil: la sombra del chip activo ya no queda recortada por la fila deslizable */
+@media(max-width:600px){
+  #filterBtns{padding:4px 4px 12px;margin-bottom:-8px}
+  #filterBtns .filter-btn.active{box-shadow:0 2px 8px rgba(238,111,168,.28)}
+}
+
+/* Tarjetas: precio y botón alineados abajo en toda la fila */
+.pcard{display:flex;flex-direction:column}
+.pcard-img{flex-shrink:0}
+.pcard-body{flex:1 1 auto;display:flex;flex-direction:column}
+.pcard-foot{margin-top:auto;padding-top:12px}
+@media(max-width:600px){.pcard-foot{padding-top:10px}}
+/* Táctil: la franja "Vista rápida" quedaba pegada después del primer toque */
+@media(hover:none){.pcard-quick{display:none}.pcard:hover{transform:none}.pcard:hover .pcard-img-bg{transform:none}}
+
+/* Precio del modal: mismo formato que la tarjeta */
+.modal-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px}
+.modal-price .price-now{font-size:24px}
+.modal-price .price-old{font-size:15px}
+.modal-price .price-off{font-size:12px;margin-left:0;align-self:center}
+
+/* Checkout: burbuja de cantidad completa (antes la cortaba el overflow de la miniatura) */
+.co-si-img{overflow:visible}
+.co-si-img img{border-radius:10px}
+.co-si-qty{top:-7px;right:-7px;width:20px;height:20px;font-size:10px;border:2px solid #fff;box-sizing:border-box}
+/* "Te faltan $X para el envío gratis" como fila propia del resumen */
+.co-ship-hint{display:block;margin:-2px 0 12px;padding:8px 12px;border-radius:10px;background:#fff;border:1px dashed var(--pink-mid);color:var(--pink-deep);font-size:12px;font-weight:600;line-height:1.4;text-align:center}
+.co-ship-hint:empty{display:none}
+/* Zelle: el "-4%" solo se muestra si el carrito trae recargo con tarjeta */
+.zelle-disc-badge[hidden]{display:none!important}
+
+/* Botones de pago con el mismo degradado de marca que "Finalizar pedido" */
+.pay-btn,.zelle-btn,.gc-btn{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:#fff;box-shadow:0 4px 24px rgba(238,111,168,.35)}
+.pay-btn:hover:not(:disabled),.zelle-btn:hover{box-shadow:0 8px 32px rgba(238,111,168,.45)}
+.gc-btn{box-shadow:none;border-radius:999px}

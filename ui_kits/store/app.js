@@ -43,7 +43,10 @@ const __LS = (() => {
   try { const k = '__cacusa_t'; window.localStorage.setItem(k, '1'); window.localStorage.removeItem(k); return window.localStorage; }
   catch (_) { const m = new Map(); return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: k => { m.delete(k); } }; }
 })();
-const __LANG = __LS.getItem('cacusa-lang') || 'es';
+// La URL decide el idioma (auditoría visual): esta es la tienda en español, así que siempre
+// se muestra en español aunque 'cacusa-lang' guarde 'en' (la tienda EN fuerza 'en'). La
+// preferencia se sigue guardando al cambiar de idioma con _goLang().
+const __LANG = 'es';
 const __EN_T = {
   "store.back":"Back to home","store.cartBtn":"Cart","store.filterLabel":"Filter:",
   "store.all":"All","store.viewAllCatalog":"View full catalog →","store.sortDefault":"Sort: Featured","store.sortPriceAsc":"Price: low to high",
@@ -69,6 +72,8 @@ const __EN_T = {
   "store.successBtn":"Continue shopping","store.quickView":"Quick view →","store.viewBtn":"+ View",
   "store.emptyCategory":"No products in this category yet.","store.cartEmpty":"Your cart is empty",
   "store.shippingFree":"Free shipping unlocked!","store.coFree":"Free",
+  "store.taxEc":"Ecuador VAT (15%)","store.tax":"Tax","store.searchShort":"Search…","store.search":"Search products…",
+  "store.coErrorNetwork":"We couldn't connect to the payment system. Check your connection and try again, or finish via WhatsApp.",
   "store.coError1":"Please enter your name and mobile number.","store.coError2":"Please select your state.","store.coError3":"Please enter a valid phone number.",
   "store.coErrorZip":"Please enter a valid ZIP code (5 digits).",
   "store.coErrorOrderFailed":"We couldn't save your order — please check your connection and try again.",
@@ -84,7 +89,7 @@ const __EN_T = {
 if (__LANG === 'en') {
   const _sortOpts = {default:'Sort: Featured','price-asc':'Price: low to high','price-desc':'Price: high to low',new:'Newest',bestseller:'Best sellers'};
   document.querySelectorAll('#sortSelect option').forEach(o => { if (_sortOpts[o.value]) o.textContent = _sortOpts[o.value]; });
-  const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coTel:'(555) 123-4567',coNotas:'Color, size, special detail…'};
+  const _phs = {modalPersonText:'Name, date or special message…',coNombre:'First Name',coApellido:'Last Name',coTel:'(555) 123-4567',coNotas:'Color, size, special detail…',coEmail:'email@example.com',searchInput:'Search products…',cpCodeInput:'CODE',revName:'Your name',revComment:'Your review…'};
   Object.entries(_phs).forEach(([id,ph]) => { const el = document.getElementById(id); if (el) el.placeholder = ph; });
   document.title = 'Personalized Jewelry Store | CACUSA by Taitus';
 }
@@ -336,7 +341,7 @@ let TEXTS = {
   heroTitle: 'Nuestra Tienda',
   heroSubtitle: 'by Taitus',
   instagram: '@cacusabytaitus',
-  perks: ['Hecho a mano', 'Envío express', '5–10 días hábiles', 'Empaque especial para regalo']
+  perks: ['Hecho a mano', '5–10 días hábiles', 'Empaque especial para regalo']
 };
 function t(key, fallback) { return __LANG === 'en' && __EN_T[key] !== undefined ? __EN_T[key] : fallback; }
 function tagLabel(tag) {
@@ -468,12 +473,32 @@ function _scrollActiveChipIntoView() {
   const left = wrap.scrollLeft + (br.left - wr.left) - (wrap.clientWidth - br.width) / 2;
   wrap.scrollTo({ left: Math.max(0, left), behavior: reduce ? 'auto' : 'smooth' });
 }
+// Lleva la vista al inicio del catálogo (barra de filtros) dejando libre la altura del
+// header fijo. force=false: solo si la clienta ya bajó más allá de los filtros.
+function _scrollToCatalog(force) {
+  const target = document.querySelector('.filters');
+  if (!target) return;
+  const navEl = document.querySelector('body > nav');
+  const navH = navEl ? navEl.getBoundingClientRect().height : 0;
+  const y = Math.max(0, target.getBoundingClientRect().top + window.scrollY - navH);
+  if (!force && window.scrollY <= y + 1) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
+}
 function selectCategory(cat) {
+  const _fromPicker = !!document.querySelector('#prodGrid.cat-picker-grid');
   _categoryPickerDismissed = true;
   activeFilter = cat;
+  // Elegir una categoría reemplaza la búsqueda (que busca en todo el catálogo).
+  if (searchTerm) {
+    searchTerm = '';
+    const si = document.getElementById('searchInput'); if (si) si.value = '';
+    const sc = document.getElementById('searchClear'); if (sc) sc.style.display = 'none';
+  }
   document.querySelectorAll('#filterBtns .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
   _scrollActiveChipIntoView();
   renderProducts();
+  _scrollToCatalog(_fromPicker);
   // Cada categoría pasa a tener su propia URL (?cat=), no solo un filtro visual —
   // así queda indexable y compartible por separado, no solo la tienda genérica.
   const u = new URL(window.location.href);
@@ -528,7 +553,9 @@ function _showCatalogLoadError() {
       SHIPPING = { freeThreshold: isNaN(ft) ? 90 : ft, cost: isNaN(c) ? 10 : c };
       SHIPPING_CFG = cfg.shipping;
     }
-    if (cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
+    // config.texts está escrito en español: en la tienda EN solo se aplica config.texts_en
+    // (antes los beneficios del modal salían en español en la versión en inglés).
+    if (__LANG !== 'en' && cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     if (__LANG === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     CAMPAIGN = _normalizeCampaign(cfg.campaign);
     // Antes se excluían acá los agotados (available:false) — el producto
@@ -685,8 +712,10 @@ function applyTexts() {
   set('.store-hero-s', TEXTS.heroSubtitle);
   const perksEl = document.querySelector('.modal-perks');
   if (perksEl && Array.isArray(TEXTS.perks)) {
-    perksEl.innerHTML = TEXTS.perks.map(p =>
-      '<div class="perk"><div class="perk-dot"></div>' + p + '</div>').join('');
+    // "Envío express" (config.texts.perks, editable en el admin) contradice los 5–10 días
+    // hábiles que se muestran al lado: se filtra cualquier beneficio que diga "express".
+    perksEl.innerHTML = TEXTS.perks.filter(p => !/express/i.test(String(p || ''))).map(p =>
+      '<div class="perk"><div class="perk-dot"></div>' + esc(p) + '</div>').join('');
   }
   const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
   if (bEs) bEs.className = __LANG === 'es' ? 'on' : '';
@@ -756,6 +785,7 @@ function renderFilters() {
   wrap.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => selectCategory(btn.dataset.filter));
   });
+  _renderDrawerCats();
   // Permite enlazar a una categoría desde fuera (ej. footer del landing) con ?cat=NombreCategoria
   // — o, si es una página estática generada por producto/categoría (ver
   // generate_product_pages.py), window.__CACUSA_STATIC_CATEGORY, que no lleva query string.
@@ -785,7 +815,9 @@ function esc(s) {
 }
 // focalX/focalY/zoom vienen de products.json y van dentro de style= — forzar número y rango
 function _focal(v) { const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 50; }
-function _zoom(v)  { const n = Number(v); return Number.isFinite(n) ? Math.max(0.5, Math.min(4, n)) : 1; }
+// Mínimo 1 (auditoría visual): alejar la foto (scale < 1) dejaba la imagen chica dentro de un
+// marco vacío y a la vez recortada por object-fit:cover. Un zoom < 1 del admin se trata como 1.
+function _zoom(v)  { const n = Number(v); return Number.isFinite(n) ? Math.max(1, Math.min(4, n)) : 1; }
 // Aviso emergente (toast) temporal, abajo-centro
 let _toastTimer = null;
 function showToast(html, ms) {
@@ -802,6 +834,23 @@ function dismissToast() {
   if (el) el.classList.remove('show');
 }
 document.getElementById('cacusaToast').addEventListener('click', dismissToast);
+// Menú móvil: un enlace por categoría (página física de la categoría). En la tienda se
+// filtra en el lugar, sin recargar; Ctrl/Cmd+clic sigue abriendo la URL real.
+function _renderDrawerCats() {
+  const box = document.getElementById('drawerCats');
+  if (!box) return;
+  const base = (__LANG === 'en' ? '/en' : '') + '/ui_kits/store/categoria/';
+  box.innerHTML = CATEGORIES.map(c =>
+    '<a class="drawer-cat" href="' + base + _categorySlug(c) + '/" data-cat="' + esc(c) + '">' + esc(t('cat.' + c.toLowerCase(), c)) + '</a>').join('');
+  box.querySelectorAll('.drawer-cat').forEach(a => a.addEventListener('click', e => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    if (!document.getElementById('prodGrid')) return;
+    e.preventDefault();
+    if (typeof window._closeNavDrawer === 'function') window._closeNavDrawer();
+    selectCategory(a.dataset.cat);
+    _scrollToCatalog(true);
+  }));
+}
 // Barrido SEO (19 sep): las tarjetas de la tienda no tenían ningún <a href> real hacia el
 // producto — todo era onclick sobre <div>/<button>, invisible para un rastreador que no
 // ejecuta JS. _pcardHref() arma la URL real (misma que usa _injectProductSchema como
@@ -810,6 +859,12 @@ document.getElementById('cacusaToast').addEventListener('click', dismissToast);
 // real (nueva pestaña) — comportamiento estándar de cualquier enlace.
 function _pcardHref(p) {
   return (__LANG === 'en' ? '/en' : '') + '/ui_kits/store/producto/' + _productParam(p) + '/';
+}
+// Toda la tarjeta abre el producto (antes la descripción y el precio no respondían en móvil);
+// los enlaces y botones propios de la tarjeta conservan su acción.
+function _pcardClick(e, id) {
+  if (e.target.closest('a,button')) return;
+  openModal(id);
 }
 function _pcardNav(e, id) {
   if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return true;
@@ -918,22 +973,28 @@ function renderCategoryPicker() {
 }
 
 // ─── RENDER PRODUCTS ────────────────────────────────────────
+function _searchNorm(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
   _renderUrlFilterChips();
   if (activeFilter === 'all' && !searchTerm && !_categoryPickerDismissed) { renderCategoryPicker(); return; }
   _clearCatTileTimers();
   grid.className = 'prod-grid';
-  let filtered = activeFilter === 'all'
+  // Con una búsqueda activa se busca en TODO el catálogo (antes solo dentro de la categoría
+  // elegida, sin avisarlo); los chips de categoría se ven inactivos mientras tanto.
+  const _fb = document.getElementById('filterBtns');
+  if (_fb) _fb.classList.toggle('is-searching', !!searchTerm);
+  let filtered = (activeFilter === 'all' || searchTerm)
     ? PRODUCTS
     : PRODUCTS.filter(p => p.cat === activeFilter || (p.cat || '').startsWith(activeFilter));
   if (searchTerm) {
-    const q = searchTerm.toLowerCase();
+    // Sin distinguir acentos ni mayúsculas: "corazon" encuentra "corazón".
+    const q = _searchNorm(searchTerm);
     filtered = filtered.filter(p =>
-      (p.name || '').toLowerCase().includes(q) ||
-      (p.name_en || '').toLowerCase().includes(q) ||
-      (p.desc || '').toLowerCase().includes(q) ||
-      (p.cat || '').toLowerCase().includes(q)
+      [p.name, p.name_en, p.desc, p.description_en, p.cat, t('cat.' + (p.cat || '').toLowerCase(), '')]
+        .some(f => f && _searchNorm(f).includes(q))
     );
   }
   if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr < _urlPrice.max); });
@@ -1019,9 +1080,9 @@ function _clearAllFilters() {
 function _pcardHtml(p, i) {
   const _off = _discountPct(p);
   return `
-    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="animation-delay:${(i || 0) * 0.06}s" data-id="${p.id}">
+    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="animation-delay:${(i || 0) * 0.06}s" data-id="${p.id}" onclick="_pcardClick(event, ${p.id})">
       ${p.available === false ? `<div class="pcard-badge badge-soldout">${__LANG === 'en' ? 'Sold out' : 'Agotado'}</div>` : (p.badge ? `<div class="pcard-badge ${p.badge}">${esc(tagLabel(p.tag))}</div>` : '')}
-      <button class="pcard-wish${_wish.has(p.id)?' liked':''}" aria-label="Guardar en lista de deseos" onclick="toggleWish(${p.id},this)">
+      <button class="pcard-wish${_wish.has(p.id)?' liked':''}" aria-label="${__LANG === 'en' ? 'Save to wishlist' : 'Guardar en lista de deseos'}" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style="${_wish.has(p.id)?'fill:var(--pink)':''}"/></svg>
       </button>
       <a class="pcard-img" href="${_pcardHref(p)}" onclick="return _pcardNav(event, ${p.id})">
@@ -1037,7 +1098,7 @@ function _pcardHtml(p, i) {
         <div class="pcard-foot">
           <div class="pcard-price">
             <span class="price-now">$${(+p.price).toFixed(2)}</span>
-            ${p.isPromo && p.originalPrice ? `<span class="price-old">$${(+p.originalPrice).toFixed(2)}</span>` : (p.oldPrice ? `<span class="price-old">$${p.oldPrice}</span>` : '')}
+            ${p.isPromo && p.originalPrice ? `<span class="price-old">$${(+p.originalPrice).toFixed(2)}</span>` : (p.oldPrice ? `<span class="price-old">$${(+p.oldPrice).toFixed(2)}</span>` : '')}
             ${_off > 0 ? `<span class="price-off">-${_off}%</span>` : ''}
           </div>
           <button class="pcard-add" onclick="openModal(${p.id})">${t('store.viewBtn', '+ Ver')}</button>
@@ -1107,6 +1168,15 @@ function addComboToCart(id, cardEl) {
 }
 
 // ─── FILTERS (los botones se generan en renderFilters) ──────
+// Placeholder corto en móvil (el largo se cortaba: "Buscar produc").
+(function () {
+  const si = document.getElementById('searchInput');
+  if (!si || !window.matchMedia) return;
+  const mq = window.matchMedia('(max-width: 600px)');
+  const apply = () => { si.placeholder = mq.matches ? t('store.searchShort', 'Buscar…') : t('store.search', 'Buscar productos…'); };
+  apply();
+  if (mq.addEventListener) mq.addEventListener('change', apply);
+})();
 document.getElementById('sortSelect').addEventListener('change', renderProducts);
 document.getElementById('searchInput').addEventListener('input', e => {
   searchTerm = e.target.value.trim();
@@ -1261,11 +1331,17 @@ _updateWishCount();
 
 // ─── MODAL ──────────────────────────────────────────────────
 // Cicla el Tab dentro de modalEl y cierra con Escape. Devuelve una función para liberar los listeners.
+// Pila de overlays abiertos: solo el de más arriba atiende Tab/Escape (antes, con el
+// lightbox abierto sobre el modal, un Escape cerraba los dos).
+const _trapStack = [];
 function trapFocus(modalEl, onClose) {
   const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
   const _prevFocused = document.activeElement;
+  const _token = {};
+  _trapStack.push(_token);
   function getFocusable(){ return Array.from(modalEl.querySelectorAll(FOCUSABLE)).filter(el => el.offsetParent !== null); }
   function onKeydown(e){
+    if (_trapStack[_trapStack.length - 1] !== _token) return;
     if (e.key === 'Escape'){ onClose(); return; }
     if (e.key !== 'Tab') return;
     const items = getFocusable();
@@ -1281,6 +1357,7 @@ function trapFocus(modalEl, onClose) {
   setTimeout(() => { const items = getFocusable(); if (items.length && !modalEl.contains(document.activeElement)) items[0].focus(); }, 0);
   return function release(){
     document.removeEventListener('keydown', onKeydown);
+    const _i = _trapStack.indexOf(_token); if (_i !== -1) _trapStack.splice(_i, 1);
     if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
   };
 }
@@ -1296,8 +1373,12 @@ function openModal(id, _fromHistory) {
   document.getElementById('modalName').textContent = __LANG === 'en' && p.name_en ? p.name_en : p.name;
   const _mLang = __LANG === 'en';
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
-  const _origPrice = (p.isPromo && p.originalPrice) ? (+p.originalPrice).toFixed(2) : (p.oldPrice || null);
-  document.getElementById('modalPrice').textContent = '$' + (+p.price).toFixed(2) + (_origPrice ? (_mLang ? ' — was $' : ' — antes $') + _origPrice : '');
+  // Mismo formato que la tarjeta: precio actual, anterior tachado (2 decimales) y badge -X%.
+  const _origPrice = (p.isPromo && p.originalPrice) ? +p.originalPrice : (+p.oldPrice || 0);
+  const _mOff = _discountPct(p);
+  document.getElementById('modalPrice').innerHTML = '<span class="price-now">$' + (+p.price).toFixed(2) + '</span>' +
+    (_origPrice && _origPrice > +p.price ? '<span class="price-old"><span class="sr-only">' + (_mLang ? 'Before: ' : 'Antes: ') + '</span>$' + _origPrice.toFixed(2) + '</span>' : '') +
+    (_mOff > 0 ? '<span class="price-off">-' + _mOff + '%</span>' : '');
   const _barPrice = document.getElementById('modalBarPrice');
   if (_barPrice) _barPrice.textContent = '$' + (+p.price).toFixed(2);
   _renderModalXmas(p);
@@ -1561,11 +1642,11 @@ function updateCartUI() {
           <div class="ci-foot">
             <span class="ci-price">$${(item.price * (item.qty || 1)).toFixed(2)}</span>
             <div class="ci-qty">
-              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, -1)" aria-label="Restar cantidad">−</button>
+              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, -1)" aria-label="${__LANG === 'en' ? 'Decrease quantity' : 'Restar cantidad'}">−</button>
               <span class="ci-qty-num">${item.qty || 1}</span>
-              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="Sumar cantidad"${(item.qty || 1) >= MAX_QTY || _cartItemSoldOut(item) ? ' disabled' : ''}>+</button>
+              <button class="ci-qty-btn" onclick="changeQty(${item.cartId}, 1)" aria-label="${__LANG === 'en' ? 'Increase quantity' : 'Sumar cantidad'}"${(item.qty || 1) >= MAX_QTY || _cartItemSoldOut(item) ? ' disabled' : ''}>+</button>
             </div>
-            <button class="ci-remove" onclick="removeItem(${item.cartId})" aria-label="Quitar del carrito">✕</button>
+            <button class="ci-remove" onclick="removeItem(${item.cartId})" aria-label="${__LANG === 'en' ? 'Remove from cart' : 'Quitar del carrito'}">✕</button>
           </div>
         </div>
       </div>`).join('');
@@ -1659,6 +1740,14 @@ function changeQty(cartId, delta) {
   saveCart(); updateCartUI();
 }
 
+// Estado/ZIP solo para EE.UU. — también al cargar (el país por defecto es Ecuador en la
+// tienda ES y EE.UU. en la EN).
+function _syncCountryFields() {
+  const isUS = document.getElementById('coPais').value === 'US';
+  document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
+  document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
+}
+_syncCountryFields();
 document.getElementById('coPais').addEventListener('change', function() {
   const isUS = this.value === 'US';
   document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
@@ -1834,6 +1923,7 @@ document.getElementById('checkout-overlay').addEventListener('click', e => {
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (document.getElementById('success-overlay').classList.contains('open')) return;
+  if (document.getElementById('lightbox').classList.contains('open')) return; // lo cierra su propia trampa de foco
   if (document.getElementById('checkout-overlay').classList.contains('open')) { closeCheckout(); return; }
   if (document.getElementById('modal-overlay').classList.contains('open')) { closeModal(); return; }
   if (document.getElementById('cart-drawer').classList.contains('open')) { closeCart(); return; }
@@ -1861,10 +1951,10 @@ function renderCheckoutSummary() {
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
 
   // Calcular impuesto
-  let taxAmt = 0, taxLabel = 'Impuesto';
+  let taxAmt = 0, taxLabel = t('store.tax', 'Impuesto');
   if (pais === 'EC') {
     taxAmt   = (adjustedSubtotal + shippingCost) * 0.15;
-    taxLabel = 'IVA Ecuador (15%)';
+    taxLabel = t('store.taxEc', 'IVA Ecuador (15%)');
   } else if (pais === 'US' && estado) {
     const zip  = (document.getElementById('coZip').value || '').trim();
     const rate = getTaxRate(estado, zip);
@@ -1900,6 +1990,10 @@ function renderCheckoutSummary() {
   } else {
     taxLine.style.display = 'none';
   }
+  // El "-4%" de Zelle solo existe si algún producto del carrito trae el recargo con tarjeta
+  // (/pub/surcharges del Worker). Sin recargo, Zelle y tarjeta cuestan lo mismo y no se promete.
+  const _anySurcharge = cart.some(i => i.hasSurcharge && i.basePrice != null && i.price > i.basePrice);
+  document.querySelectorAll('.zelle-disc-badge').forEach(el => { el.hidden = !_anySurcharge; });
   const zelleRow = document.getElementById('coZelleRow');
   if (zelleDiscount > 0) {
     zelleRow.style.display = '';
@@ -2049,11 +2143,21 @@ function coGoStep2() {
   document.getElementById('coStep1').classList.remove('active');
   document.getElementById('coStep2').classList.add('active');
   _coMarkStep(2);
+  _coScrollTop();
 }
 function coGoStep1() {
   document.getElementById('coStep2').classList.remove('active');
   document.getElementById('coStep1').classList.add('active');
   _coMarkStep(1);
+  _coScrollTop();
+}
+// Al cambiar de paso, el checkout vuelve arriba (antes el paso 2 abría a mitad de página,
+// directo en el botón de pagar, sin ver el método de pago ni los códigos).
+function _coScrollTop() {
+  const box = document.querySelector('#checkout-overlay .checkout-box');
+  if (box) box.scrollTop = 0;
+  const ov = document.getElementById('checkout-overlay');
+  if (ov) ov.scrollTop = 0;
 }
 document.getElementById('coNextBtn').addEventListener('click', coGoStep2);
 document.getElementById('coBackStepBtn').addEventListener('click', coGoStep1);
@@ -2215,12 +2319,16 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
     // La tarjeta cubre el total → no se puede cobrar $0 por Square: usar WhatsApp.
     if (data && data.giftCardCoversTotal) {
-      throw new Error(__LANG === 'en'
+      const _e = new Error(__LANG === 'en'
         ? 'Your gift card covers the full total — please finish via WhatsApp'
         : 'Tu tarjeta de regalo cubre el total — finaliza por WhatsApp');
+      _e.friendly = true;
+      throw _e;
     }
     if (!resp.ok || !data.checkoutUrl) {
-      throw new Error(data.error || 'No se pudo crear el pago');
+      const _e = new Error(data.error || '');
+      _e.friendly = !!data.error;
+      throw _e;
     }
 
     // El pedido ya no se arma ni se guarda acá — cacusa-square lo registra del lado del
@@ -2238,7 +2346,11 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     window.location.href = data.checkoutUrl;
 
   } catch (err) {
-    errorEl.textContent = '! ' + err.message + (__LANG === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.');
+    // Nunca un error técnico a la vista ("Failed to fetch", JSON inválido…): solo los
+    // mensajes pensados para la clienta (del Worker o propios); el resto, uno genérico.
+    errorEl.textContent = (err && err.friendly && err.message)
+      ? '! ' + err.message + (__LANG === 'en' ? '. Try again or use WhatsApp.' : '. Intenta de nuevo o usa WhatsApp.')
+      : t('store.coErrorNetwork', 'No pudimos conectar con el sistema de pago. Revisa tu conexión e intenta de nuevo, o finaliza por WhatsApp.');
     btn.disabled = false;
     btn.classList.remove('loading');
   }
@@ -2690,7 +2802,7 @@ function initGallery(p) {
   }
   const dots = document.getElementById('galleryDots');
   dots.innerHTML = multi ? _galleryImages.map((_, i) =>
-    `<button class="gallery-dot ${i===0?'active':''}" aria-label="Foto ${i + 1}" onclick="event.stopPropagation();switchGallerySlide(${i})"></button>`
+    `<button class="gallery-dot ${i===0?'active':''}" aria-label="${__LANG === 'en' ? 'Photo' : 'Foto'} ${i + 1}" onclick="event.stopPropagation();switchGallerySlide(${i})"></button>`
   ).join('') : '';
   document.getElementById('galleryPrev').classList.toggle('vis', multi);
   document.getElementById('galleryNext').classList.toggle('vis', multi);
@@ -3125,6 +3237,8 @@ document.getElementById('revStarPicker').addEventListener('mouseleave', () => se
 async function loadProductReviews(productId) {
   const list = document.getElementById('revList');
   const avgRow = document.getElementById('revAvgRow');
+  const section = list.closest('.reviews-section');
+  if (section) section.hidden = false;
   list.innerHTML = `<div class="no-reviews" style="color:var(--ink-muted)">…</div>`;
   try {
     const r = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${productId}.json`));
@@ -3156,8 +3270,10 @@ async function loadProductReviews(productId) {
         <div class="review-text">${esc(rv.comment)}</div>
       </div>`).join('');
   } catch(_) {
-    list.innerHTML = `<div class="no-reviews">${__LANG==='en'?'Could not load reviews.':'No se pudieron cargar las reseñas.'}</div>`;
+    // Sin conexión con las reseñas: se oculta el bloque entero en vez de mostrar un error.
+    list.innerHTML = '';
     avgRow.style.display = 'none';
+    if (section) section.hidden = true;
   }
 }
 
@@ -3334,6 +3450,7 @@ window.addEventListener('appinstalled', () => {
     if (_navReleaseTrap) { _navReleaseTrap(); _navReleaseTrap = null; }
   }
 
+  window._closeNavDrawer = () => { if (drawer.classList.contains('open')) closeDrawer(); };
   btn.addEventListener('click', () => drawer.classList.contains('open') ? closeDrawer() : openDrawer());
   if (close) close.addEventListener('click', closeDrawer);
   drawer.querySelectorAll('.drawer-link').forEach(a => a.addEventListener('click', closeDrawer));
