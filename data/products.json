@@ -658,6 +658,7 @@
   "products": [
     {
       "id": 1,
+      "sku": "AN001",
       "name": "Anillo doble GG",
       "name_en": "Double GG Ring",
       "category": "Anillos",
@@ -691,6 +692,7 @@
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1780369644513_3691ae2e_f758_4374_803e_41390d61c357_jpe.webp",
       "id": 1780369728627,
+      "sku": "PU001",
       "zoom": 0.85,
       "focalX": 72.2242769732981,
       "focalY": 56.36566106499314,
@@ -711,6 +713,7 @@
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1781399656199_img_7551_jpeg.webp",
       "id": 1781387820250,
+      "sku": "HO001",
       "focalY": 70
     },
     {
@@ -730,6 +733,7 @@
       "focalX": 44.842626615101366,
       "focalY": 48.96780724843091,
       "id": 1781399974669,
+      "sku": "CA001",
       "zoom": 1.15,
       "material": "Baño de oro 18k"
     },
@@ -750,6 +754,7 @@
       "focalX": 18,
       "focalY": 49,
       "id": 1781400451404,
+      "sku": "PU002",
       "material": "Baño de oro 18k"
     },
     {
@@ -770,7 +775,8 @@
       "focalY": 75.20044543429839,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781460544331
+      "id": 1781460544331,
+      "sku": "CA002"
     },
     {
       "name": "Pulsera Tiffy",
@@ -790,7 +796,8 @@
       "focalY": 43.498117632537145,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781472855605
+      "id": 1781472855605,
+      "sku": "PU003"
     },
     {
       "name": "Pulsera triple con dije de corazón",
@@ -810,7 +817,8 @@
       "focalY": 50.928840338208985,
       "zoom": 1,
       "material": "Baño de oro 18k",
-      "id": 1781473015877
+      "id": 1781473015877,
+      "sku": "PU004"
     },
     {
       "name": "Cadena con dije de corazón y pelota",
@@ -830,7 +838,8 @@
       "focalY": 65.39221131889154,
       "zoom": 1.3,
       "material": "Baño de oro 18k",
-      "id": 1781473438388
+      "id": 1781473438388,
+      "sku": "CA003"
     },
     {
       "name": "Cadena con ángel de la guarda circular",
@@ -851,6 +860,7 @@
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781473526943,
+      "sku": "CA004",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808852028_8952299c_b5a5_49a7_a4c4_e15919538bad_jpe.webp"
       ],
@@ -875,6 +885,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781473627668,
+      "sku": "CA005",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808318000_2de17e75_6ff9_416b_9b56_e491315b8092_jpe.webp"
       ],
@@ -898,6 +909,7 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781875334358,
+      "sku": "CA006",
       "name_en": "Pearl Necklace",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808742395_56f41b89_b379_4cc0_8cbb_1bb25653e388_jpe.webp"
@@ -922,6 +934,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877227517,
+      "sku": "CA007",
       "name_en": "Chain clip with tree of life charm",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783809008800_646b8602_4550_4ef1_a5ca_bea66271a26f_jpe.webp"
@@ -946,6 +959,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877358815,
+      "sku": "CA008",
       "name_en": "Cat charm chain and heart belly with zircons",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783810093094_3afcd0b9_6234_421a_994c_a91bee4d4be2_jpe.webp"
@@ -970,6 +984,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781877568374,
+      "sku": "CA009",
       "name_en": "Ball Chain with Heart Charm and Zircons",
       "images": [],
       "promo": null
@@ -992,6 +1007,7 @@
       "zoom": 1,
       "material": "Baño de Rodio",
       "id": 1781877838074,
+      "sku": "AN002",
       "name_en": "Silver Adjustable Ring"
     },
     {
@@ -1012,6 +1028,7 @@
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781877944864,
+      "sku": "AN003",
       "name_en": "Adjustable ring of zircons and initial"
     },
     {
@@ -1032,6 +1049,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781878104655,
+      "sku": "AN004",
       "name_en": "Adjustable Ring with Micro Zirconia Degradé"
     },
     {
@@ -1052,6 +1070,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781878207350,
+      "sku": "AN005",
       "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
     },
     {
@@ -1072,6 +1091,7 @@
       "zoom": 1.6,
       "material": "Plata 925",
       "id": 1781878560407,
+      "sku": "EC001",
       "name_en": "Silver Wide Ear Cuff"
     },
     {
@@ -1092,6 +1112,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781878646387,
+      "sku": "AN006",
       "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
     },
     {
@@ -1112,6 +1133,7 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781879189744,
+      "sku": "AN007",
       "name_en": "Adjustable Chunky Ring with Green Zirconia"
     },
     {
@@ -1132,6 +1154,7 @@
       "zoom": 1.45,
       "material": "Baño de Rodio",
       "id": 1781879577380,
+      "sku": "AN008",
       "name_en": "Adjustable Twisted Ring"
     },
     {
@@ -1152,6 +1175,7 @@
       "zoom": 1.45,
       "material": "Plata 925",
       "id": 1781879917484,
+      "sku": "AN009",
       "name_en": "Size 7 Ring with Emerald Stone and Micro Zirconia"
     },
     {
@@ -1172,6 +1196,7 @@
       "zoom": 2.05,
       "material": "Baño de oro 18k",
       "id": 1781880053907,
+      "sku": "AN010",
       "name_en": "Adjustable Ring with 3 Zirconia"
     },
     {
@@ -1192,6 +1217,7 @@
       "zoom": 1.3,
       "material": "Acero inoxidable",
       "id": 1781880340918,
+      "sku": "AN011",
       "name_en": "Black Clover Adjustable Ring",
       "images": [],
       "promo": null
@@ -1214,6 +1240,7 @@
       "zoom": 1.6,
       "material": "Baño de oro 18k",
       "id": 1781880466753,
+      "sku": "AN012",
       "name_en": "Adjustable Gold Ring"
     },
     {
@@ -1234,6 +1261,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781881478183,
+      "sku": "AN013",
       "name_en": "Adjustable Ring with White Zirconia"
     },
     {
@@ -1254,6 +1282,7 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781884615354,
+      "sku": "CA010",
       "name_en": "Large Emerald Cross Charm Chain"
     },
     {
@@ -1274,6 +1303,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781884804624,
+      "sku": "CA011",
       "name_en": "Delicate Chain with Mother-of-Pearl Heart Charm"
     },
     {
@@ -1294,6 +1324,7 @@
       "zoom": 1.6,
       "material": "Plata 925 con un baño de oro de 18k",
       "id": 1781884881874,
+      "sku": "CA012",
       "name_en": "Venetian Chain with Zirconia Cross Charm"
     },
     {
@@ -1314,6 +1345,7 @@
       "zoom": 0.85,
       "material": "Baño de oro 18k",
       "id": 1781884983133,
+      "sku": "CA013",
       "name_en": "Saint Benedict Medallion with Cross"
     },
     {
@@ -1334,6 +1366,7 @@
       "zoom": 1.15,
       "material": "Baño de oro 18k",
       "id": 1781885024731,
+      "sku": "CA014",
       "name_en": "Pearl Heart with Zirconia Heart Silhouette Chain"
     },
     {
@@ -1354,6 +1387,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781885110437,
+      "sku": "CA015",
       "name_en": "Turquoise Opal Charm Chain with Double-Chain Effect"
     },
     {
@@ -1374,6 +1408,7 @@
       "zoom": 1.45,
       "material": "Baño de oro 18k",
       "id": 1781885197196,
+      "sku": "CA016",
       "name_en": "Soft Pink Zirconia Chain"
     },
     {
@@ -1394,6 +1429,7 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781885271521,
+      "sku": "CA017",
       "name_en": "Ballerina Charm with Initial"
     },
     {
@@ -1414,6 +1450,7 @@
       "zoom": 1,
       "material": "Acero inoxidable",
       "id": 1781885393238,
+      "sku": "HO002",
       "name_en": "Chain with Laser Engraved Plate"
     },
     {
@@ -1434,6 +1471,7 @@
       "zoom": 1.75,
       "material": "Baño de oro 18k",
       "id": 1781892443591,
+      "sku": "AN014",
       "name_en": "Aquamarine Ring"
     },
     {
@@ -1454,6 +1492,7 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781893045956,
+      "sku": "AN015",
       "name_en": "Ring",
       "images": [],
       "promo": null
@@ -1476,6 +1515,7 @@
       "zoom": 0.55,
       "material": "Acero inoxidable",
       "id": 1781977774245,
+      "sku": "PA001",
       "name_en": "Yin & Yang Couple Bracelets"
     },
     {
@@ -1501,6 +1541,7 @@
       "name_en": "GG",
       "description_en": "GG chain along with its earrings, the chain comes with 5 GG symbols and 7 zircons. \nWith a delicate and elegant workmanship ideal to make you feel more confident and secure. The earrings are delicate and lightweight.",
       "id": 1782309956499,
+      "sku": "JU001",
       "promo": {
         "price": 68,
         "label": "Oferta",
@@ -1527,6 +1568,7 @@
       "name_en": "Triple bracelet",
       "description_en": "Triple bracelet in gold filled, with colorful yellow, blue, and red threads. A delicate, colorful design to wear alone or stacked with your other bracelets, perfect for adding a different touch to your everyday look.",
       "id": 1783440355036,
+      "sku": "PU005",
       "promo": null
     },
     {
@@ -1551,6 +1593,7 @@
       "name_en": "Cross chain with zircons",
       "description_en": "It's stainless steel with 18k gold plating, durable for everyday wear and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
       "id": 1785466095890,
+      "sku": "CA018",
       "promo": null
     },
     {
@@ -1575,6 +1618,7 @@
       "name_en": "Evil Eye Bangle",
       "description_en": "Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection",
       "id": 1785469196142,
+      "sku": "PU006",
       "promo": null
     },
     {
@@ -1599,6 +1643,7 @@
       "name_en": "Greek Eye Bangle",
       "description_en": "Surgical steel with 18k gold plating. The oval mother-of-pearl eye paired with two blue zircon-rimmed eyes creates an elegant detail. The hollow design keeps it lightweight for everyday wear while still making a statement.",
       "id": 1785469598547,
+      "sku": "PU007",
       "promo": null
     },
     {
@@ -1623,6 +1668,7 @@
       "name_en": "Vintage Aventurine Ring",
       "description_en": "Vintage Aventurine Ring - 18K Gold Plated\n\nVintage-style double layer ring with an 18K gold finish on stainless steel. \nDesign with a braided ring and bead detail, centered with an oval natural green aventurine stone. \nAdjustable, lightweight piece, durable for everyday wear. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect worn alone or stacked with other gold rings.",
       "id": 1785470275920,
+      "sku": "AN016",
       "promo": null
     },
     {
@@ -1647,6 +1693,7 @@
       "name_en": "Glossy Octopus Ring",
       "description_en": "Glossy Octopus Ring - 18K Gold Plated\n\nElevate your style with our statement octopus ring. A bold piece with a 3D design and a shiny 18K gold finish that pays tribute to the ocean and to a one-of-a-kind personality.\n\nMade in high-quality stainless steel, it's sturdy and perfect for everyday wear. Its adjustable band fits all sizes, and the ergonomic design keeps it sitting straight and aligned on your finger.\n\nFeatures:\n- Material: Premium stainless steel with 18K gold plating\n- Design: 3D octopus with tentacles and suction cup detail\n- Finish: Glossy shine\n- Size: Adjustable — fits your finger\n- Style: Statement / Nautical / Boho Chic\n\nWhy you'll love it\nThe octopus symbolizes intelligence, adaptability and mystery. This ring is perfect for anyone who loves jewelry with personality that doesn't go unnoticed. Wear it alone as a statement piece or stack it with minimalist rings for a modern look.\n\nPerfect as a gift or to add a unique touch to your summer, beach and city outfits.",
       "id": 1785470725921,
+      "sku": "AN017",
       "promo": null
     },
     {
@@ -1669,6 +1716,7 @@
       "name_en": "Hand-woven pearl earrings",
       "description_en": "Pearl Flower Stud Earrings - Delicate ♡\nThe timeless classic, now in a smaller size\n18K Gold Plated + White Pearls | Center of 6 pearls\nLightweight + Hypoallergenic\nPerfect for everyday elegance",
       "id": 1786303032752,
+      "sku": "AR001",
       "promo": null
     },
     {
@@ -1691,6 +1739,7 @@
       "name_en": "FE Red String Bracelet",
       "description_en": "Wear your faith every day \nAdjustable net string + 18K gold-filled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
       "id": 1786308585824,
+      "sku": "PU008",
       "promo": null
     },
     {
@@ -1713,6 +1762,7 @@
       "name_en": "Blue Evil Eye Bracelet + Medal + Pearl",
       "description_en": "Blue Evil Eye Bracelet♡\nFaith, protection & elegance in one\nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl\nProtection, faith & good vibes\nMinimalist design | Unisex\n18K gold-filled | Hypoallergenic\nThe perfect spiritual gift",
       "id": 1786315591380,
+      "sku": "PU009",
       "promo": null
     },
     {
@@ -1737,6 +1787,7 @@
       "name_en": "Red Turkish Eye Bracelet",
       "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without ball chain details.",
       "id": 1786328384393,
+      "sku": "PU010",
       "promo": null
     },
     {
@@ -1761,6 +1812,7 @@
       "name_en": "Gold Zirconia Bow Necklace",
       "description_en": "Bow Zirconia Necklace\n18K gold chain + bow charm with sparkling zirconia.\nDelicate, feminine and perfect for everyday wear.\n\nThe detail that elevates any look.\nThis minimalist gold chain necklace with a bow-shaped charm and sparkling zirconia is the perfect piece to gift or wear every day. Lightweight, elegant and full of shine.\n\nFeatures:\n- Material: 18K gold-filled chain + high-quality zirconia\n- Design: Minimalist bow charm\n- Length: 40cm + 5cm extender | Adjustable\n- Care: Avoid contact with chemicals such as perfume and creams | Hypoallergenic\n- Great for: Gifting | Everyday wear | Layering | Feminine detail",
       "id": 1786329172109,
+      "sku": "CA019",
       "promo": null
     },
     {
@@ -1783,6 +1835,7 @@
       "name_en": "Heart Chinoiserie Earrings",
       "description_en": "Gold hoops with a white porcelain heart and blue flowers.\nRomantic, unique and full of style.\nDelicate and full of personality.\nGold hoops with a hanging white porcelain heart charm and blue chinoiserie-style flowers. The contrast between warm gold and classic blue makes them one of a kind. Lightweight and full of movement, perfect for a romantic touch to your look.\n\nMade in 316L stainless steel, durable for everyday wear and hypoallergenic.\n\nMeasurements: Total length 3.68cm | Heart width 1.41cm\n- Weight: 5.9g per pair\n- Closure: Click hoop\n- Style: Romantic / Chinoiserie / Statement",
       "id": 1786330341098,
+      "sku": "AR002",
       "promo": null
     },
     {
@@ -1811,6 +1864,7 @@
       "name_en": "Earring & Chain Set",
       "description_en": "Beautiful sets of 18K goldplated stainless steel.\nA Jewel to make you look more beautiful than you already are",
       "id": 1788107242835,
+      "sku": "JU002",
       "promo": null
     },
     {
@@ -1836,6 +1890,7 @@
       "name_en": "Layered hand chain",
       "description_en": "18K GOLD PLATED Stainless Steel \nPrecious, they make your hand look feminine and delicate",
       "id": 1788107453046,
+      "sku": "HC001",
       "promo": null
     },
     {
@@ -1858,6 +1913,7 @@
       "name_en": "Handmade bracelets",
       "description_en": "Beautiful adjustable bracelets handmade by Ecuadorian artisans, with style, crystal combinations and 18K gold-plated charms",
       "id": 1788449850640,
+      "sku": "PU011",
       "promo": null
     },
     {
@@ -1891,6 +1947,7 @@
       "name_en": "Geometric hand chain",
       "description_en": "Beautiful 18K Goldplated Stainless Steel hand chains to show off your most beautiful and feminine hand.",
       "id": 1788540460219,
+      "sku": "HC002",
       "promo": null
     },
     {
@@ -1915,6 +1972,7 @@
       "name_en": "Golden Shell Ring",
       "description_en": "A design inspired by the organic shapes of the sea. The Golden Shell Ring is composed of small interlocking shells that create a delicate, luminous and different piece.\n\nMade of 316L stainless steel with a gold finish, it is ideal to wear alone as the protagonist or combine with other rings for a more personal look.\n\nDetails: 316L stainless steel · gold finish · shell design · delicate and minimalist style. Adjustable size",
       "id": 1788921701764,
+      "sku": "AN018",
       "promo": null
     },
     {
@@ -1937,6 +1995,7 @@
       "name_en": "Golden stars ring",
       "description_en": "A ring made to steal the spotlight.\n\nGolden Stars combines golden stars with zirconia sparkle to create a striking, feminine and sophisticated piece. Its open design lets the stars travel around your finger and catch the light from every angle.\n\nPerfect worn as a statement piece or paired with more minimalist pieces. Its adjustable size also lets it fit comfortably on different fingers.\n\nDetails\n316L stainless steel · Gold finish · Clear zirconia · Adjustable size",
       "id": 1788922298558,
+      "sku": "AN019",
       "promo": null
     },
     {
@@ -1961,6 +2020,7 @@
       "name_en": "Lumière Ring",
       "description_en": "Lumière is designed to achieve that delicate jewelry effect that's noticeable without being over the top. Its two golden lines with zirconia create the illusion of wearing two perfectly matched rings, adding an elegant sparkle with every move of your hand.\n\nIt's one of those pieces that's easy to wear every day, yet special enough to accompany you on an important occasion. Its adjustable size lets it fit comfortably on different fingers.\n\nDetails\n316L stainless steel · Gold finish · Clear zirconia · Double design · Adjustable size",
       "id": 1788922634845,
+      "sku": "AN020",
       "promo": null
     },
     {
@@ -1985,6 +2045,7 @@
       "name_en": "Golden Silk Chain",
       "description_en": "The gold basic that makes everything look more elegant.\n\nGolden Silk is a chain with a smooth, luminous finish that gently hugs the neck and catches the light with every movement. Its flat design creates that sophisticated golden effect that looks amazing on its own or layered with other chains.\n\nIt's one of those pieces you can wear every day: with a basic t-shirt, a dress, or to complete an evening look. Minimalist, versatile and timeless.\n\nDetails: 316L stainless steel · gold finish · flat chain · 45 cm + 5 cm extender · adjustable length.",
       "id": 1788923140476,
+      "sku": "CA020",
       "promo": null
     },
     {
@@ -2007,6 +2068,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789830883898,
+      "sku": "AR003",
       "promo": null
     },
     {
@@ -2029,6 +2091,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831017689,
+      "sku": "AR004",
       "promo": null
     },
     {
@@ -2051,6 +2114,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831461536,
+      "sku": "AR005",
       "promo": null
     },
     {
@@ -2073,6 +2137,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789831746751,
+      "sku": "CA021",
       "promo": null
     },
     {
@@ -2095,6 +2160,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832083118,
+      "sku": "CA022",
       "promo": null
     },
     {
@@ -2117,6 +2183,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832318279,
+      "sku": "AR006",
       "promo": null
     },
     {
@@ -2139,6 +2206,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832633994,
+      "sku": "AN021",
       "promo": null
     },
     {
@@ -2161,6 +2229,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832841230,
+      "sku": "AN022",
       "promo": null
     },
     {
@@ -2183,6 +2252,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789832962055,
+      "sku": "AN023",
       "promo": null
     },
     {
@@ -2205,6 +2275,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833283695,
+      "sku": "AN024",
       "promo": null
     },
     {
@@ -2227,6 +2298,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833395515,
+      "sku": "AN025",
       "promo": null
     },
     {
@@ -2249,6 +2321,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833527086,
+      "sku": "AN026",
       "promo": null
     },
     {
@@ -2271,6 +2344,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789833699836,
+      "sku": "AN027",
       "promo": null
     },
     {
@@ -2293,6 +2367,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789833979991,
+      "sku": "AR007",
       "promo": null
     },
     {
@@ -2315,6 +2390,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834120184,
+      "sku": "AR008",
       "promo": null
     },
     {
@@ -2337,6 +2413,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834277881,
+      "sku": "AR009",
       "promo": null
     },
     {
@@ -2359,6 +2436,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789834373112,
+      "sku": "AR010",
       "promo": null
     },
     {
@@ -2381,6 +2459,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789834493333,
+      "sku": "AR011",
       "promo": null
     },
     {
@@ -2403,6 +2482,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835085201,
+      "sku": "AR012",
       "promo": null
     },
     {
@@ -2425,6 +2505,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835517841,
+      "sku": "AR013",
       "promo": null
     },
     {
@@ -2447,6 +2528,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789835608668,
+      "sku": "AR014",
       "promo": null
     },
     {
@@ -2469,6 +2551,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835713834,
+      "sku": "AN028",
       "promo": null
     },
     {
@@ -2491,6 +2574,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789835829929,
+      "sku": "AN029",
       "promo": null
     },
     {
@@ -2517,6 +2601,7 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1789836141687_efcb6b8c_42af_422c_b519_97198d61307f_jpe.webp"
       ],
       "id": 1789836348710,
+      "sku": "PU012",
       "promo": null
     },
     {
@@ -2539,6 +2624,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789840051998,
+      "sku": "PU013",
       "promo": null
     },
     {
@@ -2561,6 +2647,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789840143477,
+      "sku": "PU014",
       "promo": null
     },
     {
@@ -2583,6 +2670,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789854774028,
+      "sku": "PA002",
       "promo": null
     },
     {
@@ -2605,6 +2693,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789854982063,
+      "sku": "PU015",
       "promo": null
     },
     {
@@ -2627,6 +2716,7 @@
       "material": "Gold filled",
       "images": [],
       "id": 1789855320945,
+      "sku": "PU016",
       "promo": null
     },
     {
@@ -2651,6 +2741,7 @@
         "https://cacusabytaitus.com/ui_kits/store/images/1789855519113_b1499985_d121_4d61_9194_b7457ee01aa8_jpe.webp"
       ],
       "id": 1789855526360,
+      "sku": "AN030",
       "promo": null
     },
     {
@@ -2673,6 +2764,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789856160011,
+      "sku": "AR015",
       "promo": null
     },
     {
@@ -2695,6 +2787,7 @@
       "material": "Baño de oro 18k",
       "images": [],
       "id": 1789856427179,
+      "sku": "CA023",
       "promo": null
     }
   ],
