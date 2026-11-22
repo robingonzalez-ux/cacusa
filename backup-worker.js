@@ -238,8 +238,14 @@ async function getKvValue(env, key) {
 // 13 oct: marketing por correo — `mktunsub:` (quién se dio de baja; perderlo volvería a
 // mandarles promociones a personas que pidieron no recibirlas) y `mktcamp:` (campañas con
 // su progreso; sin él una campaña a medias se reenviaría desde el principio).
+//
+// 22 nov: inventario — `stock:<idProducto>` (unidades de cada pieza; una llave sin valor
+// vale 1). Es el único lugar donde vive el stock: perderlo obligaría a contar todo de nuevo.
+// `stock_soldout` NO se respalda: es una lista derivada que /stock/list reconstruye sola.
+// También `identify:refs` (huellas de las fotos reales para "Identificar por foto"; una
+// sola llave): se podrían volver a tomar, pero cuesta tiempo. No hay fotos, solo números.
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, surcharges, markets] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
@@ -253,10 +259,12 @@ async function exportKv(env) {
     listKvPrefix(env, 'loversinv:'),
     listKvPrefix(env, 'mktunsub:'),
     listKvPrefix(env, 'mktcamp:', 10),
+    listKvPrefix(env, 'stock:'),
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
+    getKvValue(env, 'identify:refs'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, surcharges, markets };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs };
 }
 
 function backupKey(iso, trigger) {
