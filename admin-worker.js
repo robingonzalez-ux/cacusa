@@ -57,6 +57,10 @@
  *                                   estado, ZIP) que va al pie de los correos de marketing —
  *                                   la exige la ley CAN-SPAM de EE.UU. Sin ella el panel no deja
  *                                   crear campañas reales (sí vista previa y prueba).
+ *   ANTHROPIC_API_KEY     (secret)  Opcional. Llave de la API de Claude (console.anthropic.com →
+ *                                   API Keys) para "✦ Sugerir datos desde la foto" al crear un
+ *                                   producto (/product/describe, Claude Haiku 5.5, < $0.001 por
+ *                                   ficha, tope 40/día). Sin ella el panel usa sus plantillas gratis.
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -429,6 +433,7 @@ export default {
       if (path.endsWith('/identify/refs'))      return await handleIdentifyRefs(env, allowOrigin);
       if (path.endsWith('/identify/ref/add'))   return await handleIdentifyRefAdd(body, env, allowOrigin);
       if (path.endsWith('/identify/ref/clear')) return await handleIdentifyRefClear(body, env, allowOrigin);
+      if (path.endsWith('/product/describe'))   return await handleProductDescribe(body, env, allowOrigin);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -1577,6 +1582,168 @@ async function handleIdentifyRefs(env, origin) {
   return ok({ ok: true, refs: data.refs, dim: IDENTIFY_REF_DIM }, origin);
 }
 // POST /identify/ref/add (sesión) { id, vector: base64 de IDENTIFY_REF_DIM bytes int8 }
+// ── Sugerir la ficha de un producto nuevo desde su foto (Claude Haiku 5.5, 24 nov) ──────
+// POST /product/describe { token, image (base64 JPEG/PNG/WebP, el panel la achica a ~768 px),
+//   mediaType, neighborIds?: [hasta 3 ids parecidos según el reconocimiento por foto del
+//   panel], hints?: { category, material } }
+// Devuelve { suggestion: { name, name_en, description, description_en, category, material } }.
+// Lo más barato posible: modelo Haiku 5.5, effort low, sin thinking, una sola imagen chica y
+// como ejemplos de estilo SOLO el texto (sin fotos) de las 3 fichas más parecidas. Costo
+// típico ~2.400 tokens de entrada + ~500 de salida ≈ $0.0005 por ficha. Tope 40/día (DO).
+// Nunca escribe nada: el panel llena solo los campos vacíos y la persona revisa.
+const DESCRIBE_MODEL = 'claude-haiku-5-5';
+const DESCRIBE_DAILY_MAX = 40;
+const DESCRIBE_MAX_BYTES = 600 * 1024;
+const DESCRIBE_TIMEOUT_MS = 30_000;
+const DESCRIBE_MEDIA_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const DESCRIBE_SYSTEM = [
+  'Eres quien escribe las fichas de producto de CACUSA by Taitus, joyería y bisutería artesanal (Ecuador y EE.UU.).',
+  'Con la foto de una pieza nueva escribes su nombre y descripción en español (tuteo, cálido, breve) y en inglés, con el mismo estilo y largo que las fichas de ejemplo.',
+  'Nombre: corto (2 a 6 palabras), describe la pieza (tipo + rasgo distintivo: dije, piedra, forma, color). Sin marcas ajenas.',
+  'Descripción: 2 o 3 frases. Qué es, el material tal como aparece en los ejemplos, y cómo o cuándo usarla. No inventes medidas, quilates, piedras naturales ni garantías que no se vean o no estén en los ejemplos.',
+  'Nunca uses emojis. Elige la categoría solo de la lista dada. Si dudas del material, usa el de las fichas parecidas.',
+].join('\n');
+
+function stripColorEmoji(v, max) {
+  return String(v == null ? '' : v)
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+    .replace(/[\u0000-\u001F\u007F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+async function handleProductDescribe(body, env, origin) {
+  let image = typeof body.image === 'string' ? body.image.trim() : '';
+  const m = /^data:([a-z/+-]+);base64,/i.exec(image);
+  if (m) image = image.slice(m[0].length);
+  image = image.replace(/\s+/g, '');
+  const mediaType = String(body.mediaType || (m ? m[1] : '') || '').toLowerCase();
+  if (!image) return err('Falta la foto', 400, origin);
+  if (!DESCRIBE_MEDIA_TYPES.has(mediaType)) return err('Formato de foto no soportado (usa JPEG, PNG o WebP)', 400, origin);
+  const size = base64DecodedSize(image);
+  if (size == null) return err('La foto no es un base64 válido', 400, origin);
+  if (size > DESCRIBE_MAX_BYTES) return err('La foto es demasiado grande para sugerir datos (máximo 600 KB)', 400, origin);
+
+  if (!env.ANTHROPIC_API_KEY) return err('La sugerencia con IA no está activada (falta ANTHROPIC_API_KEY en el Worker).', 503, origin);
+
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
+  const products = catalog.products.filter((p) => p && p.id != null);
+  const categories = [...new Set(products.map((p) => String(p.category || '').trim()).filter(Boolean))].slice(0, 40);
+  if (!categories.length) return err('El catálogo no tiene categorías.', 502, origin);
+
+  const hints = body.hints && typeof body.hints === 'object' ? body.hints : {};
+  const hintCat = categories.includes(String(hints.category || '')) ? String(hints.category) : '';
+  const hintMat = stripColorEmoji(hints.material, 60);
+  const ids = Array.isArray(body.neighborIds) ? body.neighborIds.map((x) => String(x)).slice(0, 3) : [];
+  const byId = new Map(products.map((p) => [String(p.id), p]));
+  let examples = ids.map((id) => byId.get(id)).filter((p) => p && p.description);
+  if (examples.length < 3) {
+    const pool = products.filter((p) => p.description && !examples.includes(p) && (!hintCat || p.category === hintCat));
+    examples = examples.concat(pool.slice(0, 3 - examples.length));
+  }
+  const exText = examples.map((p, i) => [
+    `Ejemplo ${i + 1} (${String(p.category || '')}, material: ${String(p.material || '')}):`,
+    `name: ${String(p.name || '').slice(0, 80)}`,
+    `name_en: ${String(p.name_en || '').slice(0, 80)}`,
+    `description: ${String(p.description || '').slice(0, 400)}`,
+    `description_en: ${String(p.description_en || '').slice(0, 400)}`,
+  ].join('\n')).join('\n\n');
+
+  // Tope diario de gasto (DO, no KV). Se cuenta antes de llamar: un timeout también gasta.
+  if (!(await rateLimit(env, 'describe', 'all', DESCRIBE_DAILY_MAX, 86400))) {
+    return err(`Se alcanzó el límite de ${DESCRIBE_DAILY_MAX} sugerencias con IA de hoy. Mañana se reinicia; mientras tanto usa la sugerencia básica.`, 429, origin);
+  }
+
+  const prompt = [
+    'Categorías posibles: ' + categories.join(', ') + '.',
+    hintCat ? `Las piezas más parecidas del catálogo son de la categoría "${hintCat}".` : '',
+    hintMat ? `Material más probable según las piezas parecidas: "${hintMat}".` : '',
+    'Fichas parecidas del catálogo (copia su estilo y largo, no su contenido):',
+    exText,
+    'Escribe la ficha de la pieza de la foto.',
+  ].filter(Boolean).join('\n');
+
+  const payload = {
+    model: DESCRIBE_MODEL,
+    max_tokens: 700,
+    thinking: { type: 'disabled' },
+    output_config: {
+      effort: 'low',
+      format: {
+        type: 'json_schema',
+        schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            name_en: { type: 'string' },
+            description: { type: 'string' },
+            description_en: { type: 'string' },
+            category: { type: 'string', enum: categories },
+            material: { type: 'string' },
+          },
+          required: ['name', 'name_en', 'description', 'description_en', 'category', 'material'],
+          additionalProperties: false,
+        },
+      },
+    },
+    system: DESCRIBE_SYSTEM,
+    messages: [{ role: 'user', content: [
+      { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } },
+      { type: 'text', text: prompt },
+    ] }],
+  };
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), DESCRIBE_TIMEOUT_MS);
+  let data;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2026-10-21',
+      },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+    if (!r.ok) {
+      let detail = '';
+      try { const j = await r.json(); detail = String((j && j.error && j.error.type) || ''); } catch (_) {}
+      console.error('describe: API de Claude respondió', r.status, detail);
+      return err(`La IA respondió con un error (HTTP ${r.status}). Usa la sugerencia básica o intenta de nuevo.`, 502, origin);
+    }
+    data = await r.json();
+  } catch (e) {
+    if (e && e.name === 'AbortError') return err('La IA tardó demasiado en responder. Intenta de nuevo.', 504, origin);
+    console.error('describe: fallo de red con la API de Claude:', e && e.message);
+    return err('No se pudo contactar a la IA. Intenta de nuevo en un momento.', 502, origin);
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (data && data.stop_reason === 'refusal') return err('La IA no pudo describir esta foto. Usa la sugerencia básica.', 502, origin);
+  if (data && data.stop_reason === 'max_tokens') return err('La respuesta de la IA quedó incompleta. Intenta de nuevo.', 502, origin);
+  const textBlock = Array.isArray(data && data.content) ? data.content.find((b) => b && b.type === 'text') : null;
+  let parsed;
+  try { parsed = JSON.parse(textBlock ? textBlock.text : ''); } catch (_) { parsed = null; }
+  if (!parsed || typeof parsed !== 'object') return err('La respuesta de la IA no se pudo leer. Intenta de nuevo.', 502, origin);
+
+  const suggestion = {
+    name: stripColorEmoji(parsed.name, 80),
+    name_en: stripColorEmoji(parsed.name_en, 80),
+    description: stripColorEmoji(parsed.description, 600),
+    description_en: stripColorEmoji(parsed.description_en, 600),
+    category: categories.includes(parsed.category) ? parsed.category : (hintCat || ''),
+    material: stripColorEmoji(parsed.material, 60),
+  };
+  const u = (data && data.usage) || {};
+  return ok({ ok: true, suggestion, model: DESCRIBE_MODEL,
+    usage: { input: Number(u.input_tokens) || 0, output: Number(u.output_tokens) || 0 } }, origin);
+}
+
 async function handleIdentifyRefAdd(body, env, origin) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const id = body.id != null ? String(body.id) : '';
