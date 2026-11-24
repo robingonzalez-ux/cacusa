@@ -61,6 +61,8 @@
  *                                   API Keys) para "✦ Sugerir datos desde la foto" al crear un
  *                                   producto (/product/describe, Claude Haiku 5.5, < $0.001 por
  *                                   ficha, tope 40/día). Sin ella el panel usa sus plantillas gratis.
+ *                                   La misma llave activa la segunda opinión del identificador por
+ *                                   foto (/identify/rerank, solo cuando duda, ~$0.0002, tope 150/día).
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -434,6 +436,7 @@ export default {
       if (path.endsWith('/identify/ref/add'))   return await handleIdentifyRefAdd(body, env, allowOrigin);
       if (path.endsWith('/identify/ref/clear')) return await handleIdentifyRefClear(body, env, allowOrigin);
       if (path.endsWith('/product/describe'))   return await handleProductDescribe(body, env, allowOrigin);
+      if (path.endsWith('/identify/rerank'))    return await handleIdentifyRerank(body, env, allowOrigin);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -1742,6 +1745,128 @@ async function handleProductDescribe(body, env, origin) {
   const u = (data && data.usage) || {};
   return ok({ ok: true, suggestion, model: DESCRIBE_MODEL,
     usage: { input: Number(u.input_tokens) || 0, output: Number(u.output_tokens) || 0 } }, origin);
+}
+
+// ── Segunda opinión cuando el identificador por foto duda (Claude Haiku 5.5, 24 nov) ────
+// POST /identify/rerank { token, image (base64 de la foto del taller, ~512 px),
+//   candidates: [{ id, image (base64 ~384 px de la foto del catálogo) }] (2 a 5) }
+// El panel la llama SOLO cuando aparece "Duda entre 2 piezas"; nunca en los casos claros.
+// Lo más barato posible: Haiku 5.5, sin thinking, effort low, imágenes chicas que manda el
+// panel (ya las tiene cargadas) → ~1.500 tokens de entrada + ~60 de salida ≈ $0.0002.
+// Devuelve { choice: id | null, confidence } con un id que SIEMPRE es uno de los candidatos
+// y existe en el catálogo. Nunca escribe nada. Tope 150/día (DO).
+const RERANK_MODEL = 'claude-haiku-5-5';
+const RERANK_DAILY_MAX = 150;
+const RERANK_MAX_BYTES = 300 * 1024;
+const RERANK_TIMEOUT_MS = 20_000;
+const RERANK_SYSTEM = [
+  'Ayudas al taller de una joyería a reconocer qué pieza del catálogo aparece en una foto tomada con el teléfono (puede haber mano, mantel estampado, otras joyas al fondo, otra luz o ángulo).',
+  'Te doy la foto del taller y varias fotos oficiales del catálogo, cada una con su ID. Compara solo la joya: forma, dijes, piedras (color, cantidad, corte), tipo de cadena o cordón, color del metal y detalles grabados. Ignora el fondo y la mano.',
+  'Elige el ID que es la MISMA pieza. Si ninguna coincide con seguridad, devuelve choice null. confidence entre 0 y 1.',
+].join('\n');
+
+function rerankImage(b64) {
+  let s = typeof b64 === 'string' ? b64.trim() : '';
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,/i.exec(s);
+  const mediaType = m ? m[1].toLowerCase() : 'image/jpeg';
+  if (m) s = s.slice(m[0].length);
+  s = s.replace(/\s+/g, '');
+  const size = base64DecodedSize(s);
+  if (size == null || size > RERANK_MAX_BYTES) return null;
+  return { type: 'image', source: { type: 'base64', media_type: mediaType, data: s } };
+}
+
+async function handleIdentifyRerank(body, env, origin) {
+  const query = rerankImage(body.image);
+  if (!query) return err('Falta la foto o es demasiado grande (máximo 300 KB)', 400, origin);
+  const list = Array.isArray(body.candidates) ? body.candidates.slice(0, 5) : [];
+  if (list.length < 2) return err('Se necesitan al menos 2 candidatas', 400, origin);
+  if (!env.ANTHROPIC_API_KEY) return err('La segunda opinión con IA no está activada (falta ANTHROPIC_API_KEY en el Worker).', 503, origin);
+
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
+  const byId = new Map(catalog.products.filter((p) => p && p.id != null).map((p) => [String(p.id), p]));
+  const cands = [];
+  const seen = new Set();
+  for (const c of list) {
+    const id = c && c.id != null ? String(c.id).trim() : '';
+    if (!id || seen.has(id) || !byId.has(id)) continue;
+    const img = rerankImage(c.image);
+    if (!img) continue;
+    seen.add(id);
+    cands.push({ id, img, p: byId.get(id) });
+  }
+  if (cands.length < 2) return err('Las candidatas no son válidas', 400, origin);
+
+  if (!(await rateLimit(env, 'rerank', 'all', RERANK_DAILY_MAX, 86400))) {
+    return err(`Se alcanzó el límite de ${RERANK_DAILY_MAX} segundas opiniones de hoy. Elige la pieza a mano o toma otra foto.`, 429, origin);
+  }
+
+  const content = [{ type: 'text', text: 'Foto del taller:' }, query];
+  for (const c of cands) {
+    content.push({ type: 'text', text: `ID ${c.id} · ${String(c.p.category || '')} · ${String(c.p.name || '').slice(0, 60)}` });
+    content.push(c.img);
+  }
+  content.push({ type: 'text', text: '¿Cuál ID es la misma pieza que la foto del taller?' });
+
+  const ids = cands.map((c) => c.id);
+  const payload = {
+    model: RERANK_MODEL,
+    max_tokens: 200,
+    thinking: { type: 'disabled' },
+    output_config: {
+      effort: 'low',
+      format: {
+        type: 'json_schema',
+        schema: {
+          type: 'object',
+          properties: {
+            choice: { anyOf: [{ type: 'string', enum: ids }, { type: 'null' }] },
+            confidence: { type: 'number' },
+          },
+          required: ['choice', 'confidence'],
+          additionalProperties: false,
+        },
+      },
+    },
+    system: RERANK_SYSTEM,
+    messages: [{ role: 'user', content }],
+  };
+
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), RERANK_TIMEOUT_MS);
+  let data;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2026-10-21' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+    if (!r.ok) {
+      let detail = '';
+      try { const j = await r.json(); detail = String((j && j.error && j.error.type) || ''); } catch (_) {}
+      console.error('rerank: API de Claude respondió', r.status, detail);
+      return err(`La IA respondió con un error (HTTP ${r.status}).`, 502, origin);
+    }
+    data = await r.json();
+  } catch (e) {
+    if (e && e.name === 'AbortError') return err('La IA tardó demasiado en responder.', 504, origin);
+    console.error('rerank: fallo de red con la API de Claude:', e && e.message);
+    return err('No se pudo contactar a la IA.', 502, origin);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (data && data.stop_reason === 'refusal') return err('La IA no pudo analizar esta foto.', 502, origin);
+  const textBlock = Array.isArray(data && data.content) ? data.content.find((b) => b && b.type === 'text') : null;
+  let parsed;
+  try { parsed = JSON.parse(textBlock ? textBlock.text : ''); } catch (_) { parsed = null; }
+  if (!parsed || typeof parsed !== 'object') return err('La respuesta de la IA no se pudo leer.', 502, origin);
+  const choice = parsed.choice != null && ids.includes(String(parsed.choice)) ? String(parsed.choice) : null;
+  const conf = Number(parsed.confidence);
+  const u = (data && data.usage) || {};
+  return ok({ ok: true, choice, confidence: Number.isFinite(conf) ? Math.min(1, Math.max(0, conf)) : 0,
+    model: RERANK_MODEL, usage: { input: Number(u.input_tokens) || 0, output: Number(u.output_tokens) || 0 } }, origin);
 }
 
 async function handleIdentifyRefAdd(body, env, origin) {
