@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://admin.cacusabytaitus.com https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <script>window.__CACUSA_STATIC_CATEGORY = "Aretes";</script>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-1JPMVGERM2"></script>
@@ -98,7 +98,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>document.documentElement.className='lang-es';</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=46ead8b184">
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=f9cdb00be8">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-storelist">{"@context":"https://schema.org","@type":"ItemList","itemListElement":[{"@type":"ListItem","position":1,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-perla-tejidos-a-mano-1786303032752/","name":"Aretes de perla tejidos a mano"},{"@type":"ListItem","position":2,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-corazon-chinoiserie-1786330341098/","name":"Aretes de corazón chinoiserie"},{"@type":"ListItem","position":3,"url":"https://cacusabytaitus.com/ui_kits/store/producto/argollas-pequenas-de-1-cm-1789830883898/","name":"Argollas pequeñas de 1 cm"},{"@type":"ListItem","position":4,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-flor-1789831017689/","name":"Aretes de flor"},{"@type":"ListItem","position":5,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-rombo-de-circon-1789831461536/","name":"Aretes de rombo de circón"},{"@type":"ListItem","position":6,"url":"https://cacusabytaitus.com/ui_kits/store/producto/argollas-1789832318279/","name":"Argollas"},{"@type":"ListItem","position":7,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-circon-verde-1789833979991/","name":"Aretes de circón verde"},{"@type":"ListItem","position":8,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-caracol-1789834120184/","name":"Aretes de caracol"},{"@type":"ListItem","position":9,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-corazon-1789834277881/","name":"Aretes de corazón"},{"@type":"ListItem","position":10,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-flor-y-circones-1789834373112/","name":"Aretes de flor y circones"},{"@type":"ListItem","position":11,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-entrelazados-1789834493333/","name":"Aretes entrelazados"},{"@type":"ListItem","position":12,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-rectangulo-1789835085201/","name":"Aretes Rectángulo"},{"@type":"ListItem","position":13,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-de-piedra-amazonita-1789835517841/","name":"Aretes de Piedra amazonita"},{"@type":"ListItem","position":14,"url":"https://cacusabytaitus.com/ui_kits/store/producto/aretes-triple-corazon-1789835608668/","name":"Aretes triple corazón"},{"@type":"ListItem","position":15,"url":"https://cacusabytaitus.com/ui_kits/store/producto/argollas-con-circon-1789856160011/","name":"Argollas con circón"}]}</script>
@@ -189,6 +189,7 @@
       placeholder="Buscar productos…" aria-label="Buscar productos">
     <button class="search-clear" id="searchClear" aria-label="Limpiar búsqueda">×</button>
   </div>
+  <button type="button" class="photo-search-btn" id="photoSearchBtn">◇ Buscar por foto</button>
   <select class="sort-select" id="sortSelect">
     <option value="default">Ordenar: Destacados</option>
     <option value="price-asc">Precio: menor a mayor</option>
@@ -724,6 +725,6 @@
   </div>
 </div>
 
-<script src="/ui_kits/store/app.js?v=44a902b09f"></script>
+<script src="/ui_kits/store/app.js?v=22bdcf9f27"></script>
 </body>
 </html>

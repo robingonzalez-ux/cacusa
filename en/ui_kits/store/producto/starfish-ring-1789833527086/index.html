@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://admin.cacusabytaitus.com https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <script>window.__CACUSA_STATIC_PRODUCT_ID = "1789833527086";</script>
   <!-- Esta es la copia en inglés (/en/): fija el idioma leído por TODO el código de abajo
        (que originalmente lee localStorage.getItem('cacusa-lang')) a 'en', sin escribir en el
@@ -103,7 +103,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>document.documentElement.className='lang-en';</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=46ead8b184">
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=f9cdb00be8">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-product">{"@context":"https://schema.org","@graph":[{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"CACUSA","item":"https://cacusabytaitus.com/en/"},{"@type":"ListItem","position":2,"name":"Store","item":"https://cacusabytaitus.com/en/ui_kits/store/"},{"@type":"ListItem","position":3,"name":"Rings","item":"https://cacusabytaitus.com/en/ui_kits/store/categoria/anillos/"},{"@type":"ListItem","position":4,"name":"Starfish ring","item":"https://cacusabytaitus.com/en/ui_kits/store/producto/starfish-ring-1789833527086/"}]},{"@type":"Product","name":"Starfish ring","description":"A piece of sea turned into a jewel. ✦✦\nIts starfish wrap your finger creating a striking design, different and with a lot of personality. With an 18K gold plating and adjustable design, it is that piece that makes you feel summer all year round and transforms any look just by putting it on.","url":"https://cacusabytaitus.com/en/ui_kits/store/producto/starfish-ring-1789833527086/","sku":"1789833527086","brand":{"@type":"Brand","name":"CACUSA by Taitus"},"offers":{"@type":"Offer","priceCurrency":"USD","price":"25","availability":"https://schema.org/InStock","url":"https://cacusabytaitus.com/en/ui_kits/store/producto/starfish-ring-1789833527086/","shippingDetails":[{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"EC"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":1,"maxValue":2,"unitCode":"DAY"}}},{"@type":"OfferShippingDetails","shippingRate":{"@type":"MonetaryAmount","value":"10.00","currency":"USD"},"shippingDestination":{"@type":"DefinedRegion","addressCountry":"US"},"deliveryTime":{"@type":"ShippingDeliveryTime","handlingTime":{"@type":"QuantitativeValue","minValue":5,"maxValue":10,"unitCode":"DAY"},"transitTime":{"@type":"QuantitativeValue","minValue":2,"maxValue":5,"unitCode":"DAY"}}}],"hasMerchantReturnPolicy":{"@type":"MerchantReturnPolicy","applicableCountry":["EC","US"],"returnPolicyCategory":"https://schema.org/MerchantReturnFiniteReturnWindow","merchantReturnDays":2,"returnMethod":"https://schema.org/ReturnByMail","returnFees":"https://schema.org/FreeReturn","refundType":"https://schema.org/ExchangeRefund","merchantReturnLink":"https://cacusabytaitus.com/devoluciones.html"}},"image":["https://cacusabytaitus.com/ui_kits/store/images/1789833448775_4663a0d8_c09d_4bd5_a9a6_f9db6506191e_png.webp"],"material":"Baño de oro 18k"}]}</script>
@@ -193,6 +193,7 @@
       placeholder="Search products…" aria-label="Search products">
     <button class="search-clear" id="searchClear" aria-label="Clear search">×</button>
   </div>
+  <button type="button" class="photo-search-btn" id="photoSearchBtn">◇ Search by photo</button>
   <select class="sort-select" id="sortSelect">
     <option value="default">Ordenar: Destacados</option>
     <option value="price-asc">Precio: menor a mayor</option>
@@ -728,6 +729,6 @@
   </div>
 </div>
 
-<script src="/en/ui_kits/store/app.js?v=dd21b3671f"></script>
+<script src="/en/ui_kits/store/app.js?v=e4b2b5d32a"></script>
 </body>
 </html>
