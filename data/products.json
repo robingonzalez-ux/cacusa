@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-11-25T22:00:51.782Z",
+  "lastUpdated": "2026-11-25T22:04:11.880Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -529,7 +529,7 @@
       "deadlineStockUs": "2026-12-14"
     },
     "skuSeq": {
-      "AN": 31,
+      "AN": 32,
       "PU": 16,
       "HO": 2,
       "CA": 23,
@@ -1988,12 +1988,12 @@
       "similar": [
         1789840143477,
         1789855320945,
+        1795643916937,
         1781977774245,
         1789840051998,
         1785469598547,
         1781879189744,
-        1781400451404,
-        1789854774028
+        1781400451404
       ]
     },
     {
@@ -2063,7 +2063,7 @@
         1788922634845,
         1781977774245,
         1788921701764,
-        1786315591380
+        1795643916937
       ]
     },
     {
@@ -2093,12 +2093,12 @@
       "similar": [
         1785469196142,
         1781473015877,
+        1795643916937,
         1781977774245,
         1786328384393,
         1788921701764,
         1788922634845,
-        1789855526360,
-        1788923140476
+        1789855526360
       ]
     },
     {
@@ -2553,11 +2553,11 @@
         1788922634845,
         1788923140476,
         1785469598547,
+        1795643916937,
         1786308585824,
         1788922298558,
         1785469196142,
-        1786329172109,
-        1785470275920
+        1786329172109
       ]
     },
     {
@@ -2623,9 +2623,9 @@
         1788922298558,
         1786308585824,
         1785470725921,
+        1795643916937,
         1785469598547,
-        1789856160011,
-        1785469196142
+        1789856160011
       ]
     },
     {
@@ -2657,10 +2657,10 @@
         1788922634845,
         1786329172109,
         1785469598547,
+        1795643916937,
         1781473627668,
         1789832083118,
-        1786308585824,
-        1781473526943
+        1786308585824
       ]
     },
     {
@@ -2857,8 +2857,8 @@
         1785470725921,
         1789856160011,
         1788107242835,
-        1789832962055,
-        1789834493333
+        1795643916937,
+        1789832962055
       ]
     },
     {
@@ -3749,7 +3749,43 @@
       ],
       "id": 1795643916937,
       "promo": null,
-      "sku": "AN031"
+      "sku": "AN031",
+      "similar": [
+        1785469598547,
+        1788921701764,
+        1788922634845,
+        1785466095890,
+        1785469196142,
+        1788923140476,
+        1786329172109,
+        1783440355036
+      ]
+    },
+    {
+      "name": "Anillo solitario con banda bicolor",
+      "name_en": "Bicolor Solitaire Ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": null,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo solitario con banda plateada pulida y una línea dorada que recorre el aro, y un circón redondo engastado en cuatro garras. Es una pieza clásica y luminosa, perfecta para lucir como protagonista o combinar con tus otros anillos. Su diseño sencillo la hace ideal para uso diario.",
+      "description_en": "Solitaire ring with a polished silver band and a golden line running along the shank, with a round zircon set in four prongs. It is a classic, luminous piece, perfect to wear as the protagonist or combined with your other rings. Its simple design makes it ideal for everyday wear.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1795644170444_9bea08c5_bc3d_458d_9a16_600e6430ac88_png.webp",
+      "focalX": 50,
+      "focalY": 50,
+      "zoom": 1,
+      "material": "Acero inoxidable",
+      "images": [
+        "https://cacusabytaitus.com/ui_kits/store/images/1795644180970_6911bc60_ae12_4fc1_833d_783c88836105_png.webp",
+        "https://cacusabytaitus.com/ui_kits/store/images/1795644187586_ce9afded_29f3_428a_a81d_f626c75fdede_png.webp"
+      ],
+      "id": 1795644249158,
+      "promo": null,
+      "sku": "AN032"
     }
   ],
   "combos": []
