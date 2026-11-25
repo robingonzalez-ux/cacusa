@@ -166,14 +166,19 @@ nav{position:sticky;top:0;z-index:400;background:rgba(254,248,255,.96);backdrop-
 .modal-close{position:absolute;top:20px;right:20px;background:var(--pink-pale);border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink);transition:all .2s var(--ease-out);z-index:10}
 .modal-close:hover{background:var(--pink);color:white}
 .related-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-@media(max-width:480px){.related-grid{grid-template-columns:repeat(2,1fr)}}
-.related-card{border-radius:14px;overflow:hidden;border:1.5px solid var(--pink-pale);cursor:pointer;transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
+/* 25 nov: tarjetas <a> de "También te puede gustar"; altura fija (sin salto de diseño al pintar
+   perezoso) y en móvil una sola fila deslizable de 4 en vez de 2×2. */
+@media(max-width:480px){.related-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:42%;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;padding-bottom:4px}.related-grid::-webkit-scrollbar{display:none}.related-card{scroll-snap-align:start}}
+.related-card{display:block;text-decoration:none;color:inherit;border-radius:14px;overflow:hidden;border:1.5px solid var(--pink-pale);cursor:pointer;transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out)}
 .related-card:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
 .related-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(238,111,168,.2)}
-.related-card-img{height:110px;background-size:cover;background-position:center}
-.related-card-body{padding:9px 12px 12px}
+.related-card-img{height:110px;background-size:cover;background-position:center;overflow:hidden}
+.related-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.related-card-body{padding:9px 12px 12px;height:92px;box-sizing:border-box;overflow:hidden}
+.related-card--ph{cursor:default;pointer-events:none}
+.related-card--ph .related-card-img{background:var(--pink-pale)}
 .related-card-tag{font-family:var(--fu);font-size:9px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
-.related-card-name{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:4px}
+.related-card-name{font-family:var(--fd);font-size:14px;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .related-card-price{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink)}
 .modal-img{height:100%;border-radius:28px 0 0 28px;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .gallery-main{flex:1;min-height:340px;position:relative;overflow:hidden;cursor:zoom-in}
@@ -811,3 +816,30 @@ main#main:focus{outline:none}
 /* "Continuar" del paso 1: mismo degradado de marca que los botones de pago (antes var(--grad), blanco sobre rosa claro) */
 .co-step-next{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:#fff;box-shadow:0 4px 24px rgba(238,111,168,.35)}
 .gc-btn{box-shadow:none;border-radius:999px}
+
+/* 25 nov: "También te puede gustar" en el carrito (fila de 4) y "Buscar por foto" */
+.cs-list--row{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.cs-list--row .cs-name{font-size:12px}
+.photo-search-btn{flex:0 0 auto;background:white;border:1.5px solid var(--ink-light);border-radius:999px;padding:8px 14px;font-family:var(--fu);font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap;transition:border-color .2s var(--ease-out)}
+.photo-search-btn:hover{border-color:var(--pink)}
+.photo-search-btn[aria-busy="true"]{opacity:.6;cursor:progress}
+@media(max-width:600px){.photo-search-btn{flex:0 0 100%;min-height:44px;order:5}}
+.ps-overlay{position:fixed;inset:0;z-index:750;background:rgba(139,42,90,.25);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
+.ps-overlay.open{display:flex}
+.ps-box{position:relative;background:var(--pearl);border-radius:24px;width:100%;max-width:680px;max-height:calc(100vh - 48px);overflow-y:auto;padding:28px;box-sizing:border-box;box-shadow:0 32px 80px rgba(238,111,168,.25)}
+.ps-close{position:absolute;top:16px;right:16px;background:var(--pink-pale);border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;color:var(--ink)}
+.ps-title{font-family:var(--fd);font-size:24px;font-weight:700;color:var(--ink);margin:0 48px 8px 0}
+.ps-intro{font-family:var(--fu);font-size:14px;color:var(--ink-mid);line-height:1.5;margin:0 0 16px}
+.ps-top{display:flex;gap:14px;align-items:center;margin-bottom:16px}
+.ps-preview{width:84px;height:auto;max-height:120px;object-fit:contain;border-radius:12px;background:white;box-shadow:var(--shadow-card);flex:0 0 auto}
+.ps-actions{flex:1;min-width:0}
+.ps-pick{background:var(--grad-warm);color:white;border:none;border-radius:999px;padding:12px 20px;min-height:44px;font-family:var(--fu);font-size:14px;font-weight:600;cursor:pointer}
+.ps-status{font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin:10px 0 0;min-height:1.4em;line-height:1.4}
+.ps-results{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ps-results:empty{display:none}
+.ps-privacy{font-family:var(--fu);font-size:11.5px;color:var(--ink-muted);margin:16px 0 0}
+@media(max-width:600px){
+  .ps-overlay{padding:0;align-items:stretch}
+  .ps-box{border-radius:0;max-width:none;max-height:none;height:100%;padding:20px 16px}
+  .ps-results{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

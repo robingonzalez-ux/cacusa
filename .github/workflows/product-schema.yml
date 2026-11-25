@@ -48,6 +48,7 @@ on:
       - "ui_kits/store/app.js"
       - "en/ui_kits/store/app.js"
       - "ui_kits/store/styles.css"
+      - "ui_kits/store/photo-search.js"
       - ".github/scripts/bump_asset_versions.py"
       - ".github/scripts/generate_*.py"
       - ".github/scripts/category_copy.py"

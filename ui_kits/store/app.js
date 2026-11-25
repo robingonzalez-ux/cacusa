@@ -1682,6 +1682,7 @@ function updateCartUI() {
     const fill = document.getElementById('cartShipFill');
     if (fill) fill.style.width = (freeCard || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, baseTotal / SHIPPING.freeThreshold * 100)) + '%';
     if (!freeCard) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
+    itemsEl.insertAdjacentHTML('beforeend', _cartSimilarHtml(freeCard ? [] : _cartSuggestions(remaining).map(p => p.id)));
     footEl.style.display = 'block';
   }
 }
@@ -2912,37 +2913,130 @@ document.addEventListener('keydown', e => {
 });
 addSwipe(document.getElementById('lightbox'), () => lbGoTo(_lbIdx + 1), () => lbGoTo(_lbIdx - 1));
 
-// ─── RELACIONADOS ──────────────────────────────────────────
-function _renderRelatedProducts(p) {
-  const container = document.getElementById('relatedProducts');
-  const grid = document.getElementById('relatedGrid');
-  if (!container || !grid) return;
-  const related = PRODUCTS
-    .filter(x => x.id !== p.id && x.cat === p.cat && x.available !== false)
-    .sort((a, b) => {
-      const sa = (a.badge === 'badge-sale' || a.badge === 'badge-promo' || a.isPromo) ? 0 : 1;
-      const sb = (b.badge === 'badge-sale' || b.badge === 'badge-promo' || b.isPromo) ? 0 : 1;
-      return sa - sb;
-    })
-    .slice(0, 4);
-  if (related.length < 2) { container.style.display = 'none'; return; }
-  container.style.display = 'block';
-  grid.innerHTML = related.map(r => {
-    const rName = (__LANG === 'en' && r.name_en) ? r.name_en : r.name;
-    const imgs = getProductImages(r);
-    const imgStyle = imgs[0]
-      ? `background-image:url('${imgs[0].replace(/'/g, '%27')}')`
-      : imgBgStyle(r);
-    return `<div class="related-card" role="button" tabindex="0" aria-label="${esc(rName)}" onclick="openModal(${r.id})" onkeydown="activateOnKey(event,()=>openModal(${r.id}))">
-      <div class="related-card-img" style="${imgStyle}"></div>
+// ─── TAMBIÉN TE PUEDE GUSTAR (25 nov) ──────────────────────
+// products.json puede traer `similar: [ids]` por producto (hasta 8, en orden, calculados en el
+// panel con las huellas visuales del catálogo). Se usan los que siguen disponibles y con stock
+// (available === false ya incluye los agotados de /pub/stock, ver _applySoldOut). Si no hay
+// `similar` o quedan menos de n, se completa con la misma categoría primero y después el precio
+// más cercano. Nunca el mismo producto ni agotados. Lo usan el modal/ficha y el carrito.
+function _similarProducts(p, n, exclude) {
+  const ex = new Set((exclude || []).map(String));
+  ex.add(String(p.id));
+  const ok = x => !!x && x.available !== false && !ex.has(String(x.id));
+  const out = [];
+  const take = x => { if (out.length < n && ok(x)) { out.push(x); ex.add(String(x.id)); } };
+  if (Array.isArray(p.similar) && p.similar.length) {
+    const byId = new Map(PRODUCTS.map(x => [String(x.id), x]));
+    p.similar.slice(0, 8).forEach(id => take(byId.get(String(id))));
+  }
+  if (out.length < n) {
+    const price = +p.price || 0;
+    PRODUCTS.filter(ok)
+      .sort((a, b) => ((b.cat === p.cat) - (a.cat === p.cat)) || (Math.abs(+a.price - price) - Math.abs(+b.price - price)))
+      .forEach(take);
+  }
+  return out;
+}
+// Tarjeta de la fila (mismos estilos .related-card de siempre). <a href> real a la página del
+// producto; un clic normal abre el modal igual que la grilla (_pcardNav → openModal + ?p=).
+function _relatedCardHtml(r) {
+  const rName = (__LANG === 'en' && r.name_en) ? r.name_en : r.name;
+  return `<a class="related-card" href="${_pcardHref(r)}" onclick="return _pcardNav(event, ${r.id})">
+      <div class="related-card-img" style="${imgBgStyle(r)}">${imgInner(r, rName)}</div>
       <div class="related-card-body">
         ${r.badge ? `<div class="related-card-tag">${esc(tagLabel(r.tag))}</div>` : ''}
         <div class="related-card-name">${esc(rName)}</div>
         <div class="related-card-price">$${(+r.price).toFixed(2)}</div>
       </div>
-    </div>`;
-  }).join('');
+    </a>`;
 }
+// Se pinta perezoso: al abrir el modal quedan 4 tarjetas vacías del mismo tamaño (sin salto de
+// diseño) y las de verdad, con sus fotos, recién cuando la fila se acerca a la pantalla.
+let _relatedIO = null;
+function _renderRelatedProducts(p) {
+  const container = document.getElementById('relatedProducts');
+  const grid = document.getElementById('relatedGrid');
+  if (!container || !grid) return;
+  if (_relatedIO) { _relatedIO.disconnect(); _relatedIO = null; }
+  const related = _similarProducts(p, 4);
+  if (related.length < 2) { container.style.display = 'none'; grid.innerHTML = ''; return; }
+  container.style.display = 'block';
+  const fill = () => { if (currentProduct === p) grid.innerHTML = related.map(_relatedCardHtml).join(''); };
+  if (!('IntersectionObserver' in window)) { fill(); return; }
+  grid.innerHTML = related.map(() => '<div class="related-card related-card--ph" aria-hidden="true"><div class="related-card-img"></div><div class="related-card-body"></div></div>').join('');
+  _relatedIO = new IntersectionObserver(entries => {
+    if (!entries.some(e => e.isIntersecting)) return;
+    if (_relatedIO) { _relatedIO.disconnect(); _relatedIO = null; }
+    fill();
+  }, { rootMargin: '240px 0px' });
+  _relatedIO.observe(grid);
+}
+// Carrito: hasta 4 piezas parecidas a lo que ya lleva (turnándose entre sus productos), sin
+// repetir lo del carrito ni las sugerencias de envío gratis. Solo con el carrito abierto, así
+// no se arma ni se piden fotos mientras está cerrado.
+function _cartSimilarHtml(excludeIds) {
+  const drawer = document.getElementById('cart-drawer');
+  if (!drawer || !drawer.classList.contains('open')) return '';
+  const base = cart.filter(i => !i.isCombo).map(i => PRODUCTS.find(p => String(p.id) === String(i.id))).filter(Boolean);
+  if (!base.length) return '';
+  const ex = cart.map(i => String(i.id)).concat((excludeIds || []).map(String));
+  const lists = base.map(p => _similarProducts(p, 8, ex));
+  const out = [], seen = new Set();
+  for (let k = 0; k < 8 && out.length < 4; k++) {
+    for (const l of lists) {
+      const x = l[k];
+      if (x && !seen.has(String(x.id)) && out.length < 4) { seen.add(String(x.id)); out.push(x); }
+    }
+  }
+  if (out.length < 2) return '';
+  return '<div class="cart-suggest cart-suggest--similar"><div class="cs-title">' + (__LANG === 'en' ? 'You may also like' : 'También te puede gustar') + '</div><div class="cs-list cs-list--row">' +
+    out.map(p => {
+      const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, nm)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+    }).join('') + '</div></div>';
+}
+
+// ─── BUSCAR POR FOTO (25 nov) ──────────────────────────────
+// El motor (TF.js + EfficientNetV2-B0 + huellas del catálogo, ~14 MB, servido por el panel en
+// admin.cacusabytaitus.com/models/) y el overlay viven en photo-search.js, compartido ES/EN.
+// No se descarga NADA hasta que la clienta toca el botón. El ?v= de abajo lo pone
+// .github/scripts/bump_asset_versions.py (no tocarlo a mano).
+const PHOTO_SEARCH_SRC = '/ui_kits/store/photo-search.js';
+let _photoSearchP = null;
+function _loadPhotoSearch() {
+  if (window.CacusaPhotoSearch) return Promise.resolve(window.CacusaPhotoSearch);
+  if (_photoSearchP) return _photoSearchP;
+  _photoSearchP = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = PHOTO_SEARCH_SRC; s.async = true;
+    s.onload = () => (window.CacusaPhotoSearch ? resolve(window.CacusaPhotoSearch) : reject(new Error('init')));
+    s.onerror = () => reject(new Error('load'));
+    document.head.appendChild(s);
+  });
+  _photoSearchP.catch(() => { _photoSearchP = null; });
+  return _photoSearchP;
+}
+function openPhotoSearch() {
+  const btn = document.getElementById('photoSearchBtn');
+  if (btn) btn.setAttribute('aria-busy', 'true');
+  _loadPhotoSearch()
+    .then(ps => ps.open(btn))
+    .catch(() => showToast(__LANG === 'en' ? 'Photo search could not load. Check your connection and try again.' : 'No se pudo abrir la búsqueda por foto. Revisa tu conexión e inténtalo de nuevo.', 4000))
+    .then(() => { if (btn) btn.removeAttribute('aria-busy'); });
+}
+// El botón viene en la plantilla; si una página física todavía no se regeneró, se crea acá.
+(function _initPhotoSearchBtn() {
+  let btn = document.getElementById('photoSearchBtn');
+  if (!btn) {
+    const sw = document.querySelector('.filters .search-wrap');
+    if (!sw) return;
+    btn = document.createElement('button');
+    btn.type = 'button'; btn.id = 'photoSearchBtn'; btn.className = 'photo-search-btn';
+    btn.textContent = __LANG === 'en' ? '◇ Search by photo' : '◇ Buscar por foto';
+    sw.insertAdjacentElement('afterend', btn);
+  }
+  btn.addEventListener('click', openPhotoSearch);
+})();
 
 // ─── SEO: SCHEMA DINÁMICO ─────────────────────────────────
 const _SEO_BASE = 'https://cacusabytaitus.com/ui_kits/store/';
