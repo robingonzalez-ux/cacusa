@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-11-25T22:14:41.572Z",
+  "lastUpdated": "2026-11-25T23:21:35.869Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -2539,9 +2539,9 @@
       "personalized": false,
       "available": true,
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1788921641910_cacusa_anillo_producto_jpg.webp",
-      "focalX": 50,
-      "focalY": 49.54545454545455,
-      "zoom": 1,
+      "focalX": 50.42194092827003,
+      "focalY": 39.848484848484574,
+      "zoom": 0.85,
       "material": "Acero inoxidable",
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1788921650147_cacusa_anillo_modelo_1_png.webp"
