@@ -1,7 +1,7 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-09-19T22:20:32.992Z",
-  "updatedBy": "tita.jaramillo",
+  "lastUpdated": "2026-11-25T22:00:51.782Z",
+  "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
     "whatsapp": "+17867375336",
@@ -473,6 +473,8 @@
     "pages": {
       "envios": {
         "intro": "Aquí te contamos cuánto cuesta, cuánto tarda y cómo sigues el envío de tu joya. Las piezas en stock salen en pocos días; las personalizadas se elaboran a mano para ti antes de enviarse.",
+        "servientregaSameCityRate": "desde $3.50",
+        "servientregaOtherCityRate": "$5.25 – $6.30",
         "servientregaNote": "Una vez despachado, tu pedido llega en 1–2 días hábiles (el mismo día dentro de la misma ciudad si sale temprano). Los envíos del sábado se entregan el lunes.",
         "uspsTime": "2–5 días hábiles",
         "otrosPaisesBody": "¿Nos escribes desde otro país? Contáctanos por WhatsApp y te confirmamos disponibilidad, tiempo y costo exacto de envío a tu ubicación."
@@ -513,6 +515,29 @@
         "sec3Body": "When not wearing it, store it in its original packaging or in an individual pouch, separate from other jewelry to prevent scratching. Keep it in a dry place, away from direct sunlight and humidity.",
         "sec5Body": "Clean your jewelry occasionally with a soft, dry cloth to remove dust and the skin's natural oils. Avoid toothpaste, baking soda or other abrasive products: they can scratch the surface and damage the finish."
       }
+    },
+    "campaign": {
+      "enabled": true,
+      "endsAt": "2026-12-26",
+      "title": "Regalos de Navidad",
+      "title_en": "Christmas gifts",
+      "banner": "",
+      "banner_en": "",
+      "deadlinePersonalEc": "2026-12-08",
+      "deadlinePersonalUs": "2026-12-03",
+      "deadlineStockEc": "2026-12-18",
+      "deadlineStockUs": "2026-12-14"
+    },
+    "skuSeq": {
+      "AN": 31,
+      "PU": 16,
+      "HO": 2,
+      "CA": 23,
+      "EC": 1,
+      "PA": 2,
+      "JU": 2,
+      "AR": 15,
+      "HC": 2
     },
     "translations": {
       "en": {
@@ -675,7 +700,17 @@
       "material": "Baño de oro 18k",
       "focalX": 45.78679500650782,
       "focalY": 51.002900697401735,
-      "zoom": 1.75
+      "zoom": 1.75,
+      "similar": [
+        1781880053907,
+        1781881478183,
+        1781879577380,
+        1781880466753,
+        1781878207350,
+        1781877944864,
+        1781879189744,
+        1781878646387
+      ]
     },
     {
       "name": "Pulsera de mano con anillo",
@@ -696,7 +731,17 @@
       "zoom": 0.85,
       "focalX": 72.2242769732981,
       "focalY": 56.36566106499314,
-      "material": "Baño de oro 18k"
+      "material": "Baño de oro 18k",
+      "similar": [
+        1786308585824,
+        1786328384393,
+        1786315591380,
+        1788540460219,
+        1781473015877,
+        1781977774245,
+        1786329172109,
+        1785469196142
+      ]
     },
     {
       "name": "Cadena jersey Ecuador",
@@ -714,7 +759,17 @@
       "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1781399656199_img_7551_jpeg.webp",
       "id": 1781387820250,
       "sku": "HO001",
-      "focalY": 70
+      "focalY": 70,
+      "similar": [
+        1781399974669,
+        1781878560407,
+        1789831461536,
+        1781885393238,
+        1781400451404,
+        1789840143477,
+        1789854982063,
+        1781473526943
+      ]
     },
     {
       "name": "Cadena San Benito con Cruz",
@@ -735,7 +790,17 @@
       "id": 1781399974669,
       "sku": "CA001",
       "zoom": 1.15,
-      "material": "Baño de oro 18k"
+      "material": "Baño de oro 18k",
+      "similar": [
+        1781387820250,
+        1789840051998,
+        1789855320945,
+        1789834373112,
+        1781877227517,
+        1789834277881,
+        1789834120184,
+        1781400451404
+      ]
     },
     {
       "name": "Pulsera tejida macramé con dije y perlas",
@@ -755,7 +820,17 @@
       "focalY": 49,
       "id": 1781400451404,
       "sku": "PU002",
-      "material": "Baño de oro 18k"
+      "material": "Baño de oro 18k",
+      "similar": [
+        1781472855605,
+        1789840051998,
+        1789835517841,
+        1789840143477,
+        1781399974669,
+        1781387820250,
+        1783440355036,
+        1788449850640
+      ]
     },
     {
       "name": "Collar negro con ojo turco",
@@ -776,7 +851,17 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781460544331,
-      "sku": "CA002"
+      "sku": "CA002",
+      "similar": [
+        1789840051998,
+        1781977774245,
+        1789840143477,
+        1789854982063,
+        1789834120184,
+        1789835829929,
+        1789854774028,
+        1781387820250
+      ]
     },
     {
       "name": "Pulsera Tiffy",
@@ -797,7 +882,17 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781472855605,
-      "sku": "PU003"
+      "sku": "PU003",
+      "similar": [
+        1781400451404,
+        1789840143477,
+        1781473015877,
+        1789834373112,
+        1788449850640,
+        1789854982063,
+        1781460544331,
+        1781885393238
+      ]
     },
     {
       "name": "Pulsera triple con dije de corazón",
@@ -818,7 +913,17 @@
       "zoom": 1,
       "material": "Baño de oro 18k",
       "id": 1781473015877,
-      "sku": "PU004"
+      "sku": "PU004",
+      "similar": [
+        1786328384393,
+        1781977774245,
+        1785469598547,
+        1786315591380,
+        1786308585824,
+        1785469196142,
+        1780369728627,
+        1789834277881
+      ]
     },
     {
       "name": "Cadena con dije de corazón y pelota",
@@ -839,7 +944,17 @@
       "zoom": 1.3,
       "material": "Baño de oro 18k",
       "id": 1781473438388,
-      "sku": "CA003"
+      "sku": "CA003",
+      "similar": [
+        1781885024731,
+        1781885197196,
+        1781884804624,
+        1781473526943,
+        1781885271521,
+        1781877568374,
+        1781885110437,
+        1781884983133
+      ]
     },
     {
       "name": "Cadena con ángel de la guarda circular",
@@ -864,7 +979,17 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808852028_8952299c_b5a5_49a7_a4c4_e15919538bad_jpe.webp"
       ],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781877358815,
+        1781877227517,
+        1781473627668,
+        1781875334358,
+        1781473438388,
+        1789856427179,
+        1781885024731,
+        1781877568374
+      ]
     },
     {
       "name": "Cadena con dije de Luna y corazón turquesa",
@@ -889,7 +1014,17 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808318000_2de17e75_6ff9_416b_9b56_e491315b8092_jpe.webp"
       ],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781473526943,
+        1781877358815,
+        1781875334358,
+        1781877227517,
+        1789856427179,
+        1785466095890,
+        1781877568374,
+        1781473438388
+      ]
     },
     {
       "name": "Collar de perla",
@@ -914,7 +1049,17 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783808742395_56f41b89_b379_4cc0_8cbb_1bb25653e388_jpe.webp"
       ],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781877358815,
+        1781473526943,
+        1781877227517,
+        1781473627668,
+        1781473438388,
+        1781885024731,
+        1781885197196,
+        1781877568374
+      ]
     },
     {
       "name": "Cadena clip con dije de árbol de vida",
@@ -939,7 +1084,17 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783809008800_646b8602_4550_4ef1_a5ca_bea66271a26f_jpe.webp"
       ],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781473526943,
+        1781875334358,
+        1781877358815,
+        1781473627668,
+        1789856427179,
+        1785466095890,
+        1781885024731,
+        1781473438388
+      ]
     },
     {
       "name": "Cadena con dije de gato y panza de corazón con circones",
@@ -964,7 +1119,17 @@
       "images": [
         "https://cacusabytaitus.com/ui_kits/store/images/1783810093094_3afcd0b9_6234_421a_994c_a91bee4d4be2_jpe.webp"
       ],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781875334358,
+        1781473526943,
+        1781473627668,
+        1781877227517,
+        1789856427179,
+        1781877568374,
+        1781885197196,
+        1781473438388
+      ]
     },
     {
       "name": "Cadena de balines con dije de corazón con circones",
@@ -987,7 +1152,17 @@
       "sku": "CA009",
       "name_en": "Ball Chain with Heart Charm and Zircons",
       "images": [],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781885197196,
+        1781885110437,
+        1781885271521,
+        1781885024731,
+        1781884804624,
+        1781884881874,
+        1781877358815,
+        1781473438388
+      ]
     },
     {
       "name": "Anillo ajustable color plateado",
@@ -1008,7 +1183,17 @@
       "material": "Baño de Rodio",
       "id": 1781877838074,
       "sku": "AN002",
-      "name_en": "Silver Adjustable Ring"
+      "name_en": "Silver Adjustable Ring",
+      "similar": [
+        1781878104655,
+        1781879917484,
+        1781878560407,
+        1789854774028,
+        1789834277881,
+        1789835085201,
+        1789834493333,
+        1789835517841
+      ]
     },
     {
       "name": "Anillo ajustable de circones e inicial",
@@ -1029,7 +1214,17 @@
       "material": "Acero inoxidable",
       "id": 1781877944864,
       "sku": "AN003",
-      "name_en": "Adjustable ring of zircons and initial"
+      "name_en": "Adjustable ring of zircons and initial",
+      "similar": [
+        1781878207350,
+        1781879577380,
+        1781880053907,
+        1781878646387,
+        1781879189744,
+        1781881478183,
+        1,
+        1781880466753
+      ]
     },
     {
       "name": "Anillo ajustable con microcircones en degradé",
@@ -1050,7 +1245,17 @@
       "material": "Baño de oro 18k",
       "id": 1781878104655,
       "sku": "AN004",
-      "name_en": "Adjustable Ring with Micro Zirconia Degradé"
+      "name_en": "Adjustable Ring with Micro Zirconia Degradé",
+      "similar": [
+        1781879917484,
+        1781877838074,
+        1789834277881,
+        1789854774028,
+        1789835085201,
+        1,
+        1789836348710,
+        1789835517841
+      ]
     },
     {
       "name": "Anillo dorado ajustable de circones fucsia",
@@ -1071,7 +1276,17 @@
       "material": "Baño de oro 18k",
       "id": 1781878207350,
       "sku": "AN005",
-      "name_en": "Fuchsia Zirconia Adjustable Gold Ring"
+      "name_en": "Fuchsia Zirconia Adjustable Gold Ring",
+      "similar": [
+        1781877944864,
+        1781879577380,
+        1781880053907,
+        1781878646387,
+        1781881478183,
+        1781879189744,
+        1,
+        1781880466753
+      ]
     },
     {
       "name": "Ear cuff ancho plateado",
@@ -1092,7 +1307,17 @@
       "material": "Plata 925",
       "id": 1781878560407,
       "sku": "EC001",
-      "name_en": "Silver Wide Ear Cuff"
+      "name_en": "Silver Wide Ear Cuff",
+      "similar": [
+        1781877838074,
+        1789854774028,
+        1781879189744,
+        1781880466753,
+        1781877944864,
+        1781387820250,
+        1,
+        1781881478183
+      ]
     },
     {
       "name": "Entorchado dorado con piedra azul zafiro",
@@ -1113,7 +1338,17 @@
       "material": "Baño de oro 18k",
       "id": 1781878646387,
       "sku": "AN006",
-      "name_en": "Gold Twisted Ring with Sapphire Blue Stone"
+      "name_en": "Gold Twisted Ring with Sapphire Blue Stone",
+      "similar": [
+        1781877944864,
+        1781878207350,
+        1781879577380,
+        1781879189744,
+        1781880053907,
+        1,
+        1781881478183,
+        1781880466753
+      ]
     },
     {
       "name": "Anillo chunky ajustable con circones verdes",
@@ -1134,7 +1369,17 @@
       "material": "Baño de oro 18k",
       "id": 1781879189744,
       "sku": "AN007",
-      "name_en": "Adjustable Chunky Ring with Green Zirconia"
+      "name_en": "Adjustable Chunky Ring with Green Zirconia",
+      "similar": [
+        1781877944864,
+        1781878207350,
+        1,
+        1781878646387,
+        1781881478183,
+        1781879577380,
+        1781880053907,
+        1781880466753
+      ]
     },
     {
       "name": "Entorchado ajustable",
@@ -1155,7 +1400,17 @@
       "material": "Baño de Rodio",
       "id": 1781879577380,
       "sku": "AN008",
-      "name_en": "Adjustable Twisted Ring"
+      "name_en": "Adjustable Twisted Ring",
+      "similar": [
+        1781878207350,
+        1781880053907,
+        1781877944864,
+        1,
+        1781881478183,
+        1781878646387,
+        1781880466753,
+        1781879189744
+      ]
     },
     {
       "name": "Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado",
@@ -1176,7 +1431,17 @@
       "material": "Plata 925",
       "id": 1781879917484,
       "sku": "AN009",
-      "name_en": "Size 7 Ring with Emerald Stone and Micro Zirconia"
+      "name_en": "Size 7 Ring with Emerald Stone and Micro Zirconia",
+      "similar": [
+        1781878104655,
+        1781878207350,
+        1781877838074,
+        1781879577380,
+        1781877944864,
+        1781878646387,
+        1,
+        1781879189744
+      ]
     },
     {
       "name": "Anillo ajustable con 3 circones",
@@ -1197,7 +1462,17 @@
       "material": "Baño de oro 18k",
       "id": 1781880053907,
       "sku": "AN010",
-      "name_en": "Adjustable Ring with 3 Zirconia"
+      "name_en": "Adjustable Ring with 3 Zirconia",
+      "similar": [
+        1781881478183,
+        1,
+        1781879577380,
+        1781878207350,
+        1781877944864,
+        1781880466753,
+        1781878646387,
+        1781879189744
+      ]
     },
     {
       "name": "Anillo ajustable con trébol negro",
@@ -1220,7 +1495,17 @@
       "sku": "AN011",
       "name_en": "Black Clover Adjustable Ring",
       "images": [],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789834373112,
+        1789831746751,
+        1788922298558,
+        1789831017689,
+        1789833979991,
+        1789832841230,
+        1788449850640,
+        1781884615354
+      ]
     },
     {
       "name": "Anillo dorado ajustable",
@@ -1241,7 +1526,17 @@
       "material": "Baño de oro 18k",
       "id": 1781880466753,
       "sku": "AN012",
-      "name_en": "Adjustable Gold Ring"
+      "name_en": "Adjustable Gold Ring",
+      "similar": [
+        1781880053907,
+        1,
+        1781881478183,
+        1781879577380,
+        1781878207350,
+        1781877944864,
+        1781878646387,
+        1781879189744
+      ]
     },
     {
       "name": "Anillo ajustable con circones blancos",
@@ -1262,7 +1557,17 @@
       "material": "Baño de oro 18k",
       "id": 1781881478183,
       "sku": "AN013",
-      "name_en": "Adjustable Ring with White Zirconia"
+      "name_en": "Adjustable Ring with White Zirconia",
+      "similar": [
+        1781880053907,
+        1,
+        1781879577380,
+        1781878207350,
+        1781880466753,
+        1781877944864,
+        1781879189744,
+        1781878646387
+      ]
     },
     {
       "name": "Cadena con dije de Cruz grande con piedras color esmeralda",
@@ -1283,7 +1588,17 @@
       "material": "Baño de oro 18k",
       "id": 1781884615354,
       "sku": "CA010",
-      "name_en": "Large Emerald Cross Charm Chain"
+      "name_en": "Large Emerald Cross Charm Chain",
+      "similar": [
+        1781885024731,
+        1781885197196,
+        1781885110437,
+        1781885271521,
+        1781884881874,
+        1781884804624,
+        1781884983133,
+        1781473438388
+      ]
     },
     {
       "name": "Cadena delicada con dije de corazón nacarado",
@@ -1304,7 +1619,17 @@
       "material": "Baño de oro 18k",
       "id": 1781884804624,
       "sku": "CA011",
-      "name_en": "Delicate Chain with Mother-of-Pearl Heart Charm"
+      "name_en": "Delicate Chain with Mother-of-Pearl Heart Charm",
+      "similar": [
+        1781885197196,
+        1781885024731,
+        1781885110437,
+        1781884881874,
+        1781885271521,
+        1781884983133,
+        1781473438388,
+        1781877568374
+      ]
     },
     {
       "name": "Cadena veneciana con un dije de Cruz de circones",
@@ -1325,7 +1650,17 @@
       "material": "Plata 925 con un baño de oro de 18k",
       "id": 1781884881874,
       "sku": "CA012",
-      "name_en": "Venetian Chain with Zirconia Cross Charm"
+      "name_en": "Venetian Chain with Zirconia Cross Charm",
+      "similar": [
+        1781884983133,
+        1781885197196,
+        1781885271521,
+        1781884804624,
+        1781885110437,
+        1781885024731,
+        1781884615354,
+        1781877568374
+      ]
     },
     {
       "name": "San Benito con cruz",
@@ -1346,7 +1681,17 @@
       "material": "Baño de oro 18k",
       "id": 1781884983133,
       "sku": "CA013",
-      "name_en": "Saint Benedict Medallion with Cross"
+      "name_en": "Saint Benedict Medallion with Cross",
+      "similar": [
+        1781884881874,
+        1781885197196,
+        1781885271521,
+        1781884804624,
+        1781885024731,
+        1781885110437,
+        1781884615354,
+        1781473438388
+      ]
     },
     {
       "name": "Corazón de perla con una silueta de corazón de circón",
@@ -1367,7 +1712,17 @@
       "material": "Baño de oro 18k",
       "id": 1781885024731,
       "sku": "CA014",
-      "name_en": "Pearl Heart with Zirconia Heart Silhouette Chain"
+      "name_en": "Pearl Heart with Zirconia Heart Silhouette Chain",
+      "similar": [
+        1781885197196,
+        1781884804624,
+        1781473438388,
+        1781885110437,
+        1781885271521,
+        1781884615354,
+        1781884881874,
+        1781884983133
+      ]
     },
     {
       "name": "Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble",
@@ -1388,7 +1743,17 @@
       "material": "Baño de oro 18k",
       "id": 1781885110437,
       "sku": "CA015",
-      "name_en": "Turquoise Opal Charm Chain with Double-Chain Effect"
+      "name_en": "Turquoise Opal Charm Chain with Double-Chain Effect",
+      "similar": [
+        1781885197196,
+        1781884804624,
+        1781885024731,
+        1781885271521,
+        1781884881874,
+        1781877568374,
+        1781884983133,
+        1781884615354
+      ]
     },
     {
       "name": "Cadena de circón rosa claro",
@@ -1409,7 +1774,17 @@
       "material": "Baño de oro 18k",
       "id": 1781885197196,
       "sku": "CA016",
-      "name_en": "Soft Pink Zirconia Chain"
+      "name_en": "Soft Pink Zirconia Chain",
+      "similar": [
+        1781884804624,
+        1781885271521,
+        1781884881874,
+        1781885024731,
+        1781885110437,
+        1781884983133,
+        1781877568374,
+        1781884615354
+      ]
     },
     {
       "name": "Dije de bailarina con inicial",
@@ -1430,7 +1805,17 @@
       "material": "Baño de oro 18k",
       "id": 1781885271521,
       "sku": "CA017",
-      "name_en": "Ballerina Charm with Initial"
+      "name_en": "Ballerina Charm with Initial",
+      "similar": [
+        1781885197196,
+        1781884881874,
+        1781884983133,
+        1781884804624,
+        1781885110437,
+        1781885024731,
+        1781884615354,
+        1781877568374
+      ]
     },
     {
       "name": "Cadena con placa grabada a láser",
@@ -1451,7 +1836,17 @@
       "material": "Acero inoxidable",
       "id": 1781885393238,
       "sku": "HO002",
-      "name_en": "Chain with Laser Engraved Plate"
+      "name_en": "Chain with Laser Engraved Plate",
+      "similar": [
+        1789833979991,
+        1781387820250,
+        1781977774245,
+        1789854982063,
+        1788923140476,
+        1789835517841,
+        1781878560407,
+        1789835608668
+      ]
     },
     {
       "name": "Anillo de aguamarina",
@@ -1495,7 +1890,17 @@
       "sku": "AN015",
       "name_en": "Ring",
       "images": [],
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788922298558,
+        1789833395515,
+        1788922634845,
+        1789833699836,
+        1789833283695,
+        1789832633994,
+        1789832962055,
+        1785470725921
+      ]
     },
     {
       "name": "Pulseras de pareja Ying y el yang",
@@ -1516,7 +1921,17 @@
       "material": "Acero inoxidable",
       "id": 1781977774245,
       "sku": "PA001",
-      "name_en": "Yin & Yang Couple Bracelets"
+      "name_en": "Yin & Yang Couple Bracelets",
+      "similar": [
+        1781473015877,
+        1786328384393,
+        1785469598547,
+        1785469196142,
+        1786308585824,
+        1780369728627,
+        1783440355036,
+        1788921701764
+      ]
     },
     {
       "name": "GG",
@@ -1569,7 +1984,17 @@
       "description_en": "Triple bracelet in gold filled, with colorful yellow, blue, and red threads. A delicate, colorful design to wear alone or stacked with your other bracelets, perfect for adding a different touch to your everyday look.",
       "id": 1783440355036,
       "sku": "PU005",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789840143477,
+        1789855320945,
+        1781977774245,
+        1789840051998,
+        1785469598547,
+        1781879189744,
+        1781400451404,
+        1789854774028
+      ]
     },
     {
       "name": "Cadena de cruz con circones",
@@ -1594,7 +2019,17 @@
       "description_en": "It's stainless steel with 18k gold plating, durable for everyday wear and hypoallergenic. The zircon-filled cross gives it that glam touch but is still minimalist. Looks elegant and shiny. The size of the cross (1.74 cm) is perfect to stand out without looking exaggerated.",
       "id": 1785466095890,
       "sku": "CA018",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781473526943,
+        1781877227517,
+        1789856427179,
+        1781473627668,
+        1786329172109,
+        1781877358815,
+        1781875334358,
+        1786330341098
+      ]
     },
     {
       "name": "Brazalete ojo turco",
@@ -1619,7 +2054,17 @@
       "description_en": "Surgical steel with 18k gold plating. Braided cable style, this everyday piece is ideal for protection",
       "id": 1785469196142,
       "sku": "PU006",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1785469598547,
+        1786328384393,
+        1786308585824,
+        1781473015877,
+        1788922634845,
+        1781977774245,
+        1788921701764,
+        1786315591380
+      ]
     },
     {
       "name": "Brazalete ojo griego",
@@ -1644,7 +2089,17 @@
       "description_en": "Surgical steel with 18k gold plating. The oval mother-of-pearl eye paired with two blue zircon-rimmed eyes creates an elegant detail. The hollow design keeps it lightweight for everyday wear while still making a statement.",
       "id": 1785469598547,
       "sku": "PU007",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1785469196142,
+        1781473015877,
+        1781977774245,
+        1786328384393,
+        1788921701764,
+        1788922634845,
+        1789855526360,
+        1788923140476
+      ]
     },
     {
       "name": "Anillo vintage de aventurina",
@@ -1669,7 +2124,17 @@
       "description_en": "Vintage Aventurine Ring - 18K Gold Plated\n\nVintage-style double layer ring with an 18K gold finish on stainless steel. \nDesign with a braided ring and bead detail, centered with an oval natural green aventurine stone. \nAdjustable, lightweight piece, durable for everyday wear. \n\nDetails:\n- Style: Vintage / Boho Chic\n- Adjustable: Fits all sizes\n\nIt symbolizes abundance, luck and prosperity. Perfect worn alone or stacked with other gold rings.",
       "id": 1785470275920,
       "sku": "AN016",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789855526360,
+        1785470725921,
+        1786315591380,
+        1789835829929,
+        1786328384393,
+        1786308585824,
+        1788921701764,
+        1781473015877
+      ]
     },
     {
       "name": "Anillo Pulpo Glossy",
@@ -1694,7 +2159,17 @@
       "description_en": "Glossy Octopus Ring - 18K Gold Plated\n\nElevate your style with our statement octopus ring. A bold piece with a 3D design and a shiny 18K gold finish that pays tribute to the ocean and to a one-of-a-kind personality.\n\nMade in high-quality stainless steel, it's sturdy and perfect for everyday wear. Its adjustable band fits all sizes, and the ergonomic design keeps it sitting straight and aligned on your finger.\n\nFeatures:\n- Material: Premium stainless steel with 18K gold plating\n- Design: 3D octopus with tentacles and suction cup detail\n- Finish: Glossy shine\n- Size: Adjustable — fits your finger\n- Style: Statement / Nautical / Boho Chic\n\nWhy you'll love it\nThe octopus symbolizes intelligence, adaptability and mystery. This ring is perfect for anyone who loves jewelry with personality that doesn't go unnoticed. Wear it alone as a statement piece or stack it with minimalist rings for a modern look.\n\nPerfect as a gift or to add a unique touch to your summer, beach and city outfits.",
       "id": 1785470725921,
       "sku": "AN017",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833699836,
+        1785470275920,
+        1788922634845,
+        1789855526360,
+        1786308585824,
+        1781893045956,
+        1789830883898,
+        1789834493333
+      ]
     },
     {
       "name": "Aretes de perla tejidos a mano",
@@ -1717,7 +2192,17 @@
       "description_en": "Pearl Flower Stud Earrings - Delicate ♡\nThe timeless classic, now in a smaller size\n18K Gold Plated + White Pearls | Center of 6 pearls\nLightweight + Hypoallergenic\nPerfect for everyday elegance",
       "id": 1786303032752,
       "sku": "AR001",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786329172109,
+        1786330341098,
+        1789856427179,
+        1785466095890,
+        1781877227517,
+        1781877358815,
+        1781473627668,
+        1789856160011
+      ]
     },
     {
       "name": "Pulsera de hilo rojo FE",
@@ -1740,7 +2225,17 @@
       "description_en": "Wear your faith every day \nAdjustable net string + 18K gold-filled FE charm \nMinimalist design | 2 smooth strings \nProtection, luck & positive energy \nUnisex | Hypoallergenic \nThe perfect meaningful gift",
       "id": 1786308585824,
       "sku": "PU008",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786328384393,
+        1786315591380,
+        1780369728627,
+        1788922634845,
+        1781473015877,
+        1786329172109,
+        1788921701764,
+        1785469196142
+      ]
     },
     {
       "name": "Pulsera ojo turco azul + medalla + perla",
@@ -1763,7 +2258,17 @@
       "description_en": "Blue Evil Eye Bracelet♡\nFaith, protection & elegance in one\nAdjustable net string + Blue Evil Eye + Saint Medallion + Pearl\nProtection, faith & good vibes\nMinimalist design | Unisex\n18K gold-filled | Hypoallergenic\nThe perfect spiritual gift",
       "id": 1786315591380,
       "sku": "PU009",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786328384393,
+        1786308585824,
+        1789855526360,
+        1780369728627,
+        1781473015877,
+        1785470275920,
+        1785469196142,
+        1789834277881
+      ]
     },
     {
       "name": "Pulsera de ojo turco rojo",
@@ -1788,7 +2293,17 @@
       "description_en": "Less is more. \nThis minimalist version of our red thread bracelet highlights the essentials: the red Turkish eye as a symbol of protection. Perfect if you are looking for a delicate, discreet and meaningful design. Customize it with or without ball chain details.",
       "id": 1786328384393,
       "sku": "PU010",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786315591380,
+        1786308585824,
+        1781473015877,
+        1780369728627,
+        1781977774245,
+        1785469196142,
+        1785469598547,
+        1789855526360
+      ]
     },
     {
       "name": "Collar Lazo Dorado con Zirconias",
@@ -1813,7 +2328,17 @@
       "description_en": "Bow Zirconia Necklace\n18K gold chain + bow charm with sparkling zirconia.\nDelicate, feminine and perfect for everyday wear.\n\nThe detail that elevates any look.\nThis minimalist gold chain necklace with a bow-shaped charm and sparkling zirconia is the perfect piece to gift or wear every day. Lightweight, elegant and full of shine.\n\nFeatures:\n- Material: 18K gold-filled chain + high-quality zirconia\n- Design: Minimalist bow charm\n- Length: 40cm + 5cm extender | Adjustable\n- Care: Avoid contact with chemicals such as perfume and creams | Hypoallergenic\n- Great for: Gifting | Everyday wear | Layering | Feminine detail",
       "id": 1786329172109,
       "sku": "CA019",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786303032752,
+        1781473526943,
+        1781877358815,
+        1785466095890,
+        1789856427179,
+        1781473627668,
+        1786308585824,
+        1781875334358
+      ]
     },
     {
       "name": "Aretes de corazón chinoiserie",
@@ -1836,7 +2361,17 @@
       "description_en": "Gold hoops with a white porcelain heart and blue flowers.\nRomantic, unique and full of style.\nDelicate and full of personality.\nGold hoops with a hanging white porcelain heart charm and blue chinoiserie-style flowers. The contrast between warm gold and classic blue makes them one of a kind. Lightweight and full of movement, perfect for a romantic touch to your look.\n\nMade in 316L stainless steel, durable for everyday wear and hypoallergenic.\n\nMeasurements: Total length 3.68cm | Heart width 1.41cm\n- Weight: 5.9g per pair\n- Closure: Click hoop\n- Style: Romantic / Chinoiserie / Statement",
       "id": 1786330341098,
       "sku": "AR002",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1786303032752,
+        1785466095890,
+        1786329172109,
+        1789856160011,
+        1788922634845,
+        1785469598547,
+        1788921701764,
+        1781977774245
+      ]
     },
     {
       "name": "Set aretes y cadena",
@@ -1865,7 +2400,17 @@
       "description_en": "Beautiful sets of 18K goldplated stainless steel.\nA Jewel to make you look more beautiful than you already are",
       "id": 1788107242835,
       "sku": "JU002",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788107453046,
+        1789831746751,
+        1789832083118,
+        1789831461536,
+        1789832318279,
+        1789840143477,
+        1789831017689,
+        1781473438388
+      ]
     },
     {
       "name": "Hand chain de capas",
@@ -1891,7 +2436,17 @@
       "description_en": "18K GOLD PLATED Stainless Steel \nPrecious, they make your hand look feminine and delicate",
       "id": 1788107453046,
       "sku": "HC001",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788107242835,
+        1789832083118,
+        1789855320945,
+        1789840143477,
+        1789831746751,
+        1789832318279,
+        1781877568374,
+        1781877358815
+      ]
     },
     {
       "name": "Pulseras hechas a mano",
@@ -1914,7 +2469,17 @@
       "description_en": "Beautiful adjustable bracelets handmade by Ecuadorian artisans, with style, crystal combinations and 18K gold-plated charms",
       "id": 1788449850640,
       "sku": "PU011",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788540460219,
+        1789840051998,
+        1781400451404,
+        1781880340918,
+        1783440355036,
+        1781472855605,
+        1789855320945,
+        1781884615354
+      ]
     },
     {
       "name": "Hand chain de rombos",
@@ -1948,7 +2513,17 @@
       "description_en": "Beautiful 18K Goldplated Stainless Steel hand chains to show off your most beautiful and feminine hand.",
       "id": 1788540460219,
       "sku": "HC002",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1780369728627,
+        1781884983133,
+        1788449850640,
+        1781884881874,
+        1781877568374,
+        1781885197196,
+        1781885271521,
+        1781885110437
+      ]
     },
     {
       "name": "Anillo Conchas Doradas",
@@ -1973,7 +2548,17 @@
       "description_en": "A design inspired by the organic shapes of the sea. The Golden Shell Ring is composed of small interlocking shells that create a delicate, luminous and different piece.\n\nMade of 316L stainless steel with a gold finish, it is ideal to wear alone as the protagonist or combine with other rings for a more personal look.\n\nDetails: 316L stainless steel · gold finish · shell design · delicate and minimalist style. Adjustable size",
       "id": 1788921701764,
       "sku": "AN018",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788922634845,
+        1788923140476,
+        1785469598547,
+        1786308585824,
+        1788922298558,
+        1785469196142,
+        1786329172109,
+        1785470275920
+      ]
     },
     {
       "name": "Anillo Golden Stars",
@@ -1996,7 +2581,17 @@
       "description_en": "A ring made to steal the spotlight.\n\nGolden Stars combines golden stars with zirconia sparkle to create a striking, feminine and sophisticated piece. Its open design lets the stars travel around your finger and catch the light from every angle.\n\nPerfect worn as a statement piece or paired with more minimalist pieces. Its adjustable size also lets it fit comfortably on different fingers.\n\nDetails\n316L stainless steel · Gold finish · Clear zirconia · Adjustable size",
       "id": 1788922298558,
       "sku": "AN019",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781893045956,
+        1788922634845,
+        1789833395515,
+        1789833527086,
+        1789832633994,
+        1789832962055,
+        1788921701764,
+        1789832841230
+      ]
     },
     {
       "name": "Anillo Lumière",
@@ -2021,7 +2616,17 @@
       "description_en": "Lumière is designed to achieve that delicate jewelry effect that's noticeable without being over the top. Its two golden lines with zirconia create the illusion of wearing two perfectly matched rings, adding an elegant sparkle with every move of your hand.\n\nIt's one of those pieces that's easy to wear every day, yet special enough to accompany you on an important occasion. Its adjustable size lets it fit comfortably on different fingers.\n\nDetails\n316L stainless steel · Gold finish · Clear zirconia · Double design · Adjustable size",
       "id": 1788922634845,
       "sku": "AN020",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788921701764,
+        1788923140476,
+        1788922298558,
+        1786308585824,
+        1785470725921,
+        1785469598547,
+        1789856160011,
+        1785469196142
+      ]
     },
     {
       "name": "Cadena Golden Silk",
@@ -2046,7 +2651,17 @@
       "description_en": "The gold basic that makes everything look more elegant.\n\nGolden Silk is a chain with a smooth, luminous finish that gently hugs the neck and catches the light with every movement. Its flat design creates that sophisticated golden effect that looks amazing on its own or layered with other chains.\n\nIt's one of those pieces you can wear every day: with a basic t-shirt, a dress, or to complete an evening look. Minimalist, versatile and timeless.\n\nDetails: 316L stainless steel · gold finish · flat chain · 45 cm + 5 cm extender · adjustable length.",
       "id": 1788923140476,
       "sku": "CA020",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1788921701764,
+        1788922634845,
+        1786329172109,
+        1785469598547,
+        1781473627668,
+        1789832083118,
+        1786308585824,
+        1781473526943
+      ]
     },
     {
       "name": "Argollas pequeñas de 1 cm",
@@ -2069,7 +2684,17 @@
       "images": [],
       "id": 1789830883898,
       "sku": "AR003",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833699836,
+        1789856160011,
+        1789833283695,
+        1789833395515,
+        1789835713834,
+        1789832318279,
+        1785470725921,
+        1789831461536
+      ]
     },
     {
       "name": "Aretes de flor",
@@ -2092,7 +2717,17 @@
       "images": [],
       "id": 1789831017689,
       "sku": "AR004",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789832841230,
+        1789831746751,
+        1789834373112,
+        1789831461536,
+        1781880340918,
+        1788107242835,
+        1789832318279,
+        1789830883898
+      ]
     },
     {
       "name": "Aretes de rombo de circón",
@@ -2115,7 +2750,17 @@
       "images": [],
       "id": 1789831461536,
       "sku": "AR005",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789830883898,
+        1789831017689,
+        1781387820250,
+        1788107242835,
+        1789835713834,
+        1781399974669,
+        1781893045956,
+        1785466095890
+      ]
     },
     {
       "name": "Cadena de arrocillos",
@@ -2138,7 +2783,17 @@
       "images": [],
       "id": 1789831746751,
       "sku": "CA021",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789832083118,
+        1789832318279,
+        1789831017689,
+        1788107242835,
+        1788922298558,
+        1789840051998,
+        1789830883898,
+        1781880340918
+      ]
     },
     {
       "name": "Cadena doble de eslabones",
@@ -2161,7 +2816,17 @@
       "images": [],
       "id": 1789832083118,
       "sku": "CA022",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789831746751,
+        1788107453046,
+        1788923140476,
+        1788107242835,
+        1781473438388,
+        1781473526943,
+        1781877568374,
+        1781885110437
+      ]
     },
     {
       "name": "Argollas",
@@ -2184,7 +2849,17 @@
       "images": [],
       "id": 1789832318279,
       "sku": "AR006",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833699836,
+        1789830883898,
+        1789831746751,
+        1785470725921,
+        1789856160011,
+        1788107242835,
+        1789832962055,
+        1789834493333
+      ]
     },
     {
       "name": "Anillo estrellas abierto",
@@ -2207,7 +2882,17 @@
       "images": [],
       "id": 1789832633994,
       "sku": "AN021",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833527086,
+        1789833395515,
+        1789832962055,
+        1789833283695,
+        1789833699836,
+        1788922298558,
+        1789835713834,
+        1781893045956
+      ]
     },
     {
       "name": "Anillo de flores",
@@ -2230,7 +2915,17 @@
       "images": [],
       "id": 1789832841230,
       "sku": "AN022",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789831017689,
+        1789833527086,
+        1788922298558,
+        1789833283695,
+        1789832962055,
+        1789833699836,
+        1789834373112,
+        1789832633994
+      ]
     },
     {
       "name": "Anillo de luna y estrella",
@@ -2253,7 +2948,17 @@
       "images": [],
       "id": 1789832962055,
       "sku": "AN023",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833395515,
+        1789833283695,
+        1789832633994,
+        1789833699836,
+        1789833527086,
+        1789835713834,
+        1788922298558,
+        1781893045956
+      ]
     },
     {
       "name": "Anillo escultura",
@@ -2276,7 +2981,17 @@
       "images": [],
       "id": 1789833283695,
       "sku": "AN024",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833395515,
+        1789832962055,
+        1789832633994,
+        1789833699836,
+        1789835713834,
+        1789830883898,
+        1789833527086,
+        1781893045956
+      ]
     },
     {
       "name": "Anillo corazón",
@@ -2299,7 +3014,17 @@
       "images": [],
       "id": 1789833395515,
       "sku": "AN025",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789832962055,
+        1789833283695,
+        1789832633994,
+        1789833699836,
+        1781893045956,
+        1789833527086,
+        1789835713834,
+        1788922298558
+      ]
     },
     {
       "name": "Anillo estrella de mar",
@@ -2322,7 +3047,17 @@
       "images": [],
       "id": 1789833527086,
       "sku": "AN026",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789832633994,
+        1789833395515,
+        1788922298558,
+        1789832962055,
+        1789832841230,
+        1789833283695,
+        1789833699836,
+        1785470725921
+      ]
     },
     {
       "name": "Anillo curvas",
@@ -2345,7 +3080,17 @@
       "images": [],
       "id": 1789833699836,
       "sku": "AN027",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789832962055,
+        1789833283695,
+        1789833395515,
+        1789830883898,
+        1785470725921,
+        1789835713834,
+        1789832633994,
+        1789834493333
+      ]
     },
     {
       "name": "Aretes de circón verde",
@@ -2368,7 +3113,17 @@
       "images": [],
       "id": 1789833979991,
       "sku": "AR007",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789835517841,
+        1789835608668,
+        1789834277881,
+        1789835085201,
+        1789834373112,
+        1789834120184,
+        1789834493333,
+        1781885393238
+      ]
     },
     {
       "name": "Aretes de caracol",
@@ -2391,7 +3146,17 @@
       "images": [],
       "id": 1789834120184,
       "sku": "AR008",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789834277881,
+        1789833979991,
+        1789835608668,
+        1789835085201,
+        1789834493333,
+        1789835517841,
+        1789834373112,
+        1781399974669
+      ]
     },
     {
       "name": "Aretes de corazón",
@@ -2414,7 +3179,17 @@
       "images": [],
       "id": 1789834277881,
       "sku": "AR009",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789835517841,
+        1789835085201,
+        1789833979991,
+        1789834120184,
+        1789835608668,
+        1789834493333,
+        1789834373112,
+        1781473015877
+      ]
     },
     {
       "name": "Aretes de flor y circones",
@@ -2437,7 +3212,17 @@
       "images": [],
       "id": 1789834373112,
       "sku": "AR010",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833979991,
+        1789835608668,
+        1789835517841,
+        1789834277881,
+        1789834120184,
+        1789835085201,
+        1781399974669,
+        1789831017689
+      ]
     },
     {
       "name": "Aretes entrelazados",
@@ -2460,7 +3245,17 @@
       "images": [],
       "id": 1789834493333,
       "sku": "AR011",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789834277881,
+        1789835085201,
+        1789834120184,
+        1789833699836,
+        1789835517841,
+        1789833979991,
+        1785470725921,
+        1789835608668
+      ]
     },
     {
       "name": "Aretes Rectángulo",
@@ -2483,7 +3278,17 @@
       "images": [],
       "id": 1789835085201,
       "sku": "AR012",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789834277881,
+        1789833979991,
+        1789835517841,
+        1789834120184,
+        1789835608668,
+        1789834493333,
+        1789834373112,
+        1781877838074
+      ]
     },
     {
       "name": "Aretes de Piedra amazonita",
@@ -2506,7 +3311,17 @@
       "images": [],
       "id": 1789835517841,
       "sku": "AR013",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833979991,
+        1789834277881,
+        1789835608668,
+        1789835085201,
+        1789834120184,
+        1789834373112,
+        1789834493333,
+        1781400451404
+      ]
     },
     {
       "name": "Aretes triple corazón",
@@ -2529,7 +3344,17 @@
       "images": [],
       "id": 1789835608668,
       "sku": "AR014",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789833979991,
+        1789835517841,
+        1789834373112,
+        1789834120184,
+        1789834277881,
+        1789835085201,
+        1789834493333,
+        1788921701764
+      ]
     },
     {
       "name": "Anillo triple circón",
@@ -2552,7 +3377,17 @@
       "images": [],
       "id": 1789835713834,
       "sku": "AN028",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789835829929,
+        1789833283695,
+        1789833699836,
+        1789833395515,
+        1789832962055,
+        1789832633994,
+        1789830883898,
+        1789855526360
+      ]
     },
     {
       "name": "Anillo maximalista",
@@ -2575,7 +3410,17 @@
       "images": [],
       "id": 1789835829929,
       "sku": "AN029",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789835713834,
+        1789855526360,
+        1785470275920,
+        1789833699836,
+        1789833283695,
+        1789832633994,
+        1789834493333,
+        1789832962055
+      ]
     },
     {
       "name": "Pulseras rojas",
@@ -2602,7 +3447,17 @@
       ],
       "id": 1789836348710,
       "sku": "PU012",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789854982063,
+        1789854774028,
+        1789855320945,
+        1789840143477,
+        1789840051998,
+        1789833979991,
+        1786328384393,
+        1789835517841
+      ]
     },
     {
       "name": "Pulsera de piedra malaquita",
@@ -2625,7 +3480,17 @@
       "images": [],
       "id": 1789840051998,
       "sku": "PU013",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789855320945,
+        1789840143477,
+        1781399974669,
+        1781884615354,
+        1789836348710,
+        1781400451404,
+        1789831746751,
+        1789854982063
+      ]
     },
     {
       "name": "Pulsera oro rosa de osito",
@@ -2648,7 +3513,17 @@
       "images": [],
       "id": 1789840143477,
       "sku": "PU014",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789855320945,
+        1789840051998,
+        1789854774028,
+        1789854982063,
+        1789836348710,
+        1783440355036,
+        1781400451404,
+        1781878560407
+      ]
     },
     {
       "name": "Set de Fe",
@@ -2671,7 +3546,17 @@
       "images": [],
       "id": 1789854774028,
       "sku": "PA002",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789836348710,
+        1789854982063,
+        1789855320945,
+        1789840143477,
+        1781878560407,
+        1781877944864,
+        1781878207350,
+        1781878104655
+      ]
     },
     {
       "name": "Pulsera te amo en 100 idiomas",
@@ -2694,7 +3579,17 @@
       "images": [],
       "id": 1789854982063,
       "sku": "PU015",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789836348710,
+        1789854774028,
+        1789840143477,
+        1789855320945,
+        1781878560407,
+        1789840051998,
+        1781878646387,
+        1781387820250
+      ]
     },
     {
       "name": "Pulsera roja personalizada",
@@ -2717,7 +3612,17 @@
       "images": [],
       "id": 1789855320945,
       "sku": "PU016",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789840051998,
+        1789840143477,
+        1789836348710,
+        1789854774028,
+        1789854982063,
+        1781399974669,
+        1783440355036,
+        1788107453046
+      ]
     },
     {
       "name": "Anillo ojo de tigre o Piedra malaquita",
@@ -2742,7 +3647,17 @@
       ],
       "id": 1789855526360,
       "sku": "AN030",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1785470275920,
+        1786315591380,
+        1789835829929,
+        1786328384393,
+        1785470725921,
+        1785469598547,
+        1789835713834,
+        1786308585824
+      ]
     },
     {
       "name": "Argollas con circón",
@@ -2765,7 +3680,17 @@
       "images": [],
       "id": 1789856160011,
       "sku": "AR015",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1789856427179,
+        1789830883898,
+        1788922634845,
+        1789833699836,
+        1789833395515,
+        1789833283695,
+        1789832962055,
+        1786303032752
+      ]
     },
     {
       "name": "Cadena doble mariposa",
@@ -2788,7 +3713,43 @@
       "images": [],
       "id": 1789856427179,
       "sku": "CA023",
-      "promo": null
+      "promo": null,
+      "similar": [
+        1781877358815,
+        1781473526943,
+        1781877227517,
+        1781473627668,
+        1781875334358,
+        1785466095890,
+        1786329172109,
+        1789856160011
+      ]
+    },
+    {
+      "name": "Anillo con circón cuadrado",
+      "name_en": "Square Zircon Stretch Ring",
+      "category": "Anillos",
+      "price": 25,
+      "oldPrice": 30,
+      "img": "collar",
+      "color": "rose",
+      "tag": null,
+      "description": "Anillo de diseño flexible con cuerpo de eslabones dorados y un circón de corte cuadrado en el centro, engastado en garras. Es una pieza elegante y con brillo, perfecta para llevar sola como protagonista o combinar con otros anillos. Su banda elástica se adapta cómodamente al dedo para uso diario.",
+      "description_en": "A flexible design ring with a body of golden links and a square-cut zircon at the center, set in prongs. It is an elegant, shiny piece, perfect to wear alone as the protagonist or combined with other rings. Its stretchy band adapts comfortably to the finger for everyday wear.",
+      "personalized": false,
+      "available": true,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1795643768597_adf3d59f_b26f_4abf_8521_b8d931a2535c_png.webp",
+      "focalX": 49.89451476793247,
+      "focalY": 43.48484848484846,
+      "zoom": 1,
+      "material": "Gold filled",
+      "images": [
+        "https://cacusabytaitus.com/ui_kits/store/images/1795643780062_1027c67d_fade_48e4_931a_6ba3e3759b53_png.webp",
+        "https://cacusabytaitus.com/ui_kits/store/images/1795643785941_8af90f0c_0946_4961_a5a3_3538ac6e35e6_png.webp"
+      ],
+      "id": 1795643916937,
+      "promo": null,
+      "sku": "AN031"
     }
   ],
   "combos": []
