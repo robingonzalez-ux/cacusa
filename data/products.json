@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-11-25T22:04:11.880Z",
+  "lastUpdated": "2026-11-25T22:08:13.433Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -856,11 +856,11 @@
         1789840051998,
         1781977774245,
         1789840143477,
+        1795644249158,
         1789854982063,
         1789834120184,
         1789835829929,
-        1789854774028,
-        1781387820250
+        1789854774028
       ]
     },
     {
@@ -1207,9 +1207,9 @@
       "description_en": "Adjustable ring in stainless steel, with sparkling zirconia stones and your personalized initial. Also available in gold. A delicate, one-of-a-kind design, perfect to wear alone or stacked with your other rings.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1781877903161_image_jpg.webp",
-      "focalX": 59.2038865178305,
-      "focalY": 35.53662901931737,
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1795644472134_1b39b27a_5f9f_4f95_a0fd_e3fc1436b2e3_png.webp",
+      "focalX": 56.35578525200771,
+      "focalY": 61.597235079923394,
       "zoom": 1.15,
       "material": "Acero inoxidable",
       "id": 1781877944864,
@@ -1224,7 +1224,9 @@
         1781881478183,
         1,
         1781880466753
-      ]
+      ],
+      "images": [],
+      "promo": null
     },
     {
       "name": "Anillo ajustable con microcircones en degradé",
@@ -2097,8 +2099,8 @@
         1781977774245,
         1786328384393,
         1788921701764,
-        1788922634845,
-        1789855526360
+        1795644249158,
+        1788922634845
       ]
     },
     {
@@ -2555,9 +2557,9 @@
         1785469598547,
         1795643916937,
         1786308585824,
+        1795644249158,
         1788922298558,
-        1785469196142,
-        1786329172109
+        1785469196142
       ]
     },
     {
@@ -2858,7 +2860,7 @@
         1789856160011,
         1788107242835,
         1795643916937,
-        1789832962055
+        1795644249158
       ]
     },
     {
@@ -3751,14 +3753,14 @@
       "promo": null,
       "sku": "AN031",
       "similar": [
+        1795644249158,
         1785469598547,
         1788921701764,
         1788922634845,
         1785466095890,
         1785469196142,
         1788923140476,
-        1786329172109,
-        1783440355036
+        1786329172109
       ]
     },
     {
@@ -3785,7 +3787,17 @@
       ],
       "id": 1795644249158,
       "promo": null,
-      "sku": "AN032"
+      "sku": "AN032",
+      "similar": [
+        1795643916937,
+        1785469598547,
+        1788921701764,
+        1788922634845,
+        1789833395515,
+        1789833283695,
+        1789832962055,
+        1785469196142
+      ]
     }
   ],
   "combos": []
