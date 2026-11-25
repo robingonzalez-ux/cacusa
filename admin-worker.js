@@ -63,6 +63,7 @@
  *                                   ficha, tope 40/día). Sin ella el panel usa sus plantillas gratis.
  *                                   La misma llave activa la segunda opinión del identificador por
  *                                   foto (/identify/rerank, solo cuando duda, ~$0.0002, tope 150/día).
+ *                                   Y la traducción ES→EN de fichas (/product/translate, ~$0.0001, tope 200/día).
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -437,6 +438,7 @@ export default {
       if (path.endsWith('/identify/ref/clear')) return await handleIdentifyRefClear(body, env, allowOrigin);
       if (path.endsWith('/product/describe'))   return await handleProductDescribe(body, env, allowOrigin);
       if (path.endsWith('/identify/rerank'))    return await handleIdentifyRerank(body, env, allowOrigin);
+      if (path.endsWith('/product/translate'))  return await handleProductTranslate(body, env, allowOrigin);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -1867,6 +1869,77 @@ async function handleIdentifyRerank(body, env, origin) {
   const u = (data && data.usage) || {};
   return ok({ ok: true, choice, confidence: Number.isFinite(conf) ? Math.min(1, Math.max(0, conf)) : 0,
     model: RERANK_MODEL, usage: { input: Number(u.input_tokens) || 0, output: Number(u.output_tokens) || 0 } }, origin);
+}
+
+// ── Traducir la ficha ES → EN con Claude Haiku 5.5 (25 nov) ──────────────────────────────
+// POST /product/translate { token, name?, description? } → { ok, name_en?, description_en? }
+// Reemplaza al traductor gratis (MyMemory) del panel; si esta ruta falla, el panel vuelve
+// a MyMemory. Solo texto, sin imágenes: ~300 tokens de entrada + ~150 de salida ≈ $0.0001.
+// Tope 200/día (DO). Nunca escribe nada: el panel llena los campos y la persona revisa.
+const TRANSLATE_MODEL = 'claude-haiku-5-5';
+const TRANSLATE_DAILY_MAX = 200;
+const TRANSLATE_SYSTEM = [
+  'Traduces fichas de producto de CACUSA by Taitus (joyería artesanal) del español al inglés de EE.UU.',
+  'Tono cálido, natural y breve, como una tienda boutique; no traducción literal. Mantén el mismo largo aproximado.',
+  'Términos fijos: "baño de oro 18K" = "18K gold plating"; "acero inoxidable" = "stainless steel"; "ajustable" = "adjustable"; "Cacusa Lovers" queda igual.',
+  'No agregues información que no esté en el texto. Nunca uses emojis.',
+].join('\n');
+
+async function handleProductTranslate(body, env, origin) {
+  const name = stripColorEmoji(body.name, 120);
+  const description = stripColorEmoji(body.description, 1200);
+  if (!name && !description) return err('No hay texto para traducir', 400, origin);
+  if (!env.ANTHROPIC_API_KEY) return err('La traducción con IA no está activada (falta ANTHROPIC_API_KEY en el Worker).', 503, origin);
+  if (!(await rateLimit(env, 'translate', 'all', TRANSLATE_DAILY_MAX, 86400))) {
+    return err(`Se alcanzó el límite de ${TRANSLATE_DAILY_MAX} traducciones con IA de hoy.`, 429, origin);
+  }
+  const props = {}; const req = [];
+  if (name) { props.name_en = { type: 'string' }; req.push('name_en'); }
+  if (description) { props.description_en = { type: 'string' }; req.push('description_en'); }
+  const payload = {
+    model: TRANSLATE_MODEL,
+    max_tokens: 800,
+    thinking: { type: 'disabled' },
+    output_config: {
+      effort: 'low',
+      format: { type: 'json_schema', schema: { type: 'object', properties: props, required: req, additionalProperties: false } },
+    },
+    system: TRANSLATE_SYSTEM,
+    messages: [{ role: 'user', content: [{ type: 'text', text:
+      (name ? 'name: ' + name + '\n' : '') + (description ? 'description: ' + description + '\n' : '') + 'Tradúcelo al inglés.' }] }],
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 20_000);
+  let data;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2026-10-21' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+    if (!r.ok) {
+      let detail = '';
+      try { const j = await r.json(); detail = String((j && j.error && j.error.type) || ''); } catch (_) {}
+      console.error('translate: API de Claude respondió', r.status, detail);
+      return err(`La IA respondió con un error (HTTP ${r.status}).`, 502, origin);
+    }
+    data = await r.json();
+  } catch (e) {
+    if (e && e.name === 'AbortError') return err('La IA tardó demasiado en responder.', 504, origin);
+    return err('No se pudo contactar a la IA.', 502, origin);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (data && (data.stop_reason === 'refusal' || data.stop_reason === 'max_tokens')) return err('La IA no pudo traducir este texto.', 502, origin);
+  const textBlock = Array.isArray(data && data.content) ? data.content.find((b) => b && b.type === 'text') : null;
+  let parsed;
+  try { parsed = JSON.parse(textBlock ? textBlock.text : ''); } catch (_) { parsed = null; }
+  if (!parsed || typeof parsed !== 'object') return err('La respuesta de la IA no se pudo leer.', 502, origin);
+  const out = { ok: true };
+  if (name) out.name_en = stripColorEmoji(parsed.name_en, 120);
+  if (description) out.description_en = stripColorEmoji(parsed.description_en, 1200);
+  return ok(out, origin);
 }
 
 async function handleIdentifyRefAdd(body, env, origin) {
