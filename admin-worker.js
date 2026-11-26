@@ -103,6 +103,13 @@
  *
  * KV Namespace (Cloudflare → Settings → Bindings):
  *   CACUSA_KV  — almacena pedidos de forma privada (no expuesto en GitHub Pages)
+ *
+ * Cron Trigger (nov, opcional pero necesario para los correos automáticos): Cloudflare →
+ * cacusa-admin → Settings → Triggers → Cron Triggers → Add → "7 16 * * *" (1 vez al día,
+ * 11:07 en Ecuador / hora del Este en invierno). Corre runAutoEmails(): pedido de reseña
+ * 3 días después de la entrega + recordatorio de carrito pendiente (24 h). No manda nada
+ * mientras falte MKT_POSTAL_ADDRESS. Llaves nuevas en KV: acart:<email> (TTL 7 días),
+ * cartremsent:<email> (TTL 7 días); en los pedidos: entregadoAt/entregadoFuente/reviewReqAt.
  */
 
 const GH_OWNER  = 'robingonzalez-ux';
@@ -124,6 +131,14 @@ const ADMIN_URL = 'https://admin.cacusabytaitus.com/';
 const POS_ORIGIN = 'https://robingonzalez-ux.github.io';
 
 export default {
+  // Cron Trigger de cacusa-admin (nuevo, nov) — correos automáticos a clientas: pedido de
+  // reseña después de la entrega y recordatorio de carrito pendiente. Se configura a mano
+  // en Cloudflare → cacusa-admin → Settings → Triggers → Cron (ver runAutoEmails()).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runAutoEmails(env).then(
+      (r) => console.log('correos automáticos:', JSON.stringify(r)),
+      (e) => console.error('correos automáticos fallaron:', e && e.message)));
+  },
   async fetch(request, env, ctx) {
     const origin      = request.headers.get('Origin') || '';
     const allowOrigin = (ORIGIN_ALLOWLIST.includes(origin) || origin === POS_ORIGIN) ? origin : (env.ALLOWED_ORIGIN || ORIGIN_ALLOWLIST[0]);
@@ -226,6 +241,14 @@ export default {
       if (path.endsWith('/lead/register')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
         return await handleLeadRegister(body, env, allowOrigin, request, ctx);
+      }
+
+      // Carrito pendiente para el recordatorio por correo (nov): la tienda lo manda UNA vez
+      // por sesión de checkout (al salir del campo de email, con debounce) y solo si la
+      // clienta marcó el permiso de recordatorio. Ver handleCartPending().
+      if (path.endsWith('/cart/pending')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleCartPending(body, env, allowOrigin, request);
       }
 
       // Cancela un lead de carrito abandonado cuando el cliente lo vacía sin comprar (no
@@ -460,6 +483,12 @@ export default {
       if (path.endsWith('/marketing/campaign'))   return await handleMktCampaignCreate(body, env, allowOrigin, session);
       if (path.endsWith('/marketing/send-batch')) return await handleMktSendBatch(body, env, allowOrigin, selfBase);
       if (path.endsWith('/marketing/campaigns'))  return await handleMktCampaigns(env, allowOrigin);
+      // Correos automáticos (reseña + carrito): vista previa (dryRun, por defecto) o corrida a
+      // mano de la misma tarea que hace el Cron Trigger. Mismo presupuesto y mismos topes.
+      if (path.endsWith('/mail-auto/run')) {
+        if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
+        return ok({ ok: true, ...(await runAutoEmails(env, { dryRun: body.dryRun !== false })) }, allowOrigin);
+      }
       if (path.endsWith('/lovers/exclusive-coupon/bulk')) return await handleLoversExclusiveBulk(body, env, allowOrigin);
       if (path.endsWith('/tiktok/export-status'))  return await handleTiktokExportStatus(env, allowOrigin);
       if (path.endsWith('/tiktok/trigger-export')) return await handleTiktokTriggerExport(env, allowOrigin);
@@ -1277,6 +1306,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   // Best-effort: nunca debe afectar la respuesta del pedido si falla.
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
+  if (ctx && orderEmailLc) ctx.waitUntil(clearPendingCart(orderEmailLc, env).catch(() => {}));
   // Correo de confirmación de pedido — nunca antes de este punto (el pedido ya está
   // guardado de verdad), nunca en un reintento (idem: ya devolvió antes de llegar acá).
   // Pedidos públicos: máx. 1 correo por destinatario por hora (se salta en silencio).
@@ -1330,6 +1360,7 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   const orderEmailLc = (newOrder.cliente?.email || '').toLowerCase();
   if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
+  if (ctx && orderEmailLc) ctx.waitUntil(clearPendingCart(orderEmailLc, env).catch(() => {}));
   if (ctx) ctx.waitUntil(sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido manual falló:', e.message)));
 
   return ok({ ok: true, order: newOrder }, origin);
@@ -1426,6 +1457,13 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   // 18 oct: las guías se compran en Click-N-Ship y el tracking se pega a mano. Al quedar el
   // pedido "Enviado" con un tracking de USPS, la clienta recibe el mismo correo de envío que
   // con las guías de la API — una sola vez por número (shipEmailSentFor).
+  // Nov: cuándo quedó "Entregado" — lo usa el pedido de reseña (runReviewRequests, N días
+  // después). Se marca una sola vez; si este cambio lo saca de Entregado, se quita (así
+  // un Entregado por error y vuelto a Enviado no dispara el correo antes de tiempo).
+  if ('estado' in patch) {
+    if (order.estado === 'Entregado') { if (!order.entregadoAt) { order.entregadoAt = new Date().toISOString(); order.entregadoFuente = 'panel'; } }
+    else if (order.entregadoFuente === 'panel') { delete order.entregadoAt; delete order.entregadoFuente; }
+  }
   const sendShipEmail = shouldSendManualShipEmail(order);
   if (sendShipEmail) order.shipEmailSentFor = String(order.tracking).trim();
   order.updatedAt = new Date().toISOString();
@@ -3839,6 +3877,7 @@ async function handleLeadCancel(body, env, origin, request) {
   if (!(await rateLimit(env, 'lead-cancel', clientIp(request), 10, 3600))) return ok({ ok: true }, origin);
   const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
   if (email) await removeCartLead(email, env);
+  if (email) await clearPendingCart(email, env).catch(() => {});
   return ok({ ok: true }, origin);
 }
 
@@ -5318,6 +5357,11 @@ async function handleUspsStatus(body, env, origin) {
   const tn = String(order.tracking).replace(/\s+/g, '');
   try {
     const item = await uspsWithTokens(env, false, (oauthToken) => uspsTrackingLookup(oauthToken, tn), 'estado USPS');
+    // Nov: si USPS ya lo da por entregado, se anota la fecha (señal para el pedido de reseña),
+    // una sola vez y releyendo el pedido para no pisar otro cambio. No toca order.estado.
+    if (/deliver/i.test(String(item.statusCategory || '')) && !/out for|attempt/i.test(String(item.statusCategory || ''))) {
+      await markOrderDeliveredByUsps(env, id, tn).catch((e) => console.error('entregadoAt (USPS):', e.message));
+    }
     const dde = item.deliveryDateExpectation || {};
     const ev = Array.isArray(item.trackingEvents) && item.trackingEvents[0] || null;
     return ok({ ok: true, tracking: tn,
@@ -6231,6 +6275,461 @@ async function handleMktUnsub(request, env) {
   return page(200, '¿Darte de baja? · Unsubscribe?',
     `Dejarás de recibir correos de promociones en <strong>${esc(email)}</strong>.<br>You will stop receiving promotional emails at <strong>${esc(email)}</strong>.`,
     `<form method="POST" action="${escAttr(url.pathname + url.search)}" style="margin-top:22px;"><button type="submit" style="background:#C0336E;color:#fff;border:0;border-radius:999px;padding:13px 28px;font-size:14px;font-weight:700;cursor:pointer;">Darme de baja · Unsubscribe</button></form>`);
+}
+
+// ── Correos automáticos a clientas (nov): pedido de reseña + recordatorio de carrito ──
+// Los corre el Cron Trigger de ESTE Worker (scheduled() → runAutoEmails), no el de
+// cacusa-lovers-webhook: esa tarea diaria ya usa ~45 de las ~50 llamadas externas por
+// ejecución del plan Free, y Gmail/los pedidos/los carritos viven acá. También se puede
+// correr a mano (o en vista previa) desde /mail-auto/run con sesión del panel.
+//
+// Los 2 se tratan como correo de PROMOCIÓN (criterio conservador ante CAN-SPAM): llevan
+// el mismo link de baja firmado que el marketing (/m/baja → mktunsub:<email>, una sola
+// baja para todo lo promocional) + List-Unsubscribe one-click, y la dirección postal
+// MKT_POSTAL_ADDRESS. Sin esa variable NO sale ninguno (la vista previa sí funciona).
+// Nunca a quien se dio de baja. Comparten el tope diario de Gmail del marketing
+// (mktsent:<fecha>, MKT_DAILY_CAP) para no dejar sin cupo los correos de pedidos.
+//
+// Topes: máx. 1 correo automático por destinataria cada 24 h (rateLimit en la DO, nunca
+// contadores en KV), 1 recordatorio de carrito por email cada 7 días (cartremsent:<email>,
+// se escribe solo al mandar), tandas chicas (AUTO_REVIEW_BATCH + AUTO_CART_BATCH) y un
+// presupuesto de llamadas externas por corrida (AUTO_MAIL_SUBREQ_MAX). Lo que no entra
+// hoy sale en la próxima corrida: todo es idempotente.
+//
+// Idempotencia de cada envío: DO OrderIdempotency (reviewreq:<id> / cartrem:<email>:<ts>)
+// → se manda → marca en KV (order.reviewReqAt / acart.remindedAt) → finalize. Si la marca
+// de KV fallara, la DO ya dice 'done' y la próxima corrida solo repara la marca.
+const REVIEW_REQUEST_DELAY_DAYS = 3;      // días después de la entrega
+const REVIEW_REQUEST_MAX_AGE_DAYS = 30;   // entregas más viejas que esto ya no se piden
+const CART_REMINDER_DELAY_HOURS = 24;     // horas después de dejar el carrito
+const CART_REMINDER_MAX_AGE_HOURS = 72;   // carritos más viejos ya no se recuerdan
+const CART_PENDING_TTL_SECONDS = 7 * 24 * 3600;
+const CART_REMINDER_EVERY_DAYS = 7;       // máx. 1 recordatorio por email en este lapso
+// Cupón opcional en el recordatorio — APAGADO (0). Robin decide el % después; con un valor
+// > 0 se crea (una vez por email, mismo patrón HMAC que welcome10) un cupón de 1 uso, atado
+// al email (restrictToEmail, que también respeta cacusa-square) y que vence en 7 días.
+const CART_REMINDER_COUPON_PCT = 0;
+const AUTO_REVIEW_BATCH = 5;              // correos de reseña por corrida
+const AUTO_CART_BATCH = 4;                // recordatorios de carrito por corrida
+const AUTO_MAIL_SUBREQ_MAX = 40;          // de ~50 del plan Free (margen para reintentos)
+const AUTO_MAIL_COST_PER_EMAIL = 4;       // claim (DO) + rateLimit (DO) + Gmail + finalize/release (DO)
+const AUTO_MAIL_RECIPIENT_WINDOW = 24 * 3600;
+const AUTO_ITEM_ID_RE = /^[A-Za-z0-9_-]{1,50}$/;
+// Base pública de este Worker para los links de baja que salen desde el cron (no hay
+// request de donde sacarla). Mismo valor que ADMIN_WORKER_URL de la tienda.
+const ADMIN_WORKER_PUBLIC_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev';
+
+function acartKey(email) { return 'acart:' + String(email || '').toLowerCase().trim(); }
+
+// Valida los items del carrito pendiente: solo id + cantidad, ids con formato de catálogo,
+// cantidades 1–10, ids repetidos se suman (tope 10), máx. 20 líneas.
+function cleanPendingItems(raw) {
+  if (!Array.isArray(raw)) return [];
+  const byId = new Map();
+  for (const it of raw.slice(0, 40)) {
+    if (!it || typeof it !== 'object') continue;
+    const id = (typeof it.id === 'string' || typeof it.id === 'number') ? String(it.id) : '';
+    if (!AUTO_ITEM_ID_RE.test(id)) continue;
+    const q = Number.isInteger(it.qty) ? it.qty : 1;
+    if (q < 1 || q > 10) continue;
+    byId.set(id, Math.min(10, (byId.get(id) || 0) + q));
+    if (byId.size >= 20) break;
+  }
+  return [...byId].map(([id, qty]) => ({ id, qty }));
+}
+
+// POST /cart/pending — pública, origin-restringida. Guarda SOLO email, idioma, items
+// (id + cantidad) y fecha, en acart:<email> con TTL de 7 días. Respuesta siempre igual
+// (sin oráculo de si el email existe o se dio de baja). Topes en la DO: 6/h por IP y
+// 3/día por email (la tienda manda 1 por sesión de checkout; esto acota un abuso).
+async function handleCartPending(body, env, origin, request) {
+  if (!env.CACUSA_KV) return ok({ ok: true }, origin);
+  if (!(await rateLimit(env, 'cart-pending-ip', clientIp(request), 6, 3600))) return ok({ ok: true }, origin);
+  const email = String(body.email || '').toLowerCase().trim().slice(0, 100);
+  if (!isValidEmail(email)) return ok({ ok: true }, origin);
+  if (!(await rateLimit(env, 'cart-pending-em', email, 3, 86400))) return ok({ ok: true }, origin);
+  // Desmarcó el permiso después de mandarlo: se borra lo guardado.
+  if (body.remind !== true) { await clearPendingCart(email, env).catch(() => {}); return ok({ ok: true }, origin); }
+  const items = cleanPendingItems(body.items);
+  if (!items.length) return ok({ ok: true }, origin);
+  if (await env.CACUSA_KV.get('mktunsub:' + email)) return ok({ ok: true }, origin);
+  const rec = { email, lang: body.lang === 'en' ? 'en' : 'es', items, ts: new Date().toISOString() };
+  await env.CACUSA_KV.put(acartKey(email), JSON.stringify(rec), { expirationTtl: CART_PENDING_TTL_SECONDS });
+  return ok({ ok: true }, origin);
+}
+
+// Compró (pedido creado con ese email) o vació el carrito: el carrito pendiente deja de
+// existir. Lee antes de borrar para no gastar borrados de KV (1.000/día) en cada pedido.
+async function clearPendingCart(email, env) {
+  if (!env.CACUSA_KV || !email) return;
+  const k = acartKey(email);
+  if (await env.CACUSA_KV.get(k)) await env.CACUSA_KV.delete(k);
+}
+
+// USPS dice "Delivered" (consulta del panel, /order/usps-status): anota entregadoAt una vez.
+async function markOrderDeliveredByUsps(env, id, tn) {
+  const fresh = await orderGet(env, id);
+  if (!fresh || fresh.entregadoAt || fresh.estado === 'Cancelado') return;
+  if (String(fresh.tracking || '').replace(/\s+/g, '') !== tn) return;
+  fresh.entregadoAt = new Date().toISOString();
+  fresh.entregadoFuente = 'usps';
+  await env.CACUSA_KV.put(orderKey(id), JSON.stringify(fresh));
+  await refreshOrdersCache(env).catch(() => {});
+}
+
+// Reclamo de un solo intento en la DO (sin los reintentos de orderIdemClaim: en el cron un
+// 'in_progress' significa que otra corrida lo está mandando ahora — se salta).
+async function autoMailClaim(env, key) {
+  const stub = orderIdemStub(env, key);
+  if (!stub) return 'claimed'; // sin binding: la marca en KV queda como única defensa
+  const r = await stub.fetch('https://order-idempotency.internal/claim', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }),
+  });
+  const d = await r.json();
+  return d.status === 'claimed' ? 'claimed' : d.status === 'done' ? 'done' : 'busy';
+}
+
+function autoMailLegalHtml(lang, unsubUrl, postal, kind) {
+  const en = lang === 'en';
+  const why = kind === 'cart'
+    ? (en ? 'You are receiving this reminder because you entered your email at checkout on cacusabytaitus.com and agreed to it.'
+          : 'Recibes este recordatorio porque dejaste tu correo en el checkout de cacusabytaitus.com y lo aceptaste.')
+    : (en ? 'You are receiving this email because you placed an order at cacusabytaitus.com.'
+          : 'Recibes este correo porque hiciste un pedido en cacusabytaitus.com.');
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.5;color:#A07090;margin-top:12px;">${why}<br><a href="${escAttr(unsubUrl)}" style="color:#C0336E;">${en ? 'Unsubscribe' : 'Darme de baja'}</a> · <a href="${MKT_SITE}/privacidad.html" style="color:#C0336E;">${en ? 'Privacy policy' : 'Política de privacidad'}</a>${postal ? `<br>CACUSA by Taitus · ${esc(postal)}` : ''}</div>`;
+}
+
+// Producto del catálogo → datos para el correo (todo armado en el servidor; nunca links ni
+// fotos que vengan del navegador). Foto con catalogImageUrl + filtro https de mktUrl.
+function autoMailProduct(p, lang) {
+  const en = lang === 'en';
+  const name = String((en && p.name_en) ? p.name_en : (p.name || '')).replace(/\s+/g, ' ').trim().slice(0, 120);
+  const url = en
+    ? `${MKT_SITE}/en/ui_kits/store/producto/${encodeURIComponent(mktProductParam(p, 'en'))}/`
+    : `${MKT_SITE}/ui_kits/store/producto/${encodeURIComponent(mktProductParam(p, 'es'))}/`;
+  const price = Number(resolveBasePrice(p));
+  return { id: String(p.id), name, url, image: mktUrl(catalogImageUrl(p)), price: Number.isFinite(price) && price > 0 ? price : null, available: p.available !== false };
+}
+
+function autoMailItemRow(it, lang, rightHtml) {
+  const img = it.image
+    ? `<img src="${escAttr(it.image)}" alt="${escAttr(it.name)}" width="64" height="64" style="display:block;width:64px;height:64px;object-fit:cover;border-radius:10px;border:0;">`
+    : `<div style="width:64px;height:64px;border-radius:10px;background:#F3E4EE;"></div>`;
+  return `<tr>
+<td width="76" valign="middle" style="padding:8px 12px 8px 0;border-bottom:1px solid #F3E4EE;">${img}</td>
+<td valign="middle" style="padding:8px 0;border-bottom:1px solid #F3E4EE;text-align:left;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B2A5A;">${esc(it.name)}${it.qty > 1 ? ` × ${it.qty}` : ''}${rightHtml}</td>
+</tr>`;
+}
+
+// Pedido de reseña. items: [{ name, image, url }] (url de la ficha; se le agrega #resena).
+function reviewRequestEmailContent({ nombre, items, lang, unsubUrl, postal }) {
+  const en = lang === 'en';
+  const link = (it) => `<div style="margin-top:6px;"><a href="${escAttr(it.url + '#resena')}" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:700;color:#C0336E;text-decoration:none;">${en ? 'Leave my review ✦' : 'Dejar mi reseña ✦'}</a></div>`;
+  const rows = items.map((it) => autoMailItemRow(it, lang, link(it))).join('');
+  const intro = en
+    ? 'We hope you are loving your pieces. Your review helps other customers choose — and it means a lot to our small workshop.'
+    : 'Esperamos que estés disfrutando tus piezas. Tu reseña ayuda a otras clientas a elegir — y para nuestro pequeño taller significa muchísimo.';
+  const bodyHtml = `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#6B3A55;text-align:left;">${intro}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">${rows}</table>`;
+  const who = nombre ? ', ' + esc(nombre) : '';
+  return {
+    subject: en ? 'How did your order go? — CACUSA by Taitus' : '¿Cómo te fue con tu pedido? — CACUSA by Taitus',
+    html: emailShellGeneric({
+      lang,
+      preheader: en ? 'Tell us what you think of your pieces — it takes one minute.' : 'Cuéntanos qué te parecieron tus piezas — toma un minuto.',
+      eyebrow: en ? 'Your opinion matters' : 'Tu opinión nos importa',
+      title: en ? `How did your order go${who}?` : `¿Cómo te fue con tu pedido${who}?`,
+      bodyHtml, ctaText: '', ctaUrl: '',
+      footerExtraHtml: autoMailLegalHtml(lang, unsubUrl, postal, 'review'),
+    }),
+  };
+}
+
+// Recordatorio de carrito. items: [{ name, image, url, qty }]; restoreUrl rellena el
+// carrito en la tienda (?cart=id:qty,...). couponCode solo si CART_REMINDER_COUPON_PCT > 0.
+function cartReminderEmailContent({ items, restoreUrl, lang, unsubUrl, postal, couponCode, couponPct }) {
+  const en = lang === 'en';
+  // Sin precios a propósito: la tienda puede sumar recargo o promo distintos según el día y
+  // el método de pago — el precio real lo ve al volver al carrito.
+  const rows = items.map((it) => autoMailItemRow(it, lang, '')).join('');
+  const intro = en
+    ? 'You left these pieces in your cart. We saved them for you — just tap the button to pick up where you left off.'
+    : 'Dejaste estas piezas en tu carrito. Te las guardamos — toca el botón para seguir donde te quedaste.';
+  const coupon = couponCode ? `<div style="margin:14px 0 4px;padding:12px;border:1.5px dashed #EE6FA8;border-radius:12px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#8B2A5A;">${en ? `Use code <strong>${esc(couponCode)}</strong> for ${couponPct}% off (valid for 7 days).` : `Usa el código <strong>${esc(couponCode)}</strong> y llévate ${couponPct}% de descuento (válido por 7 días).`}</div>` : '';
+  const bodyHtml = `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.65;color:#6B3A55;text-align:left;">${intro}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">${rows}</table>${coupon}`;
+  return {
+    subject: en ? 'Your cart is waiting — CACUSA by Taitus' : 'Tu carrito te espera — CACUSA by Taitus',
+    html: emailShellGeneric({
+      lang,
+      preheader: en ? 'Your pieces are still in your cart.' : 'Tus piezas siguen en tu carrito.',
+      eyebrow: en ? 'Your cart' : 'Tu carrito',
+      title: en ? 'Did you forget something?' : '¿Se te quedó algo?',
+      bodyHtml,
+      ctaText: en ? 'Back to my cart →' : 'Volver a mi carrito →',
+      ctaUrl: escAttr(restoreUrl),
+      footerExtraHtml: autoMailLegalHtml(lang, unsubUrl, postal, 'cart'),
+    }),
+  };
+}
+
+function cartRestoreUrl(items, lang) {
+  const base = lang === 'en' ? `${MKT_SITE}/en/ui_kits/store/` : `${MKT_SITE}/ui_kits/store/`;
+  const cart = items.map((it) => `${it.id}:${it.qty}`).join(',');
+  return `${base}?cart=${encodeURIComponent(cart)}&utm_source=email&utm_medium=email&utm_campaign=cart_reminder`;
+}
+
+async function cartReminderCouponCode(email, env) {
+  const sig = await hmac('cartrem:' + email, env.SESSION_SECRET);
+  return 'VUELVE' + sig.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+async function ensureCartReminderCoupon(email, env) {
+  const code = await cartReminderCouponCode(email, env);
+  if (!(await couponGet(env, code))) {
+    const expires = new Date(Date.now() + 7 * 86400000);
+    await env.CACUSA_KV.put(couponKey(code), JSON.stringify({
+      code, type: 'percent', amount: CART_REMINDER_COUPON_PCT, kind: 'cart-reminder',
+      maxUses: 1, usedCount: 0, active: true, expiresAt: expires.toISOString().slice(0, 10),
+      restrictToEmail: email, note: `Recordatorio de carrito ${CART_REMINDER_COUPON_PCT}% — ${email}`,
+      createdAt: new Date().toISOString(), createdBy: 'cart-reminder-system',
+    }));
+  }
+  return code;
+}
+
+// Email → fecha (ms) del pedido más reciente, desde orders_cache (1 lectura).
+function latestOrderTimeByEmail(orders) {
+  const m = new Map();
+  for (const o of orders) {
+    const em = String((o && o.cliente && o.cliente.email) || '').toLowerCase().trim();
+    if (!em) continue;
+    const t = o.fecha ? new Date(o.fecha).getTime() : 0;
+    if (!m.has(em) || t > m.get(em)) m.set(em, t);
+  }
+  return m;
+}
+
+// ¿Este pedido califica para el pedido de reseña? (puro — lo usan el filtro y la relectura)
+function reviewRequestEligible(o, now) {
+  if (!o || typeof o !== 'object') return false;
+  if (o.reviewReqAt) return false;                      // una sola vez por pedido
+  if (o.estado === 'Cancelado') return false;
+  if (!o.entregadoAt) return false;                     // sin señal de entrega, nada
+  const email = String((o.cliente && o.cliente.email) || '').trim();
+  if (!isValidEmail(email)) return false;
+  const items = (Array.isArray(o.productos) ? o.productos : []).filter((p) => p && AUTO_ITEM_ID_RE.test(String(p.id || '')));
+  if (!items.length) return false;                      // ej. caja de Lovers sin piezas cargadas
+  const t = new Date(o.entregadoAt).getTime();
+  if (!Number.isFinite(t)) return false;
+  return now - t >= REVIEW_REQUEST_DELAY_DAYS * 86400000 && now - t <= REVIEW_REQUEST_MAX_AGE_DAYS * 86400000;
+}
+
+// Error de Gmail que debe frenar toda la corrida (cupo o credenciales), como el marketing.
+function autoMailStopError(e) { return /\((429|401|403)\)|token refresh|GMAIL_REFRESH_TOKEN/i.test(String(e && e.message || e)); }
+
+async function runAutoEmails(env, { dryRun = false } = {}) {
+  const out = { dryRun, review: { candidatos: 0, enviados: 0, saltados: [] }, cart: { candidatos: 0, enviados: 0, convertidos: 0, saltados: [] }, llamadas: 0 };
+  if (!env.CACUSA_KV) { out.error = 'KV no configurado'; return out; }
+  const postal = String(env.MKT_POSTAL_ADDRESS || '').trim();
+  if (!postal && !dryRun) { out.pausado = 'Falta MKT_POSTAL_ADDRESS (CAN-SPAM): no se manda nada'; return out; }
+  const now = Date.now();
+  const budget = { n: 0, max: AUTO_MAIL_SUBREQ_MAX };
+  const canSpend = (k) => budget.n + k <= budget.max;
+  const base = String(env.PUBLIC_WORKER_URL || ADMIN_WORKER_PUBLIC_URL).replace(/\/+$/, '');
+
+  let orders = [];
+  try { const od = JSON.parse((await env.CACUSA_KV.get('orders_cache')) || '{}'); if (Array.isArray(od.orders)) orders = od.orders; } catch (_) {}
+  const latestOrder = latestOrderTimeByEmail(orders);
+
+  // Candidatas de reseña: agrupadas por email (1 correo con hasta 3 pedidos), la entrega más vieja primero.
+  const revByEmail = new Map();
+  for (const o of orders.filter((o) => reviewRequestEligible(o, now)).sort((a, b) => new Date(a.entregadoAt) - new Date(b.entregadoAt))) {
+    const em = String(o.cliente.email).toLowerCase().trim();
+    if (!revByEmail.has(em)) revByEmail.set(em, []);
+    if (revByEmail.get(em).length < 3) revByEmail.get(em).push(o);
+  }
+  const revGroups = [...revByEmail].slice(0, AUTO_REVIEW_BATCH);
+  out.review.candidatos = revByEmail.size;
+
+  // Carritos pendientes: entre CART_REMINDER_DELAY_HOURS y CART_REMINDER_MAX_AGE_HOURS, sin recordar.
+  const cartRecs = [];
+  try {
+    const vals = await kvGetMany(env, await kvListKeys(env, 'acart:'));
+    for (const [k, raw] of vals) {
+      let r; try { r = JSON.parse(raw || 'null'); } catch (_) { r = null; }
+      if (!r || r.remindedAt || !isValidEmail(r.email || '') || acartKey(r.email) !== k) continue;
+      const age = now - new Date(r.ts).getTime();
+      if (!(age >= CART_REMINDER_DELAY_HOURS * 3600000 && age <= CART_REMINDER_MAX_AGE_HOURS * 3600000)) continue;
+      cartRecs.push({ key: k, r });
+    }
+  } catch (e) { console.error('carritos pendientes:', e.message); }
+  cartRecs.sort((a, b) => new Date(a.r.ts) - new Date(b.r.ts));
+  out.cart.candidatos = cartRecs.length;
+
+  // Bajas y recordatorios recientes: una sola lectura en bloque.
+  const revEmails = revGroups.map(([em]) => em);
+  const cartEmails = cartRecs.map((x) => x.r.email);
+  const flags = await kvGetMany(env, [...new Set([...revEmails, ...cartEmails])].flatMap((e) => ['mktunsub:' + e, 'cartremsent:' + e]));
+  const unsub = (e) => !!flags.get('mktunsub:' + e);
+
+  if (dryRun) {
+    out.review.lista = revGroups.map(([em, os]) => ({ pedidos: os.map((o) => o.numero || o.id), baja: unsub(em) }));
+    out.cart.lista = cartRecs.slice(0, AUTO_CART_BATCH).map((x) => ({ items: x.r.items.length, desde: x.r.ts, baja: unsub(x.r.email), compro: (latestOrder.get(x.r.email) || -1) >= new Date(x.r.ts).getTime() }));
+    out.postal = !!postal;
+    return out;
+  }
+  if (!revGroups.length && !cartRecs.length) return out;
+
+  const usadosHoy = await mktSentToday(env);
+  let cupo = MKT_DAILY_CAP - usadosHoy;
+  let catalog = null, accessToken = null, stop = '';
+  const getCatalog = async () => {
+    if (catalog) return catalog;
+    if (!canSpend(2)) return null;
+    budget.n += 2; // hasta 2 intentos
+    const c = await fetchCatalogForOrderValidation();
+    catalog = c ? new Map(c.products.map((p) => [String(p.id), p])) : null;
+    return catalog;
+  };
+  const getToken = async () => {
+    if (accessToken) return accessToken;
+    budget.n += 1;
+    accessToken = await gmailAccessToken(env);
+    return accessToken;
+  };
+  let ordersChanged = false, enviadosTotal = 0;
+
+  // ── A) Pedido de reseña ──
+  for (const [em, os] of revGroups) {
+    if (stop || cupo <= 0) break;
+    if (unsub(em)) { out.review.saltados.push('baja'); continue; }
+    if (!canSpend(AUTO_MAIL_COST_PER_EMAIL + (accessToken ? 0 : 1) + (catalog ? 0 : 2))) { out.review.saltados.push('presupuesto'); break; }
+    // Relectura real de cada pedido (orders_cache puede estar atrasada).
+    const fresh = [];
+    for (const o of os) { const f = await orderGet(env, o.id); if (reviewRequestEligible(f, now) && String(f.cliente.email).toLowerCase().trim() === em) fresh.push(f); }
+    if (!fresh.length) { out.review.saltados.push('ya no califica'); continue; }
+    const cat = await getCatalog();
+    if (!cat) { stop = 'catálogo no disponible'; break; }
+    const lang = fresh[0].cliente.idioma === 'en' ? 'en' : 'es';
+    const seen = new Set(), items = [];
+    for (const f of fresh) for (const p of f.productos) {
+      const prod = cat.get(String(p.id));
+      if (!prod || seen.has(String(prod.id))) continue;
+      seen.add(String(prod.id)); items.push(autoMailProduct(prod, lang));
+    }
+    const claimKey = 'reviewreq:' + fresh[0].id;
+    budget.n += 1;
+    const claim = await autoMailClaim(env, claimKey);
+    if (claim === 'busy') { out.review.saltados.push('en curso'); continue; }
+    // Ya se mandó (la marca de KV no llegó a escribirse): solo se repara la marca, sin tope.
+    if (claim === 'claimed') {
+      budget.n += 1;
+      if (!(await rateLimit(env, 'mailauto', em, 1, AUTO_MAIL_RECIPIENT_WINDOW))) {
+        budget.n += 1; await orderIdemRelease(env, claimKey).catch(() => {});
+        out.review.saltados.push('tope por destinataria'); continue;
+      }
+    }
+    let sentOk = claim === 'done';
+    if (claim === 'claimed') {
+      if (!items.length) {
+        // Ninguna pieza sigue en el catálogo: se marca sin mandar (no hay ficha a la cual llevarla).
+        sentOk = true;
+      } else {
+        try {
+          const unsubUrl = await mktUnsubUrl(em, env, base);
+          const content = reviewRequestEmailContent({ nombre: String(fresh[0].cliente.nombre || '').trim().slice(0, 60), items: items.slice(0, 8), lang, unsubUrl, postal });
+          const token = await getToken();
+          budget.n += 1;
+          await sendGmail(env, { to: em, ...content, accessToken: token, headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } });
+          sentOk = true; out.review.enviados++; enviadosTotal++; cupo--;
+        } catch (e) {
+          console.error('pedido de reseña falló:', e.message);
+          if (autoMailStopError(e)) stop = String(e.message).slice(0, 200);
+        }
+      }
+    }
+    if (sentOk) {
+      // Primero la DO queda en 'done' (defensa principal), después la marca en KV — si
+      // esta falla, la próxima corrida ve 'done' y solo la repara, nunca reenvía.
+      if (claim === 'claimed') { budget.n += 1; await orderIdemFinalize(env, claimKey, fresh[0].id).catch(() => {}); }
+      const at = new Date().toISOString();
+      for (const f of fresh) {
+        f.reviewReqAt = at; f.reviewReqStatus = items.length ? 'enviado' : 'sin piezas en el catálogo';
+        try { await env.CACUSA_KV.put(orderKey(f.id), JSON.stringify(f)); ordersChanged = true; }
+        catch (e) { console.error('marca reviewReqAt falló (la DO ya evita el reenvío):', e.message); }
+      }
+    } else if (claim === 'claimed') {
+      budget.n += 1; await orderIdemRelease(env, claimKey).catch(() => {});
+    }
+  }
+
+  // ── B) Recordatorio de carrito ──
+  for (const { key, r } of cartRecs.slice(0, AUTO_CART_BATCH)) {
+    if (stop || cupo <= 0) break;
+    const em = r.email;
+    const tsMs = new Date(r.ts).getTime();
+    // Ya compró (pedido con ese email después del carrito): convertido, se borra.
+    if ((latestOrder.get(em) || -1) >= tsMs) { await env.CACUSA_KV.delete(key).catch(() => {}); out.cart.convertidos++; continue; }
+    if (unsub(em)) { await env.CACUSA_KV.delete(key).catch(() => {}); out.cart.saltados.push('baja'); continue; }
+    if (flags.get('cartremsent:' + em)) { out.cart.saltados.push('ya recordado esta semana'); continue; }
+    if (!canSpend(AUTO_MAIL_COST_PER_EMAIL + (accessToken ? 0 : 1) + (catalog ? 0 : 2))) { out.cart.saltados.push('presupuesto'); break; }
+    const cat = await getCatalog();
+    if (!cat) { stop = 'catálogo no disponible'; break; }
+    const lang = r.lang === 'en' ? 'en' : 'es';
+    const items = [];
+    for (const it of cleanPendingItems(r.items)) {
+      const prod = cat.get(it.id);
+      if (!prod) continue;
+      const p = autoMailProduct(prod, lang);
+      if (!p.available) continue; // agotada o pausada: no se recuerda
+      items.push({ ...p, qty: it.qty });
+    }
+    const ttlLeft = Math.max(60, Math.floor((tsMs + CART_PENDING_TTL_SECONDS * 1000 - now) / 1000));
+    if (!items.length) {
+      await env.CACUSA_KV.put(key, JSON.stringify({ ...r, remindedAt: new Date().toISOString(), remindStatus: 'sin piezas disponibles' }), { expirationTtl: ttlLeft }).catch(() => {});
+      out.cart.saltados.push('sin piezas disponibles'); continue;
+    }
+    const claimKey = `cartrem:${em}:${r.ts}`;
+    budget.n += 1;
+    const claim = await autoMailClaim(env, claimKey);
+    if (claim === 'busy') { out.cart.saltados.push('en curso'); continue; }
+    if (claim === 'claimed') {
+      budget.n += 1;
+      if (!(await rateLimit(env, 'mailauto', em, 1, AUTO_MAIL_RECIPIENT_WINDOW))) {
+        budget.n += 1; await orderIdemRelease(env, claimKey).catch(() => {});
+        out.cart.saltados.push('tope por destinataria'); continue;
+      }
+    }
+    let sentOk = claim === 'done';
+    if (claim === 'claimed') {
+      try {
+        const couponCode = CART_REMINDER_COUPON_PCT > 0 && env.SESSION_SECRET ? await ensureCartReminderCoupon(em, env) : '';
+        const unsubUrl = await mktUnsubUrl(em, env, base);
+        const content = cartReminderEmailContent({ items, restoreUrl: cartRestoreUrl(items, lang), lang, unsubUrl, postal, couponCode, couponPct: CART_REMINDER_COUPON_PCT });
+        const token = await getToken();
+        budget.n += 1;
+        await sendGmail(env, { to: em, ...content, accessToken: token, headers: { 'List-Unsubscribe': `<${unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } });
+        sentOk = true; out.cart.enviados++; enviadosTotal++; cupo--;
+      } catch (e) {
+        console.error('recordatorio de carrito falló:', e.message);
+        if (autoMailStopError(e)) stop = String(e.message).slice(0, 200);
+      }
+    }
+    if (sentOk) {
+      if (claim === 'claimed') { budget.n += 1; await orderIdemFinalize(env, claimKey, 'sent').catch(() => {}); }
+      await env.CACUSA_KV.put(key, JSON.stringify({ ...r, remindedAt: new Date().toISOString() }), { expirationTtl: ttlLeft }).catch(() => {});
+      await env.CACUSA_KV.put('cartremsent:' + em, '1', { expirationTtl: CART_REMINDER_EVERY_DAYS * 86400 }).catch(() => {});
+    } else if (claim === 'claimed') {
+      budget.n += 1; await orderIdemRelease(env, claimKey).catch(() => {});
+    }
+  }
+
+  if (enviadosTotal) await mktAddSent(env, enviadosTotal).catch(() => {});
+  if (ordersChanged) await refreshOrdersCache(env).catch(() => {});
+  if (stop) out.frenado = stop;
+  if (cupo <= 0) out.topeDiario = true;
+  out.llamadas = budget.n;
+  return out;
 }
 
 // ── Token (HMAC-SHA256) ────────────────────────────────────────────────────────
