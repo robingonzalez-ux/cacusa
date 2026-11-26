@@ -662,6 +662,10 @@ function _showCatalogLoadError() {
   }
   const _autoW = new URLSearchParams(window.location.search).get('wishlist');
   if (_autoW) { const _wids = _autoW.split(',').filter(Boolean); if (_wids.length) openWishlist(_wids); }
+  // Nov: link del recordatorio de carrito (?cart=id:qty,...) — rellena el carrito.
+  _restoreCartFromUrl();
+  // Nov: link del pedido de reseña (ficha + #resena, o ?review=1) — abre el formulario.
+  if (_autoP && currentProduct && _wantsReviewForm()) _openReviewForm();
 })();
 
 // ─── INVENTARIO (18 nov) ────────────────────────────────────
@@ -1592,8 +1596,19 @@ function _resetPersonUI() {
 // alguno) — lo pone registerLead() cuando el carrito llega al checkout, y saveCart() lo
 // usa para saber a quién avisarle si el carrito termina vacío sin haber comprado.
 let _abandonLeadEmail = null;
+// Email con carrito pendiente guardado para el recordatorio por correo (ver /cart/pending
+// más abajo): si el carrito queda vacío, también se cancela.
+let _pendingCartEmail = null;
 function saveCart() {
   __LS.setItem('cacusa-cart', JSON.stringify(cart));
+  if (cart.length === 0 && _pendingCartEmail && _pendingCartEmail !== _abandonLeadEmail) {
+    const email = _pendingCartEmail;
+    _pendingCartEmail = null;
+    fetch(ADMIN_WORKER_URL + '/lead/cancel', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+  } else if (cart.length === 0) _pendingCartEmail = null;
   // El carrito quedó en cero sin pasar por un pedido (esos casos limpian el lead solos,
   // del lado del servidor, al crear el pedido) — avisar para que deje de figurar como
   // "carrito abandonado" en el panel. Best-effort, no bloquea nada si falla.
@@ -3691,6 +3706,63 @@ let _vigReleaseTrap = null;
   });
 })();
 
+// ── Restaurar carrito desde el correo de recordatorio (?cart=id:qty,id:qty) ──
+// Solo ids del catálogo cargado, cantidades 1–MAX_QTY, máx. 20 líneas; agotadas o
+// inexistentes se ignoran. Nunca trae precios ni nombres del link: salen de PRODUCTS.
+const CART_RESTORE_MAX = 20;
+function _parseCartParam(raw) {
+  const out = [];
+  if (typeof raw !== 'string' || raw.length > 800) return out;
+  for (const part of raw.split(',')) {
+    if (out.length >= CART_RESTORE_MAX) break;
+    const m = /^([A-Za-z0-9_-]{1,50})(?::(\d{1,2}))?$/.exec(part.trim());
+    if (!m) continue;
+    const q = m[2] ? parseInt(m[2], 10) : 1;
+    if (!(q >= 1 && q <= MAX_QTY)) continue;
+    out.push({ id: m[1], qty: q });
+  }
+  return out;
+}
+function _restoreCartFromUrl() {
+  let u; try { u = new URL(window.location.href); } catch (_) { return; }
+  const raw = u.searchParams.get('cart');
+  if (raw == null) return;
+  u.searchParams.delete('cart');
+  try { history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (_) {}
+  let added = 0, skipped = 0;
+  for (const { id, qty: q } of _parseCartParam(raw)) {
+    const prod = PRODUCTS.find(p => String(p.id) === id);
+    if (!prod || prod.available === false) { skipped++; continue; }
+    const material = prod.material || '';
+    const line = cart.find(it => !it.isCombo && String(it.id) === id && !it.personalization && (it.material || '') === material);
+    if (line) { line.qty = Math.min(MAX_QTY, Math.max(line.qty || 1, q)); added++; continue; }
+    cart.push({ ...prod, personalization: '', material, cartId: Date.now() + added, qty: q });
+    added++;
+  }
+  if (added) {
+    saveCart(); updateCartUI(); openCart();
+    showToast(__LANG === 'en' ? '✓ We restored your cart' : '✓ Recuperamos tu carrito', 3500);
+  } else if (skipped) {
+    showToast(__LANG === 'en' ? 'The pieces from your cart are no longer available.' : 'Las piezas de tu carrito ya no están disponibles.', 4000);
+  }
+}
+
+// ── Link del pedido de reseña: la ficha con #resena (o ?review=1) abre el formulario ──
+function _wantsReviewForm() {
+  const h = String(location.hash || '').toLowerCase();
+  return h === '#resena' || h === '#review' || new URLSearchParams(location.search).get('review') === '1';
+}
+function _openReviewForm() {
+  const form = document.querySelector('.review-form');
+  if (!form) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  setTimeout(() => {
+    form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    const first = form.querySelector('.sp-star[tabindex="0"]') || document.getElementById('revName');
+    if (first) { try { first.focus({ preventScroll: true }); } catch (_) { first.focus(); } }
+  }, 450);
+}
+
 // ── Captura de lead en checkout (recuperación de abandono) ──
 (function(){
   const emailInput = document.getElementById('coEmail');
@@ -3704,4 +3776,33 @@ let _vigReleaseTrap = null;
     const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
     registerLead(email, 'cart_checkout_start', cartData, total);
   });
+  // Carrito pendiente para UN recordatorio por correo (nov) — solo con el permiso marcado
+  // (#coRemind, desmarcado por defecto). Nunca por tecla: al salir del campo de email o al
+  // cambiar el permiso, con debounce, y como mucho 3 veces por sesión (solo si cambió el
+  // email, el carrito o el permiso). Manda solo email, idioma e ids + cantidades.
+  const remindBox = document.getElementById('coRemind');
+  if (!remindBox) return;
+  const EMAIL_OK = /^[^\s@<>"',;:\\]+@[^\s@<>"',;:\\]+\.[a-z]{2,}$/i;
+  let timer = null, lastSig = '', sends = 0, stored = false;
+  function sendPending() {
+    timer = null;
+    const email = emailInput.value.trim().toLowerCase();
+    if (email.length > 100 || !EMAIL_OK.test(email)) return;
+    const remind = !!remindBox.checked;
+    const items = cart.filter(i => !i.isCombo && /^[A-Za-z0-9_-]{1,50}$/.test(String(i.id)))
+      .slice(0, 20).map(i => ({ id: String(i.id), qty: Math.min(MAX_QTY, Math.max(1, i.qty || 1)) }));
+    if (!remind && !stored) return;           // sin permiso y nada guardado: no se manda nada
+    if (remind && !items.length) return;
+    const sig = remind ? email + '|' + JSON.stringify(items) : email + '|off';
+    if (sig === lastSig || sends >= 3) return;
+    lastSig = sig; sends++; stored = remind;
+    _pendingCartEmail = remind ? email : null;
+    fetch(ADMIN_WORKER_URL + '/cart/pending', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ email, lang: __LANG, items, remind }),
+    }).catch(() => {});
+  }
+  function schedule() { if (timer) clearTimeout(timer); timer = setTimeout(sendPending, 800); }
+  emailInput.addEventListener('blur', schedule);
+  remindBox.addEventListener('change', schedule);
 })();
