@@ -2991,7 +2991,7 @@ function _cartSimilarHtml(excludeIds) {
 // admin.cacusabytaitus.com/models/) y el overlay viven en photo-search.js, compartido ES/EN.
 // No se descarga NADA hasta que la clienta toca el botón. El ?v= de abajo lo pone
 // .github/scripts/bump_asset_versions.py (no tocarlo a mano).
-const PHOTO_SEARCH_SRC = '/ui_kits/store/photo-search.js';
+const PHOTO_SEARCH_SRC = '/ui_kits/store/photo-search.js?v=a4cdb53eec';
 let _photoSearchP = null;
 function _loadPhotoSearch() {
   if (window.CacusaPhotoSearch) return Promise.resolve(window.CacusaPhotoSearch);
