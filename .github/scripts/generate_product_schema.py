@@ -185,7 +185,9 @@ def fetch_surcharges():
     try:
         req = urllib.request.Request(
             SURCHARGES_URL, data=b"{}", method="POST",
-            headers={"Content-Type": "application/json", "Origin": BASE_URL},
+            headers={"Content-Type": "application/json", "Origin": BASE_URL,
+                     # Cloudflare rechaza (403, error 1010) el User-Agent por defecto de urllib.
+                     "User-Agent": "Mozilla/5.0 (compatible; cacusa-ci/1.0; +https://cacusabytaitus.com)"},
         )
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read().decode("utf-8"))
