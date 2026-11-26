@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "lastUpdated": "2026-11-26T16:35:01.510Z",
+  "lastUpdated": "2026-11-26T19:05:27.961Z",
   "updatedBy": "robin.gonzalez",
   "whatsapp": "+17867375336",
   "config": {
@@ -1180,10 +1180,10 @@
       "description_en": "Elegant adjustable ring with rhodium silver plating. Minimalist and sophisticated design that complements any look.",
       "personalized": false,
       "available": true,
-      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1781877751373_image_jpg.webp",
+      "imageUrl": "https://cacusabytaitus.com/ui_kits/store/images/1795719891337_4bfd1be0_b303_4765_8b83_3b0babd2f470_png.webp",
       "focalX": 48.69844029040783,
       "focalY": 60.48262667407272,
-      "zoom": 1,
+      "zoom": 1.15,
       "material": "Baño de Rodio",
       "id": 1781877838074,
       "sku": "AN002",
@@ -1197,7 +1197,12 @@
         1789835085201,
         1789834493333,
         1789835517841
-      ]
+      ],
+      "images": [
+        "https://cacusabytaitus.com/ui_kits/store/images/1795719899417_6b4dc256_0571_4c43_b0cb_f14a31827c76_png.webp",
+        "https://cacusabytaitus.com/ui_kits/store/images/1795719900937_7c7e6cce_c16c_4cee_add0_8e11472674f1_png.webp"
+      ],
+      "promo": null
     },
     {
       "name": "Anillo ajustable de circones e inicial",
