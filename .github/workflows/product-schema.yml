@@ -66,6 +66,13 @@ on:
 permissions:
   contents: write
 
+
+# Varias ediciones seguidas desde el admin disparan varias corridas: se ejecutan de a una
+# (las pendientes viejas se reemplazan por la más nueva) en vez de chocar al hacer push.
+concurrency:
+  group: product-schema
+  cancel-in-progress: false
+
 jobs:
   regenerate:
     runs-on: ubuntu-latest
@@ -100,6 +107,7 @@ jobs:
           git config user.name "cacusa-bot"
           git config user.email "actions@users.noreply.github.com"
           git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml llms.txt \
+                  ui_kits/store/app.js en/ui_kits/store/app.js \
                   ui_kits/store/producto en/ui_kits/store/producto \
                   ui_kits/store/categoria en/ui_kits/store/categoria
           if git diff --cached --quiet; then
@@ -120,9 +128,9 @@ jobs:
             fi
             echo "Push rechazado (main avanzó mientras corría este job) — reintentando con rebase ($i/5)..."
             git fetch origin main
-            if ! git rebase origin/main; then
+            if ! git rebase --autostash origin/main; then
               echo "Conflicto real al rebasar: otra corrida ya está regenerando desde datos más nuevos que los de esta — no hace falta este commit."
-              git rebase --abort
+              git rebase --abort || true
               exit 0
             fi
           done
