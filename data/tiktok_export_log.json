@@ -1,7 +1,7 @@
 {
   "1": {
-    "hash": "a8f707c27f8e5b92",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "96acd2c324a3cca8",
+    "exportedAt": "2026-11-26T18:15:38.274351+00:00"
   },
   "3": {
     "hash": "62e5884347135aca",
@@ -68,8 +68,8 @@
     "exportedAt": "2026-11-20T16:49:52.829805+00:00"
   },
   "1781877944864": {
-    "hash": "e287c400957287e9",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "bb252624f0b97722",
+    "exportedAt": "2026-11-26T18:15:38.274351+00:00"
   },
   "1781878011948": {
     "hash": "2280a733f6ec302b",
@@ -304,65 +304,13 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "_meta": {
-    "lastGeneratedAt": "2026-11-20T16:49:52.829805+00:00",
-    "lastCount": 56,
+    "lastGeneratedAt": "2026-11-26T18:15:38.274351+00:00",
+    "lastCount": 4,
     "lastProducts": [
-      "CACUSA-1781399974669: Cadena San Benito con Cruz",
-      "CACUSA-1781400451404: Pulsera tejida macramé con dije y perlas",
-      "CACUSA-1781460544331: Collar negro con ojo turco",
-      "CACUSA-1781473015877: Pulsera triple con dije de corazón",
-      "CACUSA-1781473438388: Cadena con dije de corazón y pelota",
-      "CACUSA-1781473526943: Cadena con ángel de la guarda circular",
-      "CACUSA-1781473627668: Cadena con dije de Luna y corazón turquesa",
-      "CACUSA-1781875334358: Collar de perla",
-      "CACUSA-1781877227517: Cadena clip con dije de árbol de vida",
-      "CACUSA-1781877358815: Cadena con dije de gato y panza de corazón con circones",
-      "CACUSA-1781877568374: Cadena de balines con dije de corazón con circones",
-      "CACUSA-1781877838074: Anillo ajustable color plateado",
-      "CACUSA-1781878104655: Anillo ajustable con microcircones en degradé",
-      "CACUSA-1781878207350: Anillo dorado ajustable de circones fucsia",
-      "CACUSA-1781878560407: Ear cuff ancho plateado",
-      "CACUSA-1781878646387: Entorchado dorado con piedra azul zafiro",
-      "CACUSA-1781879189744: Anillo chunky ajustable con circones verdes",
-      "CACUSA-1781879577380: Entorchado ajustable",
-      "CACUSA-1781879917484: Anillo talla 7 con piedra color esmeralda y dos microcircones en cada lado",
-      "CACUSA-1781880053907: Anillo ajustable con 3 circones",
-      "CACUSA-1781880340918: Anillo ajustable con trébol negro",
-      "CACUSA-1781880466753: Anillo dorado ajustable",
-      "CACUSA-1781881478183: Anillo ajustable con circones blancos",
-      "CACUSA-1781884615354: Cadena con dije de Cruz grande con piedras color esmeralda",
-      "CACUSA-1781884804624: Cadena delicada con dije de corazón nacarado",
-      "CACUSA-1781884881874: Cadena veneciana con un dije de Cruz de circones",
-      "CACUSA-1781884983133: San Benito con cruz",
-      "CACUSA-1781885024731: Corazón de perla con una silueta de corazón de circón",
-      "CACUSA-1781885110437: Cadena de dije de ópalo turquesa. En la parte frontal luce como cadena doble",
-      "CACUSA-1781885197196: Cadena de circón rosa claro",
-      "CACUSA-1781885271521: Dije de bailarina con inicial",
-      "CACUSA-1781885393238: Cadena con placa grabada a láser",
-      "CACUSA-1785466095890: Cadena de cruz con circones",
-      "CACUSA-1785469196142: Brazalete ojo turco",
-      "CACUSA-1785469598547: Brazalete ojo griego",
-      "CACUSA-1785470275920: Anillo vintage de aventurina",
-      "CACUSA-1785470725921: Anillo Pulpo Glossy",
-      "CACUSA-1786308585824: Pulsera de hilo rojo FE",
-      "CACUSA-1786315591380: Pulsera ojo turco azul + medalla + perla",
-      "CACUSA-1786328384393: Pulsera de ojo turco rojo",
-      "CACUSA-1786330341098: Aretes de corazón chinoiserie",
-      "CACUSA-1788107242835: Set aretes y cadena",
-      "CACUSA-1788107453046: Hand chain de capas",
-      "CACUSA-1788540460219: Hand chain de rombos",
-      "CACUSA-1788921701764: Anillo Conchas Doradas",
-      "CACUSA-1789830883898: Argollas pequeñas de 1 cm",
-      "CACUSA-1789831017689: Aretes de flor",
-      "CACUSA-1789831461536: Aretes de rombo de circón",
-      "CACUSA-1789832318279: Argollas",
-      "CACUSA-1789833979991: Aretes de circón verde",
-      "CACUSA-1789835085201: Aretes Rectángulo",
-      "CACUSA-1789835713834: Anillo triple circón",
-      "CACUSA-1789836348710: Pulseras rojas",
-      "CACUSA-1789854982063: Pulsera te amo en 100 idiomas",
-      "CACUSA-1789855320945: Pulsera roja personalizada",
-      "CACUSA-1789856160011: Argollas con circón"
+      "CACUSA-1: Anillo doble GG",
+      "CACUSA-1781877944864: Anillo ajustable de circones e inicial",
+      "CACUSA-1795643916937: Anillo con circón cuadrado",
+      "CACUSA-1795644249158: Anillo solitario con banda bicolor"
     ]
   },
   "1789830883898": {
@@ -492,5 +440,13 @@
   "1789856427179": {
     "hash": "08398505e6867c99",
     "exportedAt": "2026-09-21T14:57:49.149775+00:00"
+  },
+  "1795643916937": {
+    "hash": "3f06451cdfeef05a",
+    "exportedAt": "2026-11-26T18:15:38.274351+00:00"
+  },
+  "1795644249158": {
+    "hash": "f19eabe308e8e5c3",
+    "exportedAt": "2026-11-26T18:15:38.274351+00:00"
   }
 }
