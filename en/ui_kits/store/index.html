@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://admin.cacusabytaitus.com https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://admin.cacusabytaitus.com https://identitytoolkit.googleapis.com https://cacusa-pos-default-rtdb.firebaseio.com https://cacusa-admin.facturacioncacusa.workers.dev https://cacusa-square.facturacioncacusa.workers.dev https://api.country.is https://photon.komoot.io https://www.google-analytics.com https://region1.google-analytics.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <!-- Esta es la copia en inglés (/en/): fija el idioma leído por TODO el código de abajo
        (que originalmente lee localStorage.getItem('cacusa-lang')) a 'en', sin escribir en el
        localStorage real — así una visita a /en/ no cambia el idioma que ve un visitante que
@@ -103,9 +103,9 @@
     ]}
   ]}
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/bodoni-moda-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/fonts/fonts.css">
   <script>document.documentElement.className='lang-en';</script>
   <link rel="stylesheet" href="/ui_kits/store/styles.css?v=e020c3cb30">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
