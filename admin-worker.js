@@ -371,6 +371,12 @@ export default {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         return await handleLoversReconcileOrders(body, env, allowOrigin, ctx);
       }
+      // Reembolso de Square (wave 1): cacusa-square avisa cuando un pago con tarjeta se reembolsa;
+      // el pedido queda "reembolsado" (total) o con reembolsoCents (parcial). Mismo guard interno.
+      if (path.endsWith('/internal/order/refund')) {
+        if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
+        return await handleOrderRefundIngest(body, env, allowOrigin, ctx);
+      }
       if (path.endsWith('/internal/orders/refresh')) {
         if (!isInternalIngest(request, env)) return err('No permitido', 403, allowOrigin);
         if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
@@ -471,6 +477,8 @@ export default {
       if (path.endsWith('/cost/set'))           return await handleCostSet(body, env, allowOrigin, session);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
+      if (path.endsWith('/stock/adjust'))     return await handleStockAdjust(body, env, allowOrigin, session);
+      if (path.endsWith('/stock/history'))    return await handleStockHistory(body, env, allowOrigin);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -645,7 +653,9 @@ async function handleLoad(env, origin) {
     if (!ordersText) ordersText = JSON.stringify(await refreshOrdersCache(env));
   }
 
-  return ok({ products: products ? products.text : null, orders: ordersText }, origin);
+  // productsSha (wave 1): el panel lo devuelve al publicar (baseSha) para detectar que otra
+  // persona publicó entretanto — ver handleSave.
+  return ok({ products: products ? products.text : null, productsSha: products ? products.sha : null, orders: ordersText }, origin);
 }
 
 async function notifyNgrokSyncFailure(err, env) {
@@ -697,8 +707,26 @@ async function handleSave(body, env, origin, session, ctx) {
       if (stripped) { outContent = JSON.stringify(data, null, 2); console.warn('save: se quitaron', stripped, 'campos de costo del catálogo público'); }
     } catch (_) {}
   }
+  // Conflicto de publicación (wave 1): antes se leía el sha ACTUAL de GitHub y se pisaba — si
+  // Tita y Robin publicaban casi a la vez, la última borraba en silencio los cambios de la otra.
+  // Ahora el panel manda el sha sobre el que trabajó (baseSha): si ya no es el actual → 409 con el
+  // catálogo nuevo para que el panel vuelva a aplicar sus cambios encima. Además el PUT va con
+  // ESE sha, así que GitHub mismo rechaza (409/422) si alguien publica entre la lectura y el PUT.
+  // Un panel viejo que no manda baseSha sigue funcionando igual que antes.
+  const baseSha = typeof body.baseSha === 'string' && /^[0-9a-f]{40}$/i.test(body.baseSha) ? body.baseSha.toLowerCase() : null;
   const cur = await ghGetContent(path, env);
-  const res = await ghPut(path, b64encode(outContent), cur ? cur.sha : null, message || `[admin] ${session.user}`, env);
+  const conflict = (latest) => jsonResp({
+    error: 'Otra persona publicó cambios mientras editabas.', conflict: true,
+    sha: latest ? latest.sha : null, products: latest ? latest.text : null,
+  }, 409, origin);
+  if (baseSha && cur && cur.sha !== baseSha) return conflict(cur);
+  let res;
+  try {
+    res = await ghPut(path, b64encode(outContent), baseSha || (cur ? cur.sha : null), message || `[admin] ${session.user}`, env);
+  } catch (e) {
+    if (baseSha && /GitHub PUT (409|422)/.test(e.message)) return conflict(await ghGetContent(path, env).catch(() => null));
+    throw e;
+  }
 
   // Notificar al servidor local (ngrok) para sincronizar Excel + POS — fire-and-forget,
   // pero avisa por push si falla. Antes esto se tragaba cualquier error en silencio: si
@@ -817,6 +845,16 @@ function buildOrderCore(order, { strictPago, allowTarjeta }) {
       personalization: str(p.personalization, 300),
     })),
   };
+}
+
+// ── Estado del pago (wave 1) ─────────────────────────────────────────────────────
+// pagoEstado: 'pendiente' | 'recibido' | 'reembolsado', con pagoAt (ISO) y pagoBy (cuenta del
+// panel, 'square' o 'lovers'). Los pedidos viejos no lo tienen: el panel lo infiere (Tarjeta y
+// Lovers = recibido; el resto = pendiente solo si sigue "Nuevo", si no recibido).
+const PAGO_ESTADOS = new Set(['pendiente', 'recibido', 'reembolsado']);
+function setInitialPagoEstado(order, estado, by) {
+  order.pagoEstado = PAGO_ESTADOS.has(estado) ? estado : 'pendiente';
+  if (order.pagoEstado === 'recibido') { order.pagoAt = order.fecha || new Date().toISOString(); order.pagoBy = String(by || '').slice(0, 40); }
 }
 
 const NUMERO_RE = /^[A-Za-z0-9#-]{1,30}$/;
@@ -1211,6 +1249,9 @@ async function handleOrder(body, env, origin, ctx, request) {
   }
 
   const newOrder = buildOrderCore(order, { strictPago: true, allowTarjeta: trusted });
+  // Pago (wave 1): solo un pedido con tarjeta que ya confirmó el webhook de Square llega cobrado;
+  // Zelle/WhatsApp/transferencia nacen "pendiente" hasta que Tita/Robin marcan "Pago recibido".
+  setInitialPagoEstado(newOrder, trusted && newOrder.pago === 'Tarjeta' ? 'recibido' : 'pendiente', 'square');
 
   // Idempotencia real (A07-A19, 19 sep) endurecida el 19 sep (auditoría de integridad,
   // F01): antes esto devolvía el PEDIDO COMPLETO (email, dirección, teléfono) a quien
@@ -1369,6 +1410,8 @@ async function handleOrderManual(body, env, origin, session, ctx) {
 
   const newOrder = buildOrderCore(order, { strictPago: false });
   newOrder.createdBy = session.user;
+  // Pago (wave 1): un pedido manual nace "pendiente", salvo que el modal diga que ya se cobró.
+  setInitialPagoEstado(newOrder, order.pagoEstado === 'recibido' ? 'recibido' : 'pendiente', session.user);
 
   assignOrderId(newOrder);
   if (!newOrder.numero && order.numero) newOrder.numero = String(newOrder.id);
@@ -1413,6 +1456,17 @@ function shouldSendManualShipEmail(order) {
   return String(order.shipEmailSentFor || '').replace(/\s+/g, '') !== tracking;
 }
 
+// Pedido tal como lo ve el panel (sin el PDF de la guía, igual que orders_cache).
+function orderForPanel(o) {
+  if (!o || !o.labelBase64) return o;
+  const { labelBase64, ...rest } = o;
+  return { ...rest, labelStored: true };
+}
+// 409 "este pedido cambió en otro teléfono" con el pedido actual, para que el panel lo refresque.
+function orderConflict(order, origin) {
+  return jsonResp({ error: 'Este pedido cambió en otro teléfono.', conflict: true, order: orderForPanel(order) }, 409, origin);
+}
+
 async function handleOrderUpdate(body, env, origin, session, ctx) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const id = body.id;
@@ -1420,14 +1474,25 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   const order = await orderGet(env, id);
   if (!order) return err('Pedido no encontrado', 404, origin);
 
-  if (body.delete === true) {
-    await env.CACUSA_KV.delete(orderKey(id));
-    if (order.labelStored) await env.CACUSA_KV.delete(labelKey(id)).catch(() => {});
-    if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
-    return ok({ ok: true, deleted: true }, origin);
+  // Control de versión (wave 1): el panel manda el updatedAt del pedido que tenía en pantalla
+  // (null si el pedido nunca se editó). Si ya no coincide, otra persona lo cambió mientras tanto
+  // → 409 con el pedido actual, en vez de pisarlo con una decisión tomada sobre datos viejos
+  // (ej. Tita lo marca "Enviado" y el panel atrasado de Robin lo devolvía a "En proceso", o un
+  // "Entregado" que perdía su entregadoAt y con eso el correo de reseña). Un panel viejo que no
+  // manda baseUpdatedAt sigue funcionando como antes (sin chequeo).
+  if (Object.prototype.hasOwnProperty.call(body, 'baseUpdatedAt')) {
+    const base = body.baseUpdatedAt == null || body.baseUpdatedAt === '' ? null : String(body.baseUpdatedAt);
+    if ((order.updatedAt || null) !== base) return orderConflict(order, origin);
   }
 
+  // Borrar = archivar (wave 1). Antes /order/update {delete:true} borraba la llave para siempre y
+  // sin devolver el stock; ahora queda archivado (oculto en el panel, restaurable) y devuelve lo
+  // descontado igual que una cancelación. Un panel viejo que todavía manda delete:true archiva.
+  if (body.delete === true || body.archive === true) return await archiveOrder(order, env, origin, session, ctx);
+  if (body.restore === true) return await restoreOrder(order, env, origin, session, ctx);
+
   const patch = body.patch && typeof body.patch === 'object' ? body.patch : {};
+  if ('pagoEstado' in patch && !PAGO_ESTADOS.has(patch.pagoEstado)) return err('Estado de pago inválido', 400, origin);
   // 18 nov: piezas cargadas desde el panel ("Agregar pieza con foto" o búsqueda a mano).
   // Se resuelve TODO antes de tocar el pedido: si algo falla, no se escribe nada.
   const piecesRes = await applyOrderPiecePatch(order, patch, session);
@@ -1444,6 +1509,11 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
       }
       // 22 oct: idioma de la clienta (para WhatsApp/correos) — solo 'es' o 'en', elegido en el panel.
       if ('idioma' in v && (v.idioma === 'es' || v.idioma === 'en')) order.cliente.idioma = v.idioma;
+      continue;
+    }
+    if (k === 'pagoEstado') {
+      // Pago recibido / pendiente / reembolsado: quién y cuándo lo pone el servidor, nunca el cliente.
+      if (order.pagoEstado !== v) { order.pagoEstado = v; order.pagoAt = new Date().toISOString(); order.pagoBy = session.user; }
       continue;
     }
     if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
@@ -1505,11 +1575,88 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   if (stockPlanUpd && Object.keys(stockPlanUpd.oversold).length) order.stockOversold = { ...(order.stockOversold || {}), ...stockPlanUpd.oversold };
 
   await env.CACUSA_KV.put(orderKey(id), JSON.stringify(order));
-  if (stockPlanUpd) await stockCommit(env, stockPlanUpd, stockNames).catch((e) => console.error('stock commit (update):', e.message));
+  if (stockPlanUpd) {
+    const reason = !wasCancelled && order.estado === 'Cancelado' ? 'Pedido cancelado' : 'Pieza del pedido';
+    await stockCommit(env, stockPlanUpd, stockNames, { by: session.user, reason, ref: orderStockRef(order), opId: 'ordupd:' + id + ':' + order.updatedAt })
+      .catch((e) => console.error('stock commit (update):', e.message));
+  }
   if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
   if (sendShipEmail && ctx) ctx.waitUntil(sendShippingConfirmationEmail(order, env).catch(e => console.error('email de envío (tracking manual) falló:', e.message)));
   if (ctx && uspsTrackingNew && uspsNotifyDue(order)) ctx.waitUntil(registerUspsNotifications(env, order.id, { auto: true }).catch(e => console.error('avisos USPS falló:', e.message)));
-  return ok({ ok: true, order }, origin);
+  return ok({ ok: true, order: orderForPanel(order) }, origin);
+}
+
+function orderStockRef(o) { return 'Pedido ' + (o && (o.numero ? '#' + o.numero : o.id)); }
+
+// Archivar (wave 1): oculta el pedido sin borrarlo (sigue en order:<id>, en orders_cache con
+// archivado:true y en el respaldo diario). Devuelve el stock descontado una sola vez, igual que
+// cancelar — salvo que ya estuviera Cancelado (ese stock ya volvió). Restaurar lo vuelve a descontar.
+async function archiveOrder(order, env, origin, session, ctx) {
+  if (order.archivado) return ok({ ok: true, archived: true, deleted: true, order: orderForPanel(order) }, origin);
+  const now = new Date().toISOString();
+  const deltas = {}, names = {};
+  if (order.estado !== 'Cancelado' && order.stockApplied && Object.keys(order.stockApplied).length) {
+    for (const [sid, q] of Object.entries(order.stockApplied)) { const n = Number(q) || 0; if (n > 0) deltas[sid] = (deltas[sid] || 0) + n; }
+    for (const p of order.productos || []) if (p && p.id != null && !names[String(p.id)]) names[String(p.id)] = p.name;
+    order.archiveStockReturned = { ...order.stockApplied };
+    order.stockApplied = {};
+  }
+  order.archivado = true; order.archivedAt = now; order.archivedBy = session.user;
+  order.updatedAt = now; order.updatedBy = session.user;
+  const plan = Object.keys(deltas).length ? await stockPlan(env, deltas) : null;
+  await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
+  if (plan) await stockCommit(env, plan, names, { by: session.user, reason: 'Pedido archivado', ref: orderStockRef(order), opId: 'ordarch:' + order.id + ':' + now })
+    .catch((e) => console.error('stock commit (archivar):', e.message));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  return ok({ ok: true, archived: true, deleted: true, order: orderForPanel(order) }, origin);
+}
+async function restoreOrder(order, env, origin, session, ctx) {
+  if (!order.archivado) return ok({ ok: true, restored: true, order: orderForPanel(order) }, origin);
+  const now = new Date().toISOString();
+  const deltas = {}, names = {};
+  const back = order.archiveStockReturned || {};
+  for (const [sid, q] of Object.entries(back)) { const n = Number(q) || 0; if (n > 0) deltas[sid] = (deltas[sid] || 0) - n; }
+  for (const p of order.productos || []) if (p && p.id != null && !names[String(p.id)]) names[String(p.id)] = p.name;
+  const plan = Object.keys(deltas).length ? await stockPlan(env, deltas) : null;
+  if (plan) {
+    order.stockApplied = { ...(order.stockApplied || {}), ...back };
+    if (Object.keys(plan.oversold).length) order.stockOversold = { ...(order.stockOversold || {}), ...plan.oversold };
+  }
+  delete order.archivado; delete order.archivedAt; delete order.archivedBy; delete order.archiveStockReturned;
+  order.restoredAt = now; order.restoredBy = session.user;
+  order.updatedAt = now; order.updatedBy = session.user;
+  await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
+  if (plan) await stockCommit(env, plan, names, { by: session.user, reason: 'Pedido restaurado', ref: orderStockRef(order), opId: 'ordrest:' + order.id + ':' + now })
+    .catch((e) => console.error('stock commit (restaurar):', e.message));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  return ok({ ok: true, restored: true, order: orderForPanel(order) }, origin);
+}
+
+// POST /internal/order/refund {id, refundedCents, paidCents} — lo llama cacusa-square cuando
+// Square avisa (payment.updated) que un pago de la tienda tiene reembolsos. Reembolso total →
+// pagoEstado 'reembolsado'; parcial → queda 'recibido' con reembolsoCents. Idempotente.
+async function handleOrderRefundIngest(body, env, origin, ctx) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const id = body.id;
+  if (id == null || !/^\d{1,20}$/.test(String(id))) return err('Falta id', 400, origin);
+  const refunded = Math.round(Number(body.refundedCents));
+  const paid = Math.round(Number(body.paidCents));
+  if (!Number.isFinite(refunded) || refunded <= 0 || !Number.isFinite(paid) || paid <= 0) return err('Montos inválidos', 400, origin);
+  const order = await orderGet(env, id);
+  if (!order) return err('Pedido no encontrado', 404, origin);
+  const full = refunded >= paid;
+  if ((order.reembolsoCents || 0) === refunded && (!full || order.pagoEstado === 'reembolsado')) return ok({ ok: true, unchanged: true }, origin);
+  const now = new Date().toISOString();
+  order.reembolsoCents = refunded;
+  order.reembolsoAt = now;
+  if (full) { order.pagoEstado = 'reembolsado'; order.pagoAt = now; order.pagoBy = 'square'; }
+  order.updatedAt = now; order.updatedBy = 'square';
+  await env.CACUSA_KV.put(orderKey(order.id), JSON.stringify(order));
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  const p = adminPush(env, 'CACUSA · Reembolso en Square',
+    `Square reembolsó $${(refunded / 100).toFixed(2)}${full ? ' (total)' : ' (parcial)'} del pedido ${sanitizePushText(order.numero || order.id)}`, 'cacusa-order', 'normal');
+  if (ctx) ctx.waitUntil(p); else await p;
+  return ok({ ok: true, full }, origin);
 }
 
 // ── Piezas cargadas a mano en un pedido (18 nov) ─────────────────────────────────────
@@ -2253,8 +2400,7 @@ async function handleIdentifyRefClear(body, env, origin) {
 // Cada pedido anota lo que descontó en stockApplied {id: cantidad}; cancelarlo lo devuelve
 // UNA vez (pasa a stockRestored). Volver a activar un pedido cancelado NO vuelve a
 // descontar (habría que ajustar el stock a mano en el panel).
-// Lectura-modificación-escritura por llave, sin lock (KV no tiene CAS): 2 ventas casi
-// simultáneas de la misma pieza pueden leer el mismo valor — aceptable al volumen real.
+// (Wave 1: ya no es leer→escribir sin lock — ver stockApply() y la ruta /stock de la DO.)
 // stock_soldout = lista derivada de ids agotados (la lee /pub/stock con UN solo get; nunca
 // se hace list() en una ruta pública: el plan gratis tiene 1.000 list/día). Se reescribe
 // solo cuando cambia la lista, y /stock/list (panel) la repara si quedó desfasada.
@@ -2267,25 +2413,98 @@ function stockParse(raw) {
   const n = parseInt(raw, 10);
   return Number.isFinite(n) ? Math.max(0, n) : STOCK_DEFAULT;
 }
+// Wave 1 — movimientos de stock atómicos + historial. Antes /stock/set escribía un valor absoluto
+// (el que el panel tenía en pantalla) y una venta que descontaba al mismo tiempo se perdía; y las
+// ventas/cancelaciones hacían leer→calcular→escribir sobre KV sin ningún lock. Ahora TODO cambio de
+// stock (panel, ventas, cancelaciones, piezas de Lovers, archivar/restaurar) pasa por UNA instancia
+// de la DO GiftCardLedger ("stock:ledger", ruta /stock): Cloudflare serializa sus requests y además
+// una cola en memoria encadena cada operación completa (incluido el espejo en KV), así que dos
+// movimientos nunca se pisan. La DO guarda el valor autoritativo (s:<id>) y el historial compacto
+// (log:<id>, últimos STOCK_LOG_MAX movimientos) en su storage SQLite — 0 escrituras extra de KV.
+// stock:<id> en KV sigue siendo el espejo que leen /pub/stock (vía stock_soldout), el respaldo
+// diario y los Workers viejos. Sin el binding de la DO, cae al camino viejo (no atómico, sin log).
+// OJO al restaurar stock:* desde un respaldo: la DO ya tiene su propio valor para cada pieza que
+// tocó; después de restaurar KV, fijar cada cantidad desde el panel (pasa por la DO).
+const STOCK_LEDGER_NAME = 'stock:ledger';
+const STOCK_LOG_MAX = 40;
+const STOCK_ADJUST_MAX_ITEMS = 50;
+function stockLedgerStub(env) {
+  if (!env || !env.GIFT_CARD_LEDGER) return null;
+  return env.GIFT_CARD_LEDGER.get(env.GIFT_CARD_LEDGER.idFromName(STOCK_LEDGER_NAME));
+}
+async function stockLedgerCall(env, payload) {
+  const stub = stockLedgerStub(env);
+  if (!stub) return null;
+  const r = await stub.fetch('https://gc/stock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.ok === false) throw new Error(d.error || ('stock ledger ' + r.status));
+  return d;
+}
+function stockReasonClean(v) {
+  return String(v == null ? '' : v).replace(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+}
+// Lectura del stock efectivo (autoridad = DO; lo que la DO nunca tocó sale del espejo en KV).
 async function stockGetMany(env, ids) {
   const uniq = [...new Set(ids.map(String))];
-  const raws = await kvGetMany(env, uniq.map(stockKey));
   const out = new Map();
+  if (!uniq.length) return out;
+  try {
+    const d = await stockLedgerCall(env, { op: 'get', ids: uniq });
+    if (d && d.stock) { for (const id of uniq) out.set(id, Number.isFinite(d.stock[id]) ? d.stock[id] : STOCK_DEFAULT); return out; }
+  } catch (e) { console.error('stock get (DO):', e.message); }
+  const raws = await kvGetMany(env, uniq.map(stockKey));
   for (const id of uniq) out.set(id, stockParse(raws.get(stockKey(id))));
   return out;
 }
-// Calcula (sin escribir) el resultado de aplicar deltas {id: ±n}. Los decrementos que
-// pasan de 0 se recortan a 0 y se anotan como sobreventa (oversold).
+// Aplica movimientos [{id, delta} | {id, set}] de forma atómica. Devuelve
+// {results:[{id, before, after, delta, oversold}], oversold:{id: n}, logged}.
+// opId (opcional) hace la operación idempotente: un reintento con el mismo opId no la repite.
+async function stockApply(env, items, { by = '', reason = '', ref = '', opId = '' } = {}) {
+  const clean = items.map((it) => ({
+    id: String(it.id),
+    ...(it.set != null ? { set: Math.min(STOCK_MAX, Math.max(0, Math.round(it.set))) } : { delta: Math.round(Number(it.delta) || 0) }),
+    reason: stockReasonClean(it.reason || reason),
+  })).filter((it) => it.set != null || it.delta !== 0);
+  if (!clean.length) return { results: [], oversold: {}, logged: false };
+  try {
+    const d = await stockLedgerCall(env, { op: 'adjust', items: clean, by: String(by || '').slice(0, 40), ref: String(ref || '').slice(0, 60), opId: String(opId || '').slice(0, 120) });
+    if (d) return { results: d.results || [], oversold: d.oversold || {}, logged: true, replay: !!d.replay };
+  } catch (e) {
+    // Si la DO existe pero falló, no se cae a KV a ciegas: podría duplicar un movimiento que la DO
+    // sí aplicó antes de fallar. Se propaga el error (el caller avisa / el panel reintenta con opId).
+    if (stockLedgerStub(env)) throw e;
+  }
+  // Camino viejo (sin binding de DO): leer→calcular→escribir en KV, sin lock ni historial.
+  const ids = [...new Set(clean.map((it) => it.id))];
+  const raws = await kvGetMany(env, ids.map(stockKey));
+  const cur = new Map(ids.map((id) => [id, stockParse(raws.get(stockKey(id)))]));
+  const results = [], oversold = {};
+  for (const it of clean) {
+    const before = cur.get(it.id);
+    const want = it.set != null ? it.set : before + it.delta;
+    if (want < 0) oversold[it.id] = (oversold[it.id] || 0) - want;
+    const after = Math.min(STOCK_MAX, Math.max(0, want));
+    cur.set(it.id, after);
+    results.push({ id: it.id, before, after, delta: after - before, oversold: want < 0 ? -want : 0 });
+  }
+  const finals = Object.fromEntries(cur);
+  for (const [id, q] of Object.entries(finals)) await env.CACUSA_KV.put(stockKey(id), String(q));
+  await stockSoldoutSync(env, finals).catch((e) => console.error('stock_soldout:', e.message));
+  return { results, oversold, logged: false };
+}
+// Calcula (sin escribir) el resultado de aplicar deltas {id: ±n} — solo para anotar en el pedido
+// stockApplied/stockOversold ANTES de guardarlo; el movimiento real lo hace stockCommit() después.
 async function stockPlan(env, deltas) {
   const ids = Object.keys(deltas).filter((id) => Number.isFinite(deltas[id]) && deltas[id] !== 0);
   const before = ids.length ? await stockGetMany(env, ids) : new Map();
-  const next = {}, oversold = {};
+  const next = {}, oversold = {}, clean = {};
   for (const id of ids) {
     const cur = before.get(id), want = cur + deltas[id];
     if (want < 0) oversold[id] = -want;
     next[id] = Math.min(STOCK_MAX, Math.max(0, want));
+    clean[id] = deltas[id];
   }
-  return { before, next, oversold };
+  return { before, next, oversold, deltas: clean };
 }
 async function stockSoldoutSync(env, changes) {
   // changes: {id: nuevoStock}. Solo escribe si cambia la pertenencia a la lista.
@@ -2303,22 +2522,28 @@ async function stockSoldoutSync(env, changes) {
   try { await write(); }
   catch (e) { await new Promise((r) => setTimeout(r, 1100)); await write(); } // 1 escritura/s por llave
 }
-async function stockCommit(env, plan, names = {}) {
-  for (const [id, qty] of Object.entries(plan.next)) await env.CACUSA_KV.put(stockKey(id), String(qty));
-  if (Object.keys(plan.next).length) await stockSoldoutSync(env, plan.next).catch((e) => console.error('stock_soldout:', e.message));
-  const over = Object.keys(plan.oversold);
-  if (over.length) {
-    const label = over.map((id) => sanitizePushText(names[id] || ('id ' + id))).join(', ').slice(0, 120);
-    console.warn('stock: vendido sin stock', over.join(','));
-    await adminPush(env, 'CACUSA · Vendido sin stock', 'Vendido sin stock: ' + label, 'cacusa-stock', 'high');
-    if (env.NTFY_TOPIC) {
-      try {
-        await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: 'POST',
-          headers: { 'Title': 'CACUSA · Vendido sin stock', 'Priority': 'high', 'Tags': 'warning', 'Click': ADMIN_URL, 'Content-Type': 'text/plain; charset=utf-8' },
-          body: 'Vendido sin stock: ' + label });
-      } catch (e) { console.error('ntfy stock:', e.message); }
-    }
+async function stockOversoldAlert(env, oversold, names = {}) {
+  const over = Object.keys(oversold || {});
+  if (!over.length) return;
+  const label = over.map((id) => sanitizePushText(names[id] || ('id ' + id))).join(', ').slice(0, 120);
+  console.warn('stock: vendido sin stock', over.join(','));
+  await adminPush(env, 'CACUSA · Vendido sin stock', 'Vendido sin stock: ' + label, 'cacusa-stock', 'high');
+  if (env.NTFY_TOPIC) {
+    try {
+      await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, { method: 'POST',
+        headers: { 'Title': 'CACUSA · Vendido sin stock', 'Priority': 'high', 'Tags': 'warning', 'Click': ADMIN_URL, 'Content-Type': 'text/plain; charset=utf-8' },
+        body: 'Vendido sin stock: ' + label });
+    } catch (e) { console.error('ntfy stock:', e.message); }
   }
+}
+// Confirma un plan como MOVIMIENTOS (deltas), no como valores absolutos: así una venta, una
+// cancelación y un ajuste del panel que llegan casi juntos se suman en vez de pisarse.
+async function stockCommit(env, plan, names = {}, meta = {}) {
+  const deltas = plan.deltas || Object.fromEntries(Object.entries(plan.next).map(([id, q]) => [id, q - (plan.before.get(id) || 0)]));
+  const items = Object.entries(deltas).map(([id, delta]) => ({ id, delta }));
+  const res = await stockApply(env, items, { reason: meta.reason || 'Pedido', by: meta.by || '', ref: meta.ref || '', opId: meta.opId || '' });
+  if (!res.replay) await stockOversoldAlert(env, res.oversold, names);
+  return res;
 }
 // Plan para un pedido nuevo: cuenta solo líneas cuyo id es un producto del catálogo
 // (los combos y las líneas a mano sin id no tienen stock propio).
@@ -2362,7 +2587,8 @@ async function stockFinishNewOrder(env, order, plan) {
     await adminPush(env, 'CACUSA · Stock sin descontar', `No se pudo descontar el stock del pedido ${sanitizePushText(order.numero || order.id)} (catálogo no disponible). Ajústalo a mano.`, 'cacusa-stock', 'normal');
     return;
   }
-  if (plan) await stockCommit(env, plan, plan.names).catch((e) => console.error('stock commit:', e.message));
+  if (plan) await stockCommit(env, plan, plan.names, { reason: 'Venta', by: order.createdBy || 'tienda', ref: orderStockRef(order), opId: 'ordnew:' + order.id })
+    .catch((e) => console.error('stock commit:', e.message));
 }
 
 // GET /pub/stock — para la tienda. Solo los ids agotados, nunca cantidades.
@@ -2387,7 +2613,8 @@ async function handleStockList(env, origin) {
   await stockSoldoutSync(env, stock).catch(() => {});
   return ok({ ok: true, stock, default: STOCK_DEFAULT }, origin);
 }
-// POST /stock/set (sesión) { id, qty } — entero 0..9999, id del catálogo.
+// POST /stock/set (sesión) { id, qty } — entero 0..9999, id del catálogo. Fija un valor absoluto
+// (lo siguen usando "Sí, es el mismo", el ingreso por lote y los paneles viejos); queda en el historial.
 async function handleStockSet(body, env, origin, session) {
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
   const id = body.id != null ? String(body.id) : '';
@@ -2397,10 +2624,48 @@ async function handleStockSet(body, env, origin, session) {
   const catalog = await fetchCatalogForOrderValidation();
   if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
   if (!catalog.products.some((p) => p && String(p.id) === id)) return err('Producto no encontrado en el catálogo publicado (si es nuevo, publícalo primero)', 400, origin);
-  await env.CACUSA_KV.put(stockKey(id), String(qty));
-  await stockSoldoutSync(env, { [id]: qty }).catch((e) => console.error('stock_soldout:', e.message));
+  const res = await stockApply(env, [{ id, set: qty }], { by: session.user, reason: stockReasonClean(body.reason) || 'Ajuste (cantidad fija)' });
   console.log('stock/set', id, qty, 'por', session.user);
-  return ok({ ok: true, id, qty }, origin);
+  return ok({ ok: true, id, qty: res.results[0] ? res.results[0].after : qty }, origin);
+}
+// POST /stock/adjust (sesión) { items:[{id, delta, reason}], opId? } — movimientos relativos
+// (+3 llegaron, −1 rota…) aplicados juntos y de forma atómica. opId (del panel) hace que un
+// reintento por un corte de red no sume dos veces. Devuelve el stock resultante de cada pieza.
+async function handleStockAdjust(body, env, origin, session) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const items = Array.isArray(body.items) ? body.items : null;
+  if (!items || !items.length) return err('Faltan los movimientos (items)', 400, origin);
+  if (items.length > STOCK_ADJUST_MAX_ITEMS) return err(`Máximo ${STOCK_ADJUST_MAX_ITEMS} movimientos por vez`, 400, origin);
+  const clean = [];
+  for (const it of items) {
+    const id = it && it.id != null ? String(it.id) : '';
+    if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+    const delta = it.delta;
+    if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > STOCK_MAX) return err(`El movimiento debe ser un entero distinto de 0 (máx. ±${STOCK_MAX})`, 400, origin);
+    clean.push({ id, delta, reason: stockReasonClean(it.reason) || (delta > 0 ? 'Ajuste (+)' : 'Ajuste (−)') });
+  }
+  const opId = typeof body.opId === 'string' && /^[A-Za-z0-9_:.-]{8,100}$/.test(body.opId) ? 'panel:' + body.opId : '';
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo leer el catálogo. Intenta de nuevo en un momento.', 502, origin);
+  const known = new Set(catalog.products.filter((p) => p && p.id != null).map((p) => String(p.id)));
+  const missing = clean.find((it) => !known.has(it.id));
+  if (missing) return err('Producto no encontrado en el catálogo publicado (si es nuevo, publícalo primero)', 400, origin);
+  const res = await stockApply(env, clean, { by: session.user, opId });
+  const stock = {};
+  for (const r of res.results) stock[r.id] = r.after;
+  return ok({ ok: true, stock, results: res.results, logged: res.logged, replay: !!res.replay }, origin);
+}
+// POST /stock/history (sesión) { id, limit? } — últimos movimientos de UNA pieza (más nuevo primero):
+// [{t, by, d, r, q, ref}] = cuándo, quién, cuánto, motivo, stock resultante y pedido (si aplica).
+async function handleStockHistory(body, env, origin) {
+  const id = body.id != null ? String(body.id) : '';
+  if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+  const limit = Math.min(STOCK_LOG_MAX, Math.max(1, Number.isInteger(body.limit) ? body.limit : STOCK_LOG_MAX));
+  let d = null;
+  try { d = await stockLedgerCall(env, { op: 'history', id, limit }); }
+  catch (e) { console.error('stock history:', e.message); return err('No se pudo leer el historial', 502, origin); }
+  if (!d) return ok({ ok: true, id, items: [], unavailable: true }, origin);
+  return ok({ ok: true, id, items: d.items || [] }, origin);
 }
 
 // ── Square (proxy de solo-lectura para el POS — evita el bloqueo CORS de Square) ──
@@ -2554,6 +2819,103 @@ export class GiftCardLedger {
     if (this.env.CACUSA_KV) await this.env.CACUSA_KV.put(gcKey(code), JSON.stringify(card));
   }
 
+  // ── Stock (wave 1) — solo en la instancia "stock:ledger" ─────────────────────────
+  // s:<id> = stock autoritativo (entero); log:<id> = últimos movimientos; ops = opIds ya aplicados.
+  async _stockGetMany(ids) {
+    const out = {};
+    const keys = ids.map((id) => 's:' + id);
+    for (let i = 0; i < keys.length; i += 128) {
+      const m = await this.state.storage.get(keys.slice(i, i + 128));
+      for (const [k, v] of m) if (Number.isFinite(v)) out[k.slice(2)] = v;
+    }
+    const missing = ids.filter((id) => !(id in out));
+    if (missing.length && this.env.CACUSA_KV) {
+      // Primera vez que la DO ve estas piezas: migración perezosa desde el espejo en KV.
+      for (let i = 0; i < missing.length; i += 100) {
+        const part = missing.slice(i, i + 100);
+        let res = null;
+        if (part.length > 1) { try { res = await this.env.CACUSA_KV.get(part.map(stockKey)); } catch (_) { res = null; } }
+        for (const id of part) {
+          const raw = res instanceof Map ? res.get(stockKey(id)) : await this.env.CACUSA_KV.get(stockKey(id));
+          out[id] = stockParse(raw == null ? null : raw);
+        }
+      }
+    }
+    for (const id of ids) if (!(id in out)) out[id] = STOCK_DEFAULT;
+    return out;
+  }
+
+  async _stockOp(body) {
+    const op = body.op;
+    if (op === 'get') {
+      const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map(String))].slice(0, 2000);
+      return { ok: true, stock: await this._stockGetMany(ids) };
+    }
+    if (op === 'history') {
+      const log = (await this.state.storage.get('log:' + String(body.id))) || [];
+      const limit = Math.max(1, Math.min(STOCK_LOG_MAX, Number(body.limit) || STOCK_LOG_MAX));
+      return { ok: true, items: log.slice(-limit).reverse() };
+    }
+    if (op !== 'adjust') return { ok: false, error: 'op desconocida' };
+    const items = (Array.isArray(body.items) ? body.items : []).slice(0, 200);
+    const now = Date.now();
+    const opId = String(body.opId || '');
+    let ops = null;
+    if (opId) {
+      ops = (await this.state.storage.get('ops')) || {};
+      if (ops[opId]) return { ok: true, replay: true, results: ops[opId].results || [], oversold: {} };
+    }
+    const ids = [...new Set(items.map((it) => String(it.id)))];
+    const cur = await this._stockGetMany(ids);
+    const results = [], oversold = {};
+    for (const it of items) {
+      const id = String(it.id);
+      const before = cur[id];
+      const want = it.set != null ? Math.round(Number(it.set)) : before + Math.round(Number(it.delta) || 0);
+      if (!Number.isFinite(want)) continue;
+      if (want < 0) oversold[id] = (oversold[id] || 0) - want;
+      const after = Math.min(STOCK_MAX, Math.max(0, want));
+      cur[id] = after;
+      results.push({ id, before, after, delta: after - before, oversold: want < 0 ? -want : 0, reason: String(it.reason || '').slice(0, 60) });
+    }
+    // Storage de la DO (autoridad + historial) en una sola transacción.
+    const by = String(body.by || '').slice(0, 40), ref = String(body.ref || '').slice(0, 60);
+    const logs = await this.state.storage.get(ids.map((id) => 'log:' + id));
+    const writes = {};
+    for (const id of ids) writes['s:' + id] = cur[id];
+    for (const r of results) {
+      const k = 'log:' + r.id;
+      const arr = writes[k] || (logs.get(k) || []).slice();
+      arr.push({ t: new Date(now).toISOString(), by, d: r.delta, r: r.reason, q: r.after, ...(ref ? { ref } : {}), ...(r.oversold ? { over: r.oversold } : {}) });
+      writes[k] = arr.slice(-STOCK_LOG_MAX);
+    }
+    if (ops) {
+      for (const [k, v] of Object.entries(ops)) if (now - (v.t || 0) > 3 * 86400000) delete ops[k];
+      const keys = Object.keys(ops);
+      if (keys.length > 400) for (const k of keys.slice(0, keys.length - 400)) delete ops[k];
+      ops[opId] = { t: now, results: results.map(({ reason, ...x }) => x) };
+      writes.ops = ops;
+    }
+    const entries = Object.entries(writes);
+    for (let i = 0; i < entries.length; i += 128) await this.state.storage.put(Object.fromEntries(entries.slice(i, i + 128)));
+    // Espejo en KV (lo leen /pub/stock vía stock_soldout, el respaldo y Workers viejos). KV acepta
+    // 1 escritura/s por llave: un reintento pasado ese segundo. Si igual falla, la DO ya tiene el
+    // valor real y el próximo movimiento o /stock/list lo vuelve a sincronizar.
+    if (this.env.CACUSA_KV) {
+      const finals = {};
+      for (const id of ids) finals[id] = cur[id];
+      for (const id of ids) {
+        try { await this.env.CACUSA_KV.put(stockKey(id), String(cur[id])); }
+        catch (_) {
+          await new Promise((r) => setTimeout(r, 1100));
+          try { await this.env.CACUSA_KV.put(stockKey(id), String(cur[id])); } catch (e) { console.error('stock espejo KV', id, e.message); }
+        }
+      }
+      await stockSoldoutSync(this.env, finals).catch((e) => console.error('stock_soldout:', e.message));
+    }
+    return { ok: true, results: results.map(({ reason, ...x }) => x), oversold };
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     let body = {};
@@ -2588,6 +2950,16 @@ export class GiftCardLedger {
         this.rl = rl;
       }
       return Response.json({ allowed });
+    }
+
+    // Stock (wave 1): SOLO la instancia "stock:ledger" (ver stockApply()). Cada operación corre
+    // entera dentro de una cola en memoria (incluido el espejo en KV), así que nunca se intercalan.
+    if (url.pathname === '/stock') {
+      const run = () => this._stockOp(body);
+      const p = (this._stockChain || Promise.resolve()).then(run, run);
+      this._stockChain = p.catch(() => {});
+      try { return Response.json(await p); }
+      catch (e) { console.error('stock DO:', e && e.message); return Response.json({ ok: false, error: 'stock: ' + (e && e.message) }, { status: 500 }); }
     }
 
     if (url.pathname === '/reserve') {
@@ -5637,7 +6009,7 @@ async function handleUspsSchedulePickup(body, env, origin, ctx) {
 
   const orders = await listAllOrders(env);
   const isToday = v => { if (!v) return false; const d = new Date(v); return !Number.isNaN(d.getTime()) && easternDate(d) === today; };
-  const todays = orders.filter(o => o && o.estado !== 'Cancelado' && orderHasUspsTracking(o) && (isToday(o.uspsTrackingAt) || isToday(o.labelGeneratedAt)));
+  const todays = orders.filter(o => o && o.estado !== 'Cancelado' && !o.archivado && orderHasUspsTracking(o) && (isToday(o.uspsTrackingAt) || isToday(o.labelGeneratedAt)));
   const detected = todays.length;
   const clientas = todays.map(o => [o.cliente && o.cliente.nombre, o.cliente && o.cliente.apellido].filter(Boolean).join(' ').trim() || `#${o.id}`).slice(0, 50);
   if (body.preview === true) {
@@ -5711,7 +6083,7 @@ function phone10Of(v) {
 function cnsCandidates(orders) {
   const out = [];
   for (const o of orders) {
-    if (!o || ['Cancelado', 'Enviado', 'Entregado'].includes(o.estado)) continue;
+    if (!o || o.archivado || ['Cancelado', 'Enviado', 'Entregado'].includes(o.estado)) continue;
     if (String(o.tracking || '').trim() || o.labelGeneratedAt || o.labelStored || o.labelBase64) continue;
     const cliente = o.cliente || {};
     const { pais, ciudad } = orderCountryParts(cliente);
@@ -6004,6 +6376,8 @@ async function handleLoversShipmentIngest(body, env, origin, ctx) {
       : `Envío ${body.plan || 'Cacusa Lovers'} — pendiente de elegir piezas del ciclo`,
   }, { strictPago: false });
   if (lote) newOrder.lote = lote;
+  // La caja de Lovers no tiene nada que cobrar (la suscripción se cobra con factura de Square).
+  setInitialPagoEstado(newOrder, 'recibido', 'lovers');
 
   assignOrderId(newOrder);
   try {
@@ -6747,6 +7121,7 @@ function reviewRequestEligible(o, now) {
   if (!o || typeof o !== 'object') return false;
   if (o.reviewReqAt) return false;                      // una sola vez por pedido
   if (o.estado === 'Cancelado') return false;
+  if (o.archivado) return false;                        // archivado (wave 1): no se le pide nada
   if (!o.entregadoAt) return false;                     // sin señal de entrega, nada
   const email = String((o.cliente && o.cliente.email) || '').trim();
   if (!isValidEmail(email)) return false;
@@ -7313,4 +7688,8 @@ function ok(obj, origin) {
 }
 function err(msg, status, origin) {
   return new Response(JSON.stringify({ error: msg }), { status, headers: { 'Content-Type': 'application/json', ...cors(origin) } });
+}
+// Respuesta JSON con status arbitrario (ej. 409 con datos para resolver el conflicto).
+function jsonResp(obj, status, origin) {
+  return new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json', ...cors(origin) } });
 }
