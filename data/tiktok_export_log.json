@@ -64,8 +64,8 @@
     "exportedAt": "2026-11-20T16:49:52.829805+00:00"
   },
   "1781877838074": {
-    "hash": "a40d5c49cb063b58",
-    "exportedAt": "2026-11-20T16:49:52.829805+00:00"
+    "hash": "e002303cb6be7eb9",
+    "exportedAt": "2026-11-27T17:57:38.263384+00:00"
   },
   "1781877944864": {
     "hash": "bb252624f0b97722",
@@ -80,8 +80,8 @@
     "exportedAt": "2026-11-20T16:49:52.829805+00:00"
   },
   "1781878207350": {
-    "hash": "a95bec1af061135e",
-    "exportedAt": "2026-11-20T16:49:52.829805+00:00"
+    "hash": "cd7aae10b7f5ae64",
+    "exportedAt": "2026-11-27T17:57:38.263384+00:00"
   },
   "1781878296526": {
     "hash": "d0b90c0da67f73b2",
@@ -292,8 +292,8 @@
     "exportedAt": "2026-11-20T16:49:52.829805+00:00"
   },
   "1788922298558": {
-    "hash": "bbe2880db9b2692c",
-    "exportedAt": "2026-09-20T12:57:22.331029+00:00"
+    "hash": "a19b90d40e55bd2e",
+    "exportedAt": "2026-11-27T17:57:38.263384+00:00"
   },
   "1788922634845": {
     "hash": "f376533d244588a3",
@@ -304,13 +304,13 @@
     "exportedAt": "2026-09-20T12:57:22.331029+00:00"
   },
   "_meta": {
-    "lastGeneratedAt": "2026-11-26T18:15:38.274351+00:00",
+    "lastGeneratedAt": "2026-11-27T17:57:38.263384+00:00",
     "lastCount": 4,
     "lastProducts": [
-      "CACUSA-1: Anillo doble GG",
-      "CACUSA-1781877944864: Anillo ajustable de circones e inicial",
-      "CACUSA-1795643916937: Anillo con circón cuadrado",
-      "CACUSA-1795644249158: Anillo solitario con banda bicolor"
+      "CACUSA-1781877838074: Anillo ajustable color plateado",
+      "CACUSA-1781878207350: Anillo dorado ajustable de circones fucsia",
+      "CACUSA-1788922298558: Anillo Golden Stars",
+      "CACUSA-1795722047194: Anillo solitario tubular con circón"
     ]
   },
   "1789830883898": {
@@ -448,5 +448,9 @@
   "1795644249158": {
     "hash": "f19eabe308e8e5c3",
     "exportedAt": "2026-11-26T18:15:38.274351+00:00"
+  },
+  "1795722047194": {
+    "hash": "0228b0b008a3d550",
+    "exportedAt": "2026-11-27T17:57:38.263384+00:00"
   }
 }
