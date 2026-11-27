@@ -145,6 +145,120 @@ def build_catalog_block(products, categories_order, target):
     return "\n".join(lines)
 
 
+# ─── Pre-render de la cabecera de la tienda (wave 1, CLS) ─────────────────────────
+# La franja de temporada, el aviso de envío gratis y los chips de categoría los pinta el JS
+# cuando llega data/products.json; antes aparecían de golpe y empujaban hacia abajo los
+# filtros y la grilla (layout shift). Ahora salen ya pintados en el HTML con el MISMO markup
+# que generan renderSeasonBanner()/renderFreeShippingBanner()/renderFilters() en
+# ui_kits/store/app.js (y en/), así el JS solo los reemplaza por lo mismo. Si se cambia el
+# markup de esas funciones, cambiar también este bloque.
+BANNERS_START = "<!--STORE_BANNERS_START-->"
+BANNERS_END = "<!--STORE_BANNERS_END-->"
+FILTERS_START = "<!--FILTER_BTNS_START-->"
+FILTERS_END = "<!--FILTER_BTNS_END-->"
+MONTHS_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+CAMPAIGN_DEFAULT = {  # mismo DEFAULT_CAMPAIGN de app.js
+    "enabled": True, "endsAt": "2026-12-26", "title": "Regalos de Navidad", "title_en": "Christmas gifts",
+    "banner": "", "banner_en": "", "deadlinePersonalEc": "2026-12-08", "deadlinePersonalUs": "2026-12-03",
+    "deadlineStockEc": "2026-12-18", "deadlineStockUs": "2026-12-14",
+}
+ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _today_iso():
+    """Hoy en Ecuador (UTC-5, sin horario de verano) — CI corre en UTC."""
+    from datetime import datetime, timedelta, timezone
+    return (datetime.now(timezone.utc) - timedelta(hours=5)).strftime("%Y-%m-%d")
+
+
+def _campaign(raw):
+    c = dict(CAMPAIGN_DEFAULT)
+    r = raw if isinstance(raw, dict) else {}
+    if isinstance(r.get("enabled"), bool):
+        c["enabled"] = r["enabled"]
+    for k in ("endsAt", "deadlinePersonalEc", "deadlinePersonalUs", "deadlineStockEc", "deadlineStockUs"):
+        if isinstance(r.get(k), str) and ISO_RE.match(r[k]):
+            c[k] = r[k]
+    for k in ("title", "title_en"):
+        if isinstance(r.get(k), str) and r[k].strip():
+            c[k] = r[k].strip()
+    for k in ("banner", "banner_en"):
+        if isinstance(r.get(k), str):
+            c[k] = r[k].strip()
+    return c
+
+
+def _fmt_date(iso, lang):
+    y, m, d = (int(x) for x in iso.split("-"))
+    return f"{MONTHS_EN[m - 1]} {d}" if lang == "en" else f"{d} de {MONTHS_ES[m - 1]}"
+
+
+def season_banner_text(cfg, lang, today=None):
+    """Texto de la franja con país desconocido (fechas de EE.UU. y Ecuador), o None si la
+    campaña está apagada/vencida — replica renderSeasonBanner() de app.js."""
+    c = _campaign(cfg.get("campaign"))
+    today = today or _today_iso()
+    deadlines = [c["deadlinePersonalEc"], c["deadlinePersonalUs"], c["deadlineStockEc"], c["deadlineStockUs"]]
+    if not c["enabled"] or today > c["endsAt"] or not any(d >= today for d in deadlines):
+        return None
+    lst = [(cc, c["deadlineStock" + ("Ec" if cc == "EC" else "Us")]) for cc in ("US", "EC")]
+    lst = [(cc, d) for cc, d in lst if d and d >= today]
+    if not lst:
+        return None
+    en = lang == "en"
+    label = lambda cc: "Ecuador" if cc == "EC" else ("US" if en else "EE.UU.")
+    custom = c["banner_en"] if en else c["banner"]
+    if custom:
+        fecha = (" or " if en else " o hasta el ").join(f"{_fmt_date(d, lang)} ({label(cc)})" for cc, d in lst)
+        return re.sub(r"\{(fecha|date)\}", fecha, custom)
+    title = c["title_en"] if en else c["title"]
+    parts = []
+    for i, (cc, d) in enumerate(lst):
+        pre = ("by " if i else "order by ") if en else ("hasta el " if i else "pide hasta el ")
+        parts.append(f"{label(cc)}: {pre}{_fmt_date(d, lang)}")
+    return "✦ " + title + " · " + " · ".join(parts)
+
+
+def build_banners_block(cfg, lang):
+    href = "/en/guia-regalos.html" if lang == "en" else "/guia-regalos.html"
+    text = season_banner_text(cfg, lang)
+    season = (f'<a id="seasonBanner" class="season-banner" href="{href}">{esc(text)}</a>' if text
+              else f'<a id="seasonBanner" class="season-banner" href="{href}" hidden></a>')
+    try:
+        ft = float((cfg.get("shipping") or {}).get("freeThreshold", 90))
+    except (TypeError, ValueError):
+        ft = 90.0
+    thr = f"{ft:.0f}"
+    free = f"Free shipping on orders ${thr}+" if lang == "en" else f"Envío gratis en pedidos desde ${thr}"
+    return "\n".join([BANNERS_START, season, f'<div id="freeShippingBanner" style="display:block">{esc(free)}</div>', BANNERS_END])
+
+
+def build_filters_block(cfg, lang):
+    cats = cfg.get("categories") if isinstance(cfg.get("categories"), list) and cfg.get("categories") else \
+        ["Cadenas", "Aretes", "Anillos", "Hombres", "Pulseras"]
+    btns = ['<button class="filter-btn active" data-filter="all">' + ("All" if lang == "en" else "Todo") + "</button>"]
+    for c in cats:
+        label = CATEGORY_LABELS.get(c, c) if lang == "en" else c
+        btns.append(f'<button class="filter-btn" data-filter="{esc(c)}">{esc(label)}</button>')
+    return FILTERS_START + "".join(btns) + FILTERS_END
+
+
+def inject_store_prerender(path: Path, cfg, lang) -> bool:
+    html_text = path.read_text(encoding="utf-8")
+    new_html = html_text
+    for start, end, block in ((BANNERS_START, BANNERS_END, build_banners_block(cfg, lang)),
+                              (FILTERS_START, FILTERS_END, build_filters_block(cfg, lang))):
+        pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.DOTALL)
+        if not pattern.search(new_html):
+            raise RuntimeError(f"No se encontraron los marcadores {start} en {path}")
+        new_html = pattern.sub(lambda _: block, new_html)
+    if new_html == html_text:
+        return False
+    path.write_text(new_html, encoding="utf-8")
+    return True
+
+
 def inject(path: Path, block: str) -> bool:
     html_text = path.read_text(encoding="utf-8")
     pattern = re.compile(re.escape(MARKER_START) + r".*?" + re.escape(MARKER_END), re.DOTALL)
@@ -168,6 +282,7 @@ def main():
     for target in TARGETS:
         block = build_catalog_block(products, categories_order, target)
         changed = inject(target["path"], block)
+        changed = inject_store_prerender(target["path"], data.get("config", {}), target["lang"]) or changed
         changed_any = changed_any or changed
         print(f"{target['path']}: {'actualizado' if changed else 'sin cambios'}")
     if "--check" in sys.argv:

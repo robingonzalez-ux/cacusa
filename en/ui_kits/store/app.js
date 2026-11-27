@@ -505,10 +505,150 @@ function _showCatalogLoadError() {
     9000
   );
 }
+// ─── RED CON TIEMPO LÍMITE (wave 1, auditoría de robustez) ─────────────────
+// Antes loadData() esperaba en serie products.json → /pub/surcharges → /pub/markets +
+// api.country.is, sin tope de tiempo: si el Worker o country.is se colgaban, la tienda
+// quedaba con 0 productos y la página de producto sin modal comprable. Ahora todo sale en
+// paralelo, el catálogo se pinta apenas llega products.json, y cada pedido auxiliar tiene
+// un tope (~2,5 s) con AbortController — el tope cubre también la lectura del cuerpo.
+const FETCH_TIMEOUT_MS = 2500;
+function fetchT(url, opts, ms) {
+  const lim = ms || FETCH_TIMEOUT_MS;
+  const o = Object.assign({}, opts || {});
+  if (typeof AbortController === 'function') {
+    const ctrl = new AbortController();
+    o.signal = ctrl.signal;
+    setTimeout(() => { try { ctrl.abort(); } catch (_) {} }, lim);
+  }
+  return Promise.race([
+    fetch(url, o),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), lim + 50))
+  ]);
+}
+// JSON o null (error de red, tope vencido, HTTP no-OK o cuerpo inválido) — nunca lanza.
+async function fetchJsonT(url, opts, ms) {
+  try { const r = await fetchT(url, opts, ms); return r.ok ? await r.json() : null; }
+  catch (_) { return null; }
+}
+// País provisional mientras responde api.country.is (o si nunca responde): primero la zona
+// horaria del navegador y, si no se puede leer, la región del idioma (es-EC, en-US). Solo
+// importan EC/US (fechas de la campaña y etiquetas de mercado); cualquier otro → null, que
+// es lo mismo que "no sé": se muestran las fechas de los 2 países.
+function _guessCountry() {
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (_) {}
+  if (tz) {
+    if (/^(America\/Guayaquil|Pacific\/Galapagos)$/.test(tz)) return 'EC';
+    if (/^(America\/(New_York|Detroit|Chicago|Denver|Phoenix|Boise|Los_Angeles|Anchorage|Juneau|Sitka|Nome|Yakutat|Metlakatla|Adak|Menominee|Indiana\/\w+|Kentucky\/\w+|North_Dakota\/\w+)|Pacific\/Honolulu)$/.test(tz)) return 'US';
+    return null;
+  }
+  const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+  for (const l of langs) {
+    const m = /-([A-Za-z]{2})$/.exec(String(l || ''));
+    if (m && (m[1].toUpperCase() === 'EC' || m[1].toUpperCase() === 'US')) return m[1].toUpperCase();
+  }
+  return null;
+}
+// ─── PRECIOS: recargo 4% con tarjeta + promos ───────────────
+// El recargo vive en KV (/pub/surcharges), pero CI ya lo "hornea" en el JSON-LD estático de
+// cada página (generate_product_schema.py publica el precio con recargo). Se lee de ahí como
+// valor provisional: el primer render ya muestra el mismo precio que el JSON-LD y que el
+// precio estático de la página de producto, sin salto cuando responde el Worker (que manda
+// igual: si difiere, se re-pintan solo los precios). Si el Worker no responde, queda el valor
+// horneado — el mismo que ve Google y el que cobra el Worker de Square.
+let _surchargeMap = {};
+function _withSurcharge(base) { return Math.round(base * 1.04 * 100) / 100; }
+function _staticSurcharges() {
+  const ld = {};
+  document.querySelectorAll('script[type="application/ld+json"]').forEach(el => {
+    if (el.id === 'ld-product') return; // el que arma este mismo JS, no el horneado
+    let d; try { d = JSON.parse(el.textContent); } catch (_) { return; }
+    (Array.isArray(d && d['@graph']) ? d['@graph'] : [d]).forEach(n => {
+      if (n && n['@type'] === 'Product' && n.sku != null && n.offers && n.offers.price != null) ld[String(n.sku)] = Number(n.offers.price);
+    });
+  });
+  const map = {};
+  PRODUCTS.forEach(p => {
+    const sp = ld[String(p.id)], base = Number(p.basePrice);
+    if (sp != null && base > 0 && sp !== base && Math.abs(sp - _withSurcharge(base)) < 0.005) map[p.id] = true;
+  });
+  return map;
+}
+// Recalcula p.price desde el precio base (idempotente: se puede llamar de nuevo cuando llega
+// el recargo real). La promo activa manda sobre el recargo: su precio ES el precio final.
+function _applyPricing() {
+  const _now = new Date();
+  PRODUCTS.forEach(p => {
+    p.price = p.basePrice;
+    p.hasSurcharge = false;
+    if (_surchargeMap[p.id] === true) { p.price = _withSurcharge(p.basePrice); p.hasSurcharge = true; }
+    if (p.promo && p.promo.price) {
+      const _ended = p.promo.endsAt && new Date(p.promo.endsAt) < _now;
+      if (!_ended) {
+        p.originalPrice = p.basePrice;
+        p.price = +p.promo.price;
+        p.isPromo = true;
+        p.tag = p.promo.label || 'Oferta';
+        p.badge = 'badge-promo';
+        p.hasSurcharge = false;
+      }
+    }
+  });
+}
+// ─── RE-PINTADO TRAS LOS DATOS AUXILIARES ───────────────────
+// Recargos, mercados, país y stock llegan después del primer render; cuando cambian algo
+// visible se actualizan precios/etiquetas en su lugar (tarjetas sin re-animar, modal abierto,
+// carrito y JSON-LD), una sola vez por tanda.
+let _lastViewSig = '', _enrichT = null, _noCardAnim = false;
+function _viewSig() {
+  return PRODUCTS.map(p => p.id + ':' + p.price + ':' + (p.available === false ? 0 : 1) + ':' + (p.market || '')).join('|') +
+    '#' + (window.__visitorCountry || '') + '#' + Object.keys(_reviewSummaries).length;
+}
+function _scheduleEnrich() { clearTimeout(_enrichT); _enrichT = setTimeout(_afterEnrich, 30); }
+function _afterEnrich() {
+  const sig = _viewSig();
+  if (sig === _lastViewSig) return;
+  _lastViewSig = sig;
+  reconcileCartPrices();
+  updateCartUI();
+  renderSeasonBanner();
+  _softRenderProducts();
+  const mo = document.getElementById('modal-overlay');
+  if (currentProduct && mo && mo.classList.contains('open')) _refreshOpenModal(currentProduct);
+  const co = document.getElementById('checkout-overlay');
+  if (co && co.classList.contains('open') && typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
+}
+// Vuelve a pintar la grilla sin repetir la animación de entrada de las tarjetas y sin perder
+// el foco del teclado (mismo tamaño de tarjetas → sin salto de diseño).
+function _softRenderProducts() {
+  const grid = document.getElementById('prodGrid');
+  if (!grid || grid.classList.contains('cat-picker-grid')) return;
+  const a = document.activeElement;
+  const card = a && grid.contains(a) ? a.closest('.pcard') : null;
+  const focusId = card ? card.dataset.id : null;
+  const focusCls = card && a.classList.length ? a.classList[0] : '';
+  _noCardAnim = true;
+  try { renderProducts(); } finally { _noCardAnim = false; }
+  if (focusId) {
+    const sel = '.pcard[data-id="' + focusId + '"]';
+    const el = (focusCls && grid.querySelector(sel + ' .' + focusCls)) || grid.querySelector(sel + ' a');
+    if (el) el.focus({ preventScroll: true });
+  }
+}
 // ─── LOAD DATA ──────────────────────────────────────────────
 (async function loadData() {
+  // Todo sale en paralelo desde el inicio. Solo data/products.json bloquea el primer
+  // render; lo demás se aplica cuando llega, o se ignora si falla o no responde a tiempo.
+  const _POST0 = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' };
+  const _srP  = fetchJsonT(ADMIN_WORKER_URL + '/pub/surcharges', _POST0);
+  const _mktP = fetchJsonT(ADMIN_WORKER_URL + '/pub/markets', _POST0);
+  const _ipP  = fetchJsonT('https://api.country.is/');
+  // Inventario (18 nov): ids agotados por stock. Si el Worker no responde, la tienda sigue
+  // igual (solo cuenta available del catálogo).
+  const _soldOutP = _fetchSoldOut();
+  if (!window.__visitorCountry) window.__visitorCountry = _guessCountry();
   try {
-    const res = await fetch(PRODUCTS_JSON_URL);
+    const res = await fetchT(PRODUCTS_JSON_URL, undefined, 20000);
     if (!res.ok) throw new Error('no json');
     const data = await res.json();
     const raw = Array.isArray(data) ? data : (data.products || []);
@@ -548,60 +688,9 @@ function _showCatalogLoadError() {
     PRODUCTS = [];
     _showCatalogLoadError();
   }
-  // Inventario (18 nov): ids agotados por stock — se pide en paralelo y se aplica antes de
-  // pintar. Si el Worker no responde, la tienda sigue igual (solo cuenta available del catálogo).
-  const _soldOutP = _fetchSoldOut();
-  // Apply per-product surcharges desde el worker (best-effort, non-blocking)
-  try {
-    const _srRes = await fetch(ADMIN_WORKER_URL + '/pub/surcharges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    if (_srRes.ok) {
-      const _srData = await _srRes.json();
-      const _sr = _srData.surcharges;
-      if (_sr && typeof _sr === 'object') {
-        PRODUCTS.forEach(p => {
-          if (_sr[p.id] === true) {
-            p.price = Math.round(p.basePrice * 1.04 * 100) / 100;
-            p.hasSurcharge = true;
-          }
-        });
-      }
-    }
-  } catch(_) {}
-  // Apply active promos (overrides surcharge: promo price IS the final price)
-  const _now = new Date();
-  PRODUCTS.forEach(p => {
-    if (p.promo && p.promo.price) {
-      const _ended = p.promo.endsAt && new Date(p.promo.endsAt) < _now;
-      if (!_ended) {
-        p.originalPrice = p.basePrice;
-        p.price = +p.promo.price;
-        p.isPromo = true;
-        p.tag = p.promo.label || 'Oferta';
-        p.badge = 'badge-promo';
-        p.hasSurcharge = false;
-      }
-    }
-  });
-  // Apply per-product markets + detect visitor country via IP (best-effort, non-blocking)
-  try {
-    const [_mktRes, _ipRes] = await Promise.all([
-      fetch(ADMIN_WORKER_URL + '/pub/markets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }),
-      fetch('https://api.country.is/')
-    ]);
-    if (_mktRes.ok) {
-      const _mktData = await _mktRes.json();
-      const _mkt = _mktData.markets;
-      if (_mkt && typeof _mkt === 'object') {
-        window.__markets = _mkt;
-        PRODUCTS.forEach(p => { p.market = _mkt[p.id] || 'both'; });
-      }
-    }
-    if (_ipRes.ok) {
-      const _ip = await _ipRes.json();
-      if (_ip && _ip.country) window.__visitorCountry = _ip.country;
-    }
-  } catch(_) {}
-  _applySoldOut(await _soldOutP);
+  // Recargo provisional (el horneado en el JSON-LD estático) + promos, antes del primer render.
+  _surchargeMap = _staticSurcharges();
+  _applyPricing();
   // Re-sincroniza el carrito con precios canónicos (evita precios obsoletos
   // o manipulados en localStorage; el cobro real igual se valida en el backend)
   reconcileCartPrices();
@@ -640,6 +729,30 @@ function _showCatalogLoadError() {
   _restoreCartFromUrl();
   // Nov: link del pedido de reseña (ficha + #resena, o ?review=1) — abre el formulario.
   if (_autoP && currentProduct && _wantsReviewForm()) _openReviewForm();
+  _lastViewSig = _viewSig();
+  // Datos auxiliares: se aplican al llegar (re-pintando solo lo que cambió).
+  if (!PRODUCTS.length) return;
+  _srP.then(d => {
+    const sr = d && d.surcharges;
+    if (!sr || typeof sr !== 'object') return; // sin respuesta: queda el recargo horneado
+    _surchargeMap = {};
+    Object.keys(sr).forEach(k => { if (sr[k] === true) _surchargeMap[k] = true; });
+    _applyPricing();
+    _scheduleEnrich();
+  });
+  _mktP.then(d => {
+    const mkt = d && d.markets;
+    if (!mkt || typeof mkt !== 'object') return;
+    window.__markets = mkt;
+    PRODUCTS.forEach(p => { p.market = mkt[p.id] || 'both'; });
+    _scheduleEnrich();
+  });
+  _ipP.then(d => {
+    if (!d || typeof d.country !== 'string' || !/^[A-Za-z]{2}$/.test(d.country)) return; // queda el provisional
+    window.__visitorCountry = d.country.toUpperCase();
+    _scheduleEnrich();
+  });
+  _soldOutP.then(d => { if (d && Array.isArray(d.soldOut)) { _applySoldOut(d); _scheduleEnrich(); } });
 })();
 
 // ─── INVENTARIO (18 nov) ────────────────────────────────────
@@ -648,10 +761,7 @@ function _showCatalogLoadError() {
 // botón de agregar, línea del carrito marcada y checkout bloqueado.
 let SOLD_OUT_IDS = new Set();
 function _fetchSoldOut() {
-  return Promise.race([
-    fetch(ADMIN_WORKER_URL + '/pub/stock').then(r => (r.ok ? r.json() : null)).catch(() => null),
-    new Promise(res => setTimeout(() => res(null), 4000))
-  ]).catch(() => null);
+  return fetchJsonT(ADMIN_WORKER_URL + '/pub/stock');
 }
 function _applySoldOut(data) {
   if (!data || !Array.isArray(data.soldOut)) return;
@@ -733,10 +843,23 @@ function renderSeasonBanner() {
       _campaignCountryLabel(x.country) + ': ' + (en ? (i ? 'by ' : 'order by ') : (i ? 'hasta el ' : 'pide hasta el ')) + _fmtCampaignDate(x.date)
     ).join(' · ');
   }
+  // CLS: la franja viene pre-pintada en el HTML (generate_noscript_catalog.py) con las fechas
+  // de los 2 países; al conocerse el país el texto se acorta. Mientras carga la página no se
+  // encoge (min-height), así no se mueve lo de abajo; un cambio de ancho lo libera.
+  const _prevH = el.hidden ? 0 : el.offsetHeight;
   el.textContent = text;
   el.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
   el.hidden = false;
+  if (_prevH && el.offsetHeight < _prevH) el.style.minHeight = _prevH + 'px';
 }
+(function () {
+  let w = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === w) return;
+    w = window.innerWidth;
+    const el = document.getElementById('seasonBanner'); if (el) el.style.minHeight = '';
+  }, { passive: true });
+})();
 // Línea "llega antes de Navidad" del modal, bajo el precio: fecha de personalización si la
 // pieza es personalizable, si no la de stock. Oculta si ya pasó o si está agotada. En las
 // personalizables los 5–10 días hábiles corren desde que se confirma el diseño por WhatsApp,
@@ -954,6 +1077,128 @@ function renderCategoryPicker() {
 function _searchNorm(s) {
   return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
+// ─── BÚSQUEDA (wave 1) ──────────────────────────────────────
+// Antes se buscaba la frase entera dentro de cada campo: "collar oro" → 0 resultados,
+// "collar" → solo 4 de las 23 cadenas, "anilo" → 0. Ahora: palabras sueltas con lógica Y,
+// sin acentos, en nombre (ES/EN), descripción, categoría y material; sinónimos ES/EN
+// (collar = cadena = necklace…), singular/plural, tolerancia a 1 error de tipeo en palabras
+// de 4+ letras, y orden por relevancia (coincidir en el nombre pesa más que en la descripción).
+const _SEARCH_SYN = [
+  ['collar', 'collares', 'cadena', 'cadenas', 'cadenita', 'necklace', 'necklaces', 'chain', 'chains', 'gargantilla', 'choker'],
+  ['oro', 'dorado', 'dorada', 'dorados', 'doradas', 'gold', 'golden', 'goldfilled'],
+  ['plata', 'plateado', 'plateada', 'plateados', 'plateadas', 'silver'],
+  ['arete', 'aretes', 'pendiente', 'pendientes', 'earring', 'earrings', 'argolla', 'argollas', 'hoop', 'hoops', 'topo', 'topos', 'stud', 'studs'],
+  ['pulsera', 'pulseras', 'brazalete', 'brazaletes', 'bracelet', 'bracelets', 'manilla', 'manillas', 'esclava'],
+  ['anillo', 'anillos', 'sortija', 'sortijas', 'ring', 'rings'],
+  ['dije', 'dijes', 'charm', 'charms', 'pendant', 'pendants', 'colgante', 'colgantes'],
+  ['acero', 'steel', 'stainless', 'inoxidable'],
+  ['corazon', 'corazones', 'heart', 'hearts'],
+  ['cruz', 'cruces', 'cross', 'crosses', 'crucifijo'],
+  ['perla', 'perlas', 'pearl', 'pearls'],
+  ['hombre', 'hombres', 'men', 'man', 'mens', 'caballero', 'caballeros'],
+  ['pareja', 'parejas', 'couple', 'couples'],
+  ['juego', 'juegos', 'set', 'sets', 'conjunto', 'conjuntos'],
+  ['personalizado', 'personalizada', 'personalizados', 'personalizable', 'personalizables', 'personalized', 'custom', 'grabado', 'engraved'],
+  ['inicial', 'iniciales', 'initial', 'initials', 'letra', 'letras', 'letter'],
+  ['nombre', 'nombres', 'name', 'names'],
+  ['circon', 'circones', 'zirconia', 'zirconias', 'zircon', 'zircons', 'circonia', 'circonias'],
+  ['mariposa', 'mariposas', 'butterfly', 'butterflies'],
+  ['estrella', 'estrellas', 'star', 'stars'],
+  ['luna', 'moon'],
+  ['flor', 'flores', 'flower', 'flowers'],
+  ['angel', 'angeles', 'angels'],
+  ['virgen', 'virgin', 'mary'],
+  ['ojo', 'ojos', 'eye', 'eyes', 'turco'],
+  ['regalo', 'regalos', 'gift', 'gifts'],
+];
+const _SEARCH_STOP = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'con', 'y', 'e', 'en', 'para', 'un', 'una', 'por', 'the', 'with', 'and', 'of', 'for', 'a', 'an', 'in', 'to']);
+const _SEARCH_MAT_EN = { 'baño de oro 18k': '18k gold plated', 'acero inoxidable': 'stainless steel', 'plata 925': '925 silver', 'baño de rodio': 'rhodium plated', 'plata 925 con un baño de oro de 18k': '925 silver with 18k gold plating' };
+const _SYN_OF = (() => { const m = new Map(); _SEARCH_SYN.forEach((g, i) => g.forEach(w => m.set(w, 'g' + i))); return m; })();
+const _SYN_WORDS = [..._SYN_OF.keys()];
+// Singular aproximado ES/EN: collares→collar, corazones→corazon, aretes→arete, rings→ring.
+function _searchStem(w) {
+  if (w.length > 4 && /[rlndz]es$/.test(w)) return w.slice(0, -2);
+  if (w.length > 3 && /s$/.test(w) && !/ss$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+function _searchTokens(s) { return _searchNorm(s).split(/[^a-z0-9]+/).filter(Boolean); }
+function _searchKey(w) { return _SYN_OF.get(w) || _SYN_OF.get(_searchStem(w)) || _searchStem(w); }
+// ¿Distancia de Levenshtein ≤ 1? (lineal: una sustitución, inserción o borrado)
+function _lev1(a, b) {
+  if (a === b) return true;
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, diff = 0;
+  while (i < la && j < lb) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    if (++diff > 1) return false;
+    if (la > lb) i++; else if (lb > la) j++; else { i++; j++; }
+  }
+  return diff + (la - i) + (lb - j) <= 1;
+}
+// Índice por producto (se cachea por objeto: PRODUCTS no cambia de nombre/descr. en la sesión)
+const _searchIdx = new WeakMap();
+function _searchDoc(p) {
+  let d = _searchIdx.get(p);
+  if (d) return d;
+  const mat = String(p.material || '');
+  const fields = [
+    [10, [p.name, p.name_en].join(' ')],
+    [6, [p.cat, t('cat.' + (p.cat || '').toLowerCase(), ''), __EN_T['cat.' + (p.cat || '').toLowerCase()] || ''].join(' ')],
+    [4, [mat, _SEARCH_MAT_EN[mat.toLowerCase()] || ''].join(' ')],
+    [2, [p.desc, p.description_en].join(' ')],
+  ];
+  d = fields.map(([w, txt]) => {
+    const toks = _searchTokens(txt).map(x => ({ stem: _searchStem(x), key: _searchKey(x) }));
+    return { w, toks };
+  });
+  _searchIdx.set(p, d);
+  return d;
+}
+// Una palabra de la búsqueda → qué la satisface: su clave (grupo de sinónimos o raíz), los
+// grupos a 1 error de tipeo ("pulcera" → pulsera) y, para el prefijo, su raíz.
+function _searchTerm(w) {
+  const stem = _searchStem(w), keys = new Set([_searchKey(w)]);
+  if (w.length >= 4 && !_SYN_OF.has(w) && !_SYN_OF.has(stem)) {
+    _SYN_WORDS.forEach(sw => { if (_lev1(w, sw) || _lev1(stem, sw)) keys.add(_SYN_OF.get(sw)); });
+  }
+  return { w, stem, keys };
+}
+function _termScore(doc, q) {
+  let best = 0;
+  for (const f of doc) {
+    for (const tk of f.toks) {
+      let s = 0;
+      if (q.keys.has(tk.key) || tk.stem === q.stem) s = f.w;
+      else if (q.w.length >= 3 && tk.stem.startsWith(q.stem)) s = f.w * 0.7;
+      else if (q.w.length >= 4 && tk.stem.length >= 4 && _lev1(tk.stem, q.stem)) s = f.w * 0.6;
+      if (s > best) { best = s; if (best === 10) return best; }
+    }
+  }
+  return best;
+}
+// Devuelve { list, scores } — list filtrada (lógica Y entre palabras), scores para ordenar.
+function _searchProducts(list, raw) {
+  const words = _searchTokens(raw);
+  const useful = words.filter(w => !_SEARCH_STOP.has(w));
+  const terms = (useful.length ? useful : words).map(_searchTerm);
+  const scores = new Map();
+  const qn = _searchNorm(raw).trim();
+  const skuQ = qn.replace(/[\s-]+/g, '');
+  const out = list.filter(p => {
+    // Código de producto (AN001): "an001", "AN 001", "an-001" o "an00" también lo encuentran.
+    if (typeof p.sku === 'string' && /^[a-z]{2}\d+$/.test(skuQ) && _searchNorm(p.sku).startsWith(skuQ)) { scores.set(p.id, 100); return true; }
+    if (!terms.length) return false;
+    const doc = _searchDoc(p);
+    let total = 0;
+    for (const q of terms) { const s = _termScore(doc, q); if (!s) return false; total += s; }
+    // La frase completa dentro del nombre suma (ej. "dije de bailarina").
+    if (qn.length > 2 && _searchNorm([p.name, p.name_en].join(' ')).includes(qn)) total += 5;
+    scores.set(p.id, total);
+    return true;
+  });
+  return { list: out, scores };
+}
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
   _renderUrlFilterChips();
@@ -967,15 +1212,11 @@ function renderProducts() {
   let filtered = (activeFilter === 'all' || searchTerm)
     ? PRODUCTS
     : PRODUCTS.filter(p => p.cat === activeFilter || (p.cat || '').startsWith(activeFilter));
+  let _scores = null;
   if (searchTerm) {
-    // Sin distinguir acentos ni mayúsculas: "corazon" encuentra "corazón".
-    const q = _searchNorm(searchTerm);
-    filtered = filtered.filter(p =>
-      [p.name, p.name_en, p.desc, p.description_en, p.cat, t('cat.' + (p.cat || '').toLowerCase(), '')]
-        .some(f => f && _searchNorm(f).includes(q))
-      // Código de producto (AN001): "an001", "AN 001", "an-001" o "an00" también lo encuentran.
-      || (typeof p.sku === 'string' && /^[a-z]{2}\d+$/.test(q.replace(/[\s-]+/g, '')) && _searchNorm(p.sku).startsWith(q.replace(/[\s-]+/g, '')))
-    );
+    const _sr = _searchProducts(filtered, searchTerm);
+    filtered = _sr.list;
+    _scores = _sr.scores;
   }
   if (_urlPrice) filtered = filtered.filter(p => { const pr = +p.price; return pr >= _urlPrice.min && (_urlPrice.max == null || pr < _urlPrice.max); });
   if (_hasUrlFilters()) filtered = filtered.filter(p => p.available !== false);
@@ -992,6 +1233,8 @@ function renderProducts() {
   // etiqueta "Bestseller" que pone el negocio desde el panel. Esos van primero y el resto
   // conserva el orden destacado de siempre.
   else if (sort === 'bestseller') filtered = [...filtered].sort((a, b) => _soldOutLast(a, b) || (_isBestseller(b) - _isBestseller(a)));
+  // Búsqueda con el orden "Destacados": por relevancia (los agotados al final).
+  else if (_scores) filtered = [...filtered].sort((a, b) => _soldOutLast(a, b) || ((_scores.get(b.id) || 0) - (_scores.get(a.id) || 0)));
   // ?regalo=1 con el orden "Destacados": personalizables, luego Bestseller, luego el resto.
   else if (_urlGift) filtered = [...filtered].sort((a, b) => _giftRank(a) - _giftRank(b));
   else filtered = [...filtered].sort((a, b) => {
@@ -1038,8 +1281,18 @@ function _emptyStateHtml() {
     ? (en ? 'Hi! I am looking for: ' : '¡Hola! Estoy buscando: ') + searchTerm
     : (en ? 'Hi! I have a question about a product' : '¡Hola! Tengo una consulta sobre un producto');
   const sugg = _featuredProducts(4);
+  // Búsqueda sin resultados: atajos a las categorías con más piezas y a la búsqueda por foto.
+  let tips = '';
+  if (searchTerm) {
+    const counts = {};
+    PRODUCTS.forEach(p => { if (p.available !== false && p.cat) counts[p.cat] = (counts[p.cat] || 0) + 1; });
+    const top = CATEGORIES.filter(c => counts[c]).sort((a, b) => counts[b] - counts[a]).slice(0, 5);
+    tips = '<p class="empty-tip">' + (en ? 'Try fewer words, or browse a category:' : 'Prueba con menos palabras o mira una categoría:') + '</p>' +
+      '<div class="empty-cats">' + top.map(c => '<button type="button" class="filter-btn empty-cat" data-cat="' + esc(c) + '">' + esc(t('cat.' + c.toLowerCase(), c)) + '</button>').join('') +
+      '<button type="button" class="photo-search-btn empty-photo">' + (en ? '◇ Search by photo' : '◇ Buscar por foto') + '</button></div>';
+  }
   return '<div class="empty-state">' +
-      '<p class="empty-msg" role="status" aria-live="polite">' + msg + '</p>' +
+      '<p class="empty-msg" role="status" aria-live="polite">' + msg + '</p>' + tips +
       '<button type="button" class="empty-all" onclick="_clearAllFilters()">' + (en ? 'View full catalog' : 'Ver todo el catálogo') + '</button>' +
       '<a class="empty-wa" href="' + esc(_waLink(waText)) + '" target="_blank" rel="noopener">' + (en ? 'Looking for something special? Message us on WhatsApp' : '¿Buscas algo en especial? Escríbenos por WhatsApp') + '</a>' +
       (sugg.length ? '<div class="empty-sugg-title">' + (en ? 'You might like' : 'Quizás te guste') + '</div>' : '') +
@@ -1060,7 +1313,7 @@ function _clearAllFilters() {
 function _pcardHtml(p, i) {
   const _off = _discountPct(p);
   return `
-    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="animation-delay:${(i || 0) * 0.06}s" data-id="${p.id}" onclick="_pcardClick(event, ${p.id})">
+    <div class="pcard${p.available === false ? ' pcard--soldout' : ''}" style="${_noCardAnim ? 'animation:none' : 'animation-delay:' + (i || 0) * 0.06 + 's'}" data-id="${p.id}" onclick="_pcardClick(event, ${p.id})">
       ${p.available === false ? `<div class="pcard-badge badge-soldout">${__LANG === 'en' ? 'Sold out' : 'Agotado'}</div>` : (p.badge ? `<div class="pcard-badge ${p.badge}">${esc(tagLabel(p.tag))}</div>` : '')}
       <button class="pcard-wish${_wish.has(p.id)?' liked':''}" aria-label="${__LANG === 'en' ? 'Save to wishlist' : 'Guardar en lista de deseos'}" onclick="toggleWish(${p.id},this)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style="${_wish.has(p.id)?'fill:var(--pink)':''}"/></svg>
@@ -1160,6 +1413,11 @@ function addComboToCart(id, cardEl) {
   if (mq.addEventListener) mq.addEventListener('change', apply);
 })();
 document.getElementById('sortSelect').addEventListener('change', renderProducts);
+document.getElementById('prodGrid').addEventListener('click', e => {
+  const c = e.target.closest('.empty-cat');
+  if (c) { selectCategory(c.dataset.cat); return; }
+  if (e.target.closest('.empty-photo')) openPhotoSearch();
+});
 document.getElementById('searchInput').addEventListener('input', e => {
   searchTerm = e.target.value.trim();
   document.getElementById('searchClear').style.display = searchTerm ? 'block' : 'none';
@@ -1344,6 +1602,50 @@ function trapFocus(modalEl, onClose) {
   };
 }
 let _modalReleaseTrap = null, _cartReleaseTrap = null, _checkoutReleaseTrap = null;
+// Precio del modal (y de la barra fija del móvil): mismo formato que la tarjeta — precio
+// actual, anterior tachado (2 decimales) y badge -X%.
+function _renderModalPrice(p) {
+  const _mLang = __LANG === 'en';
+  const _origPrice = (p.isPromo && p.originalPrice) ? +p.originalPrice : (+p.oldPrice || 0);
+  const _mOff = _discountPct(p);
+  document.getElementById('modalPrice').innerHTML = '<span class="price-now">$' + (+p.price).toFixed(2) + '</span>' +
+    (_origPrice && _origPrice > +p.price ? '<span class="price-old"><span class="sr-only">' + (_mLang ? 'Before: ' : 'Antes: ') + '</span>$' + _origPrice.toFixed(2) + '</span>' : '') +
+    (_mOff > 0 ? '<span class="price-off">-' + _mOff + '%</span>' : '');
+  const _barPrice = document.getElementById('modalBarPrice');
+  if (_barPrice) _barPrice.textContent = '$' + (+p.price).toFixed(2);
+}
+function _renderModalBuyState(p) {
+  const addBtn = document.getElementById('modalAddBtn');
+  const soldOutTag = document.getElementById('modalSoldOut');
+  if (p.available === false) {
+    addBtn.textContent = __LANG === 'en' ? 'Sold out' : 'Agotado';
+    addBtn.disabled = true;
+    if (soldOutTag) { soldOutTag.textContent = __LANG === 'en' ? 'Sold out' : 'Agotado'; soldOutTag.style.display = 'inline-block'; }
+  } else {
+    addBtn.textContent = __LANG === 'en' ? 'Add to cart' : 'Añadir al carrito';
+    addBtn.disabled = false;
+    if (soldOutTag) soldOutTag.style.display = 'none';
+  }
+  addBtn.className = 'modal-add';
+}
+// Modal ya abierto cuando llegan recargo/stock/país: precio, disponibilidad, línea de
+// Navidad y la oferta del JSON-LD (sin rehacer el schema, que ya puede traer las reseñas).
+function _refreshOpenModal(p) {
+  _renderModalPrice(p);
+  const addBtn = document.getElementById('modalAddBtn');
+  if (addBtn && (p.available === false) !== addBtn.disabled) _renderModalBuyState(p);
+  _renderModalXmas(p);
+  const el = document.getElementById('ld-product');
+  if (!el) return;
+  try {
+    const s = JSON.parse(el.textContent);
+    const prod = s['@graph'] ? s['@graph'].find(n => n['@type'] === 'Product') : s;
+    if (!prod || !prod.offers) return;
+    prod.offers.price = String(p.price);
+    prod.offers.availability = p.available === false ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock';
+    el.textContent = JSON.stringify(s);
+  } catch (_) {}
+}
 
 function openModal(id, _fromHistory) {
   const p = PRODUCTS.find(x => x.id === id);
@@ -1355,14 +1657,7 @@ function openModal(id, _fromHistory) {
   document.getElementById('modalName').textContent = __LANG === 'en' && p.name_en ? p.name_en : p.name;
   const _mLang = __LANG === 'en';
   const _matEN = {'Baño de oro 18k':'18k gold plated','Acero inoxidable':'Stainless steel','Plata 925':'925 silver','Gold filled':'Gold filled','Baño de Rodio':'Rhodium plated','Plata 925 con un baño de oro de 18k':'925 silver with 18k gold plating'};
-  // Mismo formato que la tarjeta: precio actual, anterior tachado (2 decimales) y badge -X%.
-  const _origPrice = (p.isPromo && p.originalPrice) ? +p.originalPrice : (+p.oldPrice || 0);
-  const _mOff = _discountPct(p);
-  document.getElementById('modalPrice').innerHTML = '<span class="price-now">$' + (+p.price).toFixed(2) + '</span>' +
-    (_origPrice && _origPrice > +p.price ? '<span class="price-old"><span class="sr-only">' + (_mLang ? 'Before: ' : 'Antes: ') + '</span>$' + _origPrice.toFixed(2) + '</span>' : '') +
-    (_mOff > 0 ? '<span class="price-off">-' + _mOff + '%</span>' : '');
-  const _barPrice = document.getElementById('modalBarPrice');
-  if (_barPrice) _barPrice.textContent = '$' + (+p.price).toFixed(2);
+  _renderModalPrice(p);
   _renderModalXmas(p);
   document.getElementById('modalDesc').textContent = (_mLang && p.description_en) ? p.description_en : (p.desc || '');
   const matEl = document.getElementById('modalMat');
@@ -1385,18 +1680,7 @@ function openModal(id, _fromHistory) {
   document.getElementById('modalPersonText').value = '';
   _resetPersonUI();
   document.getElementById('qtyNum').textContent = qty;
-  const addBtn = document.getElementById('modalAddBtn');
-  const soldOutTag = document.getElementById('modalSoldOut');
-  if (p.available === false) {
-    addBtn.textContent = __LANG === 'en' ? 'Sold out' : 'Agotado';
-    addBtn.disabled = true;
-    if (soldOutTag) { soldOutTag.textContent = __LANG === 'en' ? 'Sold out' : 'Agotado'; soldOutTag.style.display = 'inline-block'; }
-  } else {
-    addBtn.textContent = __LANG === 'en' ? 'Add to cart' : 'Añadir al carrito';
-    addBtn.disabled = false;
-    if (soldOutTag) soldOutTag.style.display = 'none';
-  }
-  addBtn.className = 'modal-add';
+  _renderModalBuyState(p);
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   // Otro producto desde "relacionados" con el modal ya abierto: arriba de todo (en el
@@ -1785,7 +2069,21 @@ document.getElementById('coPais').addEventListener('change', function() {
     return '';
   }
 
-  function closeList() { list.classList.remove('open'); list.innerHTML = ''; _items = []; }
+  // Combobox accesible (wave 1): el input lleva role="combobox" + aria-expanded y las
+  // sugerencias son role="option"; la opción activa se anuncia con aria-activedescendant.
+  // El input conserva autocomplete="shipping address-line1": el autocompletado del navegador
+  // y las sugerencias de Photon conviven (la clienta elige cualquiera de los dos).
+  function closeList() {
+    list.classList.remove('open'); list.innerHTML = ''; _items = [];
+    inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant');
+  }
+  function setActive(el) {
+    list.querySelectorAll('.addr-sugg-item').forEach(x => { x.classList.remove('focused'); x.setAttribute('aria-selected', 'false'); });
+    if (!el) { inp.removeAttribute('aria-activedescendant'); return; }
+    el.classList.add('focused'); el.setAttribute('aria-selected', 'true');
+    inp.setAttribute('aria-activedescendant', el.id);
+    if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+  }
 
   function fillFromFeature(f) {
     const p = f.properties;
@@ -1816,7 +2114,7 @@ document.getElementById('coPais').addEventListener('change', function() {
     if (q.length < 3) { closeList(); return; }
     _timer = setTimeout(async () => {
       try {
-        const res  = await fetch('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en');
+        const res  = await fetchT('https://photon.komoot.io/api/?q=' + encodeURIComponent(q) + '&limit=6&lang=en', undefined, 5000);
         const data = await res.json();
         // Accept any result that has at least a street OR a city — broad enough for all address formats
         const features = (data.features || []).filter(f => {
@@ -1831,12 +2129,13 @@ document.getElementById('coPais').addEventListener('change', function() {
           const street = p.street || '';
           const main   = street ? (num ? num + ' ' : '') + street : (p.name || '');
           const sub    = [p.city, p.state, p.country].filter(Boolean).join(', ');
-          return '<div class="addr-sugg-item" data-idx="' + i + '">'
+          return '<div class="addr-sugg-item" role="option" aria-selected="false" id="addrOpt' + i + '" data-idx="' + i + '">'
                + '<div class="addr-sugg-main">' + esc(main) + '</div>'
                + (sub ? '<div class="addr-sugg-sub">' + esc(sub) + '</div>' : '')
                + '</div>';
         }).join('');
         list.classList.add('open');
+        inp.setAttribute('aria-expanded', 'true');
       } catch(e) { closeList(); }
     }, 380);
   });
@@ -1854,18 +2153,16 @@ document.getElementById('coPais').addEventListener('change', function() {
     const focused = list.querySelector('.focused');
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      const next = focused ? (focused.nextElementSibling || items[0]) : items[0];
-      if (focused) focused.classList.remove('focused');
-      next.classList.add('focused');
+      setActive(focused ? (focused.nextElementSibling || items[0]) : items[0]);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const prev = focused ? (focused.previousElementSibling || items[items.length - 1]) : items[items.length - 1];
-      if (focused) focused.classList.remove('focused');
-      prev.classList.add('focused');
+      setActive(focused ? (focused.previousElementSibling || items[items.length - 1]) : items[items.length - 1]);
     } else if (e.key === 'Enter' && focused) {
       e.preventDefault();
       fillFromFeature(_items[+focused.dataset.idx]);
     } else if (e.key === 'Escape') {
+      // Cierra solo la lista, no el checkout (la trampa de foco también escucha Escape).
+      e.stopPropagation();
       closeList();
     }
   });
@@ -2786,7 +3083,7 @@ async function loadReviewSummaries() {
       const avg = vals.reduce((s, v) => s + v.rating, 0) / vals.length;
       _reviewSummaries[+pid] = { avg: Math.round(avg * 10) / 10, count: vals.length };
     });
-    renderProducts();
+    _softRenderProducts();
   } catch(_) {}
 }
 
@@ -3149,8 +3446,10 @@ function _syncStaticCat() {
   const intro = sec.querySelector('.static-cat-intro');
   if (sec.hidden || !intro || sec.dataset.clampReady) return;
   sec.dataset.clampReady = '1';
+  // CLS (wave 1): el CSS ya lo recorta a 2 líneas desde el primer pintado (html.js), así no
+  // se encoge de golpe cuando corre este JS; .noclamp lo libera.
   intro.classList.add('clamp');
-  if (intro.scrollHeight <= intro.clientHeight + 2) { intro.classList.remove('clamp'); return; }
+  if (intro.scrollHeight <= intro.clientHeight + 2) { intro.classList.remove('clamp'); intro.classList.add('noclamp'); return; }
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'static-cat-more';
@@ -3158,6 +3457,7 @@ function _syncStaticCat() {
   btn.textContent = __LANG === 'en' ? 'Read more' : 'Leer más';
   btn.addEventListener('click', () => {
     const open = intro.classList.toggle('clamp') === false;
+    intro.classList.toggle('noclamp', open);
     btn.setAttribute('aria-expanded', String(open));
     btn.textContent = open ? (__LANG === 'en' ? 'Read less' : 'Leer menos') : (__LANG === 'en' ? 'Read more' : 'Leer más');
   });
@@ -3735,22 +4035,40 @@ function _openReviewForm() {
 (function(){
   const emailInput = document.getElementById('coEmail');
   if (!emailInput) return;
-  let _leadSent = false;
-  emailInput.addEventListener('blur', () => {
-    const email = emailInput.value.trim();
-    if (_leadSent || !email || !email.includes('@') || !cart.length) return;
-    _leadSent = true;
-    const cartData = cart.map(i => ({ name: i.name + (i.qty > 1 ? ' ×' + i.qty : ''), price: i.price * (i.qty || 1) }));
-    const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-    registerLead(email, 'cart_checkout_start', cartData, total);
-  });
+  const remindBox = document.getElementById('coRemind');
+  const EMAIL_OK = /^[^\s@<>"',;:\\]+@[^\s@<>"',;:\\]+\.[a-z]{2,}$/i;
+  // Consentimiento (wave 1, auditoría): el email + el carrito se mandan a /lead/register
+  // (carrito abandonado del panel) SOLO si la clienta marcó "Te podemos enviar un
+  // recordatorio…" (#coRemind, desmarcado por defecto) — antes se mandaban al salir del
+  // campo de email aunque la casilla estuviera desmarcada. Si la marca después de escribir
+  // el email, se registra en ese momento; si la desmarca, se cancela (mismo criterio que
+  // /cart/pending más abajo, que manda remind:false para borrar lo guardado).
+  let _leadSent = null; // email registrado en esta sesión de checkout
+  function syncLead() {
+    const email = emailInput.value.trim().toLowerCase();
+    const ok = !!remindBox && remindBox.checked && email.length <= 100 && EMAIL_OK.test(email) && cart.length > 0;
+    if (ok && _leadSent !== email) {
+      _leadSent = email;
+      const cartData = cart.map(i => ({ name: i.name + (i.qty > 1 ? ' ×' + i.qty : ''), price: i.price * (i.qty || 1) }));
+      const total = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+      registerLead(email, 'cart_checkout_start', cartData, total);
+    } else if (!ok && _leadSent && remindBox && !remindBox.checked) {
+      const prev = _leadSent;
+      _leadSent = null;
+      if (_abandonLeadEmail === prev) _abandonLeadEmail = null;
+      fetch(ADMIN_WORKER_URL + '/lead/cancel', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true,
+        body: JSON.stringify({ email: prev }),
+      }).catch(() => {});
+    }
+  }
+  emailInput.addEventListener('blur', syncLead);
+  if (remindBox) remindBox.addEventListener('change', syncLead);
   // Carrito pendiente para UN recordatorio por correo (nov) — solo con el permiso marcado
   // (#coRemind, desmarcado por defecto). Nunca por tecla: al salir del campo de email o al
   // cambiar el permiso, con debounce, y como mucho 3 veces por sesión (solo si cambió el
   // email, el carrito o el permiso). Manda solo email, idioma e ids + cantidades.
-  const remindBox = document.getElementById('coRemind');
   if (!remindBox) return;
-  const EMAIL_OK = /^[^\s@<>"',;:\\]+@[^\s@<>"',;:\\]+\.[a-z]{2,}$/i;
   let timer = null, lastSig = '', sends = 0, stored = false;
   function sendPending() {
     timer = null;
