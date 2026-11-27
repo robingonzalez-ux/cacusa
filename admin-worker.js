@@ -2703,7 +2703,7 @@ async function handleStockHistory(body, env, origin) {
 // escrituras/día en el peor caso, nunca una por visita.
 const REVIEWS_PUB_KEY = 'reviews_pub';
 const REVIEWS_PUB_MAX_AGE_MS = 60 * 60 * 1000;
-const REVIEWS_PUB_ITEMS_MAX = 20;
+const REVIEWS_PUB_ITEMS_MAX = 200; // el CI calcula reviewCount con items.length: no recortar de menos
 const REVIEW_NAME_MAX = 60;
 const REVIEW_COMMENT_MAX = 1000;
 const REVIEW_IP_PER_HOUR = 3;
