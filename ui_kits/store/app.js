@@ -587,7 +587,8 @@ function _withSurcharge(base) { return Math.round(base * 1.04 * 100) / 100; }
 function _staticSurcharges() {
   const ld = {};
   document.querySelectorAll('script[type="application/ld+json"]').forEach(el => {
-    if (el.id === 'ld-product') return; // el que arma este mismo JS, no el horneado
+    // Se llama una sola vez, antes de que este JS reescriba #ld-product: en la página física de
+    // un producto ese bloque es justamente el horneado por CI (generate_product_pages.py).
     let d; try { d = JSON.parse(el.textContent); } catch (_) { return; }
     (Array.isArray(d && d['@graph']) ? d['@graph'] : [d]).forEach(n => {
       if (n && n['@type'] === 'Product' && n.sku != null && n.offers && n.offers.price != null) ld[String(n.sku)] = Number(n.offers.price);
