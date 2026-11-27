@@ -568,6 +568,28 @@ async function redeemGiftCardViaAdmin(code, amountCents, env) {
 // ese aviso de un pago ya procesado respondía 500 y Square lo reintentaba.
 const SQPROC_TTL_SECONDS = 400 * 24 * 60 * 60;
 
+// Reembolsos (wave 1): Square manda payment.updated (status sigue COMPLETED) con refunded_money
+// cuando se reembolsa un pago — antes se ignoraba. Ahora se avisa a cacusa-admin para que el pedido
+// quede "reembolsado" (total) o con el monto reembolsado (parcial) y no cuente como venta cobrada.
+// Best-effort: si cacusa-admin todavía no tiene la ruta (Worker viejo) o falla, se avisa por push
+// una vez para marcarlo a mano; nunca se responde 500 por esto (Square reintentaría para siempre).
+async function reportRefundToAdmin(env, orderId, refundedCents, paidCents) {
+  if (orderId == null || !/^\d{1,20}$/.test(String(orderId)) || !env.ORDER_INGEST_KEY) return false;
+  try {
+    const r = await adminFetch(env, '/internal/order/refund', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Order-Ingest-Key': env.ORDER_INGEST_KEY },
+      body: JSON.stringify({ id: String(orderId), refundedCents, paidCents }),
+    });
+    if (!r.ok) console.error('admin /internal/order/refund respondió', r.status);
+    return r.ok;
+  } catch (e) { console.error('reembolso → admin falló:', e.message); return false; }
+}
+function paymentRefundCents(payment) {
+  const n = Number(payment && payment.refunded_money && payment.refunded_money.amount);
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
 // ── Webhook: Square confirma que el pago se completó ─────────────────────────
 async function handleWebhook(request, env) {
   const rawBody = await request.text();
@@ -641,13 +663,31 @@ async function handleWebhook(request, env) {
       // reintenta hasta 24h — con el sqproc: durable de más abajo, hay margen real
       // para notarlo en vez de responder 200 a ciegas).
       const wasProcessed = await env.CACUSA_KV.get(`sqproc:${referenceId}`);
-      if (wasProcessed) return new Response('OK', { status: 200 });
+      if (wasProcessed) {
+        // Desde wave 1 el marcador guarda el id del pedido en cacusa-admin (antes '1'): así un
+        // reembolso que llega después de los 30 días de pending_order igual se puede marcar.
+        const refunded = paymentRefundCents(payment);
+        if (refunded > 0 && /^\d+$/.test(wasProcessed)) await reportRefundToAdmin(env, wasProcessed, refunded, payment.amount_money?.amount);
+        return new Response('OK', { status: 200 });
+      }
       console.warn('No se encontró pedido pendiente ni marcador de procesado para reference_id:', referenceId);
       return new Response('Internal Error', { status: 500 });
     }
     const pending = JSON.parse(raw);
     if (pending.processed) {
-      return new Response('OK', { status: 200 }); // ya procesado — reintento de Square, ignorar
+      // Ya procesado: o es un reintento de Square (nada que hacer) o es el aviso de un reembolso.
+      const refunded = paymentRefundCents(payment);
+      if (refunded > 0 && pending.refundReported !== refunded && pending.refundNotified !== refunded) {
+        if (await reportRefundToAdmin(env, pending.adminOrderId, refunded, payment.amount_money?.amount)) {
+          pending.refundReported = refunded;
+        } else {
+          pending.refundNotified = refunded;
+          await notifyAdminPush('CACUSA · Reembolso en Square',
+            `Square reembolsó $${(refunded / 100).toFixed(2)} de un pago de la tienda (pedido ${pending.adminOrderId || referenceId}). Márcalo como reembolsado en el panel.`, env);
+        }
+        await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
+      }
+      return new Response('OK', { status: 200 });
     }
 
     // Auditoría externa (22 sep, S05): antes esto confiaba en `payment.status ===
@@ -707,7 +747,7 @@ async function handleWebhook(request, env) {
 
     pending.processed = true;
     await env.CACUSA_KV.put(kvKey, JSON.stringify(pending), { expirationTtl: PENDING_TTL_SECONDS });
-    await env.CACUSA_KV.put(`sqproc:${referenceId}`, '1', { expirationTtl: SQPROC_TTL_SECONDS });
+    await env.CACUSA_KV.put(`sqproc:${referenceId}`, pending.adminOrderId != null ? String(pending.adminOrderId) : '1', { expirationTtl: SQPROC_TTL_SECONDS });
 
     return new Response('OK', { status: 200 });
   } catch (e) {
