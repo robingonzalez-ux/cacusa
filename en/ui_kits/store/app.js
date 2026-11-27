@@ -1593,12 +1593,41 @@ function trapFocus(modalEl, onClose) {
     else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   }
   document.addEventListener('keydown', onKeydown);
-  // Diferido: el overlay recién pasa a visible en este ciclo y un elemento oculto no acepta foco
-  setTimeout(() => { const items = getFocusable(); if (items.length && !modalEl.contains(document.activeElement)) items[0].focus(); }, 0);
+  // Foco adentro de inmediato (wave 1): antes se movía en un setTimeout(0) mientras el overlay
+  // seguía en transición (visibility todavía hidden) y el foco quedaba afuera. Ahora el CSS
+  // hace visible el overlay en el acto (.open → visibility sin retardo), se fuerza el cálculo de
+  // estilos y se enfoca ya; si aún no se pudo, se reintenta en el próximo frame.
+  function focusFirst() {
+    if (modalEl.contains(document.activeElement)) return true;
+    const items = getFocusable();
+    if (!items.length) return false;
+    const el = items[0];
+    // Los controles con "transition:all" heredan la visibilidad del overlay CON su propia
+    // transición y siguen "hidden" unos ms (no aceptan foco): se corta esa transición.
+    const prevT = el.style.transition;
+    el.style.transition = 'none';
+    void el.offsetWidth;
+    try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
+    el.style.transition = prevT;
+    return modalEl.contains(document.activeElement);
+  }
+  void modalEl.offsetWidth;
+  if (!focusFirst()) requestAnimationFrame(() => { if (!focusFirst()) setTimeout(focusFirst, 450); });
   return function release(){
     document.removeEventListener('keydown', onKeydown);
     const _i = _trapStack.indexOf(_token); if (_i !== -1) _trapStack.splice(_i, 1);
-    if (_prevFocused && _prevFocused.focus) _prevFocused.focus();
+    // Devolver el foco a quien abrió el overlay; si no hay uno válido (p. ej. el modal que se
+    // abre solo en la página estática de un producto), al h1 / main en vez de perderlo en <body>.
+    const ok = _prevFocused && _prevFocused !== document.body && _prevFocused.isConnected &&
+      typeof _prevFocused.focus === 'function' && _prevFocused.getClientRects().length > 0;
+    if (ok) { try { _prevFocused.focus({ preventScroll: true }); } catch (_) { _prevFocused.focus(); } }
+    if (!ok || document.activeElement !== _prevFocused) {
+      const h = document.querySelector('main h1') || document.getElementById('main');
+      if (h) {
+        if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1');
+        try { h.focus({ preventScroll: true }); } catch (_) { h.focus(); }
+      }
+    }
   };
 }
 let _modalReleaseTrap = null, _cartReleaseTrap = null, _checkoutReleaseTrap = null;

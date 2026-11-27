@@ -108,7 +108,7 @@ footer a:focus-visible,#story a:focus-visible,#vignette .vig-close:focus-visible
 @keyframes ldB{to{transform:scaleX(1)}}
 
 /* ── TICKER ────────────────────────────────────────── */
-#ticker{height:38px;overflow:hidden;display:flex;align-items:center;background:var(--pink);position:relative;z-index:600}
+#ticker{height:38px;overflow:hidden;display:flex;align-items:center;background:var(--pink-deep);position:relative;z-index:600}
 .t-track{display:flex;animation:tScroll 28s linear infinite;white-space:nowrap}
 .t-item{font-family:var(--fu);font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:white;padding:0 36px;display:flex;align-items:center;gap:10px}
 .t-dot{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.5);flex-shrink:0}
@@ -282,7 +282,7 @@ html.sr .sr-rise.sr-in{opacity:1;transform:none}
 /* ── FRASE (revelado por palabra al hacer scroll, taglineReveal) ── */
 #tagline{background:var(--pearl);padding:40px 0 104px}
 .tl-text{font-family:var(--fd);font-weight:700;font-size:clamp(34px,5.4vw,72px);line-height:1.12;letter-spacing:-.01em;color:var(--ink);text-align:center;max-width:1000px;margin:0 auto;text-wrap:balance}
-.tl-words.tl-on .tl-w{opacity:.3;transition:opacity .6s var(--ease-out)}
+.tl-words.tl-on .tl-w{opacity:.6;transition:opacity .6s var(--ease-out)}
 .tl-words.tl-on .tl-w.lit{opacity:1}
 @media (prefers-reduced-motion: reduce){.tl-words .tl-w{opacity:1!important;transition:none!important}}
 @media(max-width:768px){#tagline{padding:16px 0 56px}}
@@ -419,7 +419,7 @@ footer{background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--g
 .lang-sw button{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:rgba(139,42,90,.8);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s var(--ease-out);letter-spacing:.04em}
 nav.scrolled .lang-sw button{color:var(--ink-muted)}
 .lang-sw button.on{background:white;color:var(--ink);box-shadow:0 0 0 1px rgba(139,42,90,.18)}
-nav.scrolled .lang-sw button.on{background:var(--pink);color:white}
+nav.scrolled .lang-sw button.on{background:var(--pink-deep);color:white}
 
 /* ════════════════════════════════════════════════════════════
    MOBILE — solo afecta pantallas ≤ 820px (escritorio sin cambios)
