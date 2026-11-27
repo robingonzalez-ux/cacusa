@@ -1731,7 +1731,29 @@ cntEls.forEach(el=>cntObs.observe(el));
 // (las reseñas anteriores a la moderación no tienen el campo). Solo se muestra el primer nombre.
 // Con menos de 3 reseñas la sección queda oculta; los testimonios escritos a mano ya no se usan.
 const HOME_REVIEWS_URL = 'https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews.json';
-const _homeReviewsP = fetch(HOME_REVIEWS_URL).then(r => r.ok ? r.json() : null).catch(() => null);
+// Wave 1: primero el Worker (/pub/reviews, solo aprobadas); si no responde en 4 s o no tiene la
+// ruta todavía, la lectura de Firebase de antes. Se convierte a la misma forma {id: {clave: reseña}}.
+const HOME_PUB_REVIEWS_URL = 'https://cacusa-admin.facturacioncacusa.workers.dev/pub/reviews';
+const _homeReviewsFb = () => fetch(HOME_REVIEWS_URL).then(r => r.ok ? r.json() : null).catch(() => null);
+const _homeReviewsP = (() => {
+  const ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+  const t = ctrl ? setTimeout(() => ctrl.abort(), 4000) : null;
+  return fetch(HOME_PUB_REVIEWS_URL, ctrl ? { signal: ctrl.signal } : undefined)
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      const by = d && d.ok && d.byProduct && typeof d.byProduct === 'object' && !Array.isArray(d.byProduct) ? d.byProduct : null;
+      if (!by) return _homeReviewsFb();
+      const out = {};
+      Object.entries(by).forEach(([pid, e]) => {
+        const items = e && Array.isArray(e.items) ? e.items : [];
+        out[pid] = {};
+        items.forEach((v, i) => { if (v && typeof v === 'object') out[pid]['w' + i] = Object.assign({}, v, { approved: true }); });
+      });
+      return out;
+    })
+    .catch(() => _homeReviewsFb())
+    .finally(() => { if (t) clearTimeout(t); });
+})();
 // 'YYYY-MM-DD' → "3 de diciembre de 2026" / "December 3, 2026" (fecha local: new Date(y, m-1, d)).
 function _homeReviewDate(raw, en){
   const iso = typeof raw === 'string' ? raw.slice(0, 10) : '';
