@@ -244,8 +244,9 @@ async function getKvValue(env, key) {
 // `stock_soldout` NO se respalda: es una lista derivada que /stock/list reconstruye sola.
 // También `identify:refs` (huellas de las fotos reales para "Identificar por foto"; una
 // sola llave): se podrían volver a tomar, pero cuesta tiempo. No hay fotos, solo números.
+// 27 nov: `admin_costs` (costo privado de cada pieza + margen; una sola llave).
 async function exportKv(env) {
-  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs] = await Promise.all([
+  const [orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs, adminCosts] = await Promise.all([
     listKvPrefix(env, 'order:'),
     listKvPrefix(env, 'gc:'),
     listKvPrefix(env, 'coupon:'),
@@ -263,8 +264,9 @@ async function exportKv(env) {
     getKvValue(env, 'surcharges'),
     getKvValue(env, 'markets'),
     getKvValue(env, 'identify:refs'),
+    getKvValue(env, 'admin_costs'),
   ]);
-  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs };
+  return { orders, giftcards, coupons, webauthnCredentials, leads, loversShipIndex, couponUsage, uspsLabels, loversLote, loversShipInvoice, loversInvoices, mktUnsub, mktCampaigns, stock, surcharges, markets, identifyRefs, adminCosts };
 }
 
 function backupKey(iso, trigger) {

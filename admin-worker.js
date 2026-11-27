@@ -64,6 +64,9 @@
  *                                   La misma llave activa la segunda opinión del identificador por
  *                                   foto (/identify/rerank, solo cuando duda, ~$0.0002, tope 150/día).
  *                                   Y la traducción ES→EN de fichas (/product/translate, ~$0.0001, tope 200/día).
+ *                                   Ingreso de inventario: leer la factura del proveedor (/product/invoice,
+ *                                   ~$0.0007, tope 30/día) y contar unidades en una foto (/product/count,
+ *                                   ~$0.0002, tope 100/día).
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -462,6 +465,10 @@ export default {
       if (path.endsWith('/product/describe'))   return await handleProductDescribe(body, env, allowOrigin);
       if (path.endsWith('/identify/rerank'))    return await handleIdentifyRerank(body, env, allowOrigin);
       if (path.endsWith('/product/translate'))  return await handleProductTranslate(body, env, allowOrigin);
+      if (path.endsWith('/product/invoice'))    return await handleProductInvoice(body, env, allowOrigin);
+      if (path.endsWith('/product/count'))      return await handleProductCount(body, env, allowOrigin);
+      if (path.endsWith('/cost/list'))          return await handleCostList(env, allowOrigin);
+      if (path.endsWith('/cost/set'))           return await handleCostSet(body, env, allowOrigin, session);
       if (path.endsWith('/stock/list'))       return await handleStockList(env, allowOrigin);
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
@@ -678,8 +685,20 @@ async function handleSave(body, env, origin, session, ctx) {
     return ok({ ok: true }, origin);
   }
 
+  // (27 nov) El costo es privado (KV admin_costs): si un panel viejo o un error lo mete en un
+  // producto, se quita antes de publicar data/products.json (público).
+  let outContent = content;
+  if (path === PRODUCTS_PATH && /"(cost|costCurrency)"\s*:/.test(content)) {
+    try {
+      const data = JSON.parse(content);
+      const list = Array.isArray(data) ? data : (data && Array.isArray(data.products) ? data.products : []);
+      let stripped = 0;
+      for (const p of list) if (p && typeof p === 'object') for (const k of ['cost', 'costCurrency']) if (k in p) { delete p[k]; stripped++; }
+      if (stripped) { outContent = JSON.stringify(data, null, 2); console.warn('save: se quitaron', stripped, 'campos de costo del catálogo público'); }
+    } catch (_) {}
+  }
   const cur = await ghGetContent(path, env);
-  const res = await ghPut(path, b64encode(content), cur ? cur.sha : null, message || `[admin] ${session.user}`, env);
+  const res = await ghPut(path, b64encode(outContent), cur ? cur.sha : null, message || `[admin] ${session.user}`, env);
 
   // Notificar al servidor local (ngrok) para sincronizar Excel + POS — fire-and-forget,
   // pero avisa por push si falla. Antes esto se tragaba cualquier error en silencio: si
@@ -1978,6 +1997,220 @@ async function handleProductTranslate(body, env, origin) {
   if (name) out.name_en = stripColorEmoji(parsed.name_en, 120);
   if (description) out.description_en = stripColorEmoji(parsed.description_en, 1200);
   return ok(out, origin);
+}
+
+// ── Ingreso de inventario con foto (27 nov): factura del proveedor y conteo de unidades ──
+// Mismo patrón que /product/describe: Claude Haiku 5.5, sin thinking, effort low, salida
+// json_schema, una sola imagen chica que achica el panel, tope diario en la DO (rateLimit,
+// nunca KV) contado ANTES de llamar. Nunca escriben nada: el panel muestra el resultado y la
+// persona confirma (costo y stock se guardan después por /cost/set y /stock/set).
+// Precios Haiku 5.5: US$ 0,10 / 0,50 por millón de tokens de entrada / salida; imagen ≈
+// ancho × alto / 750 tokens.
+//   /product/invoice: foto ≤ 600 KB (~1.600 px → ~2.500 tokens) + ~250 de texto + ~600 de
+//     salida (20 líneas) ≈ US$ 0,0006; peor caso (max_tokens 2.000) ≈ US$ 0,0013. Tope 30/día.
+//   /product/count:   foto ≤ 300 KB (~1.000 px → ~1.300 tokens) + ~200 de texto + ~80 de
+//     salida ≈ US$ 0,0002. Tope 100/día.
+const INVENTORY_MODEL = 'claude-haiku-5-5';
+const INVOICE_DAILY_MAX = 30;
+const INVOICE_MAX_BYTES = 600 * 1024;
+const INVOICE_MAX_LINES = 60;
+const COUNT_DAILY_MAX = 100;
+const COUNT_MAX_BYTES = 300 * 1024;
+const INVOICE_SYSTEM = [
+  'Lees facturas, notas de venta o listas de pedido de proveedores de una joyería artesanal (CACUSA by Taitus, Ecuador y EE.UU.). La foto puede estar torcida, con sombras o escrita a mano.',
+  'Devuelve una línea por cada producto comprado: description (texto de la línea tal como aparece, corto), quantity (unidades, entero), unit_cost (costo por UNIDAD, número sin símbolo; si solo aparece el total de la línea, divídelo por la cantidad) y currency (código ISO de 3 letras; USD si no se indica).',
+  'No incluyas subtotales, impuestos, envío, descuentos generales ni totales. Si una línea no se puede leer, omítela. No inventes líneas ni precios. Nunca uses emojis.',
+].join('\n');
+const COUNT_SYSTEM = [
+  'Cuentas unidades de joyería en una foto tomada con el teléfono en el taller (aretes, anillos, dijes, cadenas, pulseras sobre una mesa o en bolsitas).',
+  'Cuenta cuántas unidades vendibles hay. Un par de aretes cuenta como 1 unidad. Si te dicen qué pieza contar, cuenta solo esa. Agrupa por color o tono visible (por ejemplo dorado, plateado, rosado, verde) en by_color; la suma de by_color debe ser igual a count.',
+  'Si no se puede contar con seguridad, da tu mejor estimación honesta. Nunca uses emojis.',
+].join('\n');
+
+// base64 (con o sin prefijo data:) → bloque de imagen para la API, o { error }.
+function inventoryImage(raw, mediaTypeIn, maxBytes) {
+  let image = typeof raw === 'string' ? raw.trim() : '';
+  const m = /^data:([a-z/+-]+);base64,/i.exec(image);
+  if (m) image = image.slice(m[0].length);
+  image = image.replace(/\s+/g, '');
+  const mediaType = String(mediaTypeIn || (m ? m[1] : '') || 'image/jpeg').toLowerCase();
+  if (!image) return { error: 'Falta la foto' };
+  if (!DESCRIBE_MEDIA_TYPES.has(mediaType)) return { error: 'Formato de foto no soportado (usa JPEG, PNG o WebP)' };
+  const size = base64DecodedSize(image);
+  if (size == null) return { error: 'La foto no es un base64 válido' };
+  if (size > maxBytes) return { error: `La foto es demasiado grande (máximo ${Math.round(maxBytes / 1024)} KB)` };
+  return { block: { type: 'image', source: { type: 'base64', media_type: mediaType, data: image } } };
+}
+
+// Llama a Haiku con salida json_schema. → { parsed, usage } o { error, status }.
+async function inventoryAsk(env, { system, content, schema, maxTokens, timeoutMs, tag }) {
+  const payload = {
+    model: INVENTORY_MODEL,
+    max_tokens: maxTokens,
+    thinking: { type: 'disabled' },
+    output_config: { effort: 'low', format: { type: 'json_schema', schema } },
+    system,
+    messages: [{ role: 'user', content }],
+  };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let data;
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2026-10-21' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    });
+    if (!r.ok) {
+      let detail = '';
+      try { const j = await r.json(); detail = String((j && j.error && j.error.type) || ''); } catch (_) {}
+      console.error(tag + ': API de Claude respondió', r.status, detail);
+      return { error: `La IA respondió con un error (HTTP ${r.status}). Intenta de nuevo.`, status: 502 };
+    }
+    data = await r.json();
+  } catch (e) {
+    if (e && e.name === 'AbortError') return { error: 'La IA tardó demasiado en responder. Intenta de nuevo.', status: 504 };
+    console.error(tag + ': fallo de red con la API de Claude:', e && e.message);
+    return { error: 'No se pudo contactar a la IA. Intenta de nuevo en un momento.', status: 502 };
+  } finally {
+    clearTimeout(timer);
+  }
+  if (data && data.stop_reason === 'refusal') return { error: 'La IA no pudo leer esta foto.', status: 502 };
+  if (data && data.stop_reason === 'max_tokens') return { error: 'La respuesta de la IA quedó incompleta. Prueba con una foto de menos líneas.', status: 502 };
+  const textBlock = Array.isArray(data && data.content) ? data.content.find((b) => b && b.type === 'text') : null;
+  let parsed;
+  try { parsed = JSON.parse(textBlock ? textBlock.text : ''); } catch (_) { parsed = null; }
+  if (!parsed || typeof parsed !== 'object') return { error: 'La respuesta de la IA no se pudo leer. Intenta de nuevo.', status: 502 };
+  const u = (data && data.usage) || {};
+  return { parsed, usage: { input: Number(u.input_tokens) || 0, output: Number(u.output_tokens) || 0 } };
+}
+
+function clampInt(v, lo, hi) { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo; }
+function cleanCurrency(v) { const c = String(v || '').trim().toUpperCase(); return /^[A-Z]{3}$/.test(c) ? c : 'USD'; }
+
+// POST /product/invoice { token, image (base64, ≤ 600 KB), mediaType }
+//   → { ok, lines: [{ description, quantity, unit_cost, currency }], usage }
+async function handleProductInvoice(body, env, origin) {
+  const img = inventoryImage(body.image, body.mediaType, INVOICE_MAX_BYTES);
+  if (img.error) return err(img.error, 400, origin);
+  if (!env.ANTHROPIC_API_KEY) return err('Leer facturas con IA no está activado (falta ANTHROPIC_API_KEY en el Worker).', 503, origin);
+  if (!(await rateLimit(env, 'invoice', 'all', INVOICE_DAILY_MAX, 86400))) {
+    return err(`Se alcanzó el límite de ${INVOICE_DAILY_MAX} facturas leídas con IA de hoy. Mañana se reinicia; mientras tanto escribe el costo a mano.`, 429, origin);
+  }
+  const res = await inventoryAsk(env, {
+    system: INVOICE_SYSTEM, maxTokens: 2000, timeoutMs: 40_000, tag: 'invoice',
+    content: [img.block, { type: 'text', text: 'Extrae las líneas de productos de esta factura.' }],
+    schema: {
+      type: 'object',
+      properties: { lines: { type: 'array', items: { type: 'object', properties: {
+        description: { type: 'string' }, quantity: { type: 'integer' }, unit_cost: { type: 'number' }, currency: { type: 'string' },
+      }, required: ['description', 'quantity', 'unit_cost', 'currency'], additionalProperties: false } } },
+      required: ['lines'], additionalProperties: false,
+    },
+  });
+  if (res.error) return err(res.error, res.status, origin);
+  const lines = (Array.isArray(res.parsed.lines) ? res.parsed.lines : []).slice(0, INVOICE_MAX_LINES).map((l) => ({
+    description: stripColorEmoji(l && l.description, 120),
+    quantity: clampInt(l && l.quantity, 0, 9999),
+    unit_cost: Math.round(Math.min(100000, Math.max(0, Number(l && l.unit_cost) || 0)) * 100) / 100,
+    currency: cleanCurrency(l && l.currency),
+  })).filter((l) => l.description);
+  return ok({ ok: true, lines, model: INVENTORY_MODEL, usage: res.usage }, origin);
+}
+
+// POST /product/count { token, image (base64, ≤ 300 KB), mediaType, hint? (qué pieza contar) }
+//   → { ok, count, by_color: [{ color, count }], usage }
+async function handleProductCount(body, env, origin) {
+  const img = inventoryImage(body.image, body.mediaType, COUNT_MAX_BYTES);
+  if (img.error) return err(img.error, 400, origin);
+  if (!env.ANTHROPIC_API_KEY) return err('Contar con IA no está activado (falta ANTHROPIC_API_KEY en el Worker).', 503, origin);
+  const hint = stripColorEmoji(body.hint, 80);
+  if (!(await rateLimit(env, 'count', 'all', COUNT_DAILY_MAX, 86400))) {
+    return err(`Se alcanzó el límite de ${COUNT_DAILY_MAX} conteos con IA de hoy. Mañana se reinicia; mientras tanto cuéntalas a mano.`, 429, origin);
+  }
+  const res = await inventoryAsk(env, {
+    system: COUNT_SYSTEM, maxTokens: 300, timeoutMs: 25_000, tag: 'count',
+    content: [img.block, { type: 'text', text: (hint ? `Pieza a contar: ${hint}.\n` : '') + 'Cuenta las unidades de la foto.' }],
+    schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'integer' },
+        by_color: { type: 'array', items: { type: 'object', properties: { color: { type: 'string' }, count: { type: 'integer' } }, required: ['color', 'count'], additionalProperties: false } },
+      },
+      required: ['count', 'by_color'], additionalProperties: false,
+    },
+  });
+  if (res.error) return err(res.error, res.status, origin);
+  const by_color = (Array.isArray(res.parsed.by_color) ? res.parsed.by_color : []).slice(0, 12)
+    .map((c) => ({ color: stripColorEmoji(c && c.color, 30), count: clampInt(c && c.count, 0, 9999) }))
+    .filter((c) => c.color && c.count > 0);
+  return ok({ ok: true, count: clampInt(res.parsed.count, 0, 9999), by_color, model: INVENTORY_MODEL, usage: res.usage }, origin);
+}
+
+// ── Costo de cada pieza (27 nov): PRIVADO, en KV (una sola llave `admin_costs`), nunca en
+// data/products.json (que es público). Como el stock, se guarda al instante sin "Publicar".
+// { costs: { id: { c: número, cur: 'USD', at } }, margin: número, updatedAt }.
+// Una sola llave = 1 lectura para todo el panel y 1 escritura por guardado (plan gratis).
+// Acepta ids de productos todavía sin publicar (formato válido) a propósito: el costo se
+// carga en el ingreso por lote antes de publicar. cacusa-backup respalda esta llave.
+const COSTS_KEY = 'admin_costs';
+const COSTS_MAX_ENTRIES = 5000;
+const COST_MAX = 100000;
+const MARGIN_DEFAULT = 3;
+async function costsRead(env) {
+  let d = null;
+  try { d = JSON.parse(await env.CACUSA_KV.get(COSTS_KEY)); } catch (_) { d = null; }
+  if (!d || typeof d !== 'object' || !d.costs || typeof d.costs !== 'object') d = { costs: {} };
+  return d;
+}
+function costsPublic(d) {
+  const costs = {};
+  for (const [id, v] of Object.entries(d.costs || {})) if (v && Number.isFinite(v.c)) costs[id] = { cost: v.c, currency: v.cur || 'USD' };
+  const margin = Number(d.margin);
+  return { costs, margin: margin >= 1 && margin <= 20 ? margin : MARGIN_DEFAULT };
+}
+// POST /cost/list (sesión) → { ok, costs: { id: { cost, currency } }, margin }
+async function handleCostList(env, origin) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  return ok({ ok: true, ...costsPublic(await costsRead(env)) }, origin);
+}
+// POST /cost/set (sesión) { items: [{ id, cost (número o null = borrar), currency? }] (máx. 100)
+//   | id, cost, currency | margin } → { ok, costs, margin }
+async function handleCostSet(body, env, origin, session) {
+  if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  const items = Array.isArray(body.items) ? body.items : (body.id != null ? [{ id: body.id, cost: body.cost, currency: body.currency }] : []);
+  if (items.length > 100) return err('Máximo 100 costos por vez', 400, origin);
+  const hasMargin = body.margin !== undefined;
+  if (!items.length && !hasMargin) return err('Nada para guardar', 400, origin);
+  const clean = [];
+  for (const it of items) {
+    const id = it && it.id != null ? String(it.id) : '';
+    if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err('Id de producto inválido', 400, origin);
+    if (it.cost === null || it.cost === '') { clean.push({ id, del: true }); continue; }
+    const c = Number(it.cost);
+    if (!Number.isFinite(c) || c < 0 || c > COST_MAX) return err(`El costo debe ser un número entre 0 y ${COST_MAX}`, 400, origin);
+    clean.push({ id, c: Math.round(c * 100) / 100, cur: cleanCurrency(it.currency) });
+  }
+  let margin;
+  if (hasMargin) {
+    margin = Number(body.margin);
+    if (!Number.isFinite(margin) || margin < 1 || margin > 20) return err('El margen debe estar entre 1 y 20', 400, origin);
+    margin = Math.round(margin * 100) / 100;
+  }
+  const d = await costsRead(env);
+  for (const x of clean) {
+    if (x.del) { delete d.costs[x.id]; continue; }
+    if (!d.costs[x.id] && Object.keys(d.costs).length >= COSTS_MAX_ENTRIES) return err('Se alcanzó el máximo de costos guardados', 400, origin);
+    d.costs[x.id] = { c: x.c, cur: x.cur, at: new Date().toISOString() };
+  }
+  if (hasMargin) d.margin = margin;
+  d.updatedAt = new Date().toISOString();
+  const txt = JSON.stringify(d);
+  try { await env.CACUSA_KV.put(COSTS_KEY, txt); }
+  catch (e) { await new Promise((r) => setTimeout(r, 1100)); await env.CACUSA_KV.put(COSTS_KEY, txt); } // 1 escritura/s por llave
+  console.log('cost/set', clean.length, hasMargin ? 'margen ' + margin : '', 'por', session.user);
+  return ok({ ok: true, ...costsPublic(d) }, origin);
 }
 
 async function handleIdentifyRefAdd(body, env, origin) {
