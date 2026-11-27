@@ -67,6 +67,11 @@
  *                                   Ingreso de inventario: leer la factura del proveedor (/product/invoice,
  *                                   ~$0.0007, tope 30/día) y contar unidades en una foto (/product/count,
  *                                   ~$0.0002, tope 100/día).
+ *   FB_DB_SECRET          (secret)  Wave 1 (reseñas): MISMO valor que ya tienen cacusa-lovers-webhook y
+ *                                   cacusa-backup. Lo usan /review/submit, /pub/reviews, /reviews/list
+ *                                   y /reviews/moderate. Sin él, esas rutas responden 503 y el resto
+ *                                   del Worker funciona igual.
+ *   FB_DB_URL             (text)    Opcional (default https://cacusa-pos-default-rtdb.firebaseio.com).
  *
  * Generar una guía real además exige que la cuenta de USPS tenga: (a) aprobación
  * para la Labels API específicamente (Developer Portal, aparte del registro básico
@@ -159,6 +164,12 @@ export default {
     if (path.endsWith('/pub/stock') && (request.method === 'GET' || request.method === 'POST')) {
       try { return await handlePubStock(env, allowOrigin); }
       catch (e) { console.error('pub/stock:', e.message); return err('Error del servidor', 500, allowOrigin); }
+    }
+    // Reseñas aprobadas para la tienda (wave 1): GET o POST, sin sesión, cacheable 300 s. Sale de
+    // una copia en KV (reviews_pub) que se rehace al moderar — nunca toca Firebase por visita.
+    if (path.endsWith('/pub/reviews') && (request.method === 'GET' || request.method === 'POST')) {
+      try { return await handlePubReviews(env, allowOrigin); }
+      catch (e) { console.error('pub/reviews:', e.message); return err('Error del servidor', 500, allowOrigin); }
     }
     if (request.method !== 'POST') return err('Method not allowed', 405, allowOrigin);
     // Base de los links de baja: el mismo Worker que atiende esta request.
@@ -305,6 +316,14 @@ export default {
       if (path.endsWith('/lovers/confirm')) {
         if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
         return await handleLoversConfirm(body, env, allowOrigin, request);
+      }
+
+      // Reseña nueva desde la tienda (wave 1): antes el navegador escribía directo a Firebase
+      // (regla pública de solo-crear). Ahora pasa por acá: Origin + rateLimit (3/h por IP y tope
+      // diario global), producto validado contra el catálogo y texto saneado. Nace approved:false.
+      if (path.endsWith('/review/submit')) {
+        if (!ORIGIN_ALLOWLIST.includes(origin)) return err('No permitido', 403, allowOrigin);
+        return await handleReviewSubmit(body, env, allowOrigin, request);
       }
 
       // Cupones — validación pública (origin-restringida, rate-limited)
@@ -479,6 +498,8 @@ export default {
       if (path.endsWith('/stock/set'))        return await handleStockSet(body, env, allowOrigin, session);
       if (path.endsWith('/stock/adjust'))     return await handleStockAdjust(body, env, allowOrigin, session);
       if (path.endsWith('/stock/history'))    return await handleStockHistory(body, env, allowOrigin);
+      if (path.endsWith('/reviews/list'))     return await handleReviewsList(body, env, allowOrigin);
+      if (path.endsWith('/reviews/moderate')) return await handleReviewsModerate(body, env, allowOrigin, session);
       if (path.endsWith('/upload'))    return await handleUpload(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/create'))     return await handleGcCreate(body, env, allowOrigin, session);
       if (path.endsWith('/giftcard/list'))       return await handleGcList(env, allowOrigin);
@@ -2666,6 +2687,161 @@ async function handleStockHistory(body, env, origin) {
   catch (e) { console.error('stock history:', e.message); return err('No se pudo leer el historial', 502, origin); }
   if (!d) return ok({ ok: true, id, items: [], unavailable: true }, origin);
   return ok({ ok: true, id, items: d.items || [] }, origin);
+}
+
+// ── Reseñas de producto vía Worker (wave 1) ─────────────────────────────────────────────
+// Antes la tienda escribía y leía cacusa_reviews DIRECTO en Firebase (regla pública: cualquiera
+// leía TODAS las reseñas, también las no aprobadas, y creaba sin límite). Ahora:
+//   POST /review/submit (pública, Origin + rateLimit) → crea la reseña con approved:false
+//   GET|POST /pub/reviews (pública, caché 300 s)     → solo aprobadas, desde una copia en KV
+//   POST /reviews/list y /reviews/moderate (sesión)  → lo que usa el panel para moderar
+// Con esto la regla de Firebase de cacusa_reviews puede quedar en .read/.write false (el Worker
+// usa FB_DB_SECRET, que la ignora por diseño). Variables nuevas en ESTE Worker: FB_DB_SECRET
+// (secret, mismo valor que en cacusa-lovers-webhook y cacusa-backup) y FB_DB_URL (opcional).
+// KV: una sola llave, reviews_pub, que se reescribe al moderar desde el panel y, como mucho, una
+// vez por hora si alguien la pide vieja (por reseñas moderadas desde un panel viejo) — ~24
+// escrituras/día en el peor caso, nunca una por visita.
+const REVIEWS_PUB_KEY = 'reviews_pub';
+const REVIEWS_PUB_MAX_AGE_MS = 60 * 60 * 1000;
+const REVIEWS_PUB_ITEMS_MAX = 20;
+const REVIEW_NAME_MAX = 60;
+const REVIEW_COMMENT_MAX = 1000;
+const REVIEW_IP_PER_HOUR = 3;
+const REVIEW_GLOBAL_PER_DAY = 200;
+const REVIEW_KEY_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+function fbConf(env) {
+  if (!env.FB_DB_SECRET) return null;
+  return { url: String(env.FB_DB_URL || 'https://cacusa-pos-default-rtdb.firebaseio.com').replace(/\/+$/, ''), auth: env.FB_DB_SECRET };
+}
+function fbRef(c, path) { return `${c.url}/${path}.json?auth=${encodeURIComponent(c.auth)}`; }
+function reviewText(v, max) {
+  return stripColorEmoji(String(v == null ? '' : v).replace(/[\u0080-\u009F\u2028\u2029\u200B-\u200F\u202A-\u202E\u2066-\u2069]+/g, ' '), max);
+}
+function reviewDateOk(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : ''; }
+// Lo que la tienda publica: aprobadas (approved !== false: las reseñas anteriores a la moderación,
+// sin el campo, siempre fueron visibles — mismo criterio de los otros consumidores).
+function reviewsPublicSnapshot(tree) {
+  const byProduct = {};
+  for (const [pid, revs] of Object.entries(tree && typeof tree === 'object' ? tree : {})) {
+    if (!REVIEW_KEY_RE.test(pid) || !revs || typeof revs !== 'object') continue;
+    const items = [];
+    for (const v of Object.values(revs)) {
+      if (!v || typeof v !== 'object' || v.approved === false || !v.comment) continue;
+      const rating = Math.min(5, Math.max(1, Math.round(Number(v.rating) || 5)));
+      items.push({
+        name: reviewText(v.name, REVIEW_NAME_MAX) || 'Anónimo',
+        rating,
+        comment: reviewText(v.comment, REVIEW_COMMENT_MAX),
+        date: reviewDateOk(v.date),
+        lang: v.lang === 'en' ? 'en' : 'es',
+      });
+    }
+    if (!items.length) continue;
+    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const avg = Math.round((items.reduce((s, x) => s + x.rating, 0) / items.length) * 100) / 100;
+    byProduct[pid] = { avg, count: items.length, items: items.slice(0, REVIEWS_PUB_ITEMS_MAX) };
+  }
+  return byProduct;
+}
+async function reviewsFetchTree(env, productId) {
+  const c = fbConf(env);
+  if (!c) throw new Error('FB_DB_SECRET no configurado en cacusa-admin');
+  const r = await fetch(fbRef(c, 'cacusa_reviews' + (productId ? '/' + productId : '')));
+  if (!r.ok) throw new Error('Firebase ' + r.status);
+  return (await r.json()) || {};
+}
+async function reviewsRebuild(env) {
+  const byProduct = reviewsPublicSnapshot(await reviewsFetchTree(env));
+  const data = { updatedAt: new Date().toISOString(), byProduct };
+  const raw = JSON.stringify(data);
+  try { await env.CACUSA_KV.put(REVIEWS_PUB_KEY, raw); }
+  catch (_) { await new Promise((r) => setTimeout(r, 1100)); await env.CACUSA_KV.put(REVIEWS_PUB_KEY, raw); } // 1 escritura/s por llave
+  return data;
+}
+async function handlePubReviews(env, origin) {
+  let data = null;
+  if (env.CACUSA_KV) { try { data = JSON.parse(await env.CACUSA_KV.get(REVIEWS_PUB_KEY)); } catch (_) { data = null; } }
+  const stale = !data || !(Date.now() - Date.parse(data.updatedAt) < REVIEWS_PUB_MAX_AGE_MS);
+  // Rehacer la copia como mucho 1 vez cada 2 min aunque lleguen muchas visitas a la vez (el
+  // candado vive en la DO, no en KV); el resto sirve la copia vieja mientras tanto.
+  if (stale && env.CACUSA_KV && fbConf(env) && (await rateLimit(env, 'revsnap', 'rebuild', 1, 120))) {
+    try { data = await reviewsRebuild(env); } catch (e) { console.error('pub/reviews rebuild:', e.message); }
+  }
+  if (!data || !data.byProduct) return err('Reseñas no disponibles por ahora', 503, origin);
+  return new Response(JSON.stringify({ ok: true, byProduct: data.byProduct, updatedAt: data.updatedAt || null }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300', ...cors(origin), 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' },
+  });
+}
+// POST /review/submit {productId, name, rating, comment, lang} — pública.
+async function handleReviewSubmit(body, env, origin, request) {
+  const productId = body.productId != null ? String(body.productId) : '';
+  if (!/^[A-Za-z0-9_-]{1,50}$/.test(productId)) return err('Producto inválido', 400, origin);
+  const name = reviewText(body.name, REVIEW_NAME_MAX);
+  const comment = reviewText(body.comment, REVIEW_COMMENT_MAX);
+  const rating = body.rating;
+  if (!name) return err('Falta tu nombre', 400, origin);
+  if (!comment) return err('Falta el comentario', 400, origin);
+  if (String(body.name || '').trim().length > REVIEW_NAME_MAX * 2 || String(body.comment || '').length > REVIEW_COMMENT_MAX * 2) return err('Texto demasiado largo', 400, origin);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return err('La calificación debe ser de 1 a 5', 400, origin);
+  const lang = body.lang === 'en' ? 'en' : 'es';
+  const c = fbConf(env);
+  if (!c) return err('Reseñas no disponibles por ahora', 503, origin);
+  if (!(await rateLimit(env, 'review-ip', clientIp(request), REVIEW_IP_PER_HOUR, 3600))) return err('Demasiadas reseñas seguidas. Intenta más tarde.', 429, origin);
+  if (!(await rateLimit(env, 'review-day', new Date().toISOString().slice(0, 10), REVIEW_GLOBAL_PER_DAY, 86400))) return err('Demasiadas reseñas hoy. Intenta mañana.', 429, origin);
+  const catalog = await fetchCatalogForOrderValidation();
+  if (!catalog) return err('No se pudo validar el producto. Intenta de nuevo en un momento.', 502, origin);
+  const prod = catalog.products.find((p) => p && String(p.id) === productId);
+  if (!prod) return err('Producto no encontrado', 400, origin);
+  // Misma forma que escribía la tienda (name, rating, comment, approved:false, date YYYY-MM-DD)
+  // + lang. approved:false: no se muestra hasta que Tita o Robin la aprueben en el panel.
+  const review = { name, rating, comment, approved: false, date: new Date().toISOString().slice(0, 10), lang };
+  const r = await fetch(fbRef(c, 'cacusa_reviews/' + productId), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(review) });
+  if (!r.ok) { console.error('review submit Firebase', r.status); return err('No se pudo guardar la reseña. Intenta de nuevo.', 502, origin); }
+  await adminPush(env, 'CACUSA · Reseña por aprobar', `${sanitizePushText(name)} · ${rating}/5 · ${sanitizePushText(prod.name)}`, 'cacusa-review', 'normal');
+  return ok({ ok: true }, origin);
+}
+// POST /reviews/list (sesión) {productId?} — TODAS las reseñas (también las pendientes) de un
+// producto, o de todo el catálogo si no viene productId.
+async function handleReviewsList(body, env, origin) {
+  const productId = body.productId != null && body.productId !== '' ? String(body.productId) : '';
+  if (productId && !/^[A-Za-z0-9_-]{1,50}$/.test(productId)) return err('Producto inválido', 400, origin);
+  if (!fbConf(env)) return err('FB_DB_SECRET no configurado en cacusa-admin', 503, origin);
+  let tree;
+  try { tree = await reviewsFetchTree(env, productId); } catch (e) { return err('No se pudieron leer las reseñas (' + e.message + ')', 502, origin); }
+  const asList = (revs) => Object.entries(revs && typeof revs === 'object' ? revs : {})
+    .filter(([, v]) => v && typeof v === 'object')
+    .map(([key, v]) => ({ key, name: String(v.name || ''), rating: Number(v.rating) || 0, comment: String(v.comment || ''), date: String(v.date || ''), approved: v.approved, lang: v.lang === 'en' ? 'en' : 'es' }));
+  if (productId) return ok({ ok: true, productId, reviews: asList(tree) }, origin);
+  const byProduct = {};
+  for (const [pid, revs] of Object.entries(tree || {})) if (REVIEW_KEY_RE.test(pid)) byProduct[pid] = asList(revs);
+  return ok({ ok: true, byProduct }, origin);
+}
+// POST /reviews/moderate (sesión) {productId, reviewId, action:'approve'|'delete'} — y rehace la
+// copia pública en el momento (la tienda la ve en ≤5 min por la caché del navegador/CDN).
+async function handleReviewsModerate(body, env, origin, session) {
+  const productId = body.productId != null ? String(body.productId) : '';
+  const reviewId = body.reviewId != null ? String(body.reviewId) : '';
+  if (!REVIEW_KEY_RE.test(productId) || !REVIEW_KEY_RE.test(reviewId)) return err('Reseña inválida', 400, origin);
+  if (body.action !== 'approve' && body.action !== 'delete') return err('Acción inválida', 400, origin);
+  const c = fbConf(env);
+  if (!c) return err('FB_DB_SECRET no configurado en cacusa-admin', 503, origin);
+  const url = fbRef(c, `cacusa_reviews/${productId}/${reviewId}`);
+  if (body.action === 'approve') {
+    const cur = await fetch(url);
+    if (!cur.ok) return err('No se pudo leer la reseña', 502, origin);
+    if (!(await cur.json())) return err('Reseña no encontrada', 404, origin);
+    const r = await fetch(url, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ approved: true }) });
+    if (!r.ok) return err('No se pudo aprobar la reseña', 502, origin);
+  } else {
+    const r = await fetch(url, { method: 'DELETE' });
+    if (!r.ok) return err('No se pudo eliminar la reseña', 502, origin);
+  }
+  console.log('reseña', body.action, productId, reviewId, 'por', session.user);
+  let refreshed = false;
+  if (env.CACUSA_KV) { try { await reviewsRebuild(env); refreshed = true; } catch (e) { console.error('reviews rebuild (moderar):', e.message); } }
+  return ok({ ok: true, refreshed }, origin);
 }
 
 // ── Square (proxy de solo-lectura para el POS — evita el bloqueo CORS de Square) ──
