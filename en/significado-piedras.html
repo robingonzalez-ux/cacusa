@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#EE6FA8">
 <meta name="description" content="Birthstone meanings by month — the history, color and traditional meaning of each birthstone, from January to December.">
@@ -25,7 +25,9 @@
 <meta property="og:site_name" content="CACUSA by Taitus">
 <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Article","@id":"https://cacusabytaitus.com/en/significado-piedras.html#article","headline":"Birthstone Meanings","description":"Birthstone meanings by month — the history, color and traditional meaning of each birthstone, from January to December.","inLanguage":"en","url":"https://cacusabytaitus.com/en/significado-piedras.html","image":"https://cacusabytaitus.com/assets/og-image.jpg","mainEntityOfPage":{"@type":"WebPage","@id":"https://cacusabytaitus.com/en/significado-piedras.html"},"author":{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg"}},"publisher":{"@type":"Organization","@id":"https://cacusabytaitus.com/#organization","name":"CACUSA by Taitus","url":"https://cacusabytaitus.com","logo":{"@type":"ImageObject","url":"https://cacusabytaitus.com/assets/icon-512.jpg"}}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://cacusabytaitus.com/en/"},{"@type":"ListItem","position":2,"name":"Guides","item":"https://cacusabytaitus.com/en/guias.html"},{"@type":"ListItem","position":3,"name":"Birthstone Meanings","item":"https://cacusabytaitus.com/en/significado-piedras.html"}]}]}</script>
 <!-- GUIDE_SEO:END -->
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;0,6..96,900;1,6..96,400&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="/assets/fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/bodoni-moda-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -48,7 +50,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:18px 5
 .nav-back:hover{background:var(--pink);color:white;border-color:var(--pink)}
 .lang-sw{display:flex;align-items:center;gap:2px}
 .lang-sw button,.lang-sw a{background:none;border:none;font-family:var(--fu);font-size:11px;font-weight:700;color:var(--ink-muted);padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .2s;letter-spacing:.04em}
-.lang-sw button.on,.lang-sw a.on{background:var(--pink);color:white}
+.lang-sw button.on,.lang-sw a.on{background:var(--pink-deep);color:white}
 
 header{background:var(--grad-full);padding:72px 52px 64px;text-align:center;position:relative;overflow:hidden}
 header::before{content:'';position:absolute;top:-100px;right:-100px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
