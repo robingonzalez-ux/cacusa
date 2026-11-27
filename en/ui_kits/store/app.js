@@ -3762,12 +3762,12 @@ async function submitReview() {
   try {
     // Wave 1: la reseña va al Worker (POST /review/submit), que valida, limita la frecuencia
     // (429) y la guarda pendiente de aprobación. Solo si el Worker todavía no tiene la ruta
-    // (404, no desplegado) se usa la escritura directa a Firebase de antes.
+    // (401/404/405 del Worker viejo, o 503 sin FB_DB_SECRET) se usa la escritura directa a Firebase de antes.
     let res = await fetchT(ADMIN_WORKER_URL + '/review/submit', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ productId: String(currentProduct.id), name, rating, comment, lang: __LANG })
     }, 10000);
-    if (res.status === 404) {
+    if ([401, 404, 405, 503].includes(res.status)) {
       res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${encodeURIComponent(currentProduct.id)}.json`), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         // approved:false — la reseña no se muestra hasta que Tita o Robin la aprueben
