@@ -646,6 +646,7 @@ function _softRenderProducts() {
   // Inventario (18 nov): ids agotados por stock. Si el Worker no responde, la tienda sigue
   // igual (solo cuenta available del catálogo).
   const _soldOutP = _fetchSoldOut();
+  _fetchPubReviews();
   if (!window.__visitorCountry) window.__visitorCountry = _guessCountry();
   try {
     const res = await fetchT(PRODUCTS_JSON_URL, undefined, 20000);
@@ -3098,8 +3099,35 @@ function renderStars(avg) {
   return h;
 }
 
+// ─── RESEÑAS VÍA EL WORKER (wave 1) ─────────────────────────
+// GET /pub/reviews (Worker cacusa-admin, el mismo de /pub/stock) devuelve SOLO las reseñas
+// aprobadas, ya agrupadas: { ok, byProduct: { "<id>": { avg, count, items:[{name,rating,
+// comment,date,lang}] } } }, cacheable 300 s. Se pide una sola vez por visita (en paralelo
+// con el catálogo). Si el Worker todavía no tiene la ruta (404/405), falla o no responde,
+// se usa la lectura directa de Firebase de siempre.
+var _pubReviewsP = null; // var (no let): loadData() la usa antes de llegar a esta línea
+function _fetchPubReviews() {
+  if (!_pubReviewsP) _pubReviewsP = fetchJsonT(ADMIN_WORKER_URL + '/pub/reviews', undefined, 4000)
+    .then(d => (d && d.ok && d.byProduct && typeof d.byProduct === 'object' && !Array.isArray(d.byProduct)) ? d.byProduct : null);
+  return _pubReviewsP;
+}
+function _pubReviewItems(entry) {
+  const items = entry && Array.isArray(entry.items) ? entry.items : [];
+  return items.filter(v => v && typeof v === 'object' && v.comment)
+    .map(v => ({ name: String(v.name || ''), rating: Math.min(5, Math.max(1, Math.round(Number(v.rating) || 5))), comment: String(v.comment), date: String(v.date || '') }))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+}
 // ─── REVIEW SUMMARIES (para las cards) ─────────────────────
 async function loadReviewSummaries() {
+  const pub = await _fetchPubReviews();
+  if (pub) {
+    Object.entries(pub).forEach(([pid, e]) => {
+      const count = Math.floor(Number(e && e.count) || 0), avg = Number(e && e.avg);
+      if (count > 0 && avg >= 1 && avg <= 5) _reviewSummaries[+pid] = { avg: Math.round(avg * 10) / 10, count };
+    });
+    _softRenderProducts();
+    return;
+  }
   try {
     const r = await fetch(_fbUrl('https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews.json'));
     if (!r.ok) return;
@@ -3666,23 +3694,36 @@ async function loadProductReviews(productId) {
   if (section) section.hidden = false;
   list.innerHTML = `<div class="no-reviews" style="color:var(--ink-muted)">…</div>`;
   try {
-    const r = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${productId}.json`));
-    if (!r.ok) throw new Error();
-    const data = await r.json();
-    if (!data || !Object.keys(data).length) {
+    let reviews, avg, count;
+    const pub = await _fetchPubReviews();
+    // Otro producto abierto mientras esperábamos: no pisar su lista.
+    if (!currentProduct || String(currentProduct.id) !== String(productId)) return;
+    if (pub) {
+      const entry = pub[String(productId)];
+      reviews = _pubReviewItems(entry);
+      count = Math.floor(Number(entry && entry.count) || 0) || reviews.length;
+      avg = Number(entry && entry.avg) || 0;
+    } else {
+      const r = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${productId}.json`));
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      if (!currentProduct || String(currentProduct.id) !== String(productId)) return;
+      // approved !== false: las reseñas anteriores a la moderación no tienen el campo
+      // y siguen visibles; solo se ocultan las nuevas mientras esperan aprobación.
+      reviews = (data && typeof data === 'object' ? Object.values(data) : []).filter(v => v && v.comment && v.approved !== false).sort((a, b) => (b.date||'').localeCompare(a.date||''));
+      count = reviews.length;
+      avg = count ? reviews.reduce((s, v) => s + (v.rating || 5), 0) / count : 0;
+    }
+    if (!reviews.length) {
       list.innerHTML = `<div class="no-reviews">${__LANG === 'en' ? 'No reviews yet. Be the first!' : 'Aún sin reseñas. ¡Sé el primero/a!'}</div>`;
       avgRow.style.display = 'none'; return;
     }
-    // approved !== false: las reseñas anteriores a la moderación no tienen el campo
-    // y siguen visibles; solo se ocultan las nuevas mientras esperan aprobación.
-    const reviews = Object.values(data).filter(v => v && v.comment && v.approved !== false).sort((a, b) => (b.date||'').localeCompare(a.date||''));
-    if (!reviews.length) { list.innerHTML = `<div class="no-reviews">${__LANG==='en'?'No reviews yet.':'Aún sin reseñas.'}</div>`; avgRow.style.display='none'; return; }
-    const avg = reviews.reduce((s, v) => s + (v.rating || 5), 0) / reviews.length;
+    if (!(avg >= 1 && avg <= 5)) avg = reviews.reduce((s, v) => s + (v.rating || 5), 0) / reviews.length;
     avgRow.style.display = 'flex';
     document.getElementById('revScore').textContent = avg.toFixed(1);
     document.getElementById('revStarsDisplay').innerHTML = renderStars(avg);
-    document.getElementById('revCountText').textContent = `(${reviews.length})`;
-    _patchSchemaRating(avg, reviews.length, reviews);
+    document.getElementById('revCountText').textContent = `(${count})`;
+    _patchSchemaRating(avg, count, reviews);
     list.innerHTML = reviews.slice(0, 5).map(rv => `
       <div class="review-item">
         <div class="review-top">
@@ -3718,13 +3759,30 @@ async function submitReview() {
   const btn = document.getElementById('revSubmitBtn');
   btn.disabled = true; btn.textContent = '…';
   try {
-    const res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${encodeURIComponent(currentProduct.id)}.json`), {
+    // Wave 1: la reseña va al Worker (POST /review/submit), que valida, limita la frecuencia
+    // (429) y la guarda pendiente de aprobación. Solo si el Worker todavía no tiene la ruta
+    // (404, no desplegado) se usa la escritura directa a Firebase de antes.
+    let res = await fetchT(ADMIN_WORKER_URL + '/review/submit', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      // approved:false — la reseña no se muestra hasta que Tita o Robin la aprueben
-      // desde el panel. Las reglas de Firebase exigen este valor al crear, así que
-      // nadie puede auto-aprobarse mandando la reseña por fuera del sitio.
-      body: JSON.stringify({ name, rating, comment, approved: false, date: new Date().toISOString().slice(0,10) })
-    });
+      body: JSON.stringify({ productId: String(currentProduct.id), name, rating, comment, lang: __LANG })
+    }, 10000);
+    if (res.status === 404) {
+      res = await fetch(_fbUrl(`https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews/${encodeURIComponent(currentProduct.id)}.json`), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        // approved:false — la reseña no se muestra hasta que Tita o Robin la aprueben
+        // desde el panel. Las reglas de Firebase exigen este valor al crear, así que
+        // nadie puede auto-aprobarse mandando la reseña por fuera del sitio.
+        body: JSON.stringify({ name, rating, comment, approved: false, date: new Date().toISOString().slice(0,10) })
+      });
+    } else if (res.status === 429) {
+      showToast(__LANG==='en'?'Too many reviews from this connection. Please try again later.':'Recibimos varias reseñas desde aquí. Intenta de nuevo más tarde.');
+      btn.disabled = false;
+      btn.textContent = __LANG === 'en' ? 'Submit' : 'Enviar';
+      return;
+    } else if (res.ok) {
+      const d = await res.json().catch(() => null);
+      if (!d || d.ok !== true) throw new Error();
+    }
     if (!res.ok) throw new Error();
     __LS.setItem('cacusa-last-review', String(Date.now()));
     document.getElementById('revName').value = '';

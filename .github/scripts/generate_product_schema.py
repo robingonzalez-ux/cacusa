@@ -28,6 +28,8 @@ PRODUCTS_JSON = ROOT / "data" / "products.json"
 BASE_URL = "https://cacusabytaitus.com"
 REVIEWS_URL = "https://cacusa-pos-default-rtdb.firebaseio.com/cacusa_reviews.json"
 SURCHARGES_URL = "https://cacusa-admin.facturacioncacusa.workers.dev/pub/surcharges"
+PUB_REVIEWS_URL = "https://cacusa-admin.facturacioncacusa.workers.dev/pub/reviews"
+CI_USER_AGENT = "Mozilla/5.0 (compatible; cacusa-ci/1.0; +https://cacusabytaitus.com)"
 
 MARKER_START = "<!-- STATIC_PRODUCT_SCHEMA:START -->"
 MARKER_END = "<!-- STATIC_PRODUCT_SCHEMA:END -->"
@@ -107,7 +109,42 @@ RETURN_POLICY = {
 }
 
 
+def fetch_pub_reviews():
+    """Wave 1: reseñas desde el Worker (GET /pub/reviews) — ya vienen SOLO las aprobadas,
+    agrupadas por producto ({ok, byProduct:{id:{avg,count,items:[{name,rating,comment,date,lang}]}}}).
+    Se devuelven con la misma forma que la lectura de Firebase ({id: {clave: reseña}}), con
+    approved=True, para que build_review_fields() no cambie. None si el Worker no responde,
+    no tiene la ruta todavía (404/405) o la respuesta no tiene la forma esperada."""
+    try:
+        req = urllib.request.Request(PUB_REVIEWS_URL, method="GET",
+                                     headers={"Origin": BASE_URL, "User-Agent": CI_USER_AGENT})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        print(f"Aviso: /pub/reviews no respondió ({e}) — se leen las reseñas de Firebase.")
+        return None
+    by = data.get("byProduct") if isinstance(data, dict) and data.get("ok") is True else None
+    if not isinstance(by, dict):
+        print("Aviso: /pub/reviews con forma inesperada — se leen las reseñas de Firebase.")
+        return None
+    out = {}
+    for pid, entry in by.items():
+        items = entry.get("items") if isinstance(entry, dict) else None
+        if not isinstance(items, list):
+            continue
+        out[str(pid)] = {f"r{i}": {**it, "approved": True} for i, it in enumerate(items) if isinstance(it, dict)}
+    return out
+
+
 def fetch_reviews_by_product():
+    """Primero el Worker (fetch_pub_reviews); si falla, Firebase como antes."""
+    pub = fetch_pub_reviews()
+    if pub is not None:
+        return pub
+    return fetch_reviews_firebase()
+
+
+def fetch_reviews_firebase():
     """Reseñas reales desde Firebase (lectura pública, sin credenciales — mismo
     endpoint que ya usa el JS del cliente). Best-effort: si Firebase no responde,
     no debe romper la regeneración de precios/nombres de TODOS los productos —
@@ -187,7 +224,7 @@ def fetch_surcharges():
             SURCHARGES_URL, data=b"{}", method="POST",
             headers={"Content-Type": "application/json", "Origin": BASE_URL,
                      # Cloudflare rechaza (403, error 1010) el User-Agent por defecto de urllib.
-                     "User-Agent": "Mozilla/5.0 (compatible; cacusa-ci/1.0; +https://cacusabytaitus.com)"},
+                     "User-Agent": CI_USER_AGENT},
         )
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read().decode("utf-8"))
