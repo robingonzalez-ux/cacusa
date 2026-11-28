@@ -485,8 +485,10 @@ function _scrollToCatalog(force) {
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   window.scrollTo({ top: y, behavior: reduce ? 'auto' : 'smooth' });
 }
-function selectCategory(cat) {
-  const _fromPicker = !!document.querySelector('#prodGrid.cat-picker-grid');
+// forceScroll: true desde el selector de categorías (que ahora está debajo de la grilla) y
+// desde "Ver todo": la vista sube hasta los filtros aunque la clienta esté más abajo.
+function selectCategory(cat, forceScroll) {
+  const _fromPicker = forceScroll === true;
   _categoryPickerDismissed = true;
   activeFilter = cat;
   // Elegir una categoría reemplaza la búsqueda (que busca en todo el catálogo).
@@ -643,13 +645,13 @@ function _afterEnrich() {
   const mo = document.getElementById('modal-overlay');
   if (currentProduct && mo && mo.classList.contains('open')) _refreshOpenModal(currentProduct);
   const co = document.getElementById('checkout-overlay');
-  if (co && co.classList.contains('open') && typeof renderCheckoutSummary === 'function') renderCheckoutSummary();
+  if (co && co.classList.contains('open') && typeof renderCheckoutSummary === 'function') { _coPreselectCountry(); _syncCountryFields(); renderCheckoutSummary(); }
 }
 // Vuelve a pintar la grilla sin repetir la animación de entrada de las tarjetas y sin perder
 // el foco del teclado (mismo tamaño de tarjetas → sin salto de diseño).
 function _softRenderProducts() {
   const grid = document.getElementById('prodGrid');
-  if (!grid || grid.classList.contains('cat-picker-grid')) return;
+  if (!grid) return;
   const a = document.activeElement;
   const card = a && grid.contains(a) ? a.closest('.pcard') : null;
   const focusId = card ? card.dataset.id : null;
@@ -700,6 +702,7 @@ function _softRenderProducts() {
     if (__LANG !== 'en' && cfg.texts && typeof cfg.texts === 'object') TEXTS = { ...TEXTS, ...cfg.texts };
     if (__LANG === 'en' && cfg.texts_en && typeof cfg.texts_en === 'object') TEXTS = { ...TEXTS, ...cfg.texts_en };
     CAMPAIGN = _normalizeCampaign(cfg.campaign);
+    _homeFeaturedIds = new Set((cfg.home && Array.isArray(cfg.home.featuredProductIds) ? cfg.home.featuredProductIds : []).map(String));
     // Antes se excluían acá los agotados (available:false) — el producto
     // desaparecía del todo, del sitio y de los buscadores. Ahora se quedan en
     // PRODUCTS con su flag 'available' correcto, y cada consumidor decide qué
@@ -826,34 +829,42 @@ function applyTexts() {
   set('.store-hero-label', TEXTS.heroLabel);
   set('.store-hero-h', TEXTS.heroTitle);
   set('.store-hero-s', TEXTS.heroSubtitle);
-  const perksEl = document.querySelector('.modal-perks');
-  if (perksEl && Array.isArray(TEXTS.perks)) {
-    // "Envío express" (config.texts.perks, editable en el admin) contradice los 5–10 días
-    // hábiles que se muestran al lado: se filtra cualquier beneficio que diga "express".
-    perksEl.innerHTML = TEXTS.perks.filter(p => !/express/i.test(String(p || ''))).map(p =>
-      '<div class="perk"><div class="perk-dot"></div>' + esc(p) + '</div>').join('');
-  }
+  // "Envío express" (config.texts.perks, editable en el admin) se filtra siempre, y "5–10 días
+  // hábiles" solo se muestra en piezas personalizables: lo hace _renderModalPerks() al abrir
+  // cada producto (wave 2).
+  _renderModalPerks(currentProduct);
   const bEs = document.getElementById('lEs'), bEn = document.getElementById('lEn');
   if (bEs) bEs.className = __LANG === 'es' ? 'on' : '';
   if (bEn) bEn.className = __LANG === 'en' ? 'on' : '';
 }
+// Wave 2: temporada y envío gratis comparten UNA franja fina (#storeBar) en vez de 2 franjas
+// apiladas. Mismo texto que pre-pinta build_banners_block() en generate_noscript_catalog.py.
 function renderFreeShippingBanner() {
   const el = document.getElementById('freeShippingBanner');
   if (!el) return;
   const threshold = SHIPPING.freeThreshold.toFixed(0);
   el.textContent = __LANG === 'en'
-    ? 'Free shipping on orders $' + threshold + '+'
-    : 'Envío gratis en pedidos desde $' + threshold;
-  el.style.display = 'block';
+    ? 'Free shipping on $' + threshold + '+'
+    : 'Envío gratis desde $' + threshold;
+  el.style.display = '';
 }
-// Franja de temporada sobre el aviso de envío gratis (#seasonBanner). Fecha de "stock"
-// (piezas listas) del mercado de la visitante, o las 2 si no se conoce; se oculta sola
-// cuando la campaña está apagada/vencida o la fecha de la visitante ya pasó.
+// Fecha corta para la franja: "14 dic" / "Dec 14".
+const _MONTHS_ES_SHORT = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+function _fmtCampaignDateShort(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  return __LANG === 'en' ? _MONTHS_EN[dt.getMonth()].slice(0, 3) + ' ' + dt.getDate() : dt.getDate() + ' ' + _MONTHS_ES_SHORT[dt.getMonth()];
+}
+// Parte de temporada de la franja (#seasonBanner). Fecha de "stock" (piezas listas) del
+// mercado de la visitante, o las 2 si no se conoce; se oculta sola cuando la campaña está
+// apagada/vencida o la fecha de la visitante ya pasó.
 function renderSeasonBanner() {
   const el = document.getElementById('seasonBanner');
   if (!el) return;
   const en = __LANG === 'en';
   const list = _campaignDeadlines('stock');
+  const bar = document.getElementById('storeBar') || el;
+  const _prevH = bar.offsetHeight;
   if (!list.length) { el.hidden = true; return; }
   const known = !!_campaignCountry();
   const title = en ? CAMPAIGN.title_en : CAMPAIGN.title;
@@ -865,27 +876,26 @@ function renderSeasonBanner() {
       : list.map(x => _fmtCampaignDate(x.date) + ' (' + _campaignCountryLabel(x.country) + ')').join(en ? ' or ' : ' o hasta el ');
     text = custom.replace(/\{(fecha|date)\}/g, fecha);
   } else if (known) {
-    text = '✦ ' + title + ' · ' + (en ? 'order by ' : 'pide hasta el ') + _fmtCampaignDate(list[0].date) + (en ? ' to get them in time' : ' para recibirlos a tiempo');
+    text = '✦ ' + title + ': ' + (en ? 'order by ' : 'pide hasta el ') + _fmtCampaignDate(list[0].date);
   } else {
-    text = '✦ ' + title + ' · ' + list.map((x, i) =>
-      _campaignCountryLabel(x.country) + ': ' + (en ? (i ? 'by ' : 'order by ') : (i ? 'hasta el ' : 'pide hasta el ')) + _fmtCampaignDate(x.date)
+    text = '✦ ' + title + ': ' + list.map(x =>
+      _campaignCountryLabel(x.country) + (en ? ' by ' : ' hasta el ') + _fmtCampaignDateShort(x.date)
     ).join(' · ');
   }
   // CLS: la franja viene pre-pintada en el HTML (generate_noscript_catalog.py) con las fechas
   // de los 2 países; al conocerse el país el texto se acorta. Mientras carga la página no se
   // encoge (min-height), así no se mueve lo de abajo; un cambio de ancho lo libera.
-  const _prevH = el.hidden ? 0 : el.offsetHeight;
   el.textContent = text;
   el.href = en ? '/en/guia-regalos.html' : '/guia-regalos.html';
   el.hidden = false;
-  if (_prevH && el.offsetHeight < _prevH) el.style.minHeight = _prevH + 'px';
+  if (_prevH && bar.offsetHeight < _prevH) bar.style.minHeight = _prevH + 'px';
 }
 (function () {
   let w = window.innerWidth;
   window.addEventListener('resize', () => {
     if (window.innerWidth === w) return;
     w = window.innerWidth;
-    const el = document.getElementById('seasonBanner'); if (el) el.style.minHeight = '';
+    ['storeBar', 'seasonBanner'].forEach(id => { const el = document.getElementById(id); if (el) el.style.minHeight = ''; });
   }, { passive: true });
 })();
 // Línea "llega antes de Navidad" del modal, bajo el precio: fecha de personalización si la
@@ -1004,17 +1014,62 @@ function _pcardNav(e, id) {
 function imgBgStyle(p) {
   return p && p.imageUrl ? '' : 'background:' + ((p && p.grad) || 'var(--grad)');
 }
-function imgInner(p, alt) {
+// ─── IMÁGENES RESPONSIVAS (wave 2) ──────────────────────────
+// CI (.github/scripts/generate_image_variants.py) genera junto a cada foto del catálogo
+// <nombre>-320.webp, -640.webp y -960.webp. Acá se arma el srcset con esos 3 nombres fijos;
+// si una variante todavía no existe (foto recién subida, antes de que corra CI) el listener
+// de 'error' en captura (en el <head> de la plantilla, repetido abajo por si una página física
+// todavía no se regeneró) quita el srcset y vuelve a la original de data-src-orig. Si falla la
+// original, se oculta y queda el degradado de data-grad. Sin onerror en línea.
+const IMG_WIDTHS = [320, 640, 960];
+const _OWN_IMG_RE = /^(?:https:\/\/cacusabytaitus\.com)?\/ui_kits\/store\/images\/[^/?#"'<>\s]+\.(?:webp|jpe?g|png)$/i;
+const _VARIANT_RE = /-(?:320|640|960)\.webp$/i;
+// Tamaños de presentación: tarjeta de la grilla, foto del modal, ficha estática, categorías.
+const SIZES_CARD = '(max-width:600px) 48vw, (max-width:1280px) 23vw, 290px';
+const SIZES_MODAL = '(max-width:600px) 100vw, 440px';
+const SIZES_CAT = '(max-width:768px) 48vw, 400px';
+function _imgSrcset(url) {
+  if (!url || !_OWN_IMG_RE.test(url) || _VARIANT_RE.test(url)) return '';
+  return IMG_WIDTHS.map(w => String(url).replace(/\.(?:webp|jpe?g|png)$/i, '-' + w + '.webp') + ' ' + w + 'w').join(', ');
+}
+// src/srcset/sizes (+ data-src-orig para volver a la original) ya escapados para innerHTML.
+function _imgAttrs(url, sizes) {
+  const ss = _imgSrcset(url);
+  return 'src="' + esc(url) + '"' + (ss ? ' srcset="' + esc(ss) + '" sizes="' + esc(sizes || '100vw') + '" data-src-orig="' + esc(url) + '"' : '');
+}
+// Lo mismo sobre un <img> ya creado (crossfade de categorías), sin pasar por innerHTML.
+function _setImgSources(img, url, sizes) {
+  const ss = _imgSrcset(url);
+  if (ss) { img.setAttribute('data-src-orig', url); img.setAttribute('sizes', sizes || '100vw'); img.setAttribute('srcset', ss); }
+  else { img.removeAttribute('data-src-orig'); img.removeAttribute('srcset'); img.removeAttribute('sizes'); }
+  img.setAttribute('src', url);
+}
+(function () {
+  if (window.__cacusaImgFb) return;
+  window.__cacusaImgFb = 1;
+  document.addEventListener('error', e => {
+    const i = e.target;
+    if (!i || i.tagName !== 'IMG') return;
+    const o = i.getAttribute('data-src-orig');
+    if (o) { i.removeAttribute('data-src-orig'); i.removeAttribute('srcset'); i.removeAttribute('sizes'); i.src = o; return; }
+    const g = i.getAttribute('data-grad');
+    if (g !== null) { i.removeAttribute('data-grad'); i.style.display = 'none'; if (i.parentElement) i.parentElement.style.background = g || 'var(--grad)'; }
+  }, true);
+})();
+// opts: { sizes, eager (sin loading=lazy: primera fila), priority (fetchpriority=high: 1.ª tarjeta) }
+function imgInner(p, alt, opts) {
   if (p && p.imageUrl) {
+    const o = opts || {};
     const pos  = _focal(p.focalX) + '% ' + _focal(p.focalY) + '%';
     const zoom = _zoom(p.zoom);
     const altText = alt ? alt + ' — joyería artesanal personalizada CACUSA' : 'Joyería artesanal personalizada CACUSA';
     const grad = esc((p && p.grad) || 'var(--grad)');
-    return '<img src="' + esc(p.imageUrl) + '" alt="' + esc(altText) + '" loading="lazy" width="220" height="220" onerror="_imgFallback(this,\'' + grad + '\')" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
+    return '<img ' + _imgAttrs(p.imageUrl, o.sizes || SIZES_CARD) + ' alt="' + esc(altText) + '"' + (o.eager ? '' : ' loading="lazy"') +
+      (o.priority ? ' fetchpriority="high"' : '') + ' decoding="async" width="220" height="220" data-grad="' + grad + '" style="object-position:' + pos + ';transform:scale(' + zoom + ');transform-origin:' + pos + '">';
   }
   return '';
 }
-// Si la imagen de un producto no carga, ocultarla y mostrar el degradado de marca en su lugar
+// Compatibilidad: páginas físicas viejas todavía pueden traer onerror="_imgFallback(...)".
 function _imgFallback(el, grad) {
   el.style.display = 'none';
   if (el.parentElement) el.parentElement.style.background = grad || 'var(--grad)';
@@ -1036,20 +1091,69 @@ function getMarketBadge(p) {
   return '';
 }
 
-// ─── CATEGORY PICKER (primera pantalla) ──────────────────────
-// En vez de recibir a la clienta con los 74 productos de golpe, la primera vista es un
-// selector visual de categorías — menos abrumador, más parecido a Mejuri/Kendra Scott.
-let _catTileTimers = [];
+// ─── VISTA INICIAL + SELECTOR DE CATEGORÍAS (wave 2) ─────────
+// Antes la primera pantalla era un selector de categorías (~600px de cabecera + tarjetas
+// grandes antes del primer producto). Ahora la vista inicial muestra productos: "Más
+// vendidos" (HOME_N piezas) + botón al catálogo completo, y el selector de categorías queda
+// como sección secundaria DEBAJO de la grilla (#catPicker), con tarjetas que son enlaces
+// reales a cada página de categoría y fotos <img> (no fondos CSS).
+const HOME_N = 8;
 const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-function _clearCatTileTimers() { _catTileTimers.forEach(clearInterval); _catTileTimers = []; }
+let _homeFeaturedIds = new Set(); // config.home.featuredProductIds (elegidos en el panel)
+// Orden de "Más vendidos": etiqueta Bestseller → destacados del panel → promo/oferta → Nuevo
+// → resto, en el orden del catálogo. Réplica de home_rank() en generate_noscript_catalog.py
+// (pre-render de la primera fila): si se cambia uno, cambiar el otro.
+function _homeRank(p) {
+  const tg = String(p.tag || '').toLowerCase();
+  if (_isBestseller(p)) return 0;
+  if (_homeFeaturedIds.has(String(p.id))) return 1;
+  if (p.isPromo || p.badge === 'badge-promo' || p.badge === 'badge-sale') return 2;
+  if (tg === 'nuevo' || tg === 'new') return 3;
+  return 4;
+}
+function _bestsellerList(n) {
+  return PRODUCTS.map((p, i) => ({ p, i }))
+    .filter(x => x.p.available !== false && x.p.imageUrl)
+    .sort((a, b) => (_homeRank(a.p) - _homeRank(b.p)) || (a.i - b.i))
+    .slice(0, n).map(x => x.p);
+}
+function _isHomeView() { return activeFilter === 'all' && !searchTerm && !_categoryPickerDismissed && !_hasUrlFilters(); }
+function renderHomeView(grid) {
+  const en = __LANG === 'en';
+  const list = _bestsellerList(HOME_N);
+  const total = PRODUCTS.length;
+  grid.className = 'prod-grid prod-grid--home';
+  grid.innerHTML =
+    '<h2 class="grid-heading"><span>' + (en ? 'Best sellers' : 'Más vendidos') + '</span>' +
+      '<button type="button" class="grid-viewall-link" data-viewall="1">' + (en ? 'View all' : 'Ver todo') + ' (' + total + ')</button></h2>' +
+    list.map(_pcardHtml).join('') +
+    '<div class="grid-viewall-wrap"><button type="button" class="grid-viewall" data-viewall="1">' +
+      (en ? 'View full catalog' : 'Ver todo el catálogo') + ' (' + total + ') →</button></div>';
+}
+// Selector de categorías: hasta 3 fotos por categoría (Bestseller primero) para un crossfade
+// que solo corre mientras la tarjeta está a la vista (IntersectionObserver), se pausa con el
+// mouse/foco encima y no corre con prefers-reduced-motion.
+let _catTileTimers = [], _catIO = null, _catSig = '';
+function _clearCatTileTimers() {
+  _catTileTimers.forEach(t => t && clearInterval(t));
+  _catTileTimers = [];
+  if (_catIO) { _catIO.disconnect(); _catIO = null; }
+}
+function _syncCategoryPicker() {
+  const sec = document.getElementById('catPicker');
+  if (!sec) return;
+  const show = !searchTerm && !_hasUrlFilters() && PRODUCTS.length > 0;
+  if (!show) { sec.hidden = true; return; }
+  renderCategoryPicker();
+}
 function renderCategoryPicker() {
-  _clearCatTileTimers();
-  const grid = document.getElementById('prodGrid');
-  grid.className = 'cat-picker-grid';
-  // Hasta 3 fotos distintas por categoría (bestseller primero), para el crossfade.
+  const sec = document.getElementById('catPicker');
+  const gridEl = document.getElementById('catPickerGrid');
+  if (!sec || !gridEl) return;
+  sec.hidden = false;
   const tilesData = CATEGORIES.map(cat => {
     const catProducts = PRODUCTS.filter(p => p.cat === cat && p.available !== false);
-    const bestsellers = catProducts.filter(p => (p.tag || '').toLowerCase() === 'bestseller');
+    const bestsellers = catProducts.filter(p => _isBestseller(p));
     const ordered = [...bestsellers, ...catProducts.filter(p => !bestsellers.includes(p))];
     const images = [];
     for (const p of ordered) {
@@ -1058,48 +1162,71 @@ function renderCategoryPicker() {
       if (images.length >= 3) break;
     }
     return { cat, label: t('cat.' + cat.toLowerCase(), cat), images };
-  });
-  const tiles = tilesData.map((d, i) => {
-    const bg0 = d.images[0] ? `background-image:url('${d.images[0].replace(/'/g, '%27')}')` : 'background:var(--grad)';
-    return `
-      <div class="cat-tile" role="button" tabindex="0" aria-label="${esc(d.label)}" onclick="selectCategory('${d.cat.replace(/'/g, "\\'")}')" onkeydown="activateOnKey(event,()=>selectCategory('${d.cat.replace(/'/g, "\\'")}'))">
-        <div class="cat-tile-bg on" data-tile="${i}" style="${bg0}"></div>
-        <div class="cat-tile-bg" data-tile="${i}"></div>
-        <div class="cat-tile-overlay"></div>
-        <div class="cat-tile-label"><span>${esc(d.label)}</span></div>
-      </div>`;
-  }).join('');
-  grid.innerHTML = tiles +
-    `<div class="cat-picker-viewall-wrap"><span class="cat-picker-viewall" role="button" tabindex="0" onclick="selectCategory('all')" onkeydown="activateOnKey(event,()=>selectCategory('all'))">${t('store.viewAllCatalog', 'Ver todo el catálogo →')}</span></div>`;
-  // Carrusel con crossfade — mismo patrón que el slideshow del hero del landing
-  // (2 capas superpuestas, opacidad cruzada), un pequeño desfase por tarjeta para
-  // que no cambien todas a la vez.
-  if (_reduceMotion) return;
-  tilesData.forEach((d, i) => {
-    if (d.images.length <= 1) return;
-    const layers = grid.querySelectorAll('.cat-tile-bg[data-tile="' + i + '"]');
-    const tile = grid.querySelectorAll('.cat-tile')[i];
-    let front = layers[0], idx = 0;
-    const interval = 3600 + i * 220;
-    const advance = () => {
-      idx = (idx + 1) % d.images.length;
-      const back = front === layers[0] ? layers[1] : layers[0];
-      back.style.backgroundImage = "url('" + d.images[idx].replace(/'/g, '%27') + "')";
-      back.classList.add('on'); front.classList.remove('on');
-      front = back;
-    };
-    let timer = setInterval(advance, interval);
-    _catTileTimers.push(timer);
-    if (tile) {
-      const pause = () => { clearInterval(timer); timer = null; };
-      const resume = () => { if (!timer) { timer = setInterval(advance, interval); _catTileTimers.push(timer); } };
-      tile.addEventListener('mouseenter', pause);
-      tile.addEventListener('mouseleave', resume);
-      tile.addEventListener('focusin', pause);
-      tile.addEventListener('focusout', resume);
+  }).filter(d => d.images.length || PRODUCTS.some(p => p.cat === d.cat));
+  const sig = tilesData.map(d => d.cat + ':' + d.images.join(',')).join('|');
+  if (sig === _catSig && gridEl.children.length) return; // ya pintado igual: no reiniciar fotos
+  _catSig = sig;
+  _clearCatTileTimers();
+  const base = (__LANG === 'en' ? '/en' : '') + '/ui_kits/store/categoria/';
+  gridEl.innerHTML = tilesData.map((d, i) =>
+    '<a class="cat-tile" href="' + base + _categorySlug(d.cat) + '/" data-cat="' + esc(d.cat) + '" data-tile="' + i + '">' +
+      (d.images[0]
+        ? '<img class="cat-tile-img on" ' + _imgAttrs(d.images[0], SIZES_CAT) + ' alt="" loading="lazy" decoding="async" width="400" height="400">'
+        : '<span class="cat-tile-ph"></span>') +
+      '<span class="cat-tile-overlay"></span><span class="cat-tile-label"><span>' + esc(d.label) + '</span></span></a>'
+  ).join('');
+  if (_reduceMotion || !('IntersectionObserver' in window)) return;
+  const tiles = [...gridEl.querySelectorAll('.cat-tile')];
+  const state = tilesData.map(() => ({ idx: 0, visible: false, hover: false }));
+  const advance = i => {
+    const d = tilesData[i], st = state[i], tile = tiles[i];
+    if (!tile || d.images.length <= 1) return;
+    st.idx = (st.idx + 1) % d.images.length;
+    const front = tile.querySelector('.cat-tile-img.on');
+    let back = [...tile.querySelectorAll('.cat-tile-img')].find(x => x !== front);
+    if (!back) {
+      back = document.createElement('img');
+      back.className = 'cat-tile-img';
+      back.alt = ''; back.decoding = 'async'; back.width = 400; back.height = 400;
+      tile.insertBefore(back, tile.querySelector('.cat-tile-overlay'));
     }
+    const swap = () => { back.classList.add('on'); if (front) front.classList.remove('on'); };
+    back.onload = null;
+    _setImgSources(back, d.images[st.idx], SIZES_CAT);
+    if (back.complete && back.naturalWidth) swap(); else back.addEventListener('load', swap, { once: true });
+  };
+  const stop = i => { if (_catTileTimers[i]) { clearInterval(_catTileTimers[i]); _catTileTimers[i] = null; } };
+  const start = i => {
+    if (_catTileTimers[i] || tilesData[i].images.length <= 1 || !state[i].visible || state[i].hover) return;
+    _catTileTimers[i] = setInterval(() => advance(i), 3600 + i * 220);
+  };
+  tiles.forEach((tile, i) => {
+    const pause = () => { state[i].hover = true; stop(i); };
+    const resume = () => { state[i].hover = false; start(i); };
+    tile.addEventListener('mouseenter', pause);
+    tile.addEventListener('mouseleave', resume);
+    tile.addEventListener('focusin', pause);
+    tile.addEventListener('focusout', resume);
   });
+  _catIO = new IntersectionObserver(entries => entries.forEach(en => {
+    const i = +en.target.dataset.tile;
+    state[i].visible = en.isIntersecting;
+    if (en.isIntersecting) start(i); else stop(i);
+  }), { threshold: 0.35 });
+  tiles.forEach(tile => _catIO.observe(tile));
 }
+// Clic normal en una tarjeta de categoría: filtra en el lugar (sin recargar) y sube a la
+// grilla; Ctrl/Cmd/rueda siguen abriendo la página real de la categoría.
+(function () {
+  const gridEl = document.getElementById('catPickerGrid');
+  if (!gridEl) return;
+  gridEl.addEventListener('click', e => {
+    const a = e.target.closest('a.cat-tile');
+    if (!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    selectCategory(a.dataset.cat, true);
+  });
+})();
 
 // ─── RENDER PRODUCTS ────────────────────────────────────────
 function _searchNorm(s) {
@@ -1227,11 +1354,20 @@ function _searchProducts(list, raw) {
   });
   return { list: out, scores };
 }
+// Primer pintado sobre tarjetas pre-renderizadas en el HTML (generate_noscript_catalog.py /
+// generate_product_pages.py): se reemplazan sin la animación de entrada, así no "parpadean".
+let _gridPrerendered = !!document.querySelector('#prodGrid .pcard--static');
 function renderProducts() {
   const grid = document.getElementById('prodGrid');
   _renderUrlFilterChips();
-  if (activeFilter === 'all' && !searchTerm && !_categoryPickerDismissed) { renderCategoryPicker(); return; }
-  _clearCatTileTimers();
+  const _skipAnim = _gridPrerendered;
+  _gridPrerendered = false;
+  if (_skipAnim) _noCardAnim = true;
+  try { _renderProductsInner(grid); } finally { if (_skipAnim) _noCardAnim = false; }
+  _syncCategoryPicker();
+}
+function _renderProductsInner(grid) {
+  if (_isHomeView()) { renderHomeView(grid); return; }
   grid.className = 'prod-grid';
   // Con una búsqueda activa se busca en TODO el catálogo (antes solo dentro de la categoría
   // elegida, sin avisarlo); los chips de categoría se ven inactivos mientras tanto.
@@ -1347,14 +1483,13 @@ function _pcardHtml(p, i) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style="${_wish.has(p.id)?'fill:var(--pink)':''}"/></svg>
       </button>
       <a class="pcard-img" href="${_pcardHref(p)}" onclick="return _pcardNav(event, ${p.id})">
-        <div class="pcard-img-bg" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div>
+        <div class="pcard-img-bg" style="${imgBgStyle(p)}">${imgInner(p, p.name, { eager: (i || 0) < 4, priority: (i || 0) === 0 })}</div>
         <div class="pcard-quick">${t('store.quickView', 'Vista rápida →')}</div>
       </a>
       <div class="pcard-body">
-        <div class="pcard-cat">${t('cat.' + (p.cat||'').toLowerCase(), p.cat || '')}</div>
+        <div class="pcard-meta"><div class="pcard-cat">${t('cat.' + (p.cat||'').toLowerCase(), p.cat || '')}</div>${(()=>{const r=_reviewSummaries[p.id];return r&&r.count?`<div class="pcard-stars" role="img" aria-label="${r.avg} / 5 (${r.count})">${renderStars(r.avg)}<span class="pcard-stars-count">(${r.count})</span></div>`:''})()}</div>
         <a class="pcard-name" href="${_pcardHref(p)}" onclick="return _pcardNav(event, ${p.id})">${esc(__LANG === 'en' && p.name_en ? p.name_en : p.name)}</a>
         <div class="pcard-desc">${esc((__LANG === 'en' && p.description_en ? p.description_en : (p.desc || '')).substring(0, 60))}…</div>
-        ${(()=>{const r=_reviewSummaries[p.id];return r&&r.count?`<div class="pcard-stars">${renderStars(r.avg)}<span class="pcard-stars-count">(${r.count})</span></div>`:''})()}
         ${getMarketBadge(p)}
         <div class="pcard-foot">
           <div class="pcard-price">
@@ -1440,6 +1575,7 @@ function addComboToCart(id, cardEl) {
 })();
 document.getElementById('sortSelect').addEventListener('change', renderProducts);
 document.getElementById('prodGrid').addEventListener('click', e => {
+  if (e.target.closest('[data-viewall]')) { selectCategory('all', true); return; }
   const c = e.target.closest('.empty-cat');
   if (c) { selectCategory(c.dataset.cat); return; }
   if (e.target.closest('.empty-photo')) openPhotoSearch();
@@ -1702,6 +1838,157 @@ function _refreshOpenModal(p) {
   } catch (_) {}
 }
 
+// ─── FICHA: beneficios, medidas, estrellas y acordeones (wave 2) ───────────
+// "5–10 días hábiles" es el plazo de las piezas PERSONALIZADAS: en una pieza en stock se leía
+// como su tiempo de entrega. En las personalizables se aclara; en las demás no se muestra.
+function _renderModalPerks(p) {
+  const perksEl = document.querySelector('.modal-perks');
+  if (!perksEl || !Array.isArray(TEXTS.perks)) return;
+  const en = __LANG === 'en';
+  const list = [];
+  TEXTS.perks.forEach(x => {
+    const s = String(x || '').trim();
+    if (!s || /express/i.test(s)) return;
+    if (/5\s*[–-]\s*10/.test(s)) {
+      if (p && p.personalized) list.push(en ? 'Personalized in 5–10 business days' : 'Personalizada en 5–10 días hábiles');
+      return;
+    }
+    list.push(s);
+  });
+  perksEl.innerHTML = list.map(x => '<div class="perk"><div class="perk-dot"></div>' + esc(x) + '</div>').join('');
+}
+// Campos opcionales que carga el panel: largo (cm), medida (o ancho) y talla (número o
+// "ajustable"). Vienen de products.json: siempre como texto escapado, nunca como HTML.
+function _isRing(p) { return !!p && (String(p.cat || '').toLowerCase() === 'anillos' || /\banillo|\bring\b/i.test(String(p.name || '') + ' ' + String(p.name_en || ''))); }
+function _specText(v) { return v == null ? '' : String(v).replace(/\s+/g, ' ').trim().slice(0, 40); }
+function _productSpecs(p) {
+  const en = __LANG === 'en', out = [];
+  const num = s => /^\d+(?:[.,]\d+)?$/.test(s);
+  const largo = _specText(p.largo);
+  if (largo) out.push([en ? 'Length' : 'Largo', num(largo) ? largo.replace(',', '.') + ' cm' : largo]);
+  const medida = _specText(p.medida != null && String(p.medida).trim() !== '' ? p.medida : p.ancho);
+  if (medida) out.push([en ? 'Dimensions' : 'Medida', num(medida) ? medida.replace(',', '.') + ' cm' : medida]);
+  const talla = _specText(p.talla);
+  if (talla) out.push([_isRing(p) ? (en ? 'Ring size' : 'Talla') : (en ? 'Size' : 'Talla'), /^(ajustable|adjustable)$/i.test(talla) ? (en ? 'Adjustable' : 'Ajustable') : talla]);
+  return out;
+}
+function _renderModalSpecs(p) {
+  const el = document.getElementById('modalSpecs');
+  if (el) el.textContent = _productSpecs(p).map(([k, v]) => k + ': ' + v).join(' · ');
+}
+// Estrellas junto al nombre (solo si hay reseñas aprobadas); llevan a la sección de reseñas.
+function _renderModalRating(p, avg, count) {
+  const el = document.getElementById('modalRating');
+  if (!el) return;
+  if (avg == null) { const r = _reviewSummaries[p.id]; if (r) { avg = r.avg; count = r.count; } }
+  if (!(count > 0) || !(avg >= 1 && avg <= 5)) { el.hidden = true; el.innerHTML = ''; return; }
+  const en = __LANG === 'en';
+  el.innerHTML = '<span class="stars-row" aria-hidden="true">' + renderStars(avg) + '</span><span class="mr-avg" aria-hidden="true">' + avg.toFixed(1) + '</span><span class="mr-count" aria-hidden="true">(' + count + ')</span>';
+  el.setAttribute('aria-label', en
+    ? 'Rated ' + avg.toFixed(1) + ' out of 5, ' + count + (count === 1 ? ' review' : ' reviews') + '. See reviews'
+    : 'Calificación ' + avg.toFixed(1) + ' de 5, ' + count + (count === 1 ? ' reseña' : ' reseñas') + '. Ver reseñas');
+  el.hidden = false;
+}
+(function () {
+  const el = document.getElementById('modalRating');
+  if (el) el.addEventListener('click', () => {
+    const sec = document.querySelector('#modal-overlay .reviews-section');
+    if (!sec) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    sec.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+})();
+const _MAT_EN = { 'baño de oro 18k': '18k gold plated', 'acero inoxidable': 'Stainless steel', 'plata 925': '925 silver', 'gold filled': 'Gold filled', 'baño de rodio': 'Rhodium plated', 'plata 925 con un baño de oro de 18k': '925 silver with 18k gold plating' };
+function _matLabel(m) { const s = String(m || '').trim(); return __LANG === 'en' ? (_MAT_EN[s.toLowerCase()] || s) : s; }
+function _pageUrl(file) { return (__LANG === 'en' ? '/en/' : '/') + file; }
+// Textos opcionales del panel (config.texts / texts_en): pdpShipping, pdpCare, pdpSize. Si no
+// están, se usa este texto corto, coherente con envios.html, devoluciones.html y cuidados.html.
+function _accShipHtml(p) {
+  const en = __LANG === 'en', c = SHIPPING_CFG || {};
+  const money = n => '$' + (Number.isInteger(+n) ? String(+n) : (+n).toFixed(2));
+  const cost = money(SHIPPING.cost), thr = money(SHIPPING.freeThreshold);
+  const ec = (c.transitDaysEcMin || 1) + '–' + (c.transitDaysEcMax || 2), us = (c.transitDaysUsMin || 2) + '–' + (c.transitDaysUsMax || 5);
+  const custom = typeof TEXTS.pdpShipping === 'string' && TEXTS.pdpShipping.trim();
+  const parts = [];
+  if (custom) parts.push('<p>' + esc(custom) + '</p>');
+  else {
+    parts.push(en
+      ? '<p>Shipping to the US and Ecuador: <strong>' + cost + '</strong>, <strong>free on orders from ' + thr + '</strong>.</p>'
+      : '<p>Envío a Ecuador y Estados Unidos: <strong>' + cost + '</strong>, <strong>gratis en compras desde ' + thr + '</strong>.</p>');
+    parts.push('<p>' + (p && p.personalized
+      ? (en ? 'Personalized piece: handmade in 5 to 10 business days after you confirm your design on WhatsApp, then shipped.' : 'Pieza personalizable: se elabora a mano en 5 a 10 días hábiles desde que confirmas tu diseño por WhatsApp, y luego se despacha.')
+      : (en ? 'In-stock piece: ships in 1 to 3 business days.' : 'Pieza en stock: sale en 1 a 3 días hábiles.')) + ' ' +
+      (en ? 'Delivery: US ' + us + ' business days (USPS), Ecuador ' + ec + ' business days (Servientrega). Other countries: we quote shipping on WhatsApp.'
+          : 'Entrega: Ecuador ' + ec + ' días hábiles (Servientrega), EE.UU. ' + us + ' días hábiles (USPS). Otros países: te cotizamos el envío por WhatsApp.') + '</p>');
+    parts.push(en
+      ? '<p>Returns: if your piece arrives with a manufacturing defect, message us within 48 hours of delivery and we\'ll repair or replace it. We don\'t accept returns or exchanges for change of mind, taste or size.</p>'
+      : '<p>Devoluciones: si tu pieza llega con un defecto de fábrica, escríbenos dentro de las 48 horas desde la entrega y la reparamos o reemplazamos. No aceptamos cambios por gusto, talla o cambio de opinión.</p>');
+  }
+  parts.push('<p><a href="' + _pageUrl('envios.html') + '">' + (en ? 'Shipping policy' : 'Política de envíos') + '</a> · <a href="' + _pageUrl('devoluciones.html') + '">' + (en ? 'Returns' : 'Devoluciones') + '</a></p>');
+  return parts.join('');
+}
+function _accCareHtml(p) {
+  const en = __LANG === 'en';
+  const mat = String((p && p.material) || '').toLowerCase();
+  const custom = typeof TEXTS.pdpCare === 'string' && TEXTS.pdpCare.trim();
+  const parts = [];
+  if (p && p.material) parts.push('<p><strong>' + (en ? 'Material' : 'Material') + ':</strong> ' + esc(_matLabel(p.material)) + '</p>');
+  if (custom) parts.push('<p>' + esc(custom) + '</p>');
+  else {
+    const water = mat.includes('acero')
+      ? (en ? 'Stainless steel handles water well: just dry it afterwards.' : 'El acero inoxidable resiste bien el agua: solo sécalo después.')
+      : mat.includes('gold filled')
+        ? (en ? 'Gold filled tolerates moisture better, but take it off for the beach and the pool.' : 'El gold filled tolera mejor la humedad, pero quítatelo para el mar y la piscina.')
+        : (en ? 'Take it off before showering, swimming or washing dishes.' : 'Quítatela antes de ducharte, nadar o lavar los platos.');
+    parts.push('<p>' + water + ' ' + (en
+      ? 'Avoid perfume, lotion, alcohol and sunscreen. Store it dry, in its pouch and apart from other jewelry.'
+      : 'Evita perfumes, cremas, alcohol y protector solar. Guárdala seca, en su bolsita y separada de otras joyas.') + '</p>');
+  }
+  parts.push('<p><a href="' + _pageUrl('cuidados.html') + '">' + (en ? 'Jewelry care guide' : 'Guía de cuidados') + '</a></p>');
+  return parts.join('');
+}
+function _accSizeHtml(p) {
+  const en = __LANG === 'en';
+  const specs = _productSpecs(p);
+  const custom = typeof TEXTS.pdpSize === 'string' && TEXTS.pdpSize.trim();
+  const parts = [];
+  if (specs.length) parts.push('<dl>' + specs.map(([k, v]) => '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>').join('') + '</dl>');
+  if (custom) parts.push('<p>' + esc(custom) + '</p>');
+  else if (!specs.length) parts.push('<p>' + (en ? 'You\'ll find this piece\'s measurements in its description.' : 'Las medidas de esta pieza están en su descripción.') + '</p>');
+  const ring = _isRing(p);
+  parts.push('<p><a href="' + _pageUrl('guia-tallas.html') + '">' + (ring ? (en ? 'Ring size guide' : 'Guía de tallas de anillos') : (en ? 'Size and length guide' : 'Guía de tallas y largos')) + '</a></p>');
+  const name = p ? ((en && p.name_en) ? p.name_en : p.name) : '';
+  parts.push('<p>' + (en ? 'Not sure about the size or length? ' : '¿Dudas con la talla o el largo? ') +
+    '<a href="' + esc(_waLink((en ? 'Hi! I have a question about the size of: ' : '¡Hola! Tengo una duda sobre la talla de: ') + name)) + '" target="_blank" rel="noopener">' +
+    (en ? 'Message us on WhatsApp' : 'Escríbenos por WhatsApp') + '</a></p>');
+  return parts.join('');
+}
+function _renderModalAccordions(p) {
+  const box = document.getElementById('modalAccs');
+  if (!box) return; // página física todavía sin regenerar
+  box.querySelectorAll('details').forEach(d => { d.open = false; });
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  set('accShipBody', _accShipHtml(p));
+  set('accCareBody', _accCareHtml(p));
+  set('accSizeBody', _accSizeHtml(p));
+}
+// Reseñas: el formulario queda detrás de "Escribir una reseña" (antes siempre abierto).
+function _setReviewFormOpen(open) {
+  const btn = document.getElementById('revWriteBtn'), form = document.getElementById('revForm');
+  if (!btn || !form) return;
+  form.hidden = !open;
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+function _resetReviewForm() { _setReviewFormOpen(false); }
+(function () {
+  const btn = document.getElementById('revWriteBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') !== 'true';
+    _setReviewFormOpen(open);
+    if (open) { const first = document.querySelector('#revStarPicker .sp-star[tabindex="0"]') || document.getElementById('revName'); if (first) first.focus(); }
+  });
+})();
 function openModal(id, _fromHistory) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
@@ -1743,11 +2030,14 @@ function openModal(id, _fromHistory) {
   const _box = document.querySelector('#modal-overlay .modal-box');
   if (_box) _box.scrollTop = 0;
   if (!_alreadyOpen || !_modalReleaseTrap) _modalReleaseTrap = trapFocus(document.getElementById('modal-overlay'), closeModal);
-  if (p.hasSurcharge) {
-    showToast(__LANG === 'en'
-      ? 'This product has <strong>4% off</strong> when paying by Zelle or bank transfer'
-      : 'Este producto tiene <strong>4% de descuento</strong> pagando por Zelle o transferencia', 3000);
-  }
+  // Wave 2: ya no sale el aviso flotante "4% de descuento pagando por Zelle" al abrir un
+  // producto (tapaba la ficha y confundía con el precio); el ahorro de Zelle se muestra solo
+  // en el paso de pago del checkout.
+  _renderModalPerks(p);
+  _renderModalSpecs(p);
+  _renderModalRating(p);
+  _renderModalAccordions(p);
+  _resetReviewForm();
   _syncModalWish();
   loadProductReviews(p.id);
   setRevRating(5);
@@ -1979,7 +2269,7 @@ function updateCartUI() {
   } else {
     itemsEl.innerHTML = cart.map((item, i) => `
       <div class="cart-item">
-        <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name)}</div>
+        <div class="ci-img" style="${imgBgStyle(item)}">${imgInner(item, item.name, { sizes: '68px' })}</div>
         <div class="ci-body">
           <div class="ci-name">${esc(__LANG === 'en' && item.name_en ? item.name_en : item.name)}</div>
           ${_cartItemSoldOut(item) ? `<div class="ci-soldout" role="note" style="color:#B42318;font-size:12px;font-weight:700;margin:2px 0">${__LANG === 'en' ? 'Sold out · remove it to continue' : 'Agotado · quítalo para continuar'}</div>` : ''}
@@ -1998,53 +2288,60 @@ function updateCartUI() {
       </div>`).join('');
     document.getElementById('cartTotal').textContent = '$' + total.toFixed(2);
     // Barra de progreso hacia el envío gratis (umbral de config.shipping.freeThreshold).
-    // Zelle/transferencia decide el envío gratis con el subtotal sin recargo de tarjeta
-    // (basePrice) — solo se promete "envío gratis" sin matices si llega con los 2 subtotales.
-    const baseTotal = cart.reduce((s, i) => s + (i.hasSurcharge && i.basePrice != null ? i.basePrice : i.price) * (i.qty || 1), 0);
-    const free = _cpIsFreeShip() || baseTotal >= SHIPPING.freeThreshold;
-    const freeCard = free || total >= SHIPPING.freeThreshold;
-    const remaining = Math.max(0, SHIPPING.freeThreshold - baseTotal);
+    // Wave 2: UNA sola base en todo el sitio (carrito, checkout, Zelle, WhatsApp): el subtotal
+    // que ve la clienta, con el recargo del 4% de tarjeta donde aplica (_freeShipBase). Antes el
+    // carrito usaba el subtotal sin recargo y el checkout el con recargo ("Te faltan $68.00" vs
+    // "$67.12" para el mismo carrito). Es la misma base que usan los 2 Workers al recalcular.
+    const base = _freeShipBase();
+    const free = _cpIsFreeShip() || base >= SHIPPING.freeThreshold;
+    const remaining = _freeShipRemaining(base);
     document.getElementById('cartShipping').textContent = free
       ? (__LANG === 'en' ? '✓ You have free shipping' : '✓ Tienes envío gratis')
-      : freeCard
-        ? (__LANG === 'en' ? '✓ Free shipping when paying by card' : '✓ Envío gratis pagando con tarjeta')
-        : _freeShipMissingText(remaining);
+      : _freeShipMissingText(remaining);
     const fill = document.getElementById('cartShipFill');
-    if (fill) fill.style.width = (freeCard || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, baseTotal / SHIPPING.freeThreshold * 100)) + '%';
-    if (!freeCard) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
-    itemsEl.insertAdjacentHTML('beforeend', _cartSimilarHtml(freeCard ? [] : _cartSuggestions(remaining).map(p => p.id)));
+    if (fill) fill.style.width = (free || SHIPPING.freeThreshold <= 0 ? 100 : Math.min(100, base / SHIPPING.freeThreshold * 100)) + '%';
+    if (!free) itemsEl.insertAdjacentHTML('beforeend', _cartSuggestHtml(remaining));
+    itemsEl.insertAdjacentHTML('beforeend', _cartSimilarHtml(free ? [] : _cartSuggestions(remaining).map(p => p.id)));
     footEl.style.display = 'block';
   }
 }
+// Subtotal para el umbral de envío gratis: precio con tarjeta (p.price ya trae el recargo del
+// 4% donde aplica, o el precio de la promo). Redondeado a centavos para que el carrito y el
+// checkout muestren exactamente el mismo "te faltan".
+function _freeShipBase() {
+  return Math.round(cart.reduce((s, i) => s + (+i.price || 0) * (i.qty || 1), 0) * 100) / 100;
+}
+function _freeShipRemaining(base) { return Math.max(0, Math.round((SHIPPING.freeThreshold - base) * 100) / 100); }
 function _freeShipMissingText(remaining) {
   return __LANG === 'en'
     ? 'You are $' + remaining.toFixed(2) + ' away from free shipping'
     : 'Te faltan $' + remaining.toFixed(2) + ' para el envío gratis';
 }
-// Sugerencias del carrito: 2–3 productos en stock de categorías que no están en el
-// carrito, empezando por los más baratos que por sí solos alcanzan el envío gratis (si no
-// alcanzan, los que más se acercan). Solo abren el producto — nunca se agregan solos.
+// Sugerencias del carrito (wave 2): hasta 3 piezas en stock que por sí solas completan el
+// envío gratis (precio ≥ lo que falta, mismo precio con tarjeta que la base del umbral),
+// empezando por las de MENOR excedente — antes, por buscar una de cada categoría, con $68
+// faltantes sugería una pieza de $130. A igual excedente van primero las de una categoría que
+// no está en el carrito. Si ninguna alcanza, las que más se acercan. Solo abren el producto.
 function _cartSuggestions(remaining) {
   const inCart = new Set(cart.map(i => String(i.id)));
   const cats = new Set(cart.map(i => i.cat).filter(Boolean));
-  const pool = PRODUCTS.filter(p => p.available !== false && +p.price > 0 && !inCart.has(String(p.id)) && !cats.has(p.cat));
-  const reach = pool.filter(p => p.price >= remaining).sort((a, b) => a.price - b.price);
-  const below = pool.filter(p => p.price < remaining).sort((a, b) => b.price - a.price);
-  const out = [], usedCats = new Set();
-  for (const p of [...reach, ...below]) {
-    if (usedCats.has(p.cat)) continue;
-    usedCats.add(p.cat); out.push(p);
-    if (out.length === 3) break;
-  }
-  return out.length >= 2 ? out : [];
+  const pool = PRODUCTS.filter(p => p.available !== false && +p.price > 0 && !inCart.has(String(p.id)));
+  const newCat = p => (cats.has(p.cat) ? 1 : 0);
+  const reach = pool.filter(p => +p.price >= remaining)
+    .sort((a, b) => ((+a.price - remaining) - (+b.price - remaining)) || (newCat(a) - newCat(b)));
+  if (reach.length) return reach.slice(0, 3);
+  return pool.sort((a, b) => ((remaining - +a.price) - (remaining - +b.price)) || (newCat(a) - newCat(b))).slice(0, 3);
 }
 function _cartSuggestHtml(remaining) {
   const list = _cartSuggestions(remaining);
   if (!list.length) return '';
-  return '<div class="cart-suggest"><div class="cs-title">' + (__LANG === 'en' ? 'Complete your free shipping with' : 'Completa tu envío gratis con') + '</div><div class="cs-list">' +
+  const reaches = list.some(p => +p.price >= remaining);
+  return '<div class="cart-suggest"><div class="cs-title">' + (reaches
+    ? (__LANG === 'en' ? 'Add one of these and get free shipping' : 'Agrega una de estas y tu envío es gratis')
+    : (__LANG === 'en' ? 'Get closer to free shipping with' : 'Acércate al envío gratis con')) + '</div><div class="cs-list">' +
     list.map(p => {
       const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
-      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name, { sizes: '120px' })}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
     }).join('') + '</div></div>';
 }
 // Carrito vacío: hasta 4 productos (Bestseller, después Nuevo, en stock) como tarjetitas
@@ -2055,7 +2352,7 @@ function _cartEmptySuggestHtml() {
   return '<div class="cart-suggest cart-suggest--empty"><div class="cs-title">' + (__LANG === 'en' ? 'You might like' : 'Quizás te guste') + '</div><div class="cs-list">' +
     list.map(p => {
       const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
-      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, p.name, { sizes: '120px' })}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
     }).join('') + '</div></div>';
 }
 // "Explorar la tienda": cierra el carrito y baja hasta los filtros del catálogo.
@@ -2087,25 +2384,75 @@ function changeQty(cartId, delta) {
   saveCart(); updateCartUI();
 }
 
-// Estado/ZIP solo para EE.UU. — también al cargar (el país por defecto es Ecuador en la
-// tienda ES y EE.UU. en la EN).
+// ─── PAÍS DEL CHECKOUT (wave 2) ─────────────────────────────
+// Se preselecciona el país detectado (window.__visitorCountry: api.country.is, o la zona
+// horaria mientras tanto) en vez de Ecuador fijo; si la clienta lo cambia a mano, se respeta.
+// Estado/ZIP solo para EE.UU.; teléfono, dirección y ciudad con ejemplos del país elegido.
+// Colombia/Perú/México/Otro: el envío se cotiza por WhatsApp (envios.html, "Otros países"),
+// así que no se cobra una tarifa inventada y el pedido se coordina por WhatsApp.
+// El cálculo de IVA/sales tax NO cambia (pendiente de decisión contable).
+const CO_COUNTRIES = ['US', 'EC', 'CO', 'PE', 'MX'];
+let _coPaisTouched = false;
+function _isQuoteCountry(pais) { const c = String(pais || '').toUpperCase(); return c !== 'US' && c !== 'EC'; }
+function _coPaisValue() { const el = document.getElementById('coPais'); return el ? el.value : ''; }
+function _coPreselectCountry() {
+  const sel = document.getElementById('coPais');
+  if (!sel || _coPaisTouched) return;
+  const vc = String(window.__visitorCountry || '').toUpperCase();
+  if (!/^[A-Z]{2}$/.test(vc)) return; // sin dato: queda el país por defecto de la plantilla
+  const want = CO_COUNTRIES.includes(vc) ? vc : 'OTHER';
+  if (sel.value === want) return;
+  sel.value = want;
+  _syncCountryFields();
+  document.getElementById('coEstado').value = '';
+  document.getElementById('coZip').value = '';
+}
+const _CO_PLACEHOLDERS = {
+  US: { tel: '(555) 123-4567', dir: '123 Main St…', apto: 'Apt 4B, Suite 200…', city: 'Miami' },
+  EC: { tel: '09X XXX XXXX', dir: 'Av. Amazonas N34-120 y Juan Pablo II…', apto: 'Depto 3B, edificio, referencia…', city: 'Quito' },
+  CO: { tel: '300 123 4567', dir: 'Calle 93 # 11-26…', apto: 'Apto 502, torre, referencia…', city: 'Bogotá' },
+  PE: { tel: '912 345 678', dir: 'Av. Larco 1150…', apto: 'Dpto 301, referencia…', city: 'Lima' },
+  MX: { tel: '55 1234 5678', dir: 'Av. Reforma 222…', apto: 'Int. 4, colonia, referencia…', city: 'Ciudad de México' },
+  OTHER: { tel: '+00 000 000 0000', dir: '', apto: '', city: '' },
+};
 function _syncCountryFields() {
-  const isUS = document.getElementById('coPais').value === 'US';
+  const pais = _coPaisValue();
+  const isUS = pais === 'US';
   document.getElementById('coEstadoWrap').style.display = isUS ? 'block' : 'none';
   document.getElementById('coZipWrap').style.display    = isUS ? 'block' : 'none';
-  // Ejemplos de dirección: estilo EE.UU. para US (y siempre en la tienda en inglés);
-  // estilo Ecuador/Latam en español para cualquier otro país.
-  const usStyle = isUS || __LANG === 'en';
-  document.getElementById('coDireccion').placeholder = usStyle ? '123 Main St…' : 'Av. Amazonas N34-120 y Juan Pablo II…';
-  document.getElementById('coApto').placeholder      = usStyle ? 'Apt 4B, Suite 200…' : 'Depto 3B, edificio, referencia…';
+  const ph = _CO_PLACEHOLDERS[pais] || _CO_PLACEHOLDERS.OTHER;
+  const en = __LANG === 'en';
+  const tel = document.getElementById('coTel'); if (tel) tel.placeholder = ph.tel;
+  document.getElementById('coDireccion').placeholder = ph.dir || (en ? 'Street, number, area…' : 'Calle, número, sector…');
+  document.getElementById('coApto').placeholder      = ph.apto || (en ? 'Apt, building, reference…' : 'Depto, edificio, referencia…');
+  const city = document.getElementById('coCiudad'); if (city) city.placeholder = ph.city || (en ? 'City' : 'Ciudad');
+  // Países cotizados por WhatsApp: aviso en el paso 1 y, en el paso 2, solo el envío por WhatsApp.
+  const quote = _isQuoteCountry(pais);
+  const note = document.getElementById('coIntlNote'); if (note) note.hidden = !quote;
+  const wa = document.querySelector('#coIntlNote .co-intl-wa');
+  if (wa) wa.href = _waLink(en ? 'Hi! I would like a shipping quote to ' + _coCountryName(pais) + ' for my order.' : '¡Hola! Quisiera cotizar el envío de mi pedido a ' + _coCountryName(pais) + '.');
+  const pay = document.getElementById('coIntlPay'); if (pay) pay.hidden = !quote;
+  const step2 = document.getElementById('coStep2'); if (step2) step2.classList.toggle('co-intl-mode', quote);
+}
+function _coCountryName(pais) {
+  const sel = document.getElementById('coPais');
+  const opt = sel && [...sel.options].find(o => o.value === pais);
+  return opt && pais !== 'OTHER' ? opt.textContent : (__LANG === 'en' ? 'my country' : 'mi país');
 }
 _syncCountryFields();
 document.getElementById('coPais').addEventListener('change', function() {
+  _coPaisTouched = true;
   _syncCountryFields();
   document.getElementById('coEstado').value = '';
   document.getElementById('coZip').value    = '';
   renderCheckoutSummary();
 });
+// Envío según país y subtotal con tarjeta: { cost, free, quote }. quote = se cotiza por WhatsApp.
+function _shippingFor(pais, base) {
+  if (_isQuoteCountry(pais)) return { cost: 0, free: false, quote: true };
+  const free = _cpIsFreeShip() || base >= SHIPPING.freeThreshold;
+  return { cost: free ? 0 : SHIPPING.cost, free, quote: false };
+}
 
 // ─── AUTOCOMPLETE DIRECCIÓN (Photon / OpenStreetMap) ─────────────────────────
 (function initAddrAutocomplete() {
@@ -2264,6 +2611,8 @@ function openCheckout() {
   _setCoCodesOpen(!!(_gcCode || _cpCode || _typed));
   const helpWa = document.getElementById('coHelpWa');
   if (helpWa) helpWa.href = _waLink(__LANG === 'en' ? 'Hi! I need help with my order' : '¡Hola! Necesito ayuda con mi pedido');
+  _coPreselectCountry();
+  _syncCountryFields();
   renderCheckoutSummary();
   _checkoutReleaseTrap = trapFocus(document.getElementById('checkout-overlay'), closeCheckout);
 }
@@ -2308,9 +2657,12 @@ function renderCheckoutSummary() {
   }
   const adjustedSubtotal = subtotal - zelleDiscount;
 
-  const free       = _cpIsFreeShip() || adjustedSubtotal >= SHIPPING.freeThreshold;
-  const shippingCost = free ? 0 : SHIPPING.cost;
   const pais       = (document.getElementById('coPais').value || '').toUpperCase();
+  // Wave 2: el envío gratis se decide con el subtotal con tarjeta (el mismo del carrito), no
+  // con el subtotal ya descontado de Zelle; y los países cotizados por WhatsApp no pagan acá.
+  const _ship      = _shippingFor(pais, _freeShipBase());
+  const free       = _ship.free;
+  const shippingCost = _ship.cost;
   const estado     = (document.getElementById('coEstado').value || '').toUpperCase();
 
   // Calcular impuesto
@@ -2342,9 +2694,9 @@ function renderCheckoutSummary() {
   const grandTotal = parseFloat((afterGc - _cpDiscount).toFixed(2));
 
   document.getElementById('coSubtotal').textContent = '$' + subtotal.toFixed(2);
-  document.getElementById('coEnvio').textContent    = free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2);
+  document.getElementById('coEnvio').textContent    = _ship.quote ? (__LANG === 'en' ? 'Quoted on WhatsApp' : 'Se cotiza por WhatsApp') : (free ? t('store.coFree', 'Gratis') : '$' + shippingCost.toFixed(2));
   const shipHint = document.getElementById('coShipHint');
-  if (shipHint) shipHint.textContent = free ? '' : _freeShipMissingText(Math.max(0, SHIPPING.freeThreshold - adjustedSubtotal));
+  if (shipHint) shipHint.textContent = (free || _ship.quote) ? '' : _freeShipMissingText(_freeShipRemaining(_freeShipBase()));
   const taxLine = document.getElementById('coTaxLine');
   if (taxAmt > 0) {
     taxLine.style.display = '';
@@ -2356,7 +2708,16 @@ function renderCheckoutSummary() {
   // El "-4%" de Zelle solo existe si algún producto del carrito trae el recargo con tarjeta
   // (/pub/surcharges del Worker). Sin recargo, Zelle y tarjeta cuestan lo mismo y no se promete.
   const _anySurcharge = cart.some(i => i.hasSurcharge && i.basePrice != null && i.price > i.basePrice);
-  document.querySelectorAll('.zelle-disc-badge').forEach(el => { el.hidden = !_anySurcharge; });
+  // Ahorro de Zelle visible SOLO acá, en el paso de pago (wave 2: ya no hay aviso al abrir un producto).
+  const _zelleSave = cart.reduce((s, i) => s + (i.hasSurcharge && i.basePrice != null ? Math.round((i.price - i.basePrice) * (i.qty || 1) * 100) / 100 : 0), 0);
+  document.querySelectorAll('.zelle-disc-badge').forEach(el => {
+    el.hidden = !_anySurcharge;
+    if (_anySurcharge && _zelleSave > 0) {
+      const es = el.querySelector('.t-es'), en = el.querySelector('.t-en');
+      if (es) es.textContent = '-4% · ahorras $' + _zelleSave.toFixed(2);
+      if (en) en.textContent = '-4% · save $' + _zelleSave.toFixed(2);
+    }
+  });
   const zelleRow = document.getElementById('coZelleRow');
   if (zelleDiscount > 0) {
     zelleRow.style.display = '';
@@ -2386,7 +2747,7 @@ function renderCheckoutSummary() {
   document.getElementById('coSummaryItems').innerHTML = cart.map(item => `
     <div class="co-sum-item">
       <div class="co-si-img" style="${imgBgStyle(item)}">
-        ${imgInner(item, item.name)}
+        ${imgInner(item, item.name, { sizes: '52px' })}
         <div class="co-si-qty">${item.qty || 1}</div>
       </div>
       <div>
@@ -2555,9 +2916,10 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
   }
   const direccion = document.getElementById('coDireccion').value.trim();
   const apto      = document.getElementById('coApto').value.trim();
+  if (_isQuoteCountry(paisVal)) return; // países cotizados por WhatsApp: botón oculto (co-intl-mode)
   const zelleSubtotal = cart.reduce((s, i) => s + (i.hasSurcharge ? i.basePrice : i.price) * (i.qty || 1), 0);
-  const free          = _cpIsFreeShip() || zelleSubtotal >= SHIPPING.freeThreshold;
-  const shippingCost  = free ? 0 : SHIPPING.cost;
+  // Wave 2: el envío gratis se decide con el subtotal con tarjeta, igual que el carrito.
+  const shippingCost  = _shippingFor(paisVal, _freeShipBase()).cost;
   let zelleTax = 0;
   if (paisVal === 'EC') {
     zelleTax = (zelleSubtotal + shippingCost) * 0.15;
@@ -2602,7 +2964,7 @@ document.getElementById('zelleBtn').addEventListener('click', async () => {
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, zelleEmailVal, result.id);
-  const _zelleSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!zelleEmailVal, method: 'zelle' };
+  const _zelleSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!zelleEmailVal, method: 'zelle', hasPersonal: _cartHasPersonal() };
   _openWa(_waWin, buildWhatsAppUrl());
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -2634,6 +2996,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
 
   const paisVal = document.getElementById('coPais').value;
   const estadoVal = document.getElementById('coEstado').value;
+  if (_isQuoteCountry(paisVal)) return; // países cotizados por WhatsApp: botón oculto (co-intl-mode)
   if (paisVal === 'US' && !estadoVal) {
     _markCoFieldError('coEstado', errorEl, t('store.coError2', 'Por favor selecciona tu estado.'));
     return;
@@ -2664,7 +3027,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
   };
 
   const _subtotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-  const _shippingCost = (_cpIsFreeShip() || _subtotal >= SHIPPING.freeThreshold) ? 0 : SHIPPING.cost;
+  const _shippingCost = _shippingFor(paisVal, _freeShipBase()).cost;
   const _sqBase = _subtotal + _shippingCost;
   const _sqGcDiscount = (_gcCode && _gcBalance > 0) ? parseFloat(Math.min(_gcBalance, _sqBase).toFixed(2)) : 0;
   const _sqAfterGc = _sqBase - _sqGcDiscount;
@@ -2704,7 +3067,7 @@ document.getElementById('payBtn').addEventListener('click', async () => {
     // resumen y si dejó email (sí/no) — nunca el email ni otros datos personales.
     try {
       const _shownTotal = parseFloat((document.getElementById('coTotal').textContent || '').replace(/[^0-9.]/g, ''));
-      sessionStorage.setItem('cacusa_success_info', JSON.stringify({ total: isNaN(_shownTotal) ? null : _shownTotal, hasEmail: !!customer.email }));
+      sessionStorage.setItem('cacusa_success_info', JSON.stringify({ total: isNaN(_shownTotal) ? null : _shownTotal, hasEmail: !!customer.email, hasPersonal: _cartHasPersonal() }));
     } catch (_) {}
     window.location.href = data.checkoutUrl;
 
@@ -2816,9 +3179,10 @@ function buildWhatsAppUrl(opts = {}) {
 
   // Use base price for Zelle (no surcharge), full price for Square
   const total    = cart.reduce((s, i) => s + (isZelle && i.hasSurcharge ? i.basePrice : i.price) * (i.qty || 1), 0);
-  const free     = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
-  const envio    = free ? (_waEN ? 'Free' : 'Gratis') : '$' + SHIPPING.cost.toFixed(2);
-  const _waShip  = free ? 0 : SHIPPING.cost;
+  // Wave 2: envío gratis con el subtotal con tarjeta (misma base que carrito y checkout).
+  const _waShipInfo = _shippingFor(pais, _freeShipBase());
+  const envio    = _waShipInfo.quote ? (_waEN ? 'to be quoted on WhatsApp' : 'por cotizar por WhatsApp') : (_waShipInfo.free ? (_waEN ? 'Free' : 'Gratis') : '$' + SHIPPING.cost.toFixed(2));
+  const _waShip  = _waShipInfo.cost;
   // Impuesto — misma lógica que renderCheckoutSummary para que el mensaje cuadre con el resumen
   const _waPais   = (document.getElementById('coPais').value || '').toUpperCase();
   const _waEstado = (document.getElementById('coEstado').value || '').toUpperCase();
@@ -2952,6 +3316,12 @@ async function submitOrder(order) {
   }
 }
 
+// Países cotizados por WhatsApp (wave 2): el botón principal del paso 2 hace lo mismo que
+// "Prefiero coordinar por WhatsApp" (registra el pedido y abre WhatsApp con el detalle).
+(function () {
+  const b = document.getElementById('coIntlBtn');
+  if (b) b.addEventListener('click', e => { e.preventDefault(); const f = document.getElementById('waFallbackBtn'); if (f) f.click(); });
+})();
 document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   e.preventDefault();
   const errorEl = document.getElementById('coError');
@@ -2982,8 +3352,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   const direccion  = document.getElementById('coDireccion').value.trim();
   const apto       = document.getElementById('coApto').value.trim();
   const total      = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
-  const free       = _cpIsFreeShip() || total >= SHIPPING.freeThreshold;
-  const waShip     = free ? 0 : SHIPPING.cost;
+  const waShip     = _shippingFor(pais, _freeShipBase()).cost;
   // Impuesto — misma lógica que renderCheckoutSummary (el total registrado debe cuadrar con lo que vio el cliente)
   const waEstadoV  = (document.getElementById('coEstado').value || '').toUpperCase();
   const waZipV     = (document.getElementById('coZip').value || '').trim();
@@ -3030,7 +3399,7 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
     return;
   }
   if (_cpCode) burnCoupon(_cpCode, tel, emailVal, result.id);
-  const _waSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!emailVal, method: 'whatsapp' };
+  const _waSuccess = { orderNum: _currentOrderNum, total: totalConGC, hasEmail: !!emailVal, method: 'whatsapp', hasPersonal: _cartHasPersonal() };
   _openWa(_waWin, buildWhatsAppUrl({ method: 'whatsapp' }));
   closeCheckout();
   cart = []; saveCart(); updateCartUI();
@@ -3044,7 +3413,10 @@ document.getElementById('waFallbackBtn').addEventListener('click', async e => {
   showSuccess(_waSuccess);
 });
 
-// Pantalla de éxito. info = { orderNum, total, hasEmail, method } — cada campo es opcional
+function _cartHasPersonal() {
+  return cart.some(i => !!(i.personalization || i.personalized || (!i.isCombo && (PRODUCTS.find(p => String(p.id) === String(i.id)) || {}).personalized)));
+}
+// Pantalla de éxito. info = { orderNum, total, hasEmail, method, hasPersonal } — cada campo es opcional
 // y solo se muestra si el flujo de verdad lo tiene (el regreso de Square no trae número de
 // pedido: lo genera cacusa-square del lado del servidor al confirmar el pago).
 let _successReleaseTrap = null;
@@ -3056,7 +3428,7 @@ function showSuccess(info) {
     let h = '';
     if (info.orderNum) h += '<p>' + (en ? 'Order #' : 'Pedido #') + '<strong>' + esc(info.orderNum) + '</strong></p>';
     if (typeof info.total === 'number' && isFinite(info.total)) h += '<p>Total: <strong>$' + info.total.toFixed(2) + '</strong></p>';
-    h += '<p>' + (en ? 'Personalized pieces are handmade in 5 to 10 business days, plus shipping time.' : 'Las piezas personalizadas se elaboran a mano en 5 a 10 días hábiles, más el tiempo de envío.') + '</p>';
+    if (info.hasPersonal) h += '<p>' + (en ? 'Personalized pieces are handmade in 5 to 10 business days, plus shipping time.' : 'Las piezas personalizadas se elaboran a mano en 5 a 10 días hábiles, más el tiempo de envío.') + '</p>';
     if (info.hasEmail) h += '<p>✓ ' + (en ? 'We sent the confirmation to your email.' : 'Te enviamos la confirmación a tu email.') + '</p>';
     if (info.method === 'zelle' && info.orderNum && info.total > 0) {
       const waText = (en ? 'Hi! Here is the payment screenshot for my order #' : '¡Hola! Te envío la captura del pago de mi pedido #') + info.orderNum;
@@ -3112,7 +3484,7 @@ if (new URLSearchParams(window.location.search).get('paid') === '1') {
   _resetGift();
   let _sqInfo = {};
   try { _sqInfo = JSON.parse(sessionStorage.getItem('cacusa_success_info') || '{}') || {}; sessionStorage.removeItem('cacusa_success_info'); } catch (_) {}
-  showSuccess({ total: typeof _sqInfo.total === 'number' ? _sqInfo.total : undefined, hasEmail: !!_sqInfo.hasEmail, method: 'square' });
+  showSuccess({ total: typeof _sqInfo.total === 'number' ? _sqInfo.total : undefined, hasEmail: !!_sqInfo.hasEmail, method: 'square', hasPersonal: _sqInfo.hasPersonal !== false });
 }
 
 // ─── STARS RENDERER ────────────────────────────────────────
@@ -3185,7 +3557,7 @@ function initGallery(p) {
   if (multi) {
     thumbs.classList.remove('hidden');
     thumbs.innerHTML = _galleryImages.map((url, i) =>
-      `<div class="gallery-thumb ${i===0?'active':''}" role="button" tabindex="0" aria-label="Foto ${i + 1}" onclick="switchGallerySlide(${i})" onkeydown="activateOnKey(event,()=>switchGallerySlide(${i}))"><img src="${esc(url)}" loading="lazy" width="52" height="52" alt="${esc(p.name || '')} — foto ${i + 1}"></div>`
+      `<div class="gallery-thumb ${i===0?'active':''}" role="button" tabindex="0" aria-label="Foto ${i + 1}" onclick="switchGallerySlide(${i})" onkeydown="activateOnKey(event,()=>switchGallerySlide(${i}))"><img ${_imgAttrs(url, '52px')} loading="lazy" decoding="async" width="52" height="52" alt="${esc(p.name || '')} — foto ${i + 1}"></div>`
     ).join('');
   } else {
     thumbs.classList.add('hidden');
@@ -3204,7 +3576,7 @@ function renderGallerySlide() {
   if (url) {
     const pos = _focal(p.focalX) + '% ' + _focal(p.focalY) + '%';
     const zoom = _galleryImages.length > 1 ? 1 : _zoom(p.zoom);
-    imgBg.innerHTML = `<img src="${esc(url)}" alt="${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" width="340" height="340" style="width:100%;height:100%;object-fit:cover;object-position:${pos};transform:scale(${zoom});transform-origin:${pos};display:block">`;
+    imgBg.innerHTML = `<img ${_imgAttrs(url, SIZES_MODAL)} fetchpriority="high" alt=""${esc(p.name + ' — joyería artesanal personalizada CACUSA')}" width="340" height="340" style="width:100%;height:100%;object-fit:cover;object-position:${pos};transform:scale(${zoom});transform-origin:${pos};display:block">`;
     imgBg.style.cssText = 'width:100%;height:100%';
   } else {
     imgBg.innerHTML = '';
@@ -3245,7 +3617,7 @@ function openLightbox(images, idx) {
   const thumbs = document.getElementById('lbThumbs');
   const _lbName = currentProduct ? (currentProduct.name || '') : '';
   thumbs.innerHTML = multi ? images.map((url, i) =>
-    `<div class="lb-thumb ${i===_lbIdx?'active':''}" role="button" tabindex="0" aria-label="Foto ${i + 1}" onclick="lbGoTo(${i})" onkeydown="activateOnKey(event,()=>lbGoTo(${i}))"><img src="${esc(url)}" loading="lazy" width="44" height="44" alt="${esc(_lbName)} — foto ${i + 1}"></div>`
+    `<div class="lb-thumb ${i===_lbIdx?'active':''}" role="button" tabindex="0" aria-label="Foto ${i + 1}" onclick="lbGoTo(${i})" onkeydown="activateOnKey(event,()=>lbGoTo(${i}))"><img ${_imgAttrs(url, '44px')} loading="lazy" decoding="async" width="44" height="44" alt="${esc(_lbName)} — foto ${i + 1}"></div>`
   ).join('') : '';
   renderLbSlide();
   const _lbW = document.getElementById('lbWish');
@@ -3312,7 +3684,7 @@ function _similarProducts(p, n, exclude) {
 function _relatedCardHtml(r) {
   const rName = (__LANG === 'en' && r.name_en) ? r.name_en : r.name;
   return `<a class="related-card" href="${_pcardHref(r)}" onclick="return _pcardNav(event, ${r.id})">
-      <div class="related-card-img" style="${imgBgStyle(r)}">${imgInner(r, rName)}</div>
+      <div class="related-card-img" style="${imgBgStyle(r)}">${imgInner(r, rName, { sizes: '(max-width:480px) 42vw, 200px' })}</div>
       <div class="related-card-body">
         ${r.badge ? `<div class="related-card-tag">${esc(tagLabel(r.tag))}</div>` : ''}
         <div class="related-card-name">${esc(rName)}</div>
@@ -3362,7 +3734,7 @@ function _cartSimilarHtml(excludeIds) {
   return '<div class="cart-suggest cart-suggest--similar"><div class="cs-title">' + (__LANG === 'en' ? 'You may also like' : 'También te puede gustar') + '</div><div class="cs-list cs-list--row">' +
     out.map(p => {
       const nm = __LANG === 'en' && p.name_en ? p.name_en : p.name;
-      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, nm)}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
+      return `<a class="cs-item" href="${_pcardHref(p)}" onclick="return _cartSuggestNav(event, ${p.id})"><div class="cs-img" style="${imgBgStyle(p)}">${imgInner(p, nm, { sizes: '100px' })}</div><div class="cs-name">${esc(nm)}</div><div class="cs-price">$${(+p.price).toFixed(2)}</div></a>`;
     }).join('') + '</div></div>';
 }
 
@@ -3749,13 +4121,16 @@ async function loadProductReviews(productId) {
     }
     if (!reviews.length) {
       list.innerHTML = `<div class="no-reviews">${__LANG === 'en' ? 'No reviews yet. Be the first!' : 'Aún sin reseñas. ¡Sé el primero/a!'}</div>`;
-      avgRow.style.display = 'none'; return;
+      avgRow.style.display = 'none';
+      _renderModalRating(currentProduct, 0, 0);
+      return;
     }
     if (!(avg >= 1 && avg <= 5)) avg = reviews.reduce((s, v) => s + (v.rating || 5), 0) / reviews.length;
     avgRow.style.display = 'flex';
     document.getElementById('revScore').textContent = avg.toFixed(1);
     document.getElementById('revStarsDisplay').innerHTML = renderStars(avg);
     document.getElementById('revCountText').textContent = `(${count})`;
+    _renderModalRating(currentProduct, avg, count);
     _patchSchemaRating(avg, count, reviews);
     list.innerHTML = reviews.slice(0, 5).map(rv => `
       <div class="review-item">
@@ -3821,6 +4196,7 @@ async function submitReview() {
     document.getElementById('revName').value = '';
     document.getElementById('revComment').value = '';
     setRevRating(5);
+    _setReviewFormOpen(false);
     showToast(__LANG==='en'?'✓ Review submitted! It will appear once we review it.':'✓ ¡Reseña enviada! Se publica apenas la revisemos.');
     // No se toca el promedio local: la reseña todavía no está aprobada, así que
     // mostrarla ya contada daría una calificación que no es la real.
@@ -4143,6 +4519,7 @@ function _wantsReviewForm() {
 function _openReviewForm() {
   const form = document.querySelector('.review-form');
   if (!form) return;
+  _setReviewFormOpen(true);
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(() => {
     form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });

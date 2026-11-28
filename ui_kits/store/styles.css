@@ -848,3 +848,130 @@ main#main:focus{outline:none}
 .empty-tip{font-family:var(--fu);font-size:14px;color:var(--ink-muted);margin:4px 0 12px}
 .empty-cats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 auto 18px;max-width:640px}
 .empty-cats .photo-search-btn{flex:0 0 auto;order:0;min-height:0}
+
+/* ═══ Wave 2 (vender más) ═══════════════════════════════════════════════════ */
+/* 1. Productos en la primera pantalla. Hero compacto: en el celular ≤120px (antes ~250),
+   en escritorio ~140px, así la primera fila de productos entra sin hacer scroll. */
+.store-hero{padding:24px 16px 22px}
+.store-hero-label{margin-bottom:6px}
+.store-hero-h{font-size:40px;line-height:1.1}
+.store-hero-s{font-size:22px;margin-top:0}
+.store-hero-value{margin-top:8px}
+@media(max-width:600px){
+  .store-hero{padding:12px 16px 10px;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;column-gap:8px}
+  .store-hero-label,.store-hero-value{display:none}
+  .store-hero-h{font-size:clamp(20px,6.2vw,26px);line-height:1.15;letter-spacing:.05em;padding:0}
+  .store-hero-s{font-size:17px}
+}
+/* Franja única: temporada + envío gratis (antes 2 franjas apiladas). */
+.store-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0 10px;padding:7px 16px;background:var(--pink-deep);color:#fff;font-family:var(--fu);font-size:12.5px;font-weight:600;line-height:1.45;letter-spacing:.01em;text-align:center}
+.store-bar .season-banner{display:inline;padding:0;background:none;font-size:inherit;line-height:inherit;color:#fff;text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+.store-bar .season-banner:hover{background:none;opacity:.85}
+.store-bar .season-banner[hidden]{display:none}
+.store-bar #freeShippingBanner{display:inline;padding:0;background:none;color:#fff;font-size:inherit;font-weight:600}
+.store-bar #freeShippingBanner:empty{display:none}
+.store-bar .season-banner:not([hidden])+#freeShippingBanner::before{content:'·';margin-right:10px;opacity:.75}
+@media(max-width:600px){
+  .store-bar{font-size:12px;padding:6px 12px;flex-direction:column;gap:1px}
+  .store-bar .season-banner:not([hidden])+#freeShippingBanner::before{display:none}
+}
+/* Filtros compactos: en el celular "Buscar por foto" es un botón de ícono (44px) en la
+   misma fila que el buscador y el orden, en vez de ocupar una fila entera. */
+.photo-search-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.photo-search-btn svg{flex:0 0 auto}
+.filters{padding:16px 48px}
+@media(max-width:768px){.filters{padding:14px 20px}}
+@media(max-width:600px){
+  .filters{padding:8px 12px 10px;gap:8px}
+  .photo-search-btn{flex:0 0 44px;order:0;width:44px;min-height:44px;padding:0;border-radius:50%}
+  .photo-search-btn .psb-txt{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .sort-select{max-width:38%}
+  .store-body{padding:14px 12px}
+}
+.store-body.store-grid-wrap{padding-top:28px}
+@media(max-width:600px){.store-body.store-grid-wrap{padding-top:14px}}
+/* Vista inicial: "Más vendidos" + botón al catálogo completo; las categorías van debajo. */
+.grid-heading{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 2px -6px;font-family:var(--fd);font-size:22px;font-weight:700;color:var(--ink);line-height:1.2}
+.grid-heading button{font-family:var(--fu);font-size:13px;font-weight:600;color:var(--pink-deep);background:none;border:0;padding:12px 0;min-height:44px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.grid-viewall-wrap{grid-column:1/-1;text-align:center;margin-top:4px}
+.grid-viewall{background:var(--pink-deep);color:#fff;border:0;border-radius:999px;padding:12px 26px;min-height:44px;font-family:var(--fu);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(238,111,168,.3)}
+.grid-viewall:hover{background:var(--ink)}
+@media(max-width:600px){.grid-heading{font-size:19px;margin-bottom:-4px}}
+.pcard--static{animation:none}
+/* Estrellas en la misma línea que la categoría: cuando llegan las reseñas la tarjeta no
+   cambia de alto (antes agregaban una línea y empujaban la grilla). */
+.pcard-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:14px;margin-bottom:4px}
+.pcard-meta .pcard-cat{margin-bottom:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pcard-meta .pcard-stars{margin-top:0;flex-shrink:0;gap:1px}
+/* Selector de categorías: sección secundaria debajo de la grilla, tarjetas = enlaces reales */
+.cat-picker-sec[hidden]{display:none}
+.cat-picker-sec{padding-top:8px;padding-bottom:8px}
+.cat-picker-title{font-family:var(--fd);font-size:22px;font-weight:700;color:var(--ink);margin:0 2px 16px}
+.cat-picker-sec .cat-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+a.cat-tile{display:block;text-decoration:none;color:inherit;background:var(--pink-pale)}
+.cat-tile-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.1s var(--ease-out),transform .6s var(--ease-out)}
+.cat-tile-img.on{opacity:1}
+.cat-tile:hover .cat-tile-img.on{transform:scale(1.06)}
+.cat-tile-ph{position:absolute;inset:0;background:var(--grad)}
+@media(max-width:768px){.cat-picker-sec .cat-picker-grid{grid-template-columns:repeat(2,1fr);gap:14px}.cat-picker-title{font-size:19px}}
+
+/* 5. Ficha: acordeones junto al botón de compra, medidas y reseñas */
+.modal-rating{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:4px 0;margin:-4px 0 10px;font-family:var(--fu);font-size:13px;color:var(--ink-muted);cursor:pointer;min-height:32px}
+.modal-rating[hidden]{display:none}
+.modal-rating .star-icon{font-size:15px}
+.modal-rating:hover .mr-count{text-decoration:underline}
+.modal-specs{font-family:var(--fu);font-size:13px;color:var(--ink);margin:-6px 0 14px}
+.modal-specs:empty{display:none}
+.pdp-accs{margin-top:16px;border-top:1.5px solid var(--ink-light)}
+.pdp-acc{border-bottom:1.5px solid var(--ink-light)}
+.pdp-acc summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:12px 2px;font-family:var(--fu);font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+.pdp-acc summary::-webkit-details-marker{display:none}
+.pdp-acc summary::after{content:'＋';font-weight:400;font-size:16px;color:var(--pink-deep);flex-shrink:0}
+.pdp-acc[open] summary::after{content:'－'}
+.pdp-acc-body{padding:0 2px 14px;font-family:var(--fu);font-size:13.5px;line-height:1.6;color:var(--ink-mid)}
+.pdp-acc-body p{margin:0 0 8px}
+.pdp-acc-body a{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.pdp-acc-body dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0 0 8px}
+.pdp-acc-body dt{font-weight:600;color:var(--ink)}
+.pdp-acc-body dd{margin:0}
+.static-pdp .pdp-accs{margin-top:4px}
+.rev-write-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-top:6px;padding:10px 20px;border-radius:999px;border:1.5px solid var(--pink-deep);background:white;color:var(--ink);font-family:var(--fu);font-size:13px;font-weight:600;cursor:pointer}
+.rev-write-btn:hover{background:var(--pink-pale)}
+.review-form[hidden]{display:none}
+.review-form{margin-top:10px}
+
+/* 3. Checkout: aviso para países que se cotizan por WhatsApp */
+.co-intl-note{margin:-4px 0 14px;padding:12px 14px;border-radius:12px;background:var(--pink-pale);font-family:var(--fu);font-size:13px;line-height:1.5;color:var(--ink)}
+.co-intl-note[hidden]{display:none}
+.co-intl-note a{display:inline-flex;align-items:center;min-height:44px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.co-intl-pay[hidden]{display:none}
+.co-intl-pay .co-intl-note{margin:0 0 14px}
+.co-intl-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:15px;border:0;border-radius:999px;background:linear-gradient(rgba(139,42,90,.7),rgba(139,42,90,.7)),var(--grad-warm);color:#fff;font-family:var(--fu);font-size:15px;font-weight:700;letter-spacing:.03em;cursor:pointer;box-shadow:0 4px 24px rgba(238,111,168,.35)}
+.co-intl-mode .pay-method-grid,.co-intl-mode #zelleTrustNote,.co-intl-mode #payBtn,.co-intl-mode #zelleBtn,.co-intl-mode #payBadges,.co-intl-mode #squareNote,.co-intl-mode .wa-fallback{display:none!important}
+
+/* 6. Áreas táctiles ≥44px y checkout a pantalla completa en el celular */
+@media(max-width:768px),(hover:none){
+  .lang-sw button{min-width:44px;min-height:44px;padding:4px 6px;display:inline-flex;align-items:center;justify-content:center}  #navMenuBtn{min-width:44px;min-height:44px;align-items:center;justify-content:center}
+  .wish-nav-btn,.cart-btn{min-height:44px}
+  .vig-close{width:44px;height:44px;top:8px;right:8px;font-size:15px}
+  .co-remind{min-height:44px}
+  .co-check input{width:22px;height:22px}
+}
+@media(max-width:600px){
+  .lang-sw{gap:0}
+  .nav-right{gap:4px}
+  #wishBtn{padding:0;width:44px;justify-content:center}
+  .cart-btn{padding:0 12px}
+  #checkout-overlay{padding:0;align-items:stretch}
+  .checkout-box{max-width:none;height:100%;max-height:none;border-radius:0;transform:translateY(16px);box-shadow:none}
+  #checkout-overlay.open .checkout-box{transform:none}
+  .checkout-left{padding:24px 18px 20px;border-right:0}
+  .checkout-right{border-radius:0;padding:24px 18px 28px}
+}
+/* Introducción de categoría: "Leer más" sobre el final de la 2.ª línea (no debajo), así al
+   aparecer no empuja la grilla pre-pintada (CLS). Abierta, vuelve a ir debajo del texto. */
+.static-cat{position:relative}
+.static-cat-intro.clamp+.static-cat-more{position:absolute;right:48px;bottom:0;margin:0;padding:0 0 0 44px;line-height:1.7;background:linear-gradient(90deg,rgba(254,248,255,0),var(--pearl) 38%)}
+@media(max-width:768px){.static-cat-intro.clamp+.static-cat-more{right:16px}}
+/* Popup 10%: enlace a la política de privacidad */
+.vig-fine a{color:inherit;text-decoration:underline}
