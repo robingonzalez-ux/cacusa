@@ -1229,7 +1229,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   // no respondía (dejaba pasar precio/cantidad del cliente tal cual); ahora
   // validatePublicOrderProducts() lanza si el catálogo no se pudo traer, y acá se
   // traduce en rechazar el pedido — nunca se acepta un precio no verificado.
-  let recalcSubtotal = null, recalcShipping = null;
+  let recalcSubtotal = null, recalcShipping = null, quoteShipping = false;
   if (!trusted) {
     try {
       const validated = await validatePublicOrderProducts(order.productos, env, order.cliente && order.cliente.idioma);
@@ -1267,7 +1267,11 @@ async function handleOrder(body, env, origin, ctx, request) {
       else if (coupon.type === 'fixed') discount = Math.min(Number(coupon.amount) || 0, recalcSubtotal);
     }
     const shipCost = recalcSubtotal >= (recalcShipping.freeThreshold || 90) ? 0 : (recalcShipping.cost || 10);
-    const envio = (coupon && coupon.type === 'freeship') ? 0 : shipCost;
+    // Wave 2: fuera de EE.UU. y Ecuador (Colombia, Perú, México, "Otro") el envío se cotiza por
+    // WhatsApp (envios.html): envio 0 y el pedido queda marcado envioPorCotizar. Sin país (tienda
+    // vieja) sigue la tarifa de siempre.
+    quoteShipping = orderShipIsQuoted(cliente);
+    const envio = quoteShipping || (coupon && coupon.type === 'freeship') ? 0 : shipCost;
     const impuestoBound = recalcSubtotal * 0.12;
     const impuesto = js_round2(Math.min(Math.max(num(order.impuesto), 0), impuestoBound));
 
@@ -1278,6 +1282,7 @@ async function handleOrder(body, env, origin, ctx, request) {
   }
 
   const newOrder = buildOrderCore(order, { strictPago: true, allowTarjeta: trusted });
+  if (quoteShipping) newOrder.envioPorCotizar = true;
   // Pago (wave 1): solo un pedido con tarjeta que ya confirmó el webhook de Square llega cobrado;
   // Zelle/WhatsApp/transferencia nacen "pendiente" hasta que Tita/Robin marcan "Pago recibido".
   setInitialPagoEstado(newOrder, trusted && newOrder.pago === 'Tarjeta' ? 'recibido' : 'pendiente', 'square');
@@ -1638,7 +1643,20 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
       if (order.pagoEstado !== v) { order.pagoEstado = v; order.pagoAt = new Date().toISOString(); order.pagoBy = session.user; }
       continue;
     }
+    if (k === 'envioCotizado') continue; // se aplica abajo (wave 2)
     if (ORDER_PATCH_FIELDS.has(k)) order[k] = String(v ?? '').slice(0, 200);
+  }
+  // Wave 2: envío cotizado por WhatsApp (pedidos a Colombia/Perú/México/otros): fija el envío y
+  // lo suma al total. Solo en pedidos que nacieron "por cotizar" (o ya cotizados, para corregir).
+  if ('envioCotizado' in patch) {
+    if (!order.envioPorCotizar && !order.envioCotizadoAt) return err('Este pedido no tiene el envío por cotizar', 400, origin);
+    const nv = Math.round(Number(patch.envioCotizado) * 100) / 100;
+    if (!(Number.isFinite(nv) && nv >= 0 && nv <= 1000)) return err('Costo de envío inválido', 400, origin);
+    const prev = Number(order.envio) || 0;
+    order.envio = nv;
+    order.total = js_round2(Math.max(0, (Number(order.total) || 0) - prev + nv));
+    order.envioPorCotizar = false;
+    order.envioCotizadoAt = new Date().toISOString(); order.envioCotizadoBy = session.user;
   }
   // Borrar el tracking a mano borra también la guía guardada: si no, quedaba el PDF viejo
   // (ej. una guía de prueba del 16 oct) y contaba para la recolección del día.
@@ -5937,6 +5955,14 @@ function usStateCode(v) {
 const US_COUNTRY_VALUES = ['USA', 'US', 'ESTADOS UNIDOS', 'UNITED STATES', 'EEUU', 'EE.UU.', 'EE UU', 'EE. UU.'];
 // (Desde el 12 oct la tienda manda también `pais`, pero sigue pegándolo a la ciudad para
 // que se lea igual en el panel: si coincide, se quita de la ciudad que va a USPS.)
+// Wave 2: ¿el envío de este pedido se cotiza por WhatsApp? Sí si trae país y no es EE.UU. ni
+// Ecuador (la tienda manda US/EC/CO/PE/MX/OTHER). Sin país (tienda vieja): no.
+const EC_COUNTRY_VALUES = ['EC', 'ECUADOR'];
+function orderShipIsQuoted(cliente) {
+  const { pais } = orderCountryParts(cliente);
+  if (!pais) return false;
+  return !US_COUNTRY_VALUES.includes(pais) && !EC_COUNTRY_VALUES.includes(pais);
+}
 function orderCountryParts(cliente) {
   const pais = String((cliente && cliente.pais) || '').trim().toUpperCase();
   const ciudad = String((cliente && cliente.ciudad) || '').trim();
