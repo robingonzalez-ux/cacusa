@@ -104,7 +104,11 @@
   <link rel="stylesheet" href="/assets/fonts/fonts.css">
   <link rel="preload" href="/data/products.json" as="fetch" crossorigin>
   <script>document.documentElement.className='lang-en js';</script>
-  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=9a4ecfae01">
+  <!-- Wave 2: si falta una variante de imagen (-320/-640/-960.webp, las genera CI) se vuelve a la
+       original; si falla la original, se ve el degradado de marca. Un solo listener en captura,
+       sin onerror en línea, registrado antes de que se pinte ninguna <img>. -->
+  <script>(function(){if(window.__cacusaImgFb)return;window.__cacusaImgFb=1;document.addEventListener('error',function(e){var i=e.target;if(!i||i.tagName!=='IMG')return;var o=i.getAttribute('data-src-orig');if(o){i.removeAttribute('data-src-orig');i.removeAttribute('srcset');i.removeAttribute('sizes');i.src=o;return;}var g=i.getAttribute('data-grad');if(g!==null){i.removeAttribute('data-grad');i.style.display='none';if(i.parentElement)i.parentElement.style.background=g||'var(--grad)';}},true);})();</script>
+  <link rel="stylesheet" href="/ui_kits/store/styles.css?v=3670150cc2">
 <!-- STATIC_PRODUCT_SCHEMA:START -->
 <!-- Generado automáticamente — no editar a mano, ver .github/workflows/product-schema.yml -->
 <script type="application/ld+json" id="ld-storelist">{"@context":"https://schema.org","@type":"ItemList","itemListElement":[{"@type":"ListItem","position":1,"url":"https://cacusabytaitus.com/en/ui_kits/store/producto/yin-yang-couple-bracelets-1781977774245/","name":"Yin \u0026 Yang Couple Bracelets"},{"@type":"ListItem","position":2,"url":"https://cacusabytaitus.com/en/ui_kits/store/producto/faith-set-1789854774028/","name":"Faith Set"}]}</script>
@@ -181,8 +185,7 @@
 </div>
 <section class="static-cat"><nav class="static-crumbs" aria-label="Breadcrumb"><ol><li><a href="/en/">Home</a></li><li><a href="/en/ui_kits/store/">Store</a></li><li aria-current="page">Couples</li></ol></nav><p class="static-cat-intro">Matching jewelry for couples: rings, chains and bracelets that go together, in stainless steel and 18k gold plating. A perfect gift for anniversaries, Valentine's Day or any special date, and they can be personalized with your initials or that date; message us on WhatsApp for a quote. We ship to Ecuador and across the United States, with free shipping on orders over $90.</p></section>
 <!--STORE_BANNERS_START-->
-<a id="seasonBanner" class="season-banner" href="/en/guia-regalos.html">✦ Christmas gifts · US: order by December 14 · Ecuador: by December 18</a>
-<div id="freeShippingBanner" style="display:block">Free shipping on orders $90+</div>
+<div class="store-bar" id="storeBar"><a id="seasonBanner" class="season-banner" href="/en/guia-regalos.html">✦ Christmas gifts: US by Dec 14 · Ecuador by Dec 18</a><span id="freeShippingBanner">Free shipping on $90+</span></div>
 <!--STORE_BANNERS_END-->
 
 <!-- FILTERS -->
@@ -195,7 +198,7 @@
       placeholder="Search products…" aria-label="Search products">
     <button class="search-clear" id="searchClear" aria-label="Clear search">×</button>
   </div>
-  <button type="button" class="photo-search-btn" id="photoSearchBtn">◇ Search by photo</button>
+  <button type="button" class="photo-search-btn" id="photoSearchBtn"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span class="psb-txt">Search by photo</span></button>
   <select class="sort-select" id="sortSelect" aria-label="Sort products">
     <option value="default">Ordenar: Destacados</option>
     <option value="price-asc">Precio: menor a mayor</option>
@@ -213,19 +216,24 @@
 </div>
 
 <!-- PRODUCT GRID -->
-<div class="store-body">
+<div class="store-body store-grid-wrap">
   <div class="prod-grid" id="prodGrid">
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
-    <div class="pcard-skeleton"><div class="sk-img"></div><div class="sk-line"></div><div class="sk-line short"></div></div>
+<!--GRID_PRERENDER_START-->
+<div class="pcard pcard--static" style="animation:none" data-id="1781977774245" onclick="_pcardClick(event, 1781977774245)"><button class="pcard-wish" aria-label="Save to wishlist" onclick="toggleWish(1781977774245,this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style=""/></svg></button><a class="pcard-img" href="/en/ui_kits/store/producto/yin-yang-couple-bracelets-1781977774245/" onclick="return _pcardNav(event, 1781977774245)"><div class="pcard-img-bg" style=""><img src="https://cacusabytaitus.com/ui_kits/store/images/1781977710324_img_6860_jpeg.webp" srcset="https://cacusabytaitus.com/ui_kits/store/images/1781977710324_img_6860_jpeg-320.webp 320w, https://cacusabytaitus.com/ui_kits/store/images/1781977710324_img_6860_jpeg-640.webp 640w, https://cacusabytaitus.com/ui_kits/store/images/1781977710324_img_6860_jpeg-960.webp 960w" sizes="(max-width:600px) 48vw, (max-width:1280px) 23vw, 290px" data-src-orig="https://cacusabytaitus.com/ui_kits/store/images/1781977710324_img_6860_jpeg.webp" alt="Pulseras de pareja Ying y el yang — handcrafted personalized jewelry by CACUSA" fetchpriority="high" decoding="async" width="220" height="220" data-grad="linear-gradient(135deg,#F9A8C9,#EE6FA8,#FCE8F3)" style="object-position:45.32908704883224% 73.78787878787881%;transform:scale(1);transform-origin:45.32908704883224% 73.78787878787881%"></div><div class="pcard-quick">Quick view →</div></a><div class="pcard-body"><div class="pcard-meta"><div class="pcard-cat">Couples</div></div><a class="pcard-name" href="/en/ui_kits/store/producto/yin-yang-couple-bracelets-1781977774245/" onclick="return _pcardNav(event, 1781977774245)">Yin &amp; Yang Couple Bracelets</a><div class="pcard-desc">Pair of couple&#x27;s bracelets featuring the yin and yang symbol…</div><div class="pcard-foot"><div class="pcard-price"><span class="price-now">$41.60</span></div><button class="pcard-add" onclick="openModal(1781977774245)">+ View</button></div></div></div>
+<div class="pcard pcard--static" style="animation:none" data-id="1789854774028" onclick="_pcardClick(event, 1789854774028)"><button class="pcard-wish" aria-label="Save to wishlist" onclick="toggleWish(1789854774028,this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" style=""/></svg></button><a class="pcard-img" href="/en/ui_kits/store/producto/faith-set-1789854774028/" onclick="return _pcardNav(event, 1789854774028)"><div class="pcard-img-bg" style=""><img src="https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe.webp" srcset="https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe-320.webp 320w, https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe-640.webp 640w, https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe-960.webp 960w" sizes="(max-width:600px) 48vw, (max-width:1280px) 23vw, 290px" data-src-orig="https://cacusabytaitus.com/ui_kits/store/images/1789854643520_f4ebd8c9_f408_4f82_86f1_651a70448e6d_jpe.webp" alt="Set de Fe — handcrafted personalized jewelry by CACUSA" decoding="async" width="220" height="220" data-grad="linear-gradient(135deg,#F9A8C9,#EE6FA8,#FCE8F3)" style="object-position:50% 50%;transform:scale(1);transform-origin:50% 50%"></div><div class="pcard-quick">Quick view →</div></a><div class="pcard-body"><div class="pcard-meta"><div class="pcard-cat">Couples</div></div><a class="pcard-name" href="/en/ui_kits/store/producto/faith-set-1789854774028/" onclick="return _pcardNav(event, 1789854774028)">Faith Set</a><div class="pcard-desc">Faith Set ✦ — Two bracelets, a special bond.
+
+A meaningful d…</div><div class="pcard-foot"><div class="pcard-price"><span class="price-now">$44.00</span></div><button class="pcard-add" onclick="openModal(1789854774028)">+ View</button></div></div></div>
+<!--GRID_PRERENDER_END-->
 
   </div>
 </div>
+
+<!-- CATEGORÍAS (wave 2): sección secundaria debajo de la grilla; tarjetas = enlaces reales a
+     cada página de categoría. La llena renderCategoryPicker() en app.js. -->
+<section class="store-body cat-picker-sec" id="catPicker" aria-labelledby="catPickerTitle" hidden>
+  <h2 class="cat-picker-title" id="catPickerTitle"><span class="t-es">Compra por categoría</span><span class="t-en">Shop by category</span></h2>
+  <div class="cat-picker-grid" id="catPickerGrid"></div>
+</section>
 
 <!-- ── PREGUNTAS FRECUENTES ─────────────────────────────────────── -->
 <section class="faq-section" id="faq" aria-label="Frequently asked questions">
@@ -366,10 +374,12 @@
     <div class="modal-body">
       <div class="modal-cat" id="modalCat"></div><span class="modal-soldout-tag" id="modalSoldOut" style="display:none"></span>
       <div class="modal-name" id="modalName"></div>
+      <button type="button" class="modal-rating" id="modalRating" hidden></button>
       <div class="modal-price" id="modalPrice"></div>
       <p class="modal-xmas" id="modalXmas" hidden></p>
       <p class="modal-desc" id="modalDesc"></p>
       <div id="modalMat" style="font-family:var(--fu);font-size:13px;color:var(--ink-muted);margin-bottom:14px"></div>
+      <div class="modal-specs" id="modalSpecs"></div>
       <div id="modalPersonField" style="display:none">
         <div class="person-head">
           <label class="modal-label" for="modalPersonText"><span class="t-es">Personalización</span><span class="t-en">Personalization</span></label>
@@ -393,9 +403,14 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
         <span class="t-es">Guardar en lista de deseos</span><span class="t-en">Save to wishlist</span>
       </button>
+      <!-- Wave 2: información junto al botón de compra (la llena _renderModalAccordions) -->
+      <div class="pdp-accs" id="modalAccs">
+        <details class="pdp-acc"><summary><span class="t-es">Envío y devoluciones</span><span class="t-en">Shipping &amp; returns</span></summary><div class="pdp-acc-body" id="accShipBody"></div></details>
+        <details class="pdp-acc"><summary><span class="t-es">Materiales y cuidado</span><span class="t-en">Materials &amp; care</span></summary><div class="pdp-acc-body" id="accCareBody"></div></details>
+        <details class="pdp-acc"><summary><span class="t-es">Medidas y talla</span><span class="t-en">Size &amp; measurements</span></summary><div class="pdp-acc-body" id="accSizeBody"></div></details>
+      </div>
       <div class="modal-perks">
         <div class="perk"><div class="perk-dot"></div>Handmade</div>
-        <div class="perk"><div class="perk-dot"></div>5&#x2013;10 business days</div>
         <div class="perk"><div class="perk-dot"></div>Special gift packaging</div>
       </div>
       <div class="modal-policy-links">
@@ -418,7 +433,8 @@
           </div>
         </div>
         <div class="reviews-list" id="revList"></div>
-        <div class="review-form">
+        <button type="button" class="rev-write-btn" id="revWriteBtn" aria-expanded="false" aria-controls="revForm"><span aria-hidden="true">✧</span> <span class="t-es">Escribir una reseña</span><span class="t-en">Write a review</span></button>
+        <div class="review-form" id="revForm" hidden>
           <div class="review-form-title"><span class="t-es">Dejar una reseña</span><span class="t-en">Leave a review</span></div>
           <div class="star-picker" id="revStarPicker" role="radiogroup" aria-label="Rating" onkeydown="starKeydown(event)">
             <button type="button" class="sp-star lit" role="radio" aria-checked="false" aria-label="1 star" tabindex="-1" onclick="setRevRating(1)">★</button>
@@ -534,6 +550,7 @@
             <option value="OTHER">Other</option>
           </select>
         </div>
+        <div class="co-intl-note" id="coIntlNote" role="status" aria-live="polite" hidden><span class="t-es">Para Colombia, Perú, México y otros países, el envío se cotiza por WhatsApp: te confirmamos disponibilidad, tiempo y costo exacto antes de pagar. En este paso no se cobra envío.</span><span class="t-en">For Colombia, Peru, Mexico and other countries, shipping is quoted on WhatsApp: we confirm availability, delivery time and the exact cost before you pay. No shipping is charged at this step.</span> <a class="co-intl-wa" href="https://wa.me/17867375336" target="_blank" rel="noopener"><span class="t-es">Escríbenos por WhatsApp</span><span class="t-en">Message us on WhatsApp</span></a></div>
         <div class="co-field" id="coEstadoWrap">
           <label class="co-label" for="coEstado"><span class="t-es">Estado</span><span class="t-en">State</span></label>
           <select class="co-input" id="coEstado" autocomplete="shipping address-level1">
@@ -625,6 +642,10 @@
         </div>
 
         <div class="co-error" id="coError" role="alert" aria-live="assertive"></div>
+        <div class="co-intl-pay" id="coIntlPay" hidden>
+          <div class="co-intl-note"><span class="t-es">Tu envío se cotiza por WhatsApp. Envíanos el pedido y te confirmamos el costo de envío y el total final antes de pagar.</span><span class="t-en">Your shipping is quoted on WhatsApp. Send us your order and we'll confirm the shipping cost and the final total before you pay.</span></div>
+          <button type="button" class="co-intl-btn" id="coIntlBtn"><span class="t-es">Enviar pedido por WhatsApp</span><span class="t-en">Send order on WhatsApp</span></button>
+        </div>
 
         <button class="pay-btn" id="payBtn">
           <div class="spinner"></div>
@@ -707,7 +728,7 @@
       <button class="vig-btn" id="vigBtn"><span class="t-es">Quiero mi descuento →</span><span class="t-en">I want my discount →</span></button>
       <div class="vig-msg" id="vigMsg" role="status" aria-live="polite" hidden></div>
       <button type="button" class="vig-skip" id="vigSkip"><span class="t-es">Ahora no</span><span class="t-en">Not now</span></button>
-      <div class="vig-fine"><span class="t-es">Válido solo para compras en CACUSA by Taitus. No aplica en productos de Cacusa Gold, que es una marca distinta.</span><span class="t-en">Valid only for purchases at CACUSA by Taitus. Does not apply to products from Cacusa Gold, a separate brand.</span></div>
+      <div class="vig-fine"><span class="t-es">Válido solo para compras en CACUSA by Taitus. No aplica en productos de Cacusa Gold, que es una marca distinta.</span><span class="t-en">Valid only for purchases at CACUSA by Taitus. Does not apply to products from Cacusa Gold, a separate brand.</span> <a href="/privacidad.html" target="_blank" rel="noopener"><span class="t-es">Política de privacidad</span><span class="t-en">Privacy policy</span></a></div>
     </div>
   </div>
 </div>
@@ -732,6 +753,6 @@
   </div>
 </div>
 
-<script src="/en/ui_kits/store/app.js?v=fd6b4dc1ef"></script>
+<script src="/en/ui_kits/store/app.js?v=f5b0ddf9ee"></script>
 </body>
 </html>
