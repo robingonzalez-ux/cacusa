@@ -118,6 +118,8 @@
  * 3 días después de la entrega + recordatorio de carrito pendiente (24 h). No manda nada
  * mientras falte MKT_POSTAL_ADDRESS. Llaves nuevas en KV: acart:<email> (TTL 7 días),
  * cartremsent:<email> (TTL 7 días); en los pedidos: entregadoAt/entregadoFuente/reviewReqAt.
+ * Wave 2: la misma corrida revisa antes en USPS hasta 10 pedidos "Enviado" (runAutoDelivered)
+ * y pasa a "Entregado" los que USPS ya dio por entregados. Llave nueva: uspsautotrack:v1.
  */
 
 const GH_OWNER  = 'robingonzalez-ux';
@@ -142,10 +144,11 @@ export default {
   // Cron Trigger de cacusa-admin (nuevo, nov) — correos automáticos a clientas: pedido de
   // reseña después de la entrega y recordatorio de carrito pendiente. Se configura a mano
   // en Cloudflare → cacusa-admin → Settings → Triggers → Cron (ver runAutoEmails()).
+  // Wave 2: antes de los correos, "Entregado" automático por USPS (runAutoDelivered). Las dos
+  // tareas comparten el tope de ~50 llamadas externas por ejecución: lo que gasta la primera se
+  // le descuenta a la segunda (CRON_SUBREQ_TOTAL).
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runAutoEmails(env).then(
-      (r) => console.log('correos automáticos:', JSON.stringify(r)),
-      (e) => console.error('correos automáticos fallaron:', e && e.message)));
+    ctx.waitUntil(runCron(env));
   },
   async fetch(request, env, ctx) {
     const origin      = request.headers.get('Origin') || '';
@@ -521,6 +524,11 @@ export default {
       if (path.endsWith('/marketing/campaigns'))  return await handleMktCampaigns(env, allowOrigin);
       // Correos automáticos (reseña + carrito): vista previa (dryRun, por defecto) o corrida a
       // mano de la misma tarea que hace el Cron Trigger. Mismo presupuesto y mismos topes.
+      // Wave 2: vista previa (dryRun, por defecto) o corrida a mano del "Entregado" automático.
+      if (path.endsWith('/usps/auto-delivered')) {
+        if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
+        return ok({ ok: true, ...(await runAutoDelivered(env, { dryRun: body.dryRun !== false })) }, allowOrigin);
+      }
       if (path.endsWith('/mail-auto/run')) {
         if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, allowOrigin);
         return ok({ ok: true, ...(await runAutoEmails(env, { dryRun: body.dryRun !== false })) }, allowOrigin);
@@ -1558,7 +1566,7 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
     const tn = String(order.tracking).replace(/\s+/g, '');
     if (order.uspsTrackingFor !== tn) {
       order.uspsTrackingFor = tn;
-      if (trackingTouched) { order.uspsTrackingAt = new Date().toISOString(); uspsTrackingNew = true; }
+      if (trackingTouched) { order.uspsTrackingAt = new Date().toISOString(); uspsTrackingNew = true; delete order.autoTrackOff; }
       else if (!order.uspsNotify) order.uspsNotify = { for: tn, status: 'omitido', at: new Date().toISOString(), msg: 'tracking anterior al 21 oct', tries: 0 };
     }
   } else if (trackingTouched) {
@@ -1572,7 +1580,12 @@ async function handleOrderUpdate(body, env, origin, session, ctx) {
   // un Entregado por error y vuelto a Enviado no dispara el correo antes de tiempo).
   if ('estado' in patch) {
     if (order.estado === 'Entregado') { if (!order.entregadoAt) { order.entregadoAt = new Date().toISOString(); order.entregadoFuente = 'panel'; } }
-    else if (order.entregadoFuente === 'panel') { delete order.entregadoAt; delete order.entregadoFuente; }
+    else {
+      if (order.entregadoFuente === 'panel') { delete order.entregadoAt; delete order.entregadoFuente; }
+      // Wave 2: alguien lo sacó a mano de un "Entregado automático (USPS)" → el cron ya no lo
+      // vuelve a pasar a Entregado (respeta la decisión de la persona).
+      if (order.entregadoAuto) { order.autoTrackOff = true; delete order.entregadoAuto; }
+    }
   }
   const sendShipEmail = shouldSendManualShipEmail(order);
   if (sendShipEmail) order.shipEmailSentFor = String(order.tracking).trim();
@@ -6140,8 +6153,10 @@ async function handleUspsStatus(body, env, origin) {
     const item = await uspsWithTokens(env, false, (oauthToken) => uspsTrackingLookup(oauthToken, tn), 'estado USPS');
     // Nov: si USPS ya lo da por entregado, se anota la fecha (señal para el pedido de reseña),
     // una sola vez y releyendo el pedido para no pisar otro cambio. No toca order.estado.
-    if (/deliver/i.test(String(item.statusCategory || '')) && !/out for|attempt/i.test(String(item.statusCategory || ''))) {
-      await markOrderDeliveredByUsps(env, id, tn).catch((e) => console.error('entregadoAt (USPS):', e.message));
+    // Wave 2: si sigue "Enviado", además lo pasa a "Entregado" (mismo camino que el cron).
+    let delivered = false;
+    if (uspsItemDelivered(item)) {
+      delivered = await markOrderDeliveredByUsps(env, id, tn, item).catch((e) => { console.error('entregadoAt (USPS):', e.message); return false; });
     }
     const dde = item.deliveryDateExpectation || {};
     const ev = Array.isArray(item.trackingEvents) && item.trackingEvents[0] || null;
@@ -6151,6 +6166,7 @@ async function handleUspsStatus(body, env, origin) {
       statusSummary: String(item.statusSummary || '').slice(0, 400),
       expectedDeliveryDate: dde.expectedDeliveryDate || dde.predictedDeliveryDate || '',
       lastEvent: ev ? { type: String(ev.eventType || '').slice(0, 120), city: ev.eventCity || '', state: ev.eventState || '', at: ev.eventTimestamp || ev.GMTTimestamp || '' } : null,
+      ...(delivered ? { markedDelivered: true } : {}),
     }, origin);
   } catch (e) {
     return ok({ ok: false, tracking: tn, notFound: !!(e && e.status === 404), error: String(e.message || e).slice(0, 300) }, origin);
@@ -7149,15 +7165,180 @@ async function clearPendingCart(email, env) {
   if (await env.CACUSA_KV.get(k)) await env.CACUSA_KV.delete(k);
 }
 
-// USPS dice "Delivered" (consulta del panel, /order/usps-status): anota entregadoAt una vez.
-async function markOrderDeliveredByUsps(env, id, tn) {
+// USPS dice "Delivered" (consulta del panel, /order/usps-status): anota entregadoAt una vez y,
+// desde wave 2, si el pedido sigue "Enviado" lo pasa a "Entregado" (mismo camino que el cron).
+async function markOrderDeliveredByUsps(env, id, tn, item) {
   const fresh = await orderGet(env, id);
-  if (!fresh || fresh.entregadoAt || fresh.estado === 'Cancelado') return;
-  if (String(fresh.tracking || '').replace(/\s+/g, '') !== tn) return;
-  fresh.entregadoAt = new Date().toISOString();
-  fresh.entregadoFuente = 'usps';
+  if (!applyUspsDelivered(fresh, tn, uspsDeliveredAt(item))) return false;
   await env.CACUSA_KV.put(orderKey(id), JSON.stringify(fresh));
   await refreshOrdersCache(env).catch(() => {});
+  return true;
+}
+
+// ── "Entregado" automático por USPS (wave 2) ─────────────────────────────────────────────
+// Antes un pedido pasaba a Entregado solo si alguien lo marcaba a mano (o anotaba entregadoAt al
+// consultar USPS desde "Notificar"); el pedido de reseña dependía de eso. Ahora el cron diario
+// consulta Tracking 3.2 para los pedidos "Enviado" con tracking de USPS despachados hace más de
+// USPS_AUTOTRACK_MIN_AGE_DAYS días. Cuidados:
+// - Cuota de USPS (~50 llamadas/día para TODO: guías, avisos, recolección, cotizaciones): tope de
+//   USPS_AUTOTRACK_MAX consultas por día (hora del Este), contado en la misma llave de estado.
+// - Rotación: primero los que hace más tiempo no se revisan (checks[id] = última revisión, ms =
+//   el lastTrackCheckAt de cada pedido). Uno revisado hace menos de USPS_AUTOTRACK_RECHECK_HOURS
+//   no se vuelve a consultar. Vive en la llave de estado y no en el pedido: anotarlo en cada
+//   order:<id> serían hasta 10 escrituras más + rehacer orders_cache todos los días.
+// - KV (1.000 escrituras/día): UNA sola llave de estado (uspsautotrack:v1) que se escribe una vez
+//   por corrida y solo si se consultó algo; cada pedido entregado se escribe una vez; orders_cache
+//   se rehace una sola vez al final y solo si cambió algún pedido. Sin candidatos: 0 escrituras.
+// - Versión (wave 1): se relee cada pedido justo antes de escribir y solo se toca si sigue
+//   "Enviado" con el mismo tracking; queda con updatedAt nuevo, así un panel con la versión vieja
+//   recibe 409 en vez de devolverlo a "Enviado".
+// - Mismo camino que dispara el correo de reseña: estado Entregado + entregadoAt (fecha real del
+//   escaneo de entrega si USPS la da) + entregadoFuente 'usps'. entregadoAuto marca que lo hizo el
+//   sistema (el panel lo muestra como "Entregado automático (USPS)").
+const USPS_AUTOTRACK_KEY = 'uspsautotrack:v1';
+const USPS_AUTOTRACK_MAX = 10;              // consultas a USPS por día
+const USPS_AUTOTRACK_MIN_AGE_DAYS = 2;      // despachado hace más de esto
+const USPS_AUTOTRACK_MAX_AGE_DAYS = 45;     // más viejo: se deja de consultar (revisar a mano)
+const USPS_AUTOTRACK_RECHECK_HOURS = 20;
+const CRON_SUBREQ_TOTAL = 46;               // de ~50 llamadas externas por ejecución (plan Free)
+
+async function runCron(env) {
+  let used = 0;
+  try {
+    const r = await runAutoDelivered(env);
+    used = r.llamadas || 0;
+    console.log('entregado automático (USPS):', JSON.stringify(r));
+  } catch (e) { used = USPS_AUTOTRACK_MAX + 2; console.error('entregado automático falló:', e && e.message); }
+  const subreqMax = Math.max(0, Math.min(AUTO_MAIL_SUBREQ_MAX, CRON_SUBREQ_TOTAL - used));
+  try {
+    const r2 = await runAutoEmails(env, { subreqMax });
+    console.log('correos automáticos:', JSON.stringify(r2));
+  } catch (e) { console.error('correos automáticos fallaron:', e && e.message); }
+}
+
+function uspsItemDelivered(item) {
+  const cat = String((item && item.statusCategory) || '');
+  return /deliver/i.test(cat) && !/out for|attempt/i.test(cat);
+}
+// Fecha real del escaneo de entrega (si USPS la manda y es razonable), si no null.
+function uspsDeliveredAt(item) {
+  if (!item || !uspsItemDelivered(item)) return null;
+  const evs = Array.isArray(item.trackingEvents) ? item.trackingEvents : [];
+  const ev = evs.find((e) => e && /deliver/i.test(String(e.eventType || '')) && !/out for|attempt/i.test(String(e.eventType || ''))) || null;
+  const raw = ev && (ev.eventTimestamp || ev.GMTTimestamp);
+  const t = raw ? new Date(raw).getTime() : NaN;
+  if (!Number.isFinite(t) || t > Date.now() + 3600000 || t < Date.now() - 120 * 86400000) return null;
+  return new Date(t).toISOString();
+}
+// Aplica "entregado por USPS" sobre un pedido ya leído. Devuelve true si cambió algo.
+function applyUspsDelivered(o, tn, deliveredAtIso) {
+  if (!o || o.estado === 'Cancelado' || o.archivado) return false;
+  if (String(o.tracking || '').replace(/\s+/g, '') !== tn) return false;
+  let changed = false;
+  const now = new Date().toISOString();
+  if (!o.entregadoAt) { o.entregadoAt = deliveredAtIso || now; o.entregadoFuente = 'usps'; changed = true; }
+  if (o.estado === 'Enviado' && !o.autoTrackOff) {
+    o.estado = 'Entregado';
+    o.entregadoAuto = true;
+    if (o.entregadoFuente !== 'usps') { o.entregadoFuente = 'usps'; if (deliveredAtIso) o.entregadoAt = deliveredAtIso; }
+    changed = true;
+  }
+  if (changed) { o.updatedAt = now; o.updatedBy = 'usps'; }
+  return changed;
+}
+function orderShippedAtMs(o) {
+  for (const v of [o.uspsTrackingAt, o.labelGeneratedAt, o.updatedAt, o.fecha]) {
+    const t = v ? new Date(v).getTime() : NaN;
+    if (Number.isFinite(t)) return t;
+  }
+  return NaN;
+}
+// Candidatos en orden de rotación (puro, lo usan el cron y las pruebas).
+function autoTrackCandidates(orders, checks, now) {
+  const min = USPS_AUTOTRACK_MIN_AGE_DAYS * 86400000, max = USPS_AUTOTRACK_MAX_AGE_DAYS * 86400000;
+  const recheck = USPS_AUTOTRACK_RECHECK_HOURS * 3600000;
+  return (orders || []).filter((o) => {
+    if (!o || o.estado !== 'Enviado' || o.archivado || o.autoTrackOff || !orderHasUspsTracking(o)) return false;
+    const age = now - orderShippedAtMs(o);
+    if (!(age >= min && age <= max)) return false;
+    const last = Number(checks[String(o.id)]) || 0;
+    return now - last >= recheck;
+  }).sort((a, b) => ((Number(checks[String(a.id)]) || 0) - (Number(checks[String(b.id)]) || 0)) || (orderShippedAtMs(a) - orderShippedAtMs(b)));
+}
+async function runAutoDelivered(env, { dryRun = false, max = USPS_AUTOTRACK_MAX } = {}) {
+  const out = { dryRun, candidatos: 0, consultados: 0, entregados: [], noEncontrados: 0, errores: 0, llamadas: 0, escrituras: 0 };
+  if (!env.CACUSA_KV) { out.error = 'KV no configurado'; return out; }
+  if (!env.USPS_CONSUMER_KEY || !env.USPS_CONSUMER_SECRET) { out.pausado = 'USPS no configurado'; return out; }
+  const now = Date.now();
+  const today = easternDate();
+  let orders = [];
+  try { const od = JSON.parse((await env.CACUSA_KV.get('orders_cache')) || '{}'); if (Array.isArray(od.orders)) orders = od.orders; } catch (_) {}
+  let st = null;
+  try { st = JSON.parse((await env.CACUSA_KV.get(USPS_AUTOTRACK_KEY)) || 'null'); } catch (_) {}
+  if (!st || typeof st !== 'object') st = {};
+  const checks = st.checks && typeof st.checks === 'object' ? { ...st.checks } : {};
+  const usedToday = st.day === today ? (Number(st.used) || 0) : 0;
+  const cands = autoTrackCandidates(orders, checks, now);
+  out.candidatos = cands.length;
+  const room = Math.max(0, Math.min(USPS_AUTOTRACK_MAX, Number(max) || 0) - usedToday);
+  const pick = cands.slice(0, room);
+  out.usadosHoy = usedToday;
+  if (dryRun) { out.lista = pick.map((o) => o.numero || o.id); return out; }
+  if (!pick.length) { if (cands.length && !room) out.topeDiario = true; return out; }
+
+  let tok = null, stop = '';
+  const getTok = async (fresh) => {
+    if (fresh) await uspsClearTokens(env);
+    tok = await uspsGetOAuth(env);
+    if (!tok.cached) out.llamadas++;
+    return tok;
+  };
+  const delivered = [];
+  for (const o of pick) {
+    if (stop) break;
+    const tn = String(o.tracking).replace(/\s+/g, '');
+    let item = null;
+    try {
+      if (!tok) await getTok(false);
+      try { out.llamadas++; item = await uspsTrackingLookup(tok.token, tn); }
+      catch (e) {
+        if (e && e.status === 401 && tok.cached) { await getTok(true); out.llamadas++; item = await uspsTrackingLookup(tok.token, tn); }
+        else throw e;
+      }
+    } catch (e) {
+      if (e && e.status === 404) out.noEncontrados++;
+      else {
+        out.errores++;
+        // Cuota agotada, credenciales o USPS caído: no se siguen gastando llamadas hoy.
+        if (!e || !e.status || e.status === 401 || e.status === 403 || e.status === 429 || e.status >= 500) stop = String((e && e.message) || e).slice(0, 200);
+      }
+    }
+    out.consultados++;
+    checks[String(o.id)] = now;
+    if (item && uspsItemDelivered(item)) delivered.push({ id: o.id, tn, at: uspsDeliveredAt(item) });
+  }
+  // Escrituras en bloque al final: cada pedido entregado (relectura → aplicar → put), una sola
+  // reconstrucción de orders_cache y una sola escritura del estado de rotación.
+  const doneIds = new Set();
+  for (const d of delivered) {
+    const fresh = await orderGet(env, d.id);
+    if (!applyUspsDelivered(fresh, d.tn, d.at)) continue;
+    try { await env.CACUSA_KV.put(orderKey(d.id), JSON.stringify(fresh)); out.escrituras++; out.entregados.push(fresh.numero || fresh.id); doneIds.add(String(d.id)); }
+    catch (e) { console.error('entregado automático (put):', e.message); }
+  }
+  if (doneIds.size) { try { await refreshOrdersCache(env); out.escrituras++; } catch (_) {} }
+  // Poda: solo quedan los pedidos que siguen "Enviado" con USPS (los demás ya no se consultan).
+  const keep = new Set(orders.filter((o) => o && o.estado === 'Enviado' && orderHasUspsTracking(o)).map((o) => String(o.id)));
+  const pruned = {};
+  for (const [id, t] of Object.entries(checks)) if (keep.has(id) && !doneIds.has(id)) pruned[id] = t;
+  try {
+    await env.CACUSA_KV.put(USPS_AUTOTRACK_KEY, JSON.stringify({ day: today, used: usedToday + out.consultados, at: new Date(now).toISOString(), checks: pruned,
+      last: { consultados: out.consultados, entregados: doneIds.size, ...(stop ? { frenado: stop } : {}) } }), { expirationTtl: 90 * 86400 });
+    out.escrituras++;
+  } catch (e) { console.error('uspsautotrack (put):', e.message); }
+  if (tok) await uspsLog(env, 'auto-entrega', tok, stop ? 'error' : 'ok');
+  if (stop) out.frenado = stop;
+  return out;
 }
 
 // Reclamo de un solo intento en la DO (sin los reintentos de orderIdemClaim: en el cron un
@@ -7311,13 +7492,13 @@ function reviewRequestEligible(o, now) {
 // Error de Gmail que debe frenar toda la corrida (cupo o credenciales), como el marketing.
 function autoMailStopError(e) { return /\((429|401|403)\)|token refresh|GMAIL_REFRESH_TOKEN/i.test(String(e && e.message || e)); }
 
-async function runAutoEmails(env, { dryRun = false } = {}) {
+async function runAutoEmails(env, { dryRun = false, subreqMax = AUTO_MAIL_SUBREQ_MAX } = {}) {
   const out = { dryRun, review: { candidatos: 0, enviados: 0, saltados: [] }, cart: { candidatos: 0, enviados: 0, convertidos: 0, saltados: [] }, llamadas: 0 };
   if (!env.CACUSA_KV) { out.error = 'KV no configurado'; return out; }
   const postal = String(env.MKT_POSTAL_ADDRESS || '').trim();
   if (!postal && !dryRun) { out.pausado = 'Falta MKT_POSTAL_ADDRESS (CAN-SPAM): no se manda nada'; return out; }
   const now = Date.now();
-  const budget = { n: 0, max: AUTO_MAIL_SUBREQ_MAX };
+  const budget = { n: 0, max: Math.max(0, Math.min(AUTO_MAIL_SUBREQ_MAX, Number(subreqMax) || 0)) };
   const canSpend = (k) => budget.n + k <= budget.max;
   const base = String(env.PUBLIC_WORKER_URL || ADMIN_WORKER_PUBLIC_URL).replace(/\/+$/, '');
 
