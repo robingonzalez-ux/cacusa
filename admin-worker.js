@@ -1436,6 +1436,9 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   const { order } = body;
   if (!order || !order.cliente) return err('Pedido inválido', 400, origin);
   if (!env.CACUSA_KV) return err('KV no configurado en el Worker', 500, origin);
+  // Wave 2: forma nueva (v: 2) del modal "Nuevo pedido manual" — líneas del catálogo validadas,
+  // totales recalculados acá, descuento y correo solo si se pidió. Sin v (panel viejo), igual que antes.
+  if (order.v === 2) return await handleOrderManualV2(order, env, origin, session, ctx);
 
   const newOrder = buildOrderCore(order, { strictPago: false });
   newOrder.createdBy = session.user;
@@ -1455,6 +1458,96 @@ async function handleOrderManual(body, env, origin, session, ctx) {
   if (ctx) ctx.waitUntil(sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido manual falló:', e.message)));
 
   return ok({ ok: true, order: newOrder }, origin);
+}
+
+// ── Pedido manual completo (wave 2) ─────────────────────────────────────────────────────
+// order = { v: 2, cliente: {nombre, apellido, telefono, email?, idioma, pais, estado, ciudad, zip,
+//   direccion, apto, notas?}, productos: [{id, qty, price} | {manual: true, name, qty, price}],
+//   envio, descuento, pago, pagoEstado, notas?, notifyEmail }
+// - Líneas del catálogo: el id tiene que existir en el catálogo publicado (si no, 400) y el nombre
+//   sale del catálogo; precio y cantidad los decide quien carga el pedido (rebaja a mano, etc.).
+// - Líneas a mano (manual: true): texto libre marcado — no descuentan stock ni cuentan en
+//   "Más vendidos" del panel.
+// - subtotal/total los calcula el Worker (nunca los del navegador): subtotal = Σ precio × cant.,
+//   total = subtotal + envío − descuento.
+// - Stock: el mismo camino que un pedido de la tienda (stockPrepareNewOrder → guardar →
+//   stockFinishNewOrder, DO stock:ledger con opId ordnew:<id>, idempotente).
+// - Correo de confirmación: el mismo de la tienda (sendOrderConfirmationEmail), SOLO si viene
+//   notifyEmail: true y el correo es válido. Un correo inválido (no vacío) se rechaza con 400 para
+//   que se corrija en el modal en vez de guardarse mal.
+const MANUAL_LINES_MAX = 30;
+const MANUAL_PRICE_MAX = 10000;
+const MANUAL_QTY_MAX = 99;
+async function handleOrderManualV2(order, env, origin, session, ctx) {
+  const str = (v, max) => typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]+/g, ' ').trim().slice(0, max) : '';
+  const money = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
+  const lines = Array.isArray(order.productos) ? order.productos : [];
+  if (!lines.length) return err('Agrega al menos una pieza al pedido.', 400, origin);
+  if (lines.length > MANUAL_LINES_MAX) return err(`Máximo ${MANUAL_LINES_MAX} líneas por pedido.`, 400, origin);
+  const c = order.cliente || {};
+  const nombre = str(c.nombre, 100);
+  if (!nombre) return err('Falta el nombre de la clienta.', 400, origin);
+  const email = str(c.email, 150);
+  if (email && !isValidEmail(email)) return err('El correo no es válido. Corrígelo o déjalo vacío.', 400, origin);
+
+  const needCatalog = lines.some((l) => l && l.manual !== true);
+  const catalog = needCatalog ? await fetchCatalogForOrderValidation() : null;
+  if (needCatalog && !catalog) return err('No se pudo leer el catálogo para validar las piezas. Intenta de nuevo en un momento.', 502, origin);
+  const byId = new Map(((catalog && catalog.products) || []).filter((p) => p && p.id != null).map((p) => [String(p.id), p]));
+
+  const productos = [];
+  for (const [i, l] of lines.entries()) {
+    if (!l || typeof l !== 'object') return err(`Línea ${i + 1} inválida.`, 400, origin);
+    const qty = Number(l.qty);
+    if (!Number.isInteger(qty) || qty < 1 || qty > MANUAL_QTY_MAX) return err(`Línea ${i + 1}: la cantidad debe ser un entero entre 1 y ${MANUAL_QTY_MAX}.`, 400, origin);
+    const price = money(l.price);
+    if (!(price >= 0 && price <= MANUAL_PRICE_MAX)) return err(`Línea ${i + 1}: precio inválido.`, 400, origin);
+    const personalization = str(l.personalization, 300);
+    if (l.manual === true) {
+      const name = str(l.name, 150);
+      if (!name) return err(`Línea ${i + 1}: escribe qué pieza es.`, 400, origin);
+      productos.push({ id: '', name, price, qty, personalization, manual: true });
+      continue;
+    }
+    const id = l.id != null ? String(l.id) : '';
+    if (!/^[A-Za-z0-9_-]{1,50}$/.test(id)) return err(`Línea ${i + 1}: id de producto inválido.`, 400, origin);
+    const prod = byId.get(id);
+    if (!prod) return err(`Línea ${i + 1}: ese producto no está en el catálogo publicado (si es nuevo, publícalo primero).`, 400, origin);
+    productos.push({ id, name: String(prod.name || '').slice(0, 150), price, qty, personalization, ...(prod.sku ? { sku: String(prod.sku).slice(0, 40) } : {}) });
+  }
+
+  const envio = money(order.envio || 0), descuento = money(order.descuento || 0);
+  if (!(envio >= 0 && envio <= 1000)) return err('Costo de envío inválido.', 400, origin);
+  const subtotal = Math.round(productos.reduce((a, p) => a + p.price * p.qty, 0) * 100) / 100;
+  if (!(descuento >= 0 && descuento <= subtotal + envio)) return err('El descuento no puede ser mayor que el pedido.', 400, origin);
+  const total = Math.round((subtotal + envio - descuento) * 100) / 100;
+
+  const newOrder = buildOrderCore({
+    pago: order.pago, notas: order.notas, numero: order.numero,
+    cliente: { ...c, nombre, email }, total, subtotal, envio,
+  }, { strictPago: false });
+  newOrder.productos = productos;
+  if (descuento > 0) newOrder.descuento = descuento;
+  newOrder.createdBy = session.user;
+  newOrder.manualV = 2;
+  setInitialPagoEstado(newOrder, order.pagoEstado === 'recibido' ? 'recibido' : 'pendiente', session.user);
+  const wantsEmail = order.notifyEmail === true && !!email;
+  if (wantsEmail) newOrder.confirmEmailAt = new Date().toISOString();
+
+  assignOrderId(newOrder);
+  if (!newOrder.numero && order.numero) newOrder.numero = String(newOrder.id);
+  const stockPlanNew = productos.some((p) => p.id) ? await stockPrepareNewOrder(env, newOrder, catalog) : null;
+  await env.CACUSA_KV.put(orderKey(newOrder.id), JSON.stringify(newOrder));
+  await stockFinishNewOrder(env, newOrder, stockPlanNew);
+  if (ctx) ctx.waitUntil(refreshOrdersCache(env).catch(() => {}));
+  const orderEmailLc = email.toLowerCase();
+  if (ctx && orderEmailLc) ctx.waitUntil(removeCartLead(orderEmailLc, env).catch(() => {}));
+  if (ctx && orderEmailLc) ctx.waitUntil(clearPendingCart(orderEmailLc, env).catch(() => {}));
+  if (wantsEmail) {
+    const p = sendOrderConfirmationEmail(newOrder, env).catch(e => console.error('email confirmación pedido manual falló:', e.message));
+    if (ctx) ctx.waitUntil(p); else await p;
+  }
+  return ok({ ok: true, order: newOrder, emailQueued: wantsEmail, stockOversold: newOrder.stockOversold || null }, origin);
 }
 
 // ── Editar o borrar UN pedido existente desde el admin (cambiar estado, agregar
@@ -3778,6 +3871,7 @@ ${money(p.price * (p.qty || 1))}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:6px;">
 ${totalsRow(lang === 'en' ? 'Subtotal' : 'Subtotal', order.subtotal)}
 ${totalsRow(lang === 'en' ? 'Shipping' : 'Envío', order.envio)}
+${order.descuento > 0 ? totalsRow(lang === 'en' ? 'Discount' : 'Descuento', -order.descuento).replace('$-', '−$') : ''}
 ${order.impuesto ? totalsRow(lang === 'en' ? 'Tax' : 'Impuesto', order.impuesto) : ''}
 <tr><td style="padding:8px 0 0;text-align:left;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#8B2A5A;border-top:1.5px solid #C0336E;">Total</td>
 <td style="padding:8px 0 0;text-align:right;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#C0336E;border-top:1.5px solid #C0336E;">${money(order.total)}</td></tr>
