@@ -28,6 +28,9 @@ import sys
 import unicodedata
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from store_prerender import replace_grid_block  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent.parent
 PRODUCTS_JSON = ROOT / "data" / "products.json"
 
@@ -158,6 +161,7 @@ FILTERS_START = "<!--FILTER_BTNS_START-->"
 FILTERS_END = "<!--FILTER_BTNS_END-->"
 MONTHS_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
 MONTHS_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+MONTHS_ES_SHORT = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 CAMPAIGN_DEFAULT = {  # mismo DEFAULT_CAMPAIGN de app.js
     "enabled": True, "endsAt": "2026-12-26", "title": "Regalos de Navidad", "title_en": "Christmas gifts",
     "banner": "", "banner_en": "", "deadlinePersonalEc": "2026-12-08", "deadlinePersonalUs": "2026-12-03",
@@ -194,6 +198,11 @@ def _fmt_date(iso, lang):
     return f"{MONTHS_EN[m - 1]} {d}" if lang == "en" else f"{d} de {MONTHS_ES[m - 1]}"
 
 
+def _fmt_date_short(iso, lang):
+    y, m, d = (int(x) for x in iso.split("-"))
+    return f"{MONTHS_EN[m - 1][:3]} {d}" if lang == "en" else f"{d} {MONTHS_ES_SHORT[m - 1]}"
+
+
 def season_banner_text(cfg, lang, today=None):
     """Texto de la franja con país desconocido (fechas de EE.UU. y Ecuador), o None si la
     campaña está apagada/vencida — replica renderSeasonBanner() de app.js."""
@@ -213,14 +222,14 @@ def season_banner_text(cfg, lang, today=None):
         fecha = (" or " if en else " o hasta el ").join(f"{_fmt_date(d, lang)} ({label(cc)})" for cc, d in lst)
         return re.sub(r"\{(fecha|date)\}", fecha, custom)
     title = c["title_en"] if en else c["title"]
-    parts = []
-    for i, (cc, d) in enumerate(lst):
-        pre = ("by " if i else "order by ") if en else ("hasta el " if i else "pide hasta el ")
-        parts.append(f"{label(cc)}: {pre}{_fmt_date(d, lang)}")
-    return "✦ " + title + " · " + " · ".join(parts)
+    # Wave 2: versión corta para la franja única (= renderSeasonBanner de app.js con país desconocido)
+    parts = [f'{label(cc)}{" by " if en else " hasta el "}{_fmt_date_short(d, lang)}' for cc, d in lst]
+    return "✦ " + title + ": " + " · ".join(parts)
 
 
 def build_banners_block(cfg, lang):
+    """Wave 2: temporada + envío gratis en UNA franja fina (#storeBar), mismo texto que
+    renderSeasonBanner()/renderFreeShippingBanner() de app.js."""
     href = "/en/guia-regalos.html" if lang == "en" else "/guia-regalos.html"
     text = season_banner_text(cfg, lang)
     season = (f'<a id="seasonBanner" class="season-banner" href="{href}">{esc(text)}</a>' if text
@@ -230,8 +239,9 @@ def build_banners_block(cfg, lang):
     except (TypeError, ValueError):
         ft = 90.0
     thr = f"{ft:.0f}"
-    free = f"Free shipping on orders ${thr}+" if lang == "en" else f"Envío gratis en pedidos desde ${thr}"
-    return "\n".join([BANNERS_START, season, f'<div id="freeShippingBanner" style="display:block">{esc(free)}</div>', BANNERS_END])
+    free = f"Free shipping on ${thr}+" if lang == "en" else f"Envío gratis desde ${thr}"
+    bar = f'<div class="store-bar" id="storeBar">{season}<span id="freeShippingBanner">{esc(free)}</span></div>'
+    return "\n".join([BANNERS_START, bar, BANNERS_END])
 
 
 def build_filters_block(cfg, lang):
@@ -244,7 +254,7 @@ def build_filters_block(cfg, lang):
     return FILTERS_START + "".join(btns) + FILTERS_END
 
 
-def inject_store_prerender(path: Path, cfg, lang) -> bool:
+def inject_store_prerender(path: Path, cfg, lang, grid_html=None) -> bool:
     html_text = path.read_text(encoding="utf-8")
     new_html = html_text
     for start, end, block in ((BANNERS_START, BANNERS_END, build_banners_block(cfg, lang)),
@@ -253,6 +263,9 @@ def inject_store_prerender(path: Path, cfg, lang) -> bool:
         if not pattern.search(new_html):
             raise RuntimeError(f"No se encontraron los marcadores {start} en {path}")
         new_html = pattern.sub(lambda _: block, new_html)
+    # Wave 2: primera fila de productos ya pintada ("Más vendidos"), ver store_prerender.py
+    if grid_html is not None:
+        new_html = replace_grid_block(new_html, grid_html)
     if new_html == html_text:
         return False
     path.write_text(new_html, encoding="utf-8")
@@ -271,20 +284,88 @@ def inject(path: Path, block: str) -> bool:
     return True
 
 
+# ─── Foto principal del hero del landing (wave 2, LCP) ─────────────────────────────
+# Antes la foto del hero era un fondo CSS que el JS elegía recién después de bajar
+# data/products.json (LCP 5,5 s con 4G lenta). Ahora la primera foto va horneada en el HTML de
+# index.html y en/index.html como <img fetchpriority="high"> con width/height y srcset, entre
+# estos marcadores; el slideshow del JS la adopta como primera diapositiva (sin fundido).
+HERO_START = "<!--HERO_IMG_START-->"
+HERO_END = "<!--HERO_IMG_END-->"
+LANDINGS = [(ROOT / "index.html", "es"), (ROOT / "en" / "index.html", "en")]
+
+
+def pick_hero_product(products, cfg):
+    """config.home.heroProductIds[0] si sigue disponible y con foto; si no, la primera
+    Bestseller → Nuevo → resto (mismo criterio que _homePick() del landing)."""
+    from store_prerender import image_size, local_image_path
+    avail = [p for p in products if p.get("available") is not False and p.get("imageUrl")]
+    home = cfg.get("home") if isinstance(cfg.get("home"), dict) else {}
+    rank = lambda p: 0 if str(p.get("tag") or "").lower() == "bestseller" else 1 if str(p.get("tag") or "").lower() == "nuevo" else 2  # noqa: E731
+    by_id = {str(p.get("id")): p for p in avail}
+    ids = home.get("heroProductIds") if isinstance(home.get("heroProductIds"), list) else []
+    ordered = [by_id[str(i)] for i in ids if str(i) in by_id] + sorted(avail, key=rank)
+
+    def sharp(p):  # foto de al menos 600px de ancho (si no se puede leer, se acepta)
+        path = local_image_path(ROOT, p.get("imageUrl"))
+        size = image_size(path) if path else None
+        return size is None or size[0] >= 600
+
+    return next((p for p in ordered if sharp(p)), ordered[0] if ordered else None)
+
+
+def build_hero_block(p, lang):
+    if not p:
+        return f"{HERO_START}{HERO_END}"
+    from store_prerender import SIZES_HERO, focal, img_attrs, image_size, js_num, local_image_path
+    size = image_size(local_image_path(ROOT, p["imageUrl"])) if local_image_path(ROOT, p["imageUrl"]) else None
+    w, h = size if size else (800, 1000)
+    name = p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name")
+    alt = f"{name} — " + ("handcrafted personalized jewelry by CACUSA" if lang == "en" else "joyería artesanal personalizada CACUSA")
+    pos = f"{js_num(focal(p.get('focalX')))}% {js_num(focal(p.get('focalY')))}%"
+    pid = str(p.get("id", "")) if re.fullmatch(r"\d{1,20}", str(p.get("id", ""))) else ""
+    return (f'{HERO_START}<img class="hs-img" id="hsImg" {img_attrs(p["imageUrl"], SIZES_HERO)} alt="{esc(alt)}" '
+            f'width="{w}" height="{h}" fetchpriority="high" decoding="async" data-pid="{pid}" style="object-position:{pos}">{HERO_END}')
+
+
+def inject_landing_hero(products, cfg) -> bool:
+    changed = False
+    p = pick_hero_product(products, cfg)
+    for path, lang in LANDINGS:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8")
+        pat = re.compile(re.escape(HERO_START) + r".*?" + re.escape(HERO_END), re.DOTALL)
+        if not pat.search(text):
+            raise RuntimeError(f"No se encontraron los marcadores {HERO_START} en {path}")
+        new = pat.sub(lambda _: build_hero_block(p, lang), text, count=1)
+        if new != text:
+            path.write_text(new, encoding="utf-8")
+            changed = True
+        print(f"{path}: hero {'actualizado' if new != text else 'sin cambios'}")
+    return changed
+
+
 def main():
+    from generate_product_schema import fetch_surcharges
+    from store_prerender import home_grid_html
     data = json.loads(PRODUCTS_JSON.read_text(encoding="utf-8"))
     # Antes se excluía acá un producto agotado, así que un bot que no ejecuta
     # JS ni se enteraba de que existió. Ahora se incluyen todos, marcados
     # "(Agotado)"/"(Sold out)" junto al nombre (ver build_catalog_block).
     products = data.get("products", [])
-    categories_order = data.get("config", {}).get("categories", [])
+    cfg = data.get("config", {})
+    categories_order = cfg.get("categories", [])
+    surcharges = fetch_surcharges()
     changed_any = False
     for target in TARGETS:
         block = build_catalog_block(products, categories_order, target)
         changed = inject(target["path"], block)
-        changed = inject_store_prerender(target["path"], data.get("config", {}), target["lang"]) or changed
+        store_path = "/en/ui_kits/store/" if target["lang"] == "en" else "/ui_kits/store/"
+        grid = home_grid_html(products, cfg, target["lang"], surcharges, store_path)
+        changed = inject_store_prerender(target["path"], cfg, target["lang"], grid) or changed
         changed_any = changed_any or changed
         print(f"{target['path']}: {'actualizado' if changed else 'sin cambios'}")
+    changed_any = inject_landing_hero(products, cfg) or changed_any
     if "--check" in sys.argv:
         sys.exit(1 if changed_any else 0)
 

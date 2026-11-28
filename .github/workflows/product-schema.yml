@@ -52,6 +52,7 @@ on:
       - ".github/scripts/bump_asset_versions.py"
       - ".github/scripts/generate_*.py"
       - ".github/scripts/category_copy.py"
+      - ".github/scripts/store_prerender.py"
   workflow_dispatch: {}
   # Auditoría SEO externa (20 sep): el recargo del 4% con tarjeta vive en
   # Cloudflare KV, no en data/products.json — prender/apagarlo desde el panel
@@ -106,7 +107,10 @@ jobs:
         run: |
           git config user.name "cacusa-bot"
           git config user.email "actions@users.noreply.github.com"
+          # index.html y en/index.html: foto horneada del hero del landing (wave 2,
+          # generate_noscript_catalog.py, marcadores HERO_IMG).
           git add ui_kits/store/index.html en/ui_kits/store/index.html sitemap.xml llms.txt \
+                  index.html en/index.html \
                   ui_kits/store/app.js en/ui_kits/store/app.js \
                   ui_kits/store/producto en/ui_kits/store/producto \
                   ui_kits/store/categoria en/ui_kits/store/categoria

@@ -60,6 +60,14 @@ from generate_product_schema import (  # noqa: E402
     slugify,
 )
 from generate_noscript_catalog import CATEGORY_LABELS  # noqa: E402
+from store_prerender import (  # noqa: E402
+    SIZES_PDP,
+    accordions_html,
+    category_grid_html,
+    img_attrs,
+    replace_grid_block,
+    skeletons_html,
+)
 from category_copy import (  # noqa: E402
     CATEGORY_INTRO_EN,
     CATEGORY_INTRO_ES,
@@ -287,7 +295,7 @@ def strip_page_specific_blocks(html_text):
     return BASE_BREADCRUMB_RE.sub("", html_text, count=1)
 
 
-def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_details, reviews_by_product, surcharges):
+def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_details, reviews_by_product, surcharges, cfg=None, wa_number=None):
     name = clean(p.get("name_en") if (lang == "en" and p.get("name_en")) else p.get("name"))
     desc = clean(p.get("description_en") if (lang == "en" and p.get("description_en")) else p.get("description"))
     url = product_page_url(p, lang, store_path)
@@ -352,18 +360,23 @@ def build_product_page(base_html, p, lang, store_path, extra_levels, shipping_de
     html_text = replace_schema_block(html_text, schema_block)
     html_text = strip_page_specific_blocks(html_text)
     html_text = page_meta_fixes(html_text, "product")
+    # Wave 2: en la ficha la grilla de fondo queda con esqueletos (la tapa el modal; no hace falta
+    # bajar las fotos de "Más vendidos" de la plantilla).
+    html_text = replace_grid_block(html_text, skeletons_html())
     html_text = insert_static_section(html_text, product_section_html(
-        p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges))
+        p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges, cfg or {}, wa_number))
     html_text = inject_static_var(html_text, "__CACUSA_STATIC_PRODUCT_ID", str(p.get("id")))
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text
 
 
-def product_section_html(p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges):
+def product_section_html(p, lang, name, desc, images, crumb_items, cat_label, cat_url, surcharges, cfg=None, wa_number=None):
     t = UI[lang]
     img = ""
     if images:
-        img = (f'<img class="static-pdp-img" src="{attr_esc(images[0])}" alt="{attr_esc(name)} — CACUSA by Taitus" '
+        # Wave 2: srcset con las variantes -320/-640/-960.webp (CI); si faltan, el listener de
+        # 'error' del <head> vuelve a la original (data-src-orig).
+        img = (f'<img class="static-pdp-img" {img_attrs(images[0], SIZES_PDP)} alt="{attr_esc(name)} — CACUSA by Taitus" '
                f'width="600" height="600" decoding="async" fetchpriority="high">')
     price = money(priced(p, surcharges))
     old = p.get("oldPrice")
@@ -389,11 +402,13 @@ def product_section_html(p, lang, name, desc, images, crumb_items, cat_label, ca
         f'<p class="static-pdp-ship">{text_esc(t["ship"])}</p>'
         f'<div class="static-pdp-actions"><button type="button" class="static-pdp-cta" '
         f'onclick="openModal({attr_esc(pid)})">{text_esc(t["view"])}</button>{more}</div>'
+        # Wave 2: Envío y devoluciones / Materiales y cuidado / Medidas y talla (mismo texto que el modal)
+        f'{accordions_html(p, cfg or {}, lang, wa_number)}'
         f'</div></div></section>'
     )
 
 
-def build_category_page(base_html, cat, lang, store_path, extra_levels, products):
+def build_category_page(base_html, cat, lang, store_path, extra_levels, products, surcharges=None):
     key = cat.lower()
     label = category_label(cat, lang)
     desc = (CATEGORY_DESC_EN if lang == "en" else CATEGORY_DESC_ES).get(key) or (
@@ -463,6 +478,8 @@ def build_category_page(base_html, cat, lang, store_path, extra_levels, products
         html_text,
         f'<section class="static-cat">{crumbs}<p class="static-cat-intro">{text_esc(intro)}</p></section>',
     )
+    # Wave 2: primera fila de ESTA categoría ya pintada (mismo marcado y orden que el JS)
+    html_text = replace_grid_block(html_text, category_grid_html(products, cat, lang, surcharges or {}, store_path))
     html_text = inject_static_var(html_text, "__CACUSA_STATIC_CATEGORY", cat)
     html_text = fix_relative_depth(html_text, extra_levels)
     return html_text
@@ -513,7 +530,8 @@ def main():
 
         for p in products:
             slug = product_param(p, lang)
-            page = build_product_page(base_html, p, lang, store_path, 2, shipping_details, reviews_by_product, surcharges)
+            page = build_product_page(base_html, p, lang, store_path, 2, shipping_details, reviews_by_product, surcharges,
+                                      data.get("config", {}), data.get("whatsapp") or data.get("config", {}).get("whatsapp"))
             out_path = store_root / "producto" / slug / "index.html"
             changed_any = write_if_changed(out_path, page) or changed_any
             written_dirs.add(out_path.parent)
@@ -521,7 +539,7 @@ def main():
 
         for cat in categories:
             cat_slug = slugify(cat)
-            page = build_category_page(base_html, cat, lang, store_path, 2, products)
+            page = build_category_page(base_html, cat, lang, store_path, 2, products, surcharges)
             out_path = store_root / "categoria" / cat_slug / "index.html"
             changed_any = write_if_changed(out_path, page) or changed_any
             written_dirs.add(out_path.parent)
