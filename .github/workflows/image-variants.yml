@@ -1,0 +1,71 @@
+name: Variantes responsivas de imágenes
+
+# Wave 2 ("imágenes más rápidas"): cada vez que cambia una foto del catálogo en main (el panel
+# admin las sube directo a ui_kits/store/images/ por la API de GitHub), genera al lado de cada
+# original <nombre>-320.webp, -640.webp y -960.webp con Pillow
+# (.github/scripts/generate_image_variants.py) y las comitea. La tienda las usa en srcset;
+# mientras no existan, el navegador cae a la original (listener de 'error' en las plantillas).
+#
+# No entra en loop: el commit de este workflow se hace con GITHUB_TOKEN (GitHub no dispara
+# workflows por esos commits) y además lleva [skip ci]; y el script es idempotente — una
+# variante que ya existe no se vuelve a escribir, así que una segunda corrida no cambia nada.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ui_kits/store/images/**"
+      - ".github/scripts/generate_image_variants.py"
+      - ".github/workflows/image-variants.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# Varias fotos subidas seguidas desde el panel disparan varias corridas: van de a una.
+concurrency:
+  group: image-variants
+  cancel-in-progress: false
+
+jobs:
+  variants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Pillow
+        run: python3 -m pip install --quiet "Pillow>=10,<13"
+
+      - name: Generar variantes 320/640/960
+        run: python3 .github/scripts/generate_image_variants.py
+
+      - name: Commitear si hubo cambios
+        run: |
+          git config user.name "cacusa-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A ui_kits/store/images
+          if git diff --cached --quiet; then
+            echo "Sin cambios."
+            exit 0
+          fi
+          git commit -m "Variantes responsivas de imágenes (320/640/960) [skip ci]"
+          # Mismo patrón que product-schema.yml: si main avanzó mientras corría (otra foto u
+          # otra regeneración), rebase y reintento antes de rendirse.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "Push rechazado (main avanzó) — reintentando con rebase ($i/5)..."
+            git fetch origin main
+            if ! git rebase --autostash origin/main; then
+              echo "Conflicto real al rebasar: la próxima corrida se pone al día sola."
+              git rebase --abort || true
+              exit 0
+            fi
+          done
+          echo "No se pudo pushear tras varios intentos — la próxima foto subida dispara una corrida nueva."
